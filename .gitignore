@@ -26,12 +26,15 @@ lerna-debug.log*
 
 # Database files
 *.sql
+!Database.sql
 *.sqlite
 *.db
 
-# Documentation (exclude all MD files except README.md)
+# Documentation (exclude all MD files except specific ones)
 *.md
 !README.md
+!Zevio_Villa_MVP_Full_Development_Guide.md
+!DEVELOPMENT_TRACKER.md
 
 # IDE and Editor
 .vscode/
