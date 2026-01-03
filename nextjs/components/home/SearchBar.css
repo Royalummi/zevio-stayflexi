@@ -1,0 +1,441 @@
+/* ============================================================================
+   PROFESSIONAL AIRBNB-STYLE SEARCH BAR
+   ============================================================================ */
+
+.search-bar-professional {
+  width: 100%;
+  max-width: 850px;
+  margin: 0 auto;
+}
+
+.search-container-airbnb {
+  display: flex;
+  align-items: center;
+  background: white;
+  border-radius: 50px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.05);
+  border: 1px solid #dddddd;
+  padding: 0;
+  position: relative;
+  transition: box-shadow 0.2s ease;
+}
+
+.search-container-airbnb:hover {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08), 0 8px 16px rgba(0, 0, 0, 0.08);
+}
+
+/* Search Fields */
+.search-field {
+  flex: 1;
+  padding: 14px 24px;
+  cursor: pointer;
+  border-radius: 50px;
+  transition: background-color 0.2s ease;
+  position: relative;
+  min-width: 0; /* Allow flex items to shrink */
+}
+
+.search-field:hover {
+  background-color: #ebebeb;
+}
+
+.search-field.active {
+  background-color: #ffffff;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
+  z-index: 2;
+}
+
+.search-field-last {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-right: 8px;
+}
+
+.field-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  position: relative;
+}
+
+.field-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #222222;
+  letter-spacing: 0.01em;
+  display: block;
+}
+
+.field-input {
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 14px;
+  color: #222222;
+  font-weight: 400;
+  width: 100%;
+  padding: 0;
+  font-family: inherit;
+}
+
+.field-input::placeholder {
+  color: #717171;
+  font-weight: 400;
+}
+
+.field-input:focus {
+  outline: none;
+}
+
+/* Date Picker Input */
+.date-input {
+  cursor: pointer;
+}
+
+/* Clear Button */
+.clear-btn {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #e0e0e0;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  padding: 0;
+}
+
+.clear-btn:hover {
+  background: #d0d0d0;
+}
+
+.clear-btn svg {
+  width: 12px;
+  height: 12px;
+  color: #222222;
+}
+
+/* Field Dividers */
+.field-divider {
+  width: 1px;
+  height: 32px;
+  background-color: #dddddd;
+  flex-shrink: 0;
+}
+
+/* Search Button - Airbnb Style */
+.search-btn-airbnb {
+  background: linear-gradient(to right, #e61e4d 0%, #e31c5f 50%, #d70466 100%);
+  color: white;
+  border: none;
+  border-radius: 50px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.2s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.search-btn-airbnb:hover {
+  transform: scale(1.04);
+  box-shadow: 0 4px 12px rgba(230, 30, 77, 0.3);
+}
+
+.search-btn-airbnb:active {
+  transform: scale(0.98);
+}
+
+.search-btn-airbnb svg {
+  width: 18px;
+  height: 18px;
+}
+
+.search-btn-text {
+  display: none;
+}
+
+/* Dropdown Menus */
+.dropdown-menu {
+  position: absolute;
+  top: calc(100% + 12px);
+  left: 0;
+  min-width: 300px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  padding: 8px 0;
+  z-index: 100;
+  animation: dropdownSlide 0.2s ease;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+@keyframes dropdownSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dropdown-list {
+  padding: 0;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.dropdown-item:hover {
+  background-color: #f7f7f7;
+}
+
+.dropdown-item.selected {
+  background-color: #f0f0f0;
+}
+
+.dropdown-item.active {
+  background-color: #ebebeb;
+}
+
+.item-icon {
+  width: 20px;
+  height: 20px;
+  color: #717171;
+  flex-shrink: 0;
+}
+
+.item-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.item-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #222222;
+  margin-bottom: 2px;
+}
+
+.item-subtitle {
+  font-size: 13px;
+  color: #717171;
+}
+
+.dropdown-empty {
+  padding: 24px 16px;
+  text-align: center;
+  color: #717171;
+  font-size: 14px;
+}
+
+/* Guests Dropdown */
+.guests-dropdown {
+  min-width: 380px;
+  right: 0;
+  left: auto;
+  padding: 16px;
+}
+
+.guests-control {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.guests-info {
+  flex: 1;
+}
+
+.guests-label {
+  font-size: 16px;
+  font-weight: 500;
+  color: #222222;
+  margin-bottom: 2px;
+}
+
+.guests-sublabel {
+  font-size: 14px;
+  color: #717171;
+}
+
+.guests-buttons {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.qty-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid #b0b0b0;
+  background: white;
+  color: #717171;
+  font-size: 18px;
+  font-weight: 400;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.qty-btn:hover:not(:disabled) {
+  border-color: #222222;
+  color: #222222;
+  transform: scale(1.05);
+}
+
+.qty-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.guests-value {
+  font-size: 16px;
+  font-weight: 400;
+  color: #222222;
+  min-width: 24px;
+  text-align: center;
+}
+
+/* Mobile Responsive */
+@media (max-width: 1024px) {
+  .search-container-airbnb {
+    border-radius: 40px;
+  }
+
+  .search-field {
+    padding: 12px 16px;
+  }
+
+  .search-btn-text {
+    display: none;
+  }
+
+  .search-btn-airbnb {
+    padding: 10px 12px;
+  }
+
+  .search-btn-airbnb svg {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  .search-container-airbnb {
+    flex-direction: column;
+    border-radius: 16px;
+    padding: 8px;
+    gap: 0;
+  }
+
+  .search-field {
+    width: 100%;
+    border-radius: 12px;
+    padding: 12px 16px;
+    border: 1px solid #ebebeb;
+  }
+
+  .search-field + .search-field {
+    margin-top: 8px;
+  }
+
+  .field-divider {
+    display: none;
+  }
+
+  .search-field-last {
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 12px 16px;
+  }
+
+  .search-btn-airbnb {
+    margin-top: 12px;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .search-btn-text {
+    display: inline;
+  }
+
+  .dropdown-menu {
+    width: calc(100% - 16px);
+    left: 8px;
+    right: 8px;
+  }
+
+  .guests-dropdown {
+    width: calc(100% - 16px);
+  }
+}
+
+/* React DatePicker Custom Styles */
+.react-datepicker-wrapper {
+  width: 100%;
+}
+
+.react-datepicker__input-container {
+  width: 100%;
+}
+
+.react-datepicker {
+  font-family: inherit;
+  border-radius: 16px;
+  border: none;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.react-datepicker__header {
+  background-color: white;
+  border-bottom: 1px solid #ebebeb;
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+  padding-top: 16px;
+}
+
+.react-datepicker__day--selected,
+.react-datepicker__day--in-range,
+.react-datepicker__day--in-selecting-range {
+  background-color: #222222;
+  color: white;
+}
+
+.react-datepicker__day--keyboard-selected {
+  background-color: #f7f7f7;
+  color: #222222;
+}
+
+.react-datepicker__day:hover {
+  background-color: #f7f7f7;
+  border-radius: 50%;
+}
+
+.react-datepicker__day--in-range:hover {
+  background-color: #484848;
+}

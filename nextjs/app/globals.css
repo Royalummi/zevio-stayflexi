@@ -1,0 +1,669 @@
+/* ============================================
+   IMPORT DESIGN SYSTEM (2025-2026 Color Trends)
+   ============================================ */
+@import '../styles/design-system.css';
+
+/* ============================================
+   LEGACY COLOR FALLBACKS
+   (Kept for backward compatibility during migration)
+   ============================================ */
+:root {
+  /* Old colors mapped to new design system */
+  --primary: var(--accent-navy);
+  --primary-dark: var(--accent-navy-dark);
+  --primary-light: var(--accent-navy-light);
+  --secondary: var(--secondary-terracotta);
+  --accent: var(--accent-gold);
+
+  /* Old grays mapped to new neutrals */
+  --gray-50: var(--primary-50);
+  --gray-100: var(--primary-100);
+  --gray-200: var(--primary-200);
+  --gray-300: var(--primary-300);
+  --gray-600: var(--primary-600);
+  --gray-700: var(--primary-700);
+  --gray-900: var(--primary-900);
+
+  /* Legacy spacing - now use --space-* from design system */
+  --container-max: var(--container-xl);
+  --container-padding: var(--space-6);
+  --section-padding: var(--space-12);
+}
+
+html {
+  scroll-behavior: smooth;
+  font-size: 16px;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  line-height: 1.6;
+  color: var(--gray-900);
+  background: white;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+/* Container */
+.container {
+  width: 100%;
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: 0 var(--container-padding);
+}
+
+@media (min-width: 768px) {
+  :root {
+    --container-padding: 32px;
+    --section-padding: 64px;
+  }
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --container-padding: 48px;
+    --section-padding: 80px;
+  }
+}
+
+/* Section */
+.section {
+  padding: var(--section-padding) 0;
+}
+
+/* Header */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--gray-200);
+  box-shadow: var(--shadow-sm);
+}
+
+.header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 80px;
+}
+
+.logo {
+  font-size: 32px;
+  font-weight: var(--font-bold);
+  color: var(--accent-navy);
+  transition: transform var(--transition-base);
+}
+
+.logo:hover {
+  transform: scale(1.05);
+  color: var(--accent-navy-dark);
+}
+
+.nav {
+  display: none;
+  gap: 32px;
+  align-items: center;
+}
+
+@media (min-width: 768px) {
+  .nav {
+    display: flex;
+  }
+}
+
+.nav-link {
+  font-size: 14px;
+  font-weight: var(--font-medium);
+  color: var(--text-primary);
+  transition: color var(--transition-base);
+  position: relative;
+}
+
+.nav-link:hover {
+  color: var(--cta-primary);
+}
+
+.nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--cta-secondary);
+  transition: width var(--transition-base);
+}
+
+.nav-link:hover::after {
+  width: 100%;
+}
+
+.header-actions {
+  display: none;
+  gap: 24px;
+  align-items: center;
+}
+
+@media (min-width: 768px) {
+  .header-actions {
+    display: flex;
+  }
+}
+
+.btn {
+  padding: 10px 32px;
+  font-size: 14px;
+  font-weight: var(--font-semibold);
+  border-radius: var(--radius-lg);
+  transition: all var(--transition-base);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: none;
+}
+
+.btn-primary {
+  background: var(--cta-primary);
+  color: var(--text-inverse);
+  box-shadow: var(--shadow-navy);
+}
+
+.btn-primary:hover {
+  background: var(--cta-primary-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-xl);
+}
+
+.btn-secondary {
+  background: var(--bg-secondary);
+  color: var(--cta-primary);
+  border: 2px solid var(--cta-primary);
+}
+
+.btn-secondary:hover {
+  background: var(--cta-primary);
+  color: var(--text-inverse);
+}
+
+.btn-lg {
+  padding: 16px 40px;
+  font-size: 18px;
+}
+
+/* Hide mobile menu on desktop */
+.md-hidden {
+  display: flex;
+}
+
+@media (min-width: 768px) {
+  .md-hidden {
+    display: none !important;
+  }
+}
+
+/* Hero - Modern 2025 Design */
+.hero {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg,
+      var(--accent-navy) 0%,
+      var(--accent-navy-dark) 50%,
+      var(--primary-900) 100%);
+  padding: 64px 0;
+  text-align: center;
+}
+
+@media (min-width: 768px) {
+  .hero {
+    padding: 96px 0 120px 0;
+  }
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 48px;
+}
+
+.hero-text {
+  max-width: 900px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.hero-badge {
+  font-size: 12px;
+  font-weight: var(--font-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--accent-gold-light);
+  padding: var(--space-2) var(--space-4);
+  background: rgba(212, 175, 55, 0.15);
+  border-radius: var(--radius-full);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  display: inline-block;
+}
+
+.hero-title {
+  font-size: 48px;
+  font-weight: 900;
+  line-height: 1.1;
+  color: white;
+}
+
+@media (min-width: 768px) {
+  .hero-title {
+    font-size: 72px;
+  }
+}
+
+.hero-title-gradient {
+  background: linear-gradient(to right, #ffd700, #ffa500);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero-description {
+  font-size: 20px;
+  line-height: 1.8;
+  color: rgba(255, 255, 255, 0.95);
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* Search Bar - Modern 2025 Design */
+.search-bar {
+  width: 100%;
+  max-width: 1000px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-2xl);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-2xl);
+  border: 1px solid var(--border-light);
+}
+
+/* Responsive Search Grid */
+.search-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+/* Tablet: 2 columns */
+@media (min-width: 768px) {
+  .search-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Desktop: All fields in one row with auto button */
+@media (min-width: 1024px) {
+  .search-grid {
+    grid-template-columns: repeat(4, minmax(200px, 1fr)) auto;
+    gap: 8px;
+  }
+}
+
+/* Section Header */
+.section-header {
+  text-align: center;
+  margin-bottom: 48px;
+}
+
+.section-badge {
+  font-size: var(--text-xs);
+  font-weight: var(--font-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--secondary-terracotta);
+  margin-bottom: var(--space-4);
+  display: inline-block;
+  padding: var(--space-2) var(--space-4);
+  background: var(--secondary-terracotta-light);
+  border-radius: var(--radius-full);
+}
+
+.section-title {
+  font-size: var(--text-3xl);
+  font-weight: var(--font-bold);
+  color: var(--text-primary);
+  margin-bottom: var(--space-4);
+}
+
+@media (min-width: 768px) {
+  .section-title {
+    font-size: var(--text-4xl);
+  }
+}
+
+.section-description {
+  font-size: var(--text-lg);
+  line-height: var(--leading-relaxed);
+  color: var(--text-secondary);
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+/* Grid */
+.grid {
+  display: grid;
+  gap: 24px;
+}
+
+.grid-2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.grid-3 {
+  grid-template-columns: repeat(1, 1fr);
+}
+
+@media (min-width: 640px) {
+  .grid-3 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .grid-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .grid-4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* Card - Modern 2025 Style */
+.card {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-2xl);
+  padding: var(--space-10);
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow-md);
+  transition: all var(--transition-base);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-xl);
+  border-color: var(--secondary-terracotta-light);
+}
+
+.card-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-xl);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+}
+
+.card-icon-primary {
+  background: rgba(44, 62, 80, 0.1);
+  color: var(--accent-navy);
+}
+
+.card-icon-green {
+  background: rgba(138, 154, 107, 0.15);
+  color: var(--secondary-olive);
+}
+
+.card-icon-blue {
+  background: rgba(224, 120, 86, 0.15);
+  color: var(--secondary-terracotta);
+}
+
+.card-title {
+  font-size: var(--text-xl);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+  margin-bottom: var(--space-3);
+}
+
+.card-text {
+  font-size: var(--text-base);
+  line-height: var(--leading-relaxed);
+  color: var(--text-secondary);
+}
+
+/* Destination Card - Modern Style */
+.destination-card {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: var(--radius-2xl);
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+  transition: all var(--transition-base);
+}
+
+.destination-card:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-2xl);
+}
+
+.destination-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s;
+}
+
+.destination-card:hover img {
+  transform: scale(1.08);
+}
+
+.destination-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.3), transparent);
+}
+
+.destination-name {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 24px;
+  font-size: 24px;
+  font-weight: 600;
+  color: white;
+}
+
+/* Footer - Modern Dark */
+.footer {
+  background: #1a202c;
+  color: var(--gray-300);
+  padding: 80px 0 40px;
+}
+
+.footer-grid {
+  display: grid;
+  gap: 48px;
+  margin-bottom: 48px;
+}
+
+@media (min-width: 768px) {
+  .footer-grid {
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+  }
+}
+
+.footer-title {
+  font-size: 16px;
+  font-weight: var(--font-bold);
+  color: white;
+  margin-bottom: 16px;
+}
+
+.footer-description {
+  line-height: 1.8;
+  margin-bottom: 24px;
+  max-width: 400px;
+}
+
+.footer-subtitle {
+  font-size: 14px;
+  font-weight: var(--font-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: white;
+  margin-bottom: 20px;
+}
+
+.footer-links {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.footer-link {
+  transition: color 0.2s;
+}
+
+.footer-link:hover {
+  color: var(--accent-gold-light);
+}
+
+.footer-bottom {
+  padding-top: 32px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: center;
+}
+
+/* Utilities */
+.bg-gray {
+  background: var(--gray-50);
+}
+
+.text-center {
+  text-align: center;
+}
+
+.flex {
+  display: flex;
+}
+
+.flex-col {
+  flex-direction: column;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.justify-center {
+  justify-content: center;
+}
+
+.gap-4 {
+  gap: 16px;
+}
+
+.gap-6 {
+  gap: 24px;
+}
+
+.gap-8 {
+  gap: 32px;
+}
+
+.mb-4 {
+  margin-bottom: 16px;
+}
+
+.mb-8 {
+  margin-bottom: 32px;
+}
+
+/* React Datepicker custom styles */
+.react-datepicker-wrapper {
+  width: 100%;
+}
+
+.datepicker-input {
+  width: 100%;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--gray-900);
+  background: transparent;
+  border: none;
+  outline: none;
+  cursor: pointer;
+}
+
+.datepicker-input:disabled {
+  color: var(--gray-600);
+  cursor: not-allowed;
+}
+
+.datepicker-input::placeholder {
+  color: var(--gray-600);
+}
+
+.react-datepicker {
+  font-family: 'Inter', sans-serif !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 0.75rem !important;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15) !important;
+}
+
+.react-datepicker__header {
+  background-color: #ffffff !important;
+  border-bottom: 1px solid #e5e7eb !important;
+  border-radius: 0.75rem 0.75rem 0 0 !important;
+  padding-top: 1rem !important;
+}
+
+.react-datepicker__day--selected {
+  background-color: var(--accent-navy) !important;
+  color: white !important;
+}
+
+.react-datepicker__day--selected:hover {
+  background-color: var(--accent-navy-dark) !important;
+}
+
+.react-datepicker__day:hover {
+  background-color: #f3f4f6 !important;
+}
+
+.hidden {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .md-block {
+    display: block;
+  }
+}

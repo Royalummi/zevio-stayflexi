@@ -1,0 +1,73 @@
+# Dependencies
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+.pnp
+.pnp.js
+
+# Environment Variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+.vercel/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+pnpm-debug.log*
+
+# Testing
+coverage/
+.nyc_output/
+
+# OS Files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+.vs/
+
+# Uploaded files (may contain user data)
+uploads/
+*/uploads/
+
+# SQL files
+*.sql
+
+# Markdown files (except README.md)
+AI_DEVELOPMENT_MASTER_TRACKER.md
+AI_DEVELOPMENT_TRACKER.md
+DEVELOPMENT_TRACKER.md
+NEXTJS_DEVELOPMENT_LOG.md
+NEXTJS_MIGRATION_TRACKER.md
+SENIOR_DEVELOPER_TRACKER.md
+TAILWIND_V4_UPDATE.md
+Zevio_Villa_MVP_Full_Development_Guide.md
+
+# Temp files
+*.tmp
+*.temp
+.cache/
+
+# TypeScript
+*.tsbuildinfo

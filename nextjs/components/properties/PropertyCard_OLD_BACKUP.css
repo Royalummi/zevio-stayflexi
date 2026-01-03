@@ -1,0 +1,338 @@
+/* ============================================================================
+   PROPERTY CARD COMPONENT - Industry-Standard Design (Airbnb/VRBO Style)
+   ========================================================================= */
+
+.property-card {
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+}
+
+.property-card:hover {
+    transform: translateY(-4px);
+}
+
+/* Image Container with Carousel */
+.property-card-image-container {
+    position: relative;
+    width: 100%;
+    padding-top: 66.67%;
+    /* 3:2 aspect ratio */
+    border-radius: 16px;
+    overflow: hidden;
+    background: #f0f0f0;
+    margin-bottom: 12px;
+}
+
+.property-card-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.property-image {
+    transition: transform 0.3s ease;
+}
+
+.property-card:hover .property-image {
+    transform: scale(1.05);
+}
+
+/* Wishlist Button (Heart Icon) */
+.wishlist-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 2;
+    transition: all 0.2s ease;
+    backdrop-filter: blur(8px);
+}
+
+.wishlist-btn:hover {
+    transform: scale(1.1);
+    background: rgba(255, 255, 255, 1);
+}
+
+.wishlist-btn svg {
+    width: 16px;
+    height: 16px;
+    color: #222;
+    transition: all 0.2s ease;
+}
+
+.wishlist-btn.active {
+    background: rgba(255, 56, 92, 0.95);
+}
+
+.wishlist-btn.active svg {
+    color: #fff;
+    fill: #fff;
+}
+
+/* Photo Navigation Buttons */
+.photo-nav-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 2;
+    transition: all 0.2s ease;
+    backdrop-filter: blur(4px);
+}
+
+.photo-nav-btn:hover {
+    background: rgba(255, 255, 255, 1);
+    transform: translateY(-50%) scale(1.1);
+}
+
+.photo-nav-btn.prev {
+    left: 12px;
+}
+
+.photo-nav-btn.next {
+    right: 12px;
+}
+
+.photo-nav-btn svg {
+    color: #222;
+}
+
+/* Photo Indicators (Dots) */
+.photo-indicators {
+    position: absolute;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 4px;
+    z-index: 2;
+}
+
+.indicator {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.6);
+    transition: all 0.2s ease;
+}
+
+.indicator.active {
+    background: #fff;
+    width: 8px;
+    height: 8px;
+}
+
+/* Verified Badge (Superhost) */
+.verified-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    padding: 6px 12px;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #222;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    z-index: 2;
+    backdrop-filter: blur(8px);
+}
+
+.verified-badge svg {
+    width: 12px;
+    height: 12px;
+    fill: #FFD700;
+    color: #FFD700;
+}
+
+/* Property Content */
+.property-card-content {
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Header Row (Location + Rating) */
+.property-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.property-location {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.875rem;
+    color: #666;
+    flex: 1;
+    min-width: 0;
+}
+
+.location-icon {
+    width: 14px;
+    height: 14px;
+    color: #666;
+    flex-shrink: 0;
+}
+
+.location-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.property-rating {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.875rem;
+    flex-shrink: 0;
+}
+
+.star-icon {
+    width: 14px;
+    height: 14px;
+    fill: #FFD700;
+    color: #FFD700;
+}
+
+.rating-value {
+    font-weight: 600;
+    color: #222;
+}
+
+.rating-count {
+    color: #666;
+}
+
+/* Property Name */
+.property-card-name {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #222;
+    line-height: 1.4;
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Property Details */
+.property-card-details {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 0.875rem;
+    color: #666;
+}
+
+.detail-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.detail-item svg {
+    width: 14px;
+    height: 14px;
+    color: #666;
+}
+
+/* Price Footer */
+.property-card-footer {
+    margin-top: 4px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.property-price {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+}
+
+.price-amount {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #222;
+}
+
+.price-period {
+    font-size: 0.875rem;
+    color: #666;
+    font-weight: 400;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 640px) {
+    .property-card-image-container {
+        border-radius: 12px;
+    }
+
+    .photo-nav-btn {
+        width: 28px;
+        height: 28px;
+    }
+
+    .wishlist-btn {
+        width: 28px;
+        height: 28px;
+    }
+
+    .wishlist-btn svg {
+        width: 14px;
+        height: 14px;
+    }
+}
+
+/* Skeleton Loading State */
+.property-card.loading {
+    pointer-events: none;
+}
+
+.property-card.loading .property-card-image {
+    background: linear-gradient(90deg,
+            #f0f0f0 25%,
+            #e0e0e0 50%,
+            #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
+    }
+}

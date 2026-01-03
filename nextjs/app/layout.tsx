@@ -1,0 +1,46 @@
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import "./globals.css";
+import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
+import { AuthProvider } from "@/contexts/AuthContext";
+
+const inter = Inter({
+  subsets: ["latin"],
+  display: "swap",
+});
+
+export const metadata: Metadata = {
+  title: "Zevio - Luxury Villa Rentals | Book Your Perfect Getaway",
+  description:
+    "Discover and book stunning luxury villas in Goa, Lonavala, Alibaug and more. Premium properties with pools, beaches, and mountain views.",
+  keywords:
+    "luxury villas, villa rentals, vacation homes, Goa villas, Lonavala villas, Alibaug villas, India vacation rentals",
+  openGraph: {
+    title: "Zevio - Luxury Villa Rentals",
+    description: "Discover and book stunning luxury villas across India",
+    type: "website",
+    locale: "en_IN",
+  },
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="en" className={inter.className} suppressHydrationWarning>
+      <body
+        className="antialiased min-h-screen flex flex-col"
+        suppressHydrationWarning
+      >
+        <AuthProvider>
+          <Header />
+          <main className="flex-1">{children}</main>
+          <Footer />
+        </AuthProvider>
+      </body>
+    </html>
+  );
+}

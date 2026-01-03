@@ -1,0 +1,55 @@
+import express from "express";
+import { body } from "express-validator";
+import { validate } from "../middlewares/validator.js";
+import { authenticate, authorize } from "../middlewares/auth.js";
+import {
+  createPaymentOrder,
+  verifyPayment,
+  handleWebhook,
+  getPaymentHistory,
+} from "../controllers/paymentController.js";
+
+const router = express.Router();
+
+// Validation rules
+const createOrderValidation = [
+  body("booking_id").notEmpty().withMessage("Booking ID is required"),
+  validate,
+];
+
+const verifyPaymentValidation = [
+  body("razorpay_order_id").notEmpty().withMessage("Order ID is required"),
+  body("razorpay_payment_id").notEmpty().withMessage("Payment ID is required"),
+  body("razorpay_signature").notEmpty().withMessage("Signature is required"),
+  body("booking_id").notEmpty().withMessage("Booking ID is required"),
+  validate,
+];
+
+// Webhook (no authentication)
+router.post("/webhook", handleWebhook);
+
+// Protected routes
+router.post(
+  "/create-order",
+  authenticate,
+  authorize("user"),
+  createOrderValidation,
+  createPaymentOrder
+);
+router.post(
+  "/verify",
+  authenticate,
+  authorize("user"),
+  verifyPaymentValidation,
+  verifyPayment
+);
+
+// Admin routes
+router.get(
+  "/history",
+  authenticate,
+  authorize("admin", "super_admin"),
+  getPaymentHistory
+);
+
+export default router;

@@ -1,0 +1,173 @@
+/* Zevio Button Component Styles */
+
+.zevio-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-family: inherit;
+    font-weight: 600;
+    line-height: 1;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    border-radius: 0.5rem;
+    outline: none;
+    position: relative;
+    white-space: nowrap;
+}
+
+.zevio-button:focus-visible {
+    outline: 2px solid var(--secondary-terracotta, #e07856);
+    outline-offset: 2px;
+}
+
+.zevio-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* Sizes */
+.zevio-button--sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    min-height: 36px;
+}
+
+.zevio-button--md {
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    min-height: 44px;
+}
+
+.zevio-button--lg {
+    padding: 1rem 2rem;
+    font-size: 1.125rem;
+    min-height: 52px;
+}
+
+/* Variants */
+.zevio-button--primary {
+    background: var(--cta-primary, #2c3e50);
+    color: var(--text-inverse, white);
+    box-shadow: var(--shadow-navy, 0 4px 12px rgba(44, 62, 80, 0.25));
+}
+
+.zevio-button--primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-xl, 0 20px 25px -5px rgba(0, 0, 0, 0.1));
+    background: var(--cta-primary-hover, #1a252f);
+}
+
+.zevio-button--primary:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: var(--shadow-navy, 0 4px 12px rgba(44, 62, 80, 0.25));
+}
+
+.zevio-button--secondary {
+    background: var(--secondary-terracotta, #e07856);
+    color: var(--text-inverse, white);
+    box-shadow: 0 4px 12px rgba(224, 120, 86, 0.25);
+}
+
+.zevio-button--secondary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(224, 120, 86, 0.4);
+    background: var(--secondary-terracotta-dark, #c96647);
+}
+
+.zevio-button--outline {
+    background: transparent;
+    color: var(--secondary-terracotta, #e07856);
+    border: 2px solid var(--secondary-terracotta, #e07856);
+    box-shadow: none;
+}
+
+.zevio-button--outline:hover:not(:disabled) {
+    background: var(--secondary-terracotta-light, rgba(224, 120, 86, 0.1));
+    transform: translateY(-2px);
+}
+
+.zevio-button--ghost {
+    background: transparent;
+    color: #374151;
+    box-shadow: none;
+}
+
+.zevio-button--ghost:hover:not(:disabled) {
+    background: #f3f4f6;
+}
+
+.zevio-button--danger {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    color: white;
+    box-shadow: 0 4px 6px -1px rgba(220, 38, 38, 0.3);
+}
+
+.zevio-button--danger:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(220, 38, 38, 0.4);
+}
+
+/* Full Width */
+.zevio-button--full {
+    width: 100%;
+}
+
+/* Loading State */
+.zevio-button--loading {
+    pointer-events: none;
+}
+
+.zevio-button__spinner {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.25em;
+    height: 1.25em;
+}
+
+.zevio-button__spinner svg {
+    width: 100%;
+    height: 100%;
+    animation: spin 0.8s linear infinite;
+}
+
+.zevio-button__spinner circle {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-dasharray: 48;
+    stroke-dashoffset: 12;
+    transform-origin: center;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.zevio-button__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.zevio-button__text {
+    display: inline-block;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    .zevio-button--lg {
+        padding: 0.875rem 1.75rem;
+        font-size: 1rem;
+        min-height: 48px;
+    }
+}
