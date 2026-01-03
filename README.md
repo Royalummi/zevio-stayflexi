@@ -4,7 +4,7 @@
 
 **Status:** 🚀 In Active Development  
 **Current Phase:** Next.js Public Pages Migration  
-**Last Updated:** January 2, 2026
+**Last Updated:** January 4, 2026
 
 ---
 
@@ -14,7 +14,6 @@
 |-----------|--------|----------|------|
 | **Backend API** | ✅ Complete | 100% | 5000 |
 | **React Dashboard** | ✅ Complete | 95% | 3000 |
-| **Astro Pages** | ✅ Complete | 100% | 4322 |
 | **Next.js Pages** | 🚧 In Progress | 25% | 8000 |
 | **Database** | ✅ Complete | 100% | 3306 |
 
@@ -41,17 +40,12 @@ npm run dev
 # Terminal 3: Next.js Public Site (Port 8000)
 cd nextjs
 npm run dev
-
-# Terminal 4: Astro (Optional - Port 4322)
-cd astro
-npm run dev
 ```
 
 **Access:**
 - Next.js: http://localhost:8000 (Public pages)
 - React: http://localhost:3000 (Dashboard)
 - Backend: http://localhost:5000 (API)
-- Astro: http://localhost:4322 (Legacy)
 
 ---
 
@@ -137,7 +131,6 @@ npm run dev
 - **Port 8000:** Next.js (new public site)
 - **Port 3000:** React (existing dashboard - don't touch)
 - **Port 5000:** Backend API (don't modify)
-- **Port 4322:** Astro (legacy - kept for reference)
 
 **For AI Agents:**
 Start with NEXTJS_DEVELOPMENT_LOG.md for context, then check NEXTJS_MIGRATION_TRACKER.md for tasks.
