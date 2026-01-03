@@ -1,12 +1,8 @@
 # Dependencies
 node_modules/
 package-lock.json
-yarn.lock
-pnpm-lock.yaml
-.pnp
-.pnp.js
 
-# Environment Variables
+# Environment variables
 .env
 .env.local
 .env.development.local
@@ -18,7 +14,6 @@ dist/
 build/
 .next/
 out/
-.vercel/
 
 # Logs
 logs/
@@ -26,48 +21,45 @@ logs/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-lerna-debug.log*
 pnpm-debug.log*
+lerna-debug.log*
+
+# Database files
+*.sql
+*.sqlite
+*.db
+
+# Documentation (exclude all MD files except README.md)
+*.md
+!README.md
+
+# IDE and Editor
+.vscode/
+.idea/
+.vs/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# OS Files
+Thumbs.db
+Desktop.ini
+
+# Uploads and user-generated content
+uploads/*
+!uploads/.gitkeep
 
 # Testing
 coverage/
 .nyc_output/
 
-# OS Files
-.DS_Store
-Thumbs.db
-*.swp
-*.swo
-*~
-
-# IDE
-.vscode/
-.idea/
-*.sublime-project
-*.sublime-workspace
-.vs/
-
-# Uploaded files (may contain user data)
-uploads/
-*/uploads/
-
-# SQL files
-*.sql
-
-# Markdown files (except README.md)
-AI_DEVELOPMENT_MASTER_TRACKER.md
-AI_DEVELOPMENT_TRACKER.md
-DEVELOPMENT_TRACKER.md
-NEXTJS_DEVELOPMENT_LOG.md
-NEXTJS_MIGRATION_TRACKER.md
-SENIOR_DEVELOPER_TRACKER.md
-TAILWIND_V4_UPDATE.md
-Zevio_Villa_MVP_Full_Development_Guide.md
-
-# Temp files
+# Temporary files
+tmp/
+temp/
 *.tmp
-*.temp
-.cache/
 
-# TypeScript
-*.tsbuildinfo
+# Cache
+.cache/
+.parcel-cache/
+.eslintcache
