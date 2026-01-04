@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
 // Create axios instance
 const apiClient = axios.create({
@@ -16,6 +16,9 @@ export interface City {
   id: string;
   name: string;
   state: string;
+  country?: string;
+  status: "active" | "inactive";
+  property_count?: number;
 }
 
 export interface Property {
@@ -57,7 +60,7 @@ export interface PropertiesResponse {
 export async function getCities(): Promise<City[]> {
   try {
     const response = await apiClient.get("/public/cities");
-    return response.data;
+    return response.data.data.cities || []; // Backend returns {success, message, data: {cities: [...]}}
   } catch (error) {
     console.error("Error fetching cities:", error);
     return [];

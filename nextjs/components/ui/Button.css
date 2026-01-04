@@ -20,7 +20,7 @@
 }
 
 .zevio-button:focus-visible {
-    outline: 2px solid var(--secondary-terracotta, #e07856);
+    outline: 2px solid var(--brand-teal);
     outline-offset: 2px;
 }
 
@@ -51,65 +51,66 @@
 
 /* Variants */
 .zevio-button--primary {
-    background: var(--cta-primary, #2c3e50);
-    color: var(--text-inverse, white);
-    box-shadow: var(--shadow-navy, 0 4px 12px rgba(44, 62, 80, 0.25));
+    background: var(--btn-primary-bg);
+    color: var(--btn-primary-text);
+    box-shadow: var(--shadow-md);
 }
 
 .zevio-button--primary:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: var(--shadow-xl, 0 20px 25px -5px rgba(0, 0, 0, 0.1));
-    background: var(--cta-primary-hover, #1a252f);
+    box-shadow: var(--shadow-xl);
+    background: var(--btn-primary-bg-hover);
 }
 
 .zevio-button--primary:active:not(:disabled) {
     transform: translateY(0);
-    box-shadow: var(--shadow-navy, 0 4px 12px rgba(44, 62, 80, 0.25));
+    box-shadow: var(--shadow-md);
 }
 
 .zevio-button--secondary {
-    background: var(--secondary-terracotta, #e07856);
-    color: var(--text-inverse, white);
-    box-shadow: 0 4px 12px rgba(224, 120, 86, 0.25);
+    background: var(--btn-secondary-bg);
+    color: var(--btn-secondary-text);
+    box-shadow: var(--shadow-md);
 }
 
 .zevio-button--secondary:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 10px 15px -3px rgba(224, 120, 86, 0.4);
-    background: var(--secondary-terracotta-dark, #c96647);
+    box-shadow: var(--shadow-lg);
+    background: var(--btn-secondary-bg-hover);
 }
 
 .zevio-button--outline {
     background: transparent;
-    color: var(--secondary-terracotta, #e07856);
-    border: 2px solid var(--secondary-terracotta, #e07856);
+    color: var(--btn-outline-text);
+    border: 2px solid var(--btn-outline-border);
     box-shadow: none;
 }
 
 .zevio-button--outline:hover:not(:disabled) {
-    background: var(--secondary-terracotta-light, rgba(224, 120, 86, 0.1));
+    background: var(--btn-outline-bg-hover);
+    color: var(--btn-outline-text-hover);
     transform: translateY(-2px);
 }
 
 .zevio-button--ghost {
     background: transparent;
-    color: #374151;
+    color: var(--brand-text-dark);
     box-shadow: none;
 }
 
 .zevio-button--ghost:hover:not(:disabled) {
-    background: #f3f4f6;
+    background: var(--brand-grey-lightest);
 }
 
 .zevio-button--danger {
-    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    background: linear-gradient(135deg, var(--brand-navy) 0%, var(--brand-navy-dark) 100%);
     color: white;
-    box-shadow: 0 4px 6px -1px rgba(220, 38, 38, 0.3);
+    box-shadow: 0 4px 6px -1px rgba(31, 58, 95, 0.3);
 }
 
 .zevio-button--danger:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 10px 15px -3px rgba(220, 38, 38, 0.4);
+    box-shadow: 0 10px 15px -3px rgba(31, 58, 95, 0.4);
 }
 
 /* Full Width */

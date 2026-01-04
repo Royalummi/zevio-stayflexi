@@ -44,15 +44,15 @@
 
 /* Colors */
 .loading-spinner--primary circle {
-    stroke: var(--secondary-terracotta, #e07856);
+    stroke: var(--brand-teal);
 }
 
 .loading-spinner--secondary circle {
-    stroke: var(--secondary-olive, #8b9a6b);
+    stroke: var(--brand-navy);
 }
 
 .loading-spinner--white circle {
-    stroke: #ffffff;
+    stroke: var(--brand-white);
 }
 
 .loading-spinner--current circle {
@@ -101,14 +101,14 @@
 .loading-spinner__text {
     font-size: 0.875rem;
     font-weight: 500;
-    color: #6b7280;
+    color: var(--brand-text-dark);
     margin: 0;
 }
 
 /* Loading Skeleton Styles */
 
 .loading-skeleton {
-    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background: linear-gradient(90deg, var(--brand-grey-light) 25%, var(--brand-border) 50%, var(--brand-grey-light) 75%);
     background-size: 200% 100%;
     border-radius: 0.25rem;
 }
@@ -163,11 +163,11 @@
 /* Dark mode support */
 @media (prefers-color-scheme: dark) {
     .loading-skeleton {
-        background: linear-gradient(90deg, #2d2d2d 25%, #3d3d3d 50%, #2d2d2d 75%);
-        background-size: 200% 100%;
+        background: linear-gradient(90deg, var(--brand-navy-dark) 25%, var(--brand-navy) 50%, var(--brand-navy-dark) 75%);
+        \n background-size: 200% 100%;
     }
 
     .loading-spinner-overlay {
-        background: rgba(0, 0, 0, 0.95);
+        background: rgba(31, 58, 95, 0.95);
     }
 }

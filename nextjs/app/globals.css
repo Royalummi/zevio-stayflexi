@@ -1,28 +1,28 @@
 /* ============================================
-   IMPORT DESIGN SYSTEM (2025-2026 Color Trends)
+   IMPORT UNIFIED DESIGN SYSTEM (Client Approved Brand Colors Only - Jan 2026)
    ============================================ */
-@import '../styles/design-system.css';
+@import '../styles/brand-colors.css';
 
 /* ============================================
    LEGACY COLOR FALLBACKS
    (Kept for backward compatibility during migration)
    ============================================ */
 :root {
-  /* Old colors mapped to new design system */
-  --primary: var(--accent-navy);
-  --primary-dark: var(--accent-navy-dark);
-  --primary-light: var(--accent-navy-light);
-  --secondary: var(--secondary-terracotta);
-  --accent: var(--accent-gold);
+  /* Old colors mapped to brand colors (for backward compatibility) */
+  --primary: var(--brand-navy);
+  --primary-dark: var(--brand-navy-dark);
+  --primary-light: var(--brand-navy-light);
+  --secondary: var(--brand-teal);
+  --accent: var(--brand-teal);
 
-  /* Old grays mapped to new neutrals */
-  --gray-50: var(--primary-50);
-  --gray-100: var(--primary-100);
-  --gray-200: var(--primary-200);
-  --gray-300: var(--primary-300);
-  --gray-600: var(--primary-600);
-  --gray-700: var(--primary-700);
-  --gray-900: var(--primary-900);
+  /* Old grays mapped to brand greys */
+  --gray-50: var(--brand-grey-lightest);
+  --gray-100: var(--brand-grey-lighter);
+  --gray-200: var(--brand-grey-light);
+  --gray-300: var(--brand-border-light);
+  --gray-600: var(--brand-text-dark);
+  --gray-700: var(--brand-text-darker);
+  --gray-900: var(--brand-navy);
 
   /* Legacy spacing - now use --space-* from design system */
   --container-max: var(--container-xl);
@@ -38,8 +38,8 @@ html {
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   line-height: 1.6;
-  color: var(--gray-900);
-  background: white;
+  color: var(--brand-navy);
+  background: var(--brand-white);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -47,6 +47,11 @@ body {
 a {
   color: inherit;
   text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+a:hover {
+  color: var(--brand-teal);
 }
 
 img {
@@ -94,9 +99,9 @@ button {
   position: sticky;
   top: 0;
   z-index: 50;
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--brand-white-translucent);
   backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--gray-200);
+  border-bottom: 1px solid var(--brand-border-light);
   box-shadow: var(--shadow-sm);
 }
 
@@ -110,13 +115,13 @@ button {
 .logo {
   font-size: 32px;
   font-weight: var(--font-bold);
-  color: var(--accent-navy);
+  color: var(--brand-navy);
   transition: transform var(--transition-base);
 }
 
 .logo:hover {
   transform: scale(1.05);
-  color: var(--accent-navy-dark);
+  color: var(--brand-teal);
 }
 
 .nav {
@@ -134,13 +139,13 @@ button {
 .nav-link {
   font-size: 14px;
   font-weight: var(--font-medium);
-  color: var(--text-primary);
+  color: var(--brand-navy);
   transition: color var(--transition-base);
   position: relative;
 }
 
 .nav-link:hover {
-  color: var(--cta-primary);
+  color: var(--brand-teal);
 }
 
 .nav-link::after {
@@ -150,7 +155,7 @@ button {
   left: 0;
   width: 0;
   height: 2px;
-  background: var(--cta-secondary);
+  background: var(--brand-teal);
   transition: width var(--transition-base);
 }
 
@@ -184,13 +189,13 @@ button {
 }
 
 .btn-primary {
-  background: var(--cta-primary);
-  color: var(--text-inverse);
-  box-shadow: var(--shadow-navy);
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
+  box-shadow: var(--shadow-md);
 }
 
 .btn-primary:hover {
-  background: var(--cta-primary-hover);
+  background: var(--btn-primary-hover);
   transform: translateY(-2px);
   box-shadow: var(--shadow-xl);
 }
@@ -225,18 +230,18 @@ button {
 /* Hero - Modern 2025 Design */
 .hero {
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   background: linear-gradient(135deg,
-      var(--accent-navy) 0%,
-      var(--accent-navy-dark) 50%,
-      var(--primary-900) 100%);
+      var(--brand-navy) 0%,
+      var(--brand-navy-dark) 50%,
+      var(--brand-navy-darker) 100%);
   padding: 64px 0;
   text-align: center;
 }
 
 @media (min-width: 768px) {
   .hero {
-    padding: 96px 0 120px 0;
+    padding: 72px 0 100px 0;
   }
 }
 
@@ -247,6 +252,8 @@ button {
   flex-direction: column;
   align-items: center;
   gap: 48px;
+  width: 100% !important;
+  max-width: 100% !important;
 }
 
 .hero-text {
@@ -261,11 +268,11 @@ button {
   font-weight: var(--font-semibold);
   text-transform: uppercase;
   letter-spacing: 0.15em;
-  color: var(--accent-gold-light);
+  color: var(--brand-white);
   padding: var(--space-2) var(--space-4);
-  background: rgba(212, 175, 55, 0.15);
+  background: var(--brand-teal-lighter);
   border-radius: var(--radius-full);
-  border: 1px solid rgba(212, 175, 55, 0.3);
+  border: 1px solid var(--brand-teal-light);
   display: inline-block;
 }
 
@@ -283,7 +290,7 @@ button {
 }
 
 .hero-title-gradient {
-  background: linear-gradient(to right, #ffd700, #ffa500);
+  background: linear-gradient(135deg, var(--brand-teal) 0%, var(--brand-teal-dark) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -341,11 +348,11 @@ button {
   font-weight: var(--font-bold);
   text-transform: uppercase;
   letter-spacing: 0.15em;
-  color: var(--secondary-terracotta);
+  color: var(--brand-white);
   margin-bottom: var(--space-4);
   display: inline-block;
   padding: var(--space-2) var(--space-4);
-  background: var(--secondary-terracotta-light);
+  background: var(--brand-teal-lighter);
   border-radius: var(--radius-full);
 }
 
@@ -416,7 +423,7 @@ button {
 .card:hover {
   transform: translateY(-4px);
   box-shadow: var(--shadow-xl);
-  border-color: var(--secondary-terracotta-light);
+  border-color: var(--brand-teal-light);
 }
 
 .card-icon {
@@ -430,18 +437,18 @@ button {
 }
 
 .card-icon-primary {
-  background: rgba(44, 62, 80, 0.1);
-  color: var(--accent-navy);
+  background: var(--brand-grey-lightest);
+  color: var(--brand-navy);
 }
 
 .card-icon-green {
-  background: rgba(138, 154, 107, 0.15);
-  color: var(--secondary-olive);
+  background: var(--brand-teal-lighter);
+  color: var(--brand-teal-dark);
 }
 
 .card-icon-blue {
-  background: rgba(224, 120, 86, 0.15);
-  color: var(--secondary-terracotta);
+  background: var(--brand-teal-lighter);
+  color: var(--brand-teal);
 }
 
 .card-title {
@@ -502,8 +509,8 @@ button {
 
 /* Footer - Modern Dark */
 .footer {
-  background: #1a202c;
-  color: var(--gray-300);
+  background: var(--brand-navy-darker);
+  color: var(--brand-grey-light);
   padding: 80px 0 40px;
 }
 
@@ -552,7 +559,7 @@ button {
 }
 
 .footer-link:hover {
-  color: var(--accent-gold-light);
+  color: var(--brand-teal-light);
 }
 
 .footer-bottom {
@@ -633,29 +640,29 @@ button {
 
 .react-datepicker {
   font-family: 'Inter', sans-serif !important;
-  border: 1px solid #e5e7eb !important;
+  border: 1px solid var(--brand-border) !important;
   border-radius: 0.75rem !important;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15) !important;
+  box-shadow: 0 10px 40px rgba(31, 58, 95, 0.15) !important;
 }
 
 .react-datepicker__header {
-  background-color: #ffffff !important;
-  border-bottom: 1px solid #e5e7eb !important;
+  background-color: var(--brand-white) !important;
+  border-bottom: 1px solid var(--brand-border) !important;
   border-radius: 0.75rem 0.75rem 0 0 !important;
   padding-top: 1rem !important;
 }
 
 .react-datepicker__day--selected {
-  background-color: var(--accent-navy) !important;
+  background-color: var(--brand-navy) !important;
   color: white !important;
 }
 
 .react-datepicker__day--selected:hover {
-  background-color: var(--accent-navy-dark) !important;
+  background-color: var(--brand-navy-dark) !important;
 }
 
 .react-datepicker__day:hover {
-  background-color: #f3f4f6 !important;
+  background-color: var(--brand-grey-lightest) !important;
 }
 
 .hidden {

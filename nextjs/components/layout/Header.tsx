@@ -17,9 +17,10 @@ export default function Header() {
   const navItems = useMemo(
     () => [
       { href: "/properties", label: "Properties" },
-      { href: "#destinations", label: "Destinations" },
-      { href: "#why-zevio", label: "Why Zevio" },
-      { href: "#support", label: "Support" },
+      { href: "/destinations", label: "Destinations" },
+      { href: "/why-zevio", label: "Why Zevio" },
+      { href: "/support", label: "Support" },
+      { href: "/about", label: "About Us" },
     ],
     []
   );

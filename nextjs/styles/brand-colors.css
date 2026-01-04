@@ -1,0 +1,579 @@
+/**
+ * ============================================================================
+ * ZEVIO VILLA BOOKING PLATFORM - UNIFIED DESIGN SYSTEM
+ * ============================================================================
+ * 
+ * Created: January 4, 2026
+ * Version: 2.0.0
+ * Combined Brand Colors + Design System (Client-Approved Palette Only)
+ * 
+ * Design Philosophy:
+ * - Professional and trustworthy (Navy primary)
+ * - Fresh and modern (Teal accents)
+ * - Clean and minimal (Light grey backgrounds)
+ * 
+ * STRICT COLOR POLICY: Only 6 client-approved colors used
+ * - Primary Navy: #1F3A5F
+ * - Secondary Teal: #2FA4A9
+ * - Accent Light Grey: #E6E9EE
+ * - Background White: #FFFFFF
+ * - Text Dark Grey: #5F6B7A
+ * - Border Grey: #D1D7DF
+ * 
+ * ============================================================================
+ */
+
+:root {
+    /* ============================================================================
+     BRAND COLORS - Client Approved Palette (6 Colors Only)
+     ============================================================================ */
+
+    /* Primary Navy - #1F3A5F
+     Usage: Headers, primary buttons, navigation, important text */
+    --brand-navy: #1F3A5F;
+    --brand-navy-light: #2d4f7d;
+    --brand-navy-lighter: #3b639b;
+    --brand-navy-dark: #152844;
+    --brand-navy-darker: #0d1a2e;
+
+    /* Secondary Teal - #2FA4A9
+     Usage: Interactive elements, links, hover states, CTAs */
+    --brand-teal: #2FA4A9;
+    --brand-teal-light: #4abbc0;
+    --brand-teal-lighter: #65d2d7;
+    --brand-teal-dark: #248d92;
+    --brand-teal-darker: #1a767b;
+
+    /* Accent Light Grey - #E6E9EE
+     Usage: Backgrounds, card backgrounds, subtle sections */
+    --brand-grey-light: #E6E9EE;
+    --brand-grey-lighter: #f2f4f7;
+    --brand-grey-lightest: #fafbfc;
+
+    /* Background White - #FFFFFF
+     Usage: Main backgrounds, cards, modals */
+    --brand-white: #FFFFFF;
+    --brand-white-translucent: rgba(255, 255, 255, 0.95);
+
+    /* Text Dark Grey - #5F6B7A
+     Usage: Body text, descriptions, secondary information */
+    --brand-text-dark: #5F6B7A;
+    --brand-text-darker: #4a5666;
+    --brand-text-darkest: #3a4652;
+
+    /* Border Grey - #D1D7DF
+     Usage: Borders, dividers, input outlines */
+    --brand-border: #D1D7DF;
+    --brand-border-light: #e1e5eb;
+    --brand-border-dark: #b8c1cc;
+
+
+    /* ============================================================================
+     SEMANTIC COLOR TOKENS - Use these in components
+     ============================================================================ */
+
+    /* Backgrounds */
+    --bg-primary: var(--brand-white);
+    --bg-secondary: var(--brand-grey-light);
+    --bg-tertiary: var(--brand-grey-lighter);
+    --bg-hover: var(--brand-grey-lightest);
+
+    /* Text Colors */
+    --text-primary: var(--brand-navy);
+    --text-secondary: var(--brand-text-dark);
+    --text-muted: var(--brand-text-darker);
+    --text-white: var(--brand-white);
+    --text-link: var(--brand-teal);
+    --text-link-hover: var(--brand-teal-dark);
+
+    /* Buttons */
+    --btn-primary-bg: var(--brand-navy);
+    --btn-primary-bg-hover: var(--brand-navy-light);
+    --btn-primary-bg-active: var(--brand-navy-dark);
+    --btn-primary-text: var(--brand-white);
+
+    --btn-secondary-bg: var(--brand-teal);
+    --btn-secondary-bg-hover: var(--brand-teal-light);
+    --btn-secondary-bg-active: var(--brand-teal-dark);
+    --btn-secondary-text: var(--brand-white);
+
+    --btn-outline-border: var(--brand-navy);
+    --btn-outline-text: var(--brand-navy);
+    --btn-outline-bg-hover: var(--brand-navy);
+    --btn-outline-text-hover: var(--brand-white);
+
+    /* Borders */
+    --border-primary: var(--brand-border);
+    --border-secondary: var(--brand-border-light);
+    --border-focus: var(--brand-teal);
+    --border-error: #e74c3c;
+
+    /* Forms */
+    --input-bg: var(--brand-white);
+    --input-border: var(--brand-border);
+    --input-border-hover: var(--brand-border-dark);
+    --input-border-focus: var(--brand-teal);
+    --input-text: var(--brand-navy);
+    --input-placeholder: var(--brand-text-dark);
+
+    /* Cards */
+    --card-bg: var(--brand-white);
+    --card-border: var(--brand-border-light);
+    --card-shadow: rgba(31, 58, 95, 0.08);
+    --card-shadow-hover: rgba(31, 58, 95, 0.15);
+
+    /* Navigation */
+    --nav-bg: var(--brand-white);
+    --nav-text: var(--brand-navy);
+    --nav-text-hover: var(--brand-teal);
+    --nav-border: var(--brand-border-light);
+
+    /* Links */
+    --link-color: var(--brand-teal);
+    --link-hover: var(--brand-teal-dark);
+    --link-visited: var(--brand-navy-light);
+
+    /* Shadows */
+    --shadow-sm: 0 2px 4px rgba(31, 58, 95, 0.06);
+    --shadow-md: 0 4px 12px rgba(31, 58, 95, 0.08);
+    --shadow-lg: 0 8px 24px rgba(31, 58, 95, 0.12);
+    --shadow-xl: 0 12px 40px rgba(31, 58, 95, 0.15);
+
+
+    /* Status Colors (Enhanced with brand colors - using teal/navy only) */
+    --status-success: var(--brand-teal-dark);
+    --status-success-light: var(--brand-grey-lightest);
+    --status-success-dark: var(--brand-teal-darker);
+
+    --status-warning: var(--brand-navy-light);
+    --status-warning-light: var(--brand-grey-light);
+    --status-warning-dark: var(--brand-navy);
+
+    --status-error: var(--brand-navy-dark);
+    --status-error-light: var(--brand-grey-light);
+    --status-error-dark: var(--brand-navy-darker);
+
+    --status-info: var(--brand-teal);
+    --status-info-light: var(--brand-teal-lighter);
+    --status-info-dark: var(--brand-teal-dark);
+
+
+    /* ============================================================================
+     TYPOGRAPHY SYSTEM
+     ============================================================================ */
+    --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-secondary: 'Poppins', 'Inter', sans-serif;
+    --font-display: 'Playfair Display', Georgia, serif;
+    /* For hero headings */
+    --font-mono: 'JetBrains Mono', 'Courier New', monospace;
+
+    /* Font Sizes */
+    --text-xs: 0.75rem;
+    /* 12px */
+    --text-sm: 0.875rem;
+    /* 14px */
+    --text-base: 1rem;
+    /* 16px */
+    --text-lg: 1.125rem;
+    /* 18px */
+    --text-xl: 1.25rem;
+    /* 20px */
+    --text-2xl: 1.5rem;
+    /* 24px */
+    --text-3xl: 1.875rem;
+    /* 30px */
+    --text-4xl: 2.25rem;
+    /* 36px */
+    --text-5xl: 3rem;
+    /* 48px */
+
+    /* Font Weights */
+    --font-light: 300;
+    --font-normal: 400;
+    --font-medium: 500;
+    --font-semibold: 600;
+    --font-bold: 700;
+    --font-extrabold: 800;
+
+    /* Line Heights */
+    --leading-tight: 1.2;
+    --leading-normal: 1.5;
+    --leading-relaxed: 1.75;
+    --leading-loose: 2;
+
+
+    /* ============================================================================
+     SPACING SYSTEM (8px base)
+     ============================================================================ */
+    --space-1: 0.25rem;
+    /* 4px */
+    --space-2: 0.5rem;
+    /* 8px */
+    --space-3: 0.75rem;
+    /* 12px */
+    --space-4: 1rem;
+    /* 16px */
+    --space-5: 1.25rem;
+    /* 20px */
+    --space-6: 1.5rem;
+    /* 24px */
+    --space-8: 2rem;
+    /* 32px */
+    --space-10: 2.5rem;
+    /* 40px */
+    --space-12: 3rem;
+    /* 48px */
+    --space-16: 4rem;
+    /* 64px */
+    --space-20: 5rem;
+    /* 80px */
+    --space-24: 6rem;
+    /* 96px */
+
+
+    /* ============================================================================
+     BORDER RADIUS SYSTEM
+     ============================================================================ */
+    --radius-xs: 0.25rem;
+    /* 4px */
+    --radius-sm: 0.5rem;
+    /* 8px */
+    --radius-md: 0.75rem;
+    /* 12px */
+    --radius-lg: 1rem;
+    /* 16px */
+    --radius-xl: 1.5rem;
+    /* 24px */
+    --radius-2xl: 2rem;
+    /* 32px */
+    --radius-full: 9999px;
+    /* Fully rounded */
+
+
+    /* ============================================================================
+     TRANSITION & ANIMATION
+     ============================================================================ */
+    --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: 500ms cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+    --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+    --ease-out: cubic-bezier(0.0, 0, 0.2, 1);
+    --ease-in: cubic-bezier(0.4, 0, 1, 1);
+
+
+    /* ============================================================================
+     Z-INDEX SYSTEM
+     ============================================================================ */
+    --z-base: 0;
+    --z-dropdown: 1000;
+    --z-sticky: 1020;
+    --z-fixed: 1030;
+    --z-modal-backdrop: 1040;
+    --z-modal: 1050;
+    --z-popover: 1060;
+    --z-tooltip: 1070;
+    --z-notification: 1080;
+
+
+    /* ============================================================================
+     RESPONSIVE BREAKPOINTS
+     ============================================================================ */
+    --breakpoint-xs: 480px;
+    --breakpoint-sm: 640px;
+    --breakpoint-md: 768px;
+    --breakpoint-lg: 1024px;
+    --breakpoint-xl: 1280px;
+    --breakpoint-2xl: 1536px;
+
+
+    /* ============================================================================
+     CONTAINER WIDTHS
+     ============================================================================ */
+    --container-sm: 640px;
+    --container-md: 768px;
+    --container-lg: 1024px;
+    --container-xl: 1280px;
+    --container-2xl: 1400px;
+}
+
+
+/* ============================================================================
+   GLOBAL RESETS & BASE STYLES
+   ============================================================================ */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+    font-family: var(--font-primary);
+    font-size: var(--text-base);
+    font-weight: var(--font-normal);
+    line-height: var(--leading-normal);
+    color: var(--text-secondary);
+    background-color: var(--bg-primary);
+}
+
+
+/* ============================================================================
+   TYPOGRAPHY UTILITIES
+   ============================================================================ */
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    color: var(--text-primary);
+    font-weight: var(--font-bold);
+    line-height: var(--leading-tight);
+    margin-bottom: var(--space-4);
+}
+
+h1 {
+    font-size: var(--text-5xl);
+}
+
+h2 {
+    font-size: var(--text-4xl);
+}
+
+h3 {
+    font-size: var(--text-3xl);
+}
+
+h4 {
+    font-size: var(--text-2xl);
+}
+
+h5 {
+    font-size: var(--text-xl);
+}
+
+h6 {
+    font-size: var(--text-lg);
+}
+
+p {
+    margin-bottom: var(--space-4);
+}
+
+a {
+    color: var(--link-color);
+    text-decoration: none;
+    transition: color var(--transition-base);
+}
+
+a:hover {
+    color: var(--link-hover);
+}
+
+
+/* ============================================================================
+   UTILITY CLASSES
+   ============================================================================ */
+
+/* Container */
+.container {
+    width: 100%;
+    max-width: var(--container-xl);
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: var(--space-4);
+    padding-right: var(--space-4);
+}
+
+@media (min-width: 768px) {
+    .container {
+        padding-left: var(--space-6);
+        padding-right: var(--space-6);
+    }
+}
+
+/* Cards */
+.card {
+    background: var(--bg-secondary);
+    border-radius: var(--radius-xl);
+    padding: var(--space-6);
+    box-shadow: var(--shadow-md);
+    transition: all var(--transition-base);
+}
+
+.card:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-2px);
+}
+
+/* Buttons - Modern, accessible */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-6);
+    font-size: var(--text-base);
+    font-weight: var(--font-semibold);
+    line-height: 1;
+    border: none;
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: all var(--transition-base);
+    text-decoration: none;
+}
+
+.btn:focus-visible {
+    outline: 2px solid var(--brand-teal);
+    outline-offset: 2px;
+}
+
+.btn-primary {
+    background: var(--btn-primary-bg);
+    color: var(--btn-primary-text);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-primary:hover {
+    background: var(--btn-primary-bg-hover);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-xl);
+}
+
+.btn-secondary {
+    background: var(--btn-secondary-bg);
+    color: var(--btn-secondary-text);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-secondary:hover {
+    background: var(--btn-secondary-bg-hover);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.btn-outline {
+    background: transparent;
+    color: var(--btn-outline-text);
+    border: 2px solid var(--btn-outline-border);
+}
+
+.btn-outline:hover {
+    background: var(--btn-outline-bg-hover);
+    color: var(--btn-outline-text-hover);
+}
+
+/* Badge */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding: var(--space-1) var(--space-3);
+    font-size: var(--text-sm);
+    font-weight: var(--font-medium);
+    border-radius: var(--radius-full);
+    background: var(--brand-grey-light);
+    color: var(--brand-navy);
+}
+
+/* Section Spacing */
+.section {
+    padding: var(--space-16) 0;
+}
+
+@media (min-width: 768px) {
+    .section {
+        padding: var(--space-20) 0;
+    }
+}
+
+/* Text Utilities */
+.text-muted {
+    color: var(--text-muted);
+}
+
+.text-center {
+    text-align: center;
+}
+
+.text-right {
+    text-align: right;
+}
+
+/* Spacing Utilities */
+.mt-auto {
+    margin-top: auto;
+}
+
+.mb-0 {
+    margin-bottom: 0;
+}
+
+
+/* ============================================================================
+   COMPONENT-SPECIFIC PATTERNS (Brand Colors Only)
+   ============================================================================ */
+
+/* Property Card Pattern */
+.property-card-modern {
+    background: var(--brand-white);
+    border: 1px solid var(--brand-border-light);
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+    transition: all var(--transition-base);
+}
+
+.property-card-modern:hover {
+    box-shadow: var(--shadow-xl);
+    transform: translateY(-4px);
+    border-color: var(--brand-teal-light);
+}
+
+/* Price Tag Pattern */
+.price-tag {
+    font-size: var(--text-2xl);
+    font-weight: var(--font-bold);
+    color: var(--brand-navy);
+}
+
+.price-tag-currency {
+    font-size: var(--text-lg);
+    font-weight: var(--font-medium);
+    color: var(--brand-text-dark);
+}
+
+/* Review Badge Pattern */
+.review-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding: var(--space-2) var(--space-3);
+    background: var(--brand-teal-lighter);
+    color: var(--brand-teal-darker);
+    border-radius: var(--radius-md);
+    font-size: var(--text-sm);
+    font-weight: var(--font-semibold);
+}
+
+/* Status Indicators */
+.status-available {
+    color: var(--status-success);
+}
+
+.status-booked {
+    color: var(--status-error);
+}
+
+.status-pending {
+    color: var(--status-warning);
+}

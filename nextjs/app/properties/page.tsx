@@ -1,48 +1,56 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { api } from "@/lib/axios";
 import type { City, Property } from "@/types";
 import PropertyCard from "@/components/properties/PropertyCard";
-import {
-  FiFilter,
-  FiX,
-  FiHome,
-  FiChevronDown,
-  FiMapPin,
-  FiUsers,
-} from "react-icons/fi";
-import { IoBed } from "react-icons/io5";
+import PropertyFilters, {
+  PropertyFiltersState,
+} from "@/components/properties/PropertyFilters";
+import { FiHome } from "react-icons/fi";
 import "./properties.css";
 
-interface Filters {
-  city: string;
-  minPrice: string;
-  maxPrice: string;
-  guests: string;
-  bedrooms: string;
-  sortBy: string;
-}
-
 export default function PropertiesPage() {
+  const searchParams = useSearchParams();
   const [properties, setProperties] = useState<Property[]>([]);
   const [filteredProperties, setFilteredProperties] = useState<Property[]>([]);
   const [cities, setCities] = useState<City[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showFilters, setShowFilters] = useState(false);
-  const [filters, setFilters] = useState<Filters>({
-    city: "",
-    minPrice: "",
-    maxPrice: "",
-    guests: "",
-    bedrooms: "",
-    sortBy: "recommended",
+
+  // Initialize filters from URL search params (from SearchBar)
+  const [filters, setFilters] = useState<PropertyFiltersState>(() => {
+    const cityParam = searchParams.get("city");
+    const guestsParam = searchParams.get("guests");
+    const checkinParam = searchParams.get("checkin");
+    const checkoutParam = searchParams.get("checkout");
+
+    console.log("URL Params - guests:", guestsParam);
+
+    // Capitalize first letter of city for display
+    const formattedCity = cityParam
+      ? cityParam.charAt(0).toUpperCase() + cityParam.slice(1)
+      : "";
+
+    return {
+      city: formattedCity,
+      minPrice: "",
+      maxPrice: "",
+      guests: guestsParam || "",
+      bedrooms: "",
+      checkin: checkinParam || "",
+      checkout: checkoutParam || "",
+      sortBy: "recommended",
+    };
   });
 
   useEffect(() => {
     const fetchCities = async () => {
       try {
         const response = await api.get("/public/cities");
+        console.log("Cities API response:", response.data);
+        console.log("Cities data:", response.data.data);
+        console.log("Cities array:", response.data.data.cities);
         setCities(response.data.data.cities || []);
       } catch (error) {
         console.error("Error fetching cities:", error);
@@ -73,10 +81,14 @@ export default function PropertiesPage() {
   useEffect(() => {
     let filtered = [...properties];
 
+    // Filter by city
     if (filters.city) {
-      filtered = filtered.filter((p) => p.city === filters.city);
+      filtered = filtered.filter(
+        (p) => p.city.toLowerCase() === filters.city.toLowerCase()
+      );
     }
 
+    // Filter by price range
     if (filters.minPrice) {
       filtered = filtered.filter(
         (p) => p.price_per_night >= parseFloat(filters.minPrice)
@@ -88,12 +100,14 @@ export default function PropertiesPage() {
       );
     }
 
+    // Filter by guests
     if (filters.guests) {
       filtered = filtered.filter(
         (p) => p.max_guests >= parseInt(filters.guests)
       );
     }
 
+    // Filter by bedrooms
     if (filters.bedrooms) {
       filtered = filtered.filter(
         (p) => p.bedrooms >= parseInt(filters.bedrooms)
@@ -112,7 +126,10 @@ export default function PropertiesPage() {
     setFilteredProperties(filtered);
   }, [filters, properties]);
 
-  const handleFilterChange = (key: keyof Filters, value: string) => {
+  const handleFilterChange = (
+    key: keyof PropertyFiltersState,
+    value: string
+  ) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
   };
 
@@ -123,6 +140,8 @@ export default function PropertiesPage() {
       maxPrice: "",
       guests: "",
       bedrooms: "",
+      checkin: "",
+      checkout: "",
       sortBy: "recommended",
     });
   };
@@ -132,157 +151,16 @@ export default function PropertiesPage() {
     console.log(`Property ${propertyId} wishlist status: ${isWishlisted}`);
   };
 
-  const activeFiltersCount = Object.values(filters).filter(
-    (v) => v !== ""
-  ).length;
-
   return (
     <div className="properties-page">
-      {/* Filters Bar */}
-      <div className="filters-bar">
-        <div className="filters-container">
-          <div className="filters-top">
-            <div className="filters-actions">
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                className="filter-toggle-btn"
-              >
-                <FiFilter />
-                <span>Filters</span>
-                {activeFiltersCount > 0 && (
-                  <span className="filter-badge">{activeFiltersCount}</span>
-                )}
-                <FiChevronDown
-                  className={`chevron-icon ${showFilters ? "rotated" : ""}`}
-                />
-              </button>
-
-              {activeFiltersCount > 0 && (
-                <button onClick={clearFilters} className="clear-filters-btn">
-                  <FiX />
-                  <span>Clear all</span>
-                </button>
-              )}
-            </div>
-
-            <div className="results-actions">
-              <div className="results-count">
-                <strong>{filteredProperties.length}</strong> properties found
-              </div>
-
-              <div className="sort-dropdown">
-                <select
-                  value={filters.sortBy}
-                  onChange={(e) => handleFilterChange("sortBy", e.target.value)}
-                  className="sort-select"
-                >
-                  <option value="recommended">Recommended</option>
-                  <option value="price-low">Price: Low to High</option>
-                  <option value="price-high">Price: High to Low</option>
-                  <option value="rating">Highest Rated</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          {/* Expandable Filters */}
-          {showFilters && (
-            <div className="filter-panel">
-              <div className="filter-grid">
-                {/* City */}
-                <div className="filter-group">
-                  <label>
-                    <FiMapPin />
-                    Location
-                  </label>
-                  <select
-                    value={filters.city}
-                    onChange={(e) => handleFilterChange("city", e.target.value)}
-                    className="filter-select"
-                  >
-                    <option value="">All cities</option>
-                    {cities.map((city) => (
-                      <option key={city.id} value={city.name}>
-                        {city.name}, {city.state}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Min Price */}
-                <div className="filter-group">
-                  <label>Min Price</label>
-                  <input
-                    type="number"
-                    value={filters.minPrice}
-                    onChange={(e) =>
-                      handleFilterChange("minPrice", e.target.value)
-                    }
-                    placeholder="₹0"
-                    className="filter-input"
-                  />
-                </div>
-
-                {/* Max Price */}
-                <div className="filter-group">
-                  <label>Max Price</label>
-                  <input
-                    type="number"
-                    value={filters.maxPrice}
-                    onChange={(e) =>
-                      handleFilterChange("maxPrice", e.target.value)
-                    }
-                    placeholder="₹50,000"
-                    className="filter-input"
-                  />
-                </div>
-
-                {/* Guests */}
-                <div className="filter-group">
-                  <label>
-                    <FiUsers />
-                    Guests
-                  </label>
-                  <select
-                    value={filters.guests}
-                    onChange={(e) =>
-                      handleFilterChange("guests", e.target.value)
-                    }
-                    className="filter-select"
-                  >
-                    <option value="">Any</option>
-                    <option value="2">2+</option>
-                    <option value="4">4+</option>
-                    <option value="6">6+</option>
-                    <option value="8">8+</option>
-                  </select>
-                </div>
-
-                {/* Bedrooms */}
-                <div className="filter-group">
-                  <label>
-                    <IoBed />
-                    Bedrooms
-                  </label>
-                  <select
-                    value={filters.bedrooms}
-                    onChange={(e) =>
-                      handleFilterChange("bedrooms", e.target.value)
-                    }
-                    className="filter-select"
-                  >
-                    <option value="">Any</option>
-                    <option value="1">1+</option>
-                    <option value="2">2+</option>
-                    <option value="3">3+</option>
-                    <option value="4">4+</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
+      {/* Filters Component */}
+      <PropertyFilters
+        cities={cities}
+        filters={filters}
+        onFilterChange={handleFilterChange}
+        onClearFilters={clearFilters}
+        resultsCount={filteredProperties.length}
+      />
 
       {/* Main Content */}
       <div className="main-content">

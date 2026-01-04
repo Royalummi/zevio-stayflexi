@@ -5,7 +5,7 @@
     align-items: center;
     justify-content: center;
     padding: 2rem;
-    background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
+    background: linear-gradient(135deg, var(--brand-grey-lightest) 0%, var(--brand-grey-lighter) 100%);
 }
 
 .error-boundary__container {
@@ -24,7 +24,7 @@
     justify-content: center;
     width: 80px;
     height: 80px;
-    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+    background: linear-gradient(135deg, var(--brand-teal) 0%, var(--brand-teal-dark) 100%);
     border-radius: 50%;
     margin-bottom: 1.5rem;
     color: white;
@@ -48,14 +48,14 @@
 .error-boundary__title {
     font-size: 1.75rem;
     font-weight: 700;
-    color: #2d3748;
+    color: var(--brand-navy);
     margin-bottom: 1rem;
     line-height: 1.2;
 }
 
 .error-boundary__message {
     font-size: 1rem;
-    color: #718096;
+    color: var(--brand-text-dark);
     line-height: 1.6;
     margin-bottom: 2rem;
 }
@@ -89,19 +89,19 @@
 }
 
 .error-boundary__button:focus-visible {
-    outline: 2px solid #9333ea;
+    outline: 2px solid var(--brand-teal);
     outline-offset: 2px;
 }
 
 .error-boundary__button--primary {
-    background: linear-gradient(135deg, #9333ea 0%, #6366f1 100%);
+    background: linear-gradient(135deg, var(--brand-navy) 0%, var(--brand-navy-dark) 100%);
     color: white;
-    box-shadow: 0 4px 12px rgba(147, 51, 234, 0.3);
+    box-shadow: var(--shadow-md);
 }
 
 .error-boundary__button--primary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(147, 51, 234, 0.4);
+    box-shadow: var(--shadow-lg);
 }
 
 .error-boundary__button--primary:active {
@@ -110,24 +110,24 @@
 
 .error-boundary__button--secondary {
     background: white;
-    color: #9333ea;
-    border: 2px solid #9333ea;
+    color: var(--brand-navy);
+    border: 2px solid var(--brand-navy);
 }
 
 .error-boundary__button--secondary:hover {
-    background: #f3f4f6;
+    background: var(--brand-grey-lightest);
     transform: translateY(-2px);
 }
 
 .error-boundary__button--ghost {
     background: transparent;
-    color: #718096;
+    color: var(--brand-text-dark);
     border: none;
 }
 
 .error-boundary__button--ghost:hover {
-    color: #2d3748;
-    background: #f3f4f6;
+    color: var(--brand-navy);
+    background: var(--brand-grey-lightest);
 }
 
 /* Error Details (Development Only) */

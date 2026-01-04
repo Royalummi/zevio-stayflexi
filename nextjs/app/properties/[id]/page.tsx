@@ -1,9 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 import { api } from "@/lib/axios";
+import { formatDateForAPI } from "@/lib/utils";
 import type { Property } from "@/types";
 import {
   FiArrowLeft,
@@ -43,14 +46,19 @@ const getAmenityIcon = (amenity: string) => {
 export default function PropertyDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const propertyId = params.id as string;
 
   const [property, setProperty] = useState<Property | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedPhoto, setSelectedPhoto] = useState(0);
-  const [checkIn, setCheckIn] = useState("");
-  const [checkOut, setCheckOut] = useState("");
-  const [guests, setGuests] = useState(1);
+  const [checkIn, setCheckIn] = useState<Date | null>(null);
+  const [checkOut, setCheckOut] = useState<Date | null>(null);
+  // Pre-fill guests from SearchBar URL params, default to 1
+  const [guests, setGuests] = useState(() => {
+    const guestsParam = searchParams.get("guests");
+    return guestsParam ? parseInt(guestsParam) : 1;
+  });
   const [totalPrice, setTotalPrice] = useState(0);
   const [nights, setNights] = useState(0);
   const [isSaved, setIsSaved] = useState(false);
@@ -110,8 +118,8 @@ export default function PropertyDetailPage() {
   // Calculate total price when dates change
   useEffect(() => {
     if (checkIn && checkOut && property) {
-      const start = new Date(checkIn);
-      const end = new Date(checkOut);
+      const start = checkIn;
+      const end = checkOut;
       const calculatedNights = Math.ceil(
         (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)
       );
@@ -149,8 +157,8 @@ export default function PropertyDetailPage() {
 
       await api.post("/bookings", {
         property_id: propertyId,
-        check_in_date: checkIn,
-        check_out_date: checkOut,
+        check_in_date: checkIn ? formatDateForAPI(checkIn) : "",
+        check_out_date: checkOut ? formatDateForAPI(checkOut) : "",
         guest_count: guests,
         total_amount: totalPrice,
       });
@@ -536,10 +544,6 @@ export default function PropertyDetailPage() {
 
           {/* RIGHT SIDE - Property Header + Booking Card (Sticky) */}
           <aside className="booking-sidebar">
-            {/* Property Header - Inside RIGHT Sidebar */}
-
-            {/* Property Header - Inside RIGHT Sidebar */}
-
             {/* Booking Card */}
             <div className="booking-card">
               <div className="booking-card-content">
@@ -583,11 +587,15 @@ export default function PropertyDetailPage() {
                         <FiCalendar />
                         Check-in
                       </label>
-                      <input
-                        type="date"
-                        value={checkIn}
-                        onChange={(e) => setCheckIn(e.target.value)}
-                        min={new Date().toISOString().split("T")[0]}
+                      <DatePicker
+                        selected={checkIn}
+                        onChange={(date: Date | null) => setCheckIn(date)}
+                        selectsStart
+                        startDate={checkIn}
+                        endDate={checkOut}
+                        minDate={new Date()}
+                        placeholderText="Select check-in"
+                        dateFormat="MMM d, yyyy"
                         className="form-input"
                       />
                     </div>
@@ -598,35 +606,52 @@ export default function PropertyDetailPage() {
                         <FiCalendar />
                         Check-out
                       </label>
-                      <input
-                        type="date"
-                        value={checkOut}
-                        onChange={(e) => setCheckOut(e.target.value)}
-                        min={checkIn || new Date().toISOString().split("T")[0]}
+                      <DatePicker
+                        selected={checkOut}
+                        onChange={(date: Date | null) => setCheckOut(date)}
+                        selectsEnd
+                        startDate={checkIn}
+                        endDate={checkOut}
+                        minDate={checkIn || new Date()}
+                        placeholderText="Select check-out"
+                        dateFormat="MMM d, yyyy"
                         className="form-input"
                       />
                     </div>
                   </div>
-                  {/* Guests */}
+                  {/* Guests - Incrementer */}
                   <div className="form-group">
-                    <label>
-                      <FiUsers />
-                      Guests
-                    </label>
-                    <select
-                      value={guests}
-                      onChange={(e) => setGuests(parseInt(e.target.value))}
-                      className="form-select"
-                    >
-                      {Array.from(
-                        { length: property.max_guests },
-                        (_, i) => i + 1
-                      ).map((num) => (
-                        <option key={num} value={num}>
-                          {num} {num === 1 ? "Guest" : "Guests"}
-                        </option>
-                      ))}
-                    </select>
+                    <div className="guests-incrementer">
+                      <label className="guests-label">
+                        <FiUsers />
+                        Guests
+                      </label>
+                      <div className="guests-controls">
+                        <button
+                          type="button"
+                          onClick={() => setGuests(Math.max(1, guests - 1))}
+                          disabled={guests <= 1}
+                          className="guest-btn guest-decrement"
+                          aria-label="Decrease guests"
+                        >
+                          −
+                        </button>
+                        <span className="guests-count">
+                          {guests} {guests === 1 ? "Guest" : "Guests"}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setGuests(Math.min(property.max_guests, guests + 1))
+                          }
+                          disabled={guests >= property.max_guests}
+                          className="guest-btn guest-increment"
+                          aria-label="Increase guests"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
 

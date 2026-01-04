@@ -2,12 +2,12 @@
 
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { FiSearch, FiX, FiMapPin } from "react-icons/fi";
+import { FiSearch, FiX, FiMapPin, FiCalendar, FiUsers } from "react-icons/fi";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { City } from "@/types";
 import { formatDateForAPI } from "@/lib/utils";
-import "./SearchBar.css";
+import "./SearchBar-modern.css";
 
 interface SearchBarProps {
   cities: City[];
@@ -24,16 +24,24 @@ export default function SearchBar({ cities }: SearchBarProps) {
   const [checkout, setCheckout] = useState<Date | null>(null);
   const [guests, setGuests] = useState(2);
   const [showGuestsDropdown, setShowGuestsDropdown] = useState(false);
+  const [isCheckinOpen, setIsCheckinOpen] = useState(false);
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
 
   const [activeField, setActiveField] = useState<string | null>(null);
 
   const cityDropdownRef = useRef<HTMLDivElement>(null);
   const guestsDropdownRef = useRef<HTMLDivElement>(null);
+  const destinationInputRef = useRef<HTMLInputElement>(null);
 
   const filteredCities = useMemo(() => {
-    if (!searchInput.trim()) return cities;
+    // Ensure cities is always an array
+    const citiesArray = Array.isArray(cities) ? cities : [];
 
-    return cities.filter(
+    if (!searchInput.trim()) {
+      return citiesArray;
+    }
+
+    return citiesArray.filter(
       (city) =>
         city.name.toLowerCase().includes(searchInput.toLowerCase()) ||
         city.state.toLowerCase().includes(searchInput.toLowerCase())
@@ -111,6 +119,9 @@ export default function SearchBar({ cities }: SearchBarProps) {
     }
 
     const query = params.toString();
+    console.log("SearchBar - Navigating with params:", query);
+    console.log("SearchBar - Guests value:", guests);
+
     if (query) {
       router.push(`/properties?${query}`);
     } else {
@@ -119,34 +130,43 @@ export default function SearchBar({ cities }: SearchBarProps) {
   };
 
   return (
-    <div className="search-bar-professional">
-      <div className="search-container-airbnb">
-        {/* WHERE */}
+    <div className="search-bar-modern">
+      <div className="search-wrapper">
+        {/* Destination Field */}
         <div
-          className={`search-field ${activeField === "where" ? "active" : ""}`}
+          className={`search-field-modern ${
+            activeField === "where" ? "field-active" : ""
+          }`}
           ref={cityDropdownRef}
-          onClick={() => {
-            setShowCityDropdown(true);
-            setActiveField("where");
-          }}
         >
-          <div className="field-content">
-            <label className="field-label">Where</label>
-            <input
-              type="text"
-              className="field-input"
-              placeholder="Search destinations"
-              value={searchInput}
-              onChange={(e) => {
-                setSearchInput(e.target.value);
-                setShowCityDropdown(true);
-                setActiveField("where");
-              }}
-              onKeyDown={handleKeyDown}
-            />
+          <div
+            className="field-inner"
+            onClick={() => {
+              setShowCityDropdown(true);
+              setActiveField("where");
+              destinationInputRef.current?.focus();
+            }}
+          >
+            <FiMapPin className="field-icon" />
+            <div className="field-text-wrapper">
+              <label className="field-label-modern">Destination</label>
+              <input
+                ref={destinationInputRef}
+                type="text"
+                className="field-input-modern"
+                placeholder="Where are you going?"
+                value={searchInput}
+                onChange={(e) => {
+                  setSearchInput(e.target.value);
+                  setShowCityDropdown(true);
+                  setActiveField("where");
+                }}
+                onKeyDown={handleKeyDown}
+              />
+            </div>
             {searchInput && (
               <button
-                className="clear-btn"
+                className="clear-btn-modern"
                 onClick={(e) => {
                   e.stopPropagation();
                   clearCity();
@@ -159,28 +179,34 @@ export default function SearchBar({ cities }: SearchBarProps) {
 
           {/* City Dropdown */}
           {showCityDropdown && (
-            <div className="dropdown-menu">
+            <div className="dropdown-modern">
               {filteredCities.length === 0 ? (
-                <div className="dropdown-empty">
-                  No cities found matching &quot;{searchInput}&quot;
+                <div className="dropdown-empty-modern">
+                  <FiMapPin className="empty-icon" />
+                  <div>No destinations found</div>
+                  <div className="empty-subtitle">
+                    Try searching for a different city
+                  </div>
                 </div>
               ) : (
-                <div className="dropdown-list">
+                <div className="dropdown-list-modern">
                   {filteredCities.map((city, index) => (
                     <div
                       key={city.id}
-                      className={`dropdown-item ${
-                        index === selectedIndex ? "selected" : ""
-                      } ${selectedCity?.id === city.id ? "active" : ""}`}
+                      className={`dropdown-item-modern ${
+                        index === selectedIndex ? "item-highlighted" : ""
+                      } ${selectedCity?.id === city.id ? "item-selected" : ""}`}
                       onClick={(e) => {
                         e.stopPropagation();
                         selectCity(city);
                       }}
                     >
-                      <FiMapPin className="item-icon" />
-                      <div className="item-content">
-                        <div className="item-title">{city.name}</div>
-                        <div className="item-subtitle">{city.state}</div>
+                      <div className="item-icon-wrapper">
+                        <FiMapPin className="item-icon-modern" />
+                      </div>
+                      <div className="item-text">
+                        <div className="item-title-modern">{city.name}</div>
+                        <div className="item-subtitle-modern">{city.state}</div>
                       </div>
                     </div>
                   ))}
@@ -190,111 +216,150 @@ export default function SearchBar({ cities }: SearchBarProps) {
           )}
         </div>
 
-        {/* DIVIDER */}
-        <div className="field-divider" />
+        {/* Vertical Divider */}
+        <div className="divider-modern" />
 
-        {/* CHECK-IN */}
+        {/* Check-in Field */}
         <div
-          className={`search-field ${
-            activeField === "checkin" ? "active" : ""
+          className={`search-field-modern ${
+            activeField === "checkin" ? "field-active" : ""
           }`}
-          onClick={() => setActiveField("checkin")}
         >
-          <div className="field-content">
-            <label className="field-label">Check in</label>
-            <DatePicker
-              selected={checkin}
-              onChange={(date: Date | null) => setCheckin(date)}
-              selectsStart
-              startDate={checkin}
-              endDate={checkout}
-              minDate={new Date()}
-              placeholderText="Add dates"
-              className="field-input date-input"
-              dateFormat="MMM d"
-              onFocus={() => setActiveField("checkin")}
-            />
+          <div
+            className="field-inner"
+            onClick={() => {
+              setIsCheckinOpen(true);
+              setActiveField("checkin");
+            }}
+          >
+            <FiCalendar className="field-icon" />
+            <div className="field-text-wrapper">
+              <label className="field-label-modern">Check-in</label>
+              <DatePicker
+                selected={checkin}
+                onChange={(date: Date | null) => setCheckin(date)}
+                selectsStart
+                startDate={checkin}
+                endDate={checkout}
+                minDate={new Date()}
+                placeholderText="Select date"
+                className="field-input-modern date-picker-modern"
+                dateFormat="MMM d, yyyy"
+                open={isCheckinOpen}
+                onClickOutside={() => {
+                  setIsCheckinOpen(false);
+                  setActiveField(null);
+                }}
+                onSelect={() => setIsCheckinOpen(false)}
+                preventOpenOnFocus={true}
+                shouldCloseOnSelect={true}
+              />
+            </div>
           </div>
         </div>
 
-        {/* DIVIDER */}
-        <div className="field-divider" />
+        {/* Vertical Divider */}
+        <div className="divider-modern" />
 
-        {/* CHECK-OUT */}
+        {/* Check-out Field */}
         <div
-          className={`search-field ${
-            activeField === "checkout" ? "active" : ""
+          className={`search-field-modern ${
+            activeField === "checkout" ? "field-active" : ""
           }`}
-          onClick={() => setActiveField("checkout")}
         >
-          <div className="field-content">
-            <label className="field-label">Check out</label>
-            <DatePicker
-              selected={checkout}
-              onChange={(date: Date | null) => setCheckout(date)}
-              selectsEnd
-              startDate={checkin}
-              endDate={checkout}
-              minDate={checkin || new Date()}
-              placeholderText="Add dates"
-              className="field-input date-input"
-              dateFormat="MMM d"
-              onFocus={() => setActiveField("checkout")}
-            />
+          <div
+            className="field-inner"
+            onClick={() => {
+              setIsCheckoutOpen(true);
+              setActiveField("checkout");
+            }}
+          >
+            <FiCalendar className="field-icon" />
+            <div className="field-text-wrapper">
+              <label className="field-label-modern">Check-out</label>
+              <DatePicker
+                selected={checkout}
+                onChange={(date: Date | null) => setCheckout(date)}
+                selectsEnd
+                startDate={checkin}
+                endDate={checkout}
+                minDate={checkin || new Date()}
+                placeholderText="Select date"
+                className="field-input-modern date-picker-modern"
+                dateFormat="MMM d, yyyy"
+                open={isCheckoutOpen}
+                onClickOutside={() => {
+                  setIsCheckoutOpen(false);
+                  setActiveField(null);
+                }}
+                onSelect={() => setIsCheckoutOpen(false)}
+                preventOpenOnFocus={true}
+                shouldCloseOnSelect={true}
+              />
+            </div>
           </div>
         </div>
 
-        {/* DIVIDER */}
-        <div className="field-divider" />
+        {/* Vertical Divider */}
+        <div className="divider-modern" />
 
-        {/* GUESTS */}
+        {/* Guests Field */}
         <div
-          className={`search-field search-field-last ${
-            activeField === "guests" ? "active" : ""
+          className={`search-field-modern field-with-button ${
+            activeField === "guests" ? "field-active" : ""
           }`}
           ref={guestsDropdownRef}
         >
           <div
-            className="field-content"
+            className="field-inner"
             onClick={() => {
               setShowGuestsDropdown(!showGuestsDropdown);
               setActiveField("guests");
             }}
           >
-            <label className="field-label">Who</label>
-            <div className="field-input">
-              {guests === 0
-                ? "Add guests"
-                : `${guests} guest${guests !== 1 ? "s" : ""}`}
+            <FiUsers className="field-icon" />
+            <div className="field-text-wrapper">
+              <label className="field-label-modern">Guests</label>
+              <div className="field-value-modern">
+                {guests} {guests === 1 ? "Guest" : "Guests"}
+              </div>
             </div>
           </div>
 
           {/* Search Button */}
-          <button className="search-btn-airbnb" onClick={handleSearch}>
-            <FiSearch />
-            <span className="search-btn-text">Search</span>
+          <button className="search-btn-modern" onClick={handleSearch}>
+            <FiSearch className="search-icon" />
+            <span className="search-text">Search</span>
           </button>
 
           {/* Guests Dropdown */}
           {showGuestsDropdown && (
-            <div className="dropdown-menu guests-dropdown">
-              <div className="guests-control">
-                <div className="guests-info">
-                  <div className="guests-label">Guests</div>
-                  <div className="guests-sublabel">All ages welcome</div>
+            <div className="dropdown-modern guests-dropdown-modern">
+              <div className="guests-control-modern">
+                <div className="guests-info-modern">
+                  <div className="guests-label-modern">Number of Guests</div>
+                  <div className="guests-sublabel-modern">
+                    How many people are traveling?
+                  </div>
                 </div>
-                <div className="guests-buttons">
+                <div className="guests-counter">
                   <button
-                    className="qty-btn"
-                    onClick={() => setGuests(Math.max(1, guests - 1))}
+                    className="counter-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setGuests(Math.max(1, guests - 1));
+                    }}
                     disabled={guests <= 1}
                   >
                     −
                   </button>
-                  <span className="guests-value">{guests}</span>
+                  <span className="counter-value">{guests}</span>
                   <button
-                    className="qty-btn"
-                    onClick={() => setGuests(Math.min(20, guests + 1))}
+                    className="counter-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setGuests(Math.min(20, guests + 1));
+                    }}
                     disabled={guests >= 20}
                   >
                     +

@@ -1,23 +1,27 @@
 /* ============================================================================
-   PROFESSIONAL PROPERTY CARD - ENHANCED MODERN DESIGN
+   ZEVIO PROPERTY CARD - BRAND REDESIGN (Client Approved Colors)
+   Created: January 4, 2026
+   Colors: Navy (#1F3A5F) + Teal (#2FA4A9) + Light Grey (#E6E9EE)
    ============================================================================ */
 
 .property-card {
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border-radius: 16px;
+  transition: all var(--transition-base);
+  border-radius: var(--radius-lg);
   overflow: visible;
-  background: white;
+  background: var(--brand-white);
   position: relative;
+  border: 1px solid var(--brand-border-light);
 }
 
 .property-card:hover {
   transform: translateY(-6px);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-xl);
+  border-color: var(--brand-teal-light);
 }
 
 /* ============================================================================
-   IMAGE CONTAINER - Enhanced 3:2 Aspect Ratio
+   IMAGE CONTAINER - 3:2 Aspect Ratio with Brand Colors
    ============================================================================ */
 
 .property-card-image-container {
@@ -26,14 +30,14 @@
   padding-bottom: 66.67%;
   /* 3:2 aspect ratio */
   overflow: hidden;
-  border-radius: 16px;
-  background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  transition: box-shadow 0.3s ease;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, var(--brand-grey-lighter) 0%, var(--brand-grey-light) 100%);
+  box-shadow: var(--shadow-md);
+  transition: all var(--transition-base);
 }
 
 .property-card:hover .property-card-image-container {
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+  box-shadow: var(--shadow-lg);
 }
 
 .property-card-image {
@@ -56,7 +60,7 @@
 }
 
 /* ============================================================================
-   WISHLIST BUTTON - Enhanced Heart Icon
+   WISHLIST BUTTON - Teal Brand Color
    ============================================================================ */
 
 .wishlist-btn {
@@ -65,41 +69,41 @@
   right: 14px;
   width: 36px;
   height: 36px;
-  border-radius: 50%;
+  border-radius: var(--radius-full);
   border: none;
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--brand-white-translucent);
   backdrop-filter: blur(20px);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   z-index: 3;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  transition: all var(--transition-base);
+  box-shadow: var(--shadow-md);
 }
 
 .wishlist-btn:hover {
   transform: scale(1.15);
-  background: rgba(255, 255, 255, 1);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+  background: var(--brand-white);
+  box-shadow: var(--shadow-lg);
 }
 
 .wishlist-btn svg {
   width: 18px;
   height: 18px;
-  color: #222222;
+  color: var(--brand-navy);
   stroke-width: 2.5;
-  transition: all 0.3s ease;
+  transition: all var(--transition-base);
 }
 
 .wishlist-btn.active {
-  background: linear-gradient(135deg, #ff385c 0%, #ff1744 100%);
+  background: linear-gradient(135deg, var(--brand-teal) 0%, var(--brand-teal-dark) 100%);
   transform: scale(1.15);
 }
 
 .wishlist-btn.active svg {
-  fill: white;
-  stroke: white;
+  fill: var(--brand-white);
+  stroke: var(--brand-white);
   animation: heartBeat 0.5s ease;
 }
 
@@ -116,7 +120,7 @@
 }
 
 /* ============================================================================
-   PHOTO NAVIGATION BUTTONS - Enhanced
+   PHOTO NAVIGATION BUTTONS - Brand Navy
    ============================================================================ */
 
 .photo-nav-btn {
@@ -125,9 +129,9 @@
   transform: translateY(-50%);
   width: 32px;
   height: 32px;
-  border-radius: 50%;
-  border: none;
-  background: rgba(255, 255, 255, 0.98);
+  border-radius: var(--radius-full);
+  border: 1px solid var(--brand-border);
+  background: var(--brand-white-translucent);
   backdrop-filter: blur(20px);
   display: flex;
   align-items: center;
@@ -135,8 +139,8 @@
   cursor: pointer;
   z-index: 2;
   opacity: 0;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  transition: all var(--transition-base);
+  box-shadow: var(--shadow-md);
 }
 
 .property-card-image-container:hover .photo-nav-btn {
@@ -144,9 +148,10 @@
 }
 
 .photo-nav-btn:hover {
-  background: white;
+  background: var(--brand-navy);
+  border-color: var(--brand-navy);
   transform: translateY(-50%) scale(1.2);
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--shadow-lg);
 }
 
 .photo-nav-btn.prev {
@@ -158,8 +163,13 @@
 }
 
 .photo-nav-btn svg {
-  color: #222222;
+  color: var(--brand-navy);
   stroke-width: 2.5;
+  transition: color var(--transition-fast);
+}
+
+.photo-nav-btn:hover svg {
+  color: var(--brand-white);
 }
 
 /* ============================================================================
@@ -204,51 +214,51 @@
 }
 
 /* ============================================================================
-   VERIFIED BADGE - Premium Superhost
+   VERIFIED BADGE - Teal Accent
    ============================================================================ */
 
 .verified-badge {
   position: absolute;
   top: 14px;
   left: 14px;
-  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  background: var(--brand-teal);
   padding: 7px 14px;
-  border-radius: 24px;
+  border-radius: var(--radius-2xl);
   display: flex;
   align-items: center;
   gap: 5px;
   font-size: 12px;
-  font-weight: 700;
-  color: #222222;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  font-weight: var(--font-bold);
+  color: var(--brand-white);
+  box-shadow: var(--shadow-md);
   z-index: 3;
-  border: 1px solid rgba(255, 215, 0, 0.3);
   backdrop-filter: blur(10px);
-  transition: all 0.3s ease;
+  transition: all var(--transition-base);
 }
 
 .verified-badge:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--shadow-lg);
+  background: var(--brand-teal-light);
 }
 
 .verified-badge svg {
   width: 15px;
   height: 15px;
-  color: #ffd700;
-  fill: #ffd700;
-  filter: drop-shadow(0 2px 4px rgba(255, 215, 0, 0.4));
+  color: var(--brand-white);
+  fill: var(--brand-white);
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
 }
 
 /* ============================================================================
-   PROPERTY CONTENT - Enhanced Typography
+   PROPERTY CONTENT - Brand Typography
    ============================================================================ */
 
 .property-card-content {
-  padding: 18px;
+  padding: var(--space-4) var(--space-4);
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--space-3);
 }
 
 /* Header: Location & Rating */
@@ -270,14 +280,14 @@
 .location-icon {
   width: 14px;
   height: 14px;
-  color: #717171;
+  color: var(--brand-text-dark);
   flex-shrink: 0;
 }
 
 .location-text {
-  font-size: 14px;
-  color: #717171;
-  font-weight: 400;
+  font-size: var(--text-sm);
+  color: var(--brand-text-dark);
+  font-weight: var(--font-normal);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -293,42 +303,48 @@
 .star-icon {
   width: 12px;
   height: 12px;
-  color: #222222;
-  fill: #222222;
+  color: var(--brand-teal);
+  fill: var(--brand-teal);
 }
 
 .rating-value {
-  font-size: 14px;
-  font-weight: 600;
-  color: #222222;
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  color: var(--brand-navy);
 }
 
 .rating-count {
-  font-size: 14px;
-  color: #717171;
-  font-weight: 400;
+  font-size: var(--text-sm);
+  color: var(--brand-text-dark);
+  font-weight: var(--font-normal);
 }
 
 /* Property Name */
 .property-card-name {
-  font-size: 16px;
-  font-weight: 600;
-  color: #222222;
+  font-size: var(--text-lg);
+  font-weight: var(--font-semibold);
+  color: var(--brand-navy);
   margin: 0;
-  line-height: 1.4;
+  line-height: var(--leading-tight);
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
   max-height: 2.8em;
+  transition: color var(--transition-fast);
+}
+
+.property-card:hover .property-card-name {
+  color: var(--brand-teal);
 }
 
 /* Property Details */
 .property-card-details {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: var(--space-4);
   flex-wrap: wrap;
 }
 
@@ -336,25 +352,25 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 14px;
-  color: #717171;
-  font-weight: 400;
+  font-size: var(--text-sm);
+  color: var(--brand-text-dark);
+  font-weight: var(--font-normal);
 }
 
 .detail-item svg {
   width: 16px;
   height: 16px;
-  color: #717171;
+  color: var(--brand-teal);
 }
 
-/* Price Footer - Enhanced */
+/* Price Footer - Brand Colors */
 .property-card-footer {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  margin-top: 6px;
-  padding-top: 8px;
-  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  margin-top: var(--space-2);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--brand-border);
 }
 
 .property-price {
@@ -364,18 +380,15 @@
 }
 
 .price-amount {
-  font-size: 20px;
-  font-weight: 700;
-  background: linear-gradient(135deg, #222222 0%, #000000 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  font-size: var(--text-xl);
+  font-weight: var(--font-bold);
+  color: var(--brand-navy);
 }
 
 .price-period {
-  font-size: 14px;
-  font-weight: 500;
-  color: #717171;
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--brand-text-dark);
 }
 
 /* ============================================================================
@@ -426,6 +439,7 @@
 /* Hover Effect on Desktop Only */
 @media (hover: hover) {
   .property-card:hover {
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+    box-shadow: var(--shadow-xl);
+    border-color: var(--brand-teal);
   }
 }

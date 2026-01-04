@@ -21,15 +21,15 @@ export default function Footer() {
       title: "Company",
       links: [
         { label: "About Us", href: "/about" },
-        { label: "Careers", href: "/careers" },
-        { label: "Blog", href: "/blog" },
-        { label: "Press", href: "/press" },
+        { label: "Why Zevio", href: "/why-zevio" },
+        { label: "Destinations", href: "/destinations" },
+        { label: "Contact", href: "/contact" },
       ],
     },
     {
       title: "Support",
       links: [
-        { label: "Help Center", href: "/help" },
+        { label: "Help Center", href: "/support" },
         { label: "Contact", href: "/contact" },
         { label: "Privacy Policy", href: "/privacy" },
         { label: "Terms of Service", href: "/terms" },

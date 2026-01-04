@@ -34,44 +34,9 @@ export default async function Home() {
       {/* Hero Section */}
       <section id="hero" className="hero">
         {/* Background Pattern */}
-        <div
-          style={{
-            position: "absolute",
-            inset: "0",
-            opacity: "0.1",
-          }}
-        >
-          <div
-            style={{
-              position: "absolute",
-              width: "16rem",
-              height: "16rem",
-              top: "0",
-              left: "0",
-              transform: "translate(-50%, -50%)",
-              borderRadius: "50%)",
-              background: "white",
-              filter: "blur(48px)",
-            }}
-          />
-          <div
-            style={{
-              position: "absolute",
-              width: "24rem",
-              height: "24rem",
-              bottom: "0",
-              right: "0",
-              transform: "translate(50%, 50%)",
-              borderRadius: "50%",
-              background: "white",
-              filter: "blur(48px)",
-            }}
-          />
-        </div>
-
         <div className="container hero-content">
           <div className="hero-text">
-            <span className="hero-badge">Premium Villa Stays</span>
+            <p className="hero-badge">Discover your dream villa with Zevio</p>
             <h1 className="hero-title">
               Find your perfect{" "}
               <span
@@ -83,11 +48,6 @@ export default async function Home() {
                 villa getaway
               </span>
             </h1>
-            <p className="hero-description">
-              Discover handpicked luxury villas across India&apos;s most
-              beautiful destinations. Book with confidence and enjoy
-              concierge-level support at every step.
-            </p>
           </div>
 
           {/* Search Bar */}

@@ -10,19 +10,20 @@
 
 ## 📊 Project Status
 
-| Component | Status | Progress | Port |
-|-----------|--------|----------|------|
-| **Backend API** | ✅ Complete | 100% | 5000 |
-| **React Dashboard** | ✅ Complete | 95% | 3000 |
-| **Next.js Pages** | 🚧 In Progress | 25% | 8000 |
-| **Database** | ✅ Complete | 100% | 3306 |
+| Component           | Status         | Progress | Port |
+| ------------------- | -------------- | -------- | ---- |
+| **Backend API**     | ✅ Complete    | 100%     | 5000 |
+| **React Dashboard** | ✅ Complete    | 95%      | 3000 |
+| **Next.js Pages**   | 🚧 In Progress | 25%      | 8000 |
+| **Database**        | ✅ Complete    | 100%     | 3306 |
 
 ---
 
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Node.js v22+ 
+
+- Node.js v22+
 - MySQL 8.x
 - npm/yarn
 
@@ -43,6 +44,7 @@ npm run dev
 ```
 
 **Access:**
+
 - Next.js: http://localhost:8000 (Public pages)
 - React: http://localhost:3000 (Dashboard)
 - Backend: http://localhost:5000 (API)
@@ -91,18 +93,21 @@ npm run dev
 ## 💻 Tech Stack
 
 **Frontend:**
+
 - Next.js 16 (Public pages - Trivago-style)
 - React 19 (Dashboard - Shadcn UI)
 - TypeScript
 - Tailwind CSS
 
 **Backend:**
+
 - Node.js v22
 - Express.js
 - MySQL 8
 - JWT Authentication
 
 **Tools:**
+
 - Razorpay (Payments)
 - Nodemailer (Emails)
 - Axios (API)
@@ -114,12 +119,14 @@ npm run dev
 **Active Work:** Building Next.js public pages
 
 **Completed:**
+
 - ✅ Homepage with Trivago-style search
 - ✅ Advanced search bar
 - ✅ Header & Footer
 - ✅ Responsive design
 
 **Next:**
+
 - 🚧 Properties listing page
 - 🚧 Property detail page
 - 🚧 Integration with React dashboard

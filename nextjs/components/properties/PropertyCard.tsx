@@ -70,7 +70,7 @@ export default function PropertyCard({
         <div className="property-card-image">
           <Image
             src={photos[currentPhotoIndex]}
-            alt={property.name}
+            alt={property.title || `${property.city} Villa`}
             fill
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
             className="property-image"
@@ -167,7 +167,7 @@ export default function PropertyCard({
         </div>
 
         {/* Property Name */}
-        <h3 className="property-card-name">{property.name} Hi</h3>
+        <h3 className="property-card-name">{property.title}</h3>
 
         {/* Property Details */}
         <div className="property-card-details">

@@ -4,13 +4,14 @@ import { asyncHandler, sendSuccess, sendError } from "../utils/response.js";
 // Get all active cities
 export const getCities = asyncHandler(async (req, res) => {
   const [cities] = await db.query(
-    `SELECT id, name, state 
+    `SELECT id, name, state, status, 
+            (SELECT COUNT(*) FROM properties WHERE city_id = cities.id AND status = 'approved') as property_count
      FROM cities 
      WHERE status = 'active' 
      ORDER BY name ASC`
   );
 
-  sendSuccess(res, cities, "Cities fetched successfully", 200);
+  sendSuccess(res, { cities }, "Cities fetched successfully", 200);
 });
 
 // Get properties (with filters)
@@ -30,8 +31,8 @@ export const getProperties = asyncHandler(async (req, res) => {
       p.title, 
       p.description,
       p.address,
-      p.city,
-      p.state,
+      c.name as city,
+      c.state as state,
       p.pincode,
       p.bedrooms,
       p.bathrooms,
@@ -42,9 +43,7 @@ export const getProperties = asyncHandler(async (req, res) => {
       p.reviews_count,
       p.price_per_night,
       p.gst_percentage,
-      p.status,
-      c.name as city_name,
-      c.state as city_state
+      p.status
     FROM properties p
     INNER JOIN cities c ON p.city_id = c.id
     WHERE p.status = 'approved' 
@@ -130,15 +129,20 @@ export const getPropertyDetails = asyncHandler(async (req, res) => {
     `SELECT 
       p.id, 
       p.title, 
+      p.property_type,
       p.description,
       p.address,
-      p.city,
-      p.state,
+      c.name as city,
+      c.state as state,
       p.pincode,
       p.bedrooms,
       p.bathrooms,
       p.max_guests,
+      p.check_in_time,
+      p.check_out_time,
       p.amenities,
+      p.house_rules,
+      p.cancellation_policy,
       p.photos,
       p.rating,
       p.reviews_count,
@@ -146,8 +150,6 @@ export const getPropertyDetails = asyncHandler(async (req, res) => {
       p.gst_percentage,
       p.status,
       c.id as city_id,
-      c.name as city_name,
-      c.state as city_state,
       v.name as vendor_name,
       e.name as employee_name
     FROM properties p
@@ -172,9 +174,23 @@ export const getPropertyDetails = asyncHandler(async (req, res) => {
       ? JSON.parse(property.amenities)
       : [];
     property.photos = property.photos ? JSON.parse(property.photos) : [];
+    // Parse house_rules if it exists
+    property.house_rules = property.house_rules
+      ? typeof property.house_rules === "string"
+        ? JSON.parse(property.house_rules)
+        : property.house_rules
+      : null;
+    // Parse cancellation_policy if it exists
+    property.cancellation_policy = property.cancellation_policy
+      ? typeof property.cancellation_policy === "string"
+        ? JSON.parse(property.cancellation_policy)
+        : property.cancellation_policy
+      : null;
   } catch (error) {
     property.amenities = [];
     property.photos = [];
+    property.house_rules = null;
+    property.cancellation_policy = null;
   }
 
   // Get property images from property_images table as fallback
