@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jan 05, 2026 at 05:08 PM
+-- Generation Time: Jan 05, 2026 at 06:29 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -60,7 +60,7 @@ CREATE TABLE `admins` (
 --
 
 INSERT INTO `admins` (`id`, `name`, `email`, `password_hash`, `role`, `status`, `created_at`, `deleted_at`, `avatar`) VALUES
-('bb5898f8-e418-11f0-9f30-00410e2b5e6e', 'Super Admin', 'admin@zevio.com', '$2a$10$9g7.OhgqaB0fKSsXR.dS/OOsFufK/b25zJlyU2jwHbwVaPxEAEb7O', 'super_admin', 'active', '2025-12-28 18:12:12', NULL, NULL),
+('bb5898f8-e418-11f0-9f30-00410e2b5e6e', 'Super Admin', 'admin@zevio.com', '$2a$10$gui.vHTx6R8XjrdoznshdO9tv.Hqeu6lv6gY09s6q.P.iYv1.VfzS', 'super_admin', 'active', '2025-12-28 18:12:12', NULL, NULL),
 ('bb58b3c4-e418-11f0-9f30-00410e2b5e6e', 'John Admin', 'john.admin@zevio.com', '$2a$10$9g7.OhgqaB0fKSsXR.dS/OOsFufK/b25zJlyU2jwHbwVaPxEAEb7O', 'admin', 'active', '2025-12-28 18:12:12', NULL, NULL);
 
 -- --------------------------------------------------------
@@ -204,8 +204,8 @@ CREATE TABLE `employees` (
 --
 
 INSERT INTO `employees` (`id`, `name`, `email`, `phone`, `password_hash`, `incentive_percentage`, `status`, `created_at`, `deleted_at`, `avatar`) VALUES
-('bb5c7d89-e418-11f0-9f30-00410e2b5e6e', 'Rahul Employee', 'rahul.emp@zevio.com', '9876543220', '$2a$10$I0E5YY7gZF/n9YKX/b3AN./Dc4gVuXqBd/jopfuOvqjDVbdrqvMse', 5.00, 'active', '2025-12-28 18:12:12', NULL, NULL),
-('bb5c91ad-e418-11f0-9f30-00410e2b5e6e', 'Neha Employee', 'neha.emp@zevio.com', '9876543221', '$2a$10$I0E5YY7gZF/n9YKX/b3AN./Dc4gVuXqBd/jopfuOvqjDVbdrqvMse', 4.50, 'active', '2025-12-28 18:12:12', NULL, NULL);
+('bb5c7d89-e418-11f0-9f30-00410e2b5e6e', 'Rahul Employee', 'rahul.emp@zevio.com', '9876543220', '$2a$10$gui.vHTx6R8XjrdoznshdO9tv.Hqeu6lv6gY09s6q.P.iYv1.VfzS', 5.00, 'active', '2025-12-28 18:12:12', NULL, NULL),
+('bb5c91ad-e418-11f0-9f30-00410e2b5e6e', 'Neha Employee', 'neha.emp@zevio.com', '9876543221', '$2a$10$gui.vHTx6R8XjrdoznshdO9tv.Hqeu6lv6gY09s6q.P.iYv1.VfzS', 4.50, 'active', '2025-12-28 18:12:12', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -502,11 +502,16 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `full_name`, `email`, `phone`, `password_hash`, `status`, `created_at`, `deleted_at`, `avatar`) VALUES
-('bb551978-e418-11f0-9f30-00410e2b5e6e', 'Rajesh Kumar', 'rajesh@example.com', '9876543210', '$2a$10$yOC.Vpu6kJrpjz4KSW6saeD/sw7BObnKzK09TUCt1fKFKDgyoSEA.', 'active', '2025-12-28 18:12:12', NULL, NULL),
-('bb5538d1-e418-11f0-9f30-00410e2b5e6e', 'Priya Sharma', 'priya@example.com', '9876543211', '$2a$10$yOC.Vpu6kJrpjz4KSW6saeD/sw7BObnKzK09TUCt1fKFKDgyoSEA.', 'active', '2025-12-28 18:12:12', NULL, NULL),
+('2311bd48-54ff-469e-8a7c-9ff89ee7fb78', 'Test User', 'test_1767631087306@test.com', '1234567890', '$2a$10$IFE7cN/VckZtwgbSnVMimOD9EgQrjyTm38mVumUfQ9xXVpIkuRSJi', 'active', '2026-01-05 16:38:07', NULL, NULL),
+('4df955f5-45e7-4844-a832-9ec9e5649f5c', 'Test User', 'test_1767630472022@test.com', '1234567890', '$2a$10$KXETuyYNN8uo1XUBxA9JQu03zPLX/gnEGGJZRqwidjQMGiiuaoQya', 'active', '2026-01-05 16:27:52', NULL, NULL),
+('ae1a695c-6724-4098-bd50-73a2cf569779', 'Test User', 'test_1767631229011@test.com', '1234567890', '$2a$10$mcTBWcR5QPiIMxXEWNCApeMchTQFiWI7qWlAkbif.COPYjv9EcXI6', 'active', '2026-01-05 16:40:29', NULL, NULL),
+('bb551978-e418-11f0-9f30-00410e2b5e6e', 'Rajesh Kumar', 'rajesh@example.com', '9876543210', '$2a$10$gui.vHTx6R8XjrdoznshdO9tv.Hqeu6lv6gY09s6q.P.iYv1.VfzS', 'active', '2025-12-28 18:12:12', NULL, NULL),
+('bb5538d1-e418-11f0-9f30-00410e2b5e6e', 'Priya Sharma', 'priya@example.com', '9876543211', '$2a$10$gui.vHTx6R8XjrdoznshdO9tv.Hqeu6lv6gY09s6q.P.iYv1.VfzS', 'active', '2025-12-28 18:12:12', NULL, NULL),
 ('bb553a04-e418-11f0-9f30-00410e2b5e6e', 'Amit Patel', 'amit@example.com', '9876543212', '$2a$10$yOC.Vpu6kJrpjz4KSW6saeD/sw7BObnKzK09TUCt1fKFKDgyoSEA.', 'active', '2025-12-28 18:12:12', NULL, NULL),
 ('bb553ab0-e418-11f0-9f30-00410e2b5e6e', 'Sneha Reddy', 'sneha@example.com', '9876543213', '$2a$10$yOC.Vpu6kJrpjz4KSW6saeD/sw7BObnKzK09TUCt1fKFKDgyoSEA.', 'active', '2025-12-28 18:12:12', NULL, NULL),
-('bb553b3e-e418-11f0-9f30-00410e2b5e6e', 'Vikram Singh', 'vikram@example.com', '9876543214', '$2a$10$yOC.Vpu6kJrpjz4KSW6saeD/sw7BObnKzK09TUCt1fKFKDgyoSEA.', 'active', '2025-12-28 18:12:12', NULL, NULL);
+('bb553b3e-e418-11f0-9f30-00410e2b5e6e', 'Vikram Singh', 'vikram@example.com', '9876543214', '$2a$10$yOC.Vpu6kJrpjz4KSW6saeD/sw7BObnKzK09TUCt1fKFKDgyoSEA.', 'active', '2025-12-28 18:12:12', NULL, NULL),
+('c25ee6dc-46b9-4c05-9ed1-82a3b3e5732d', 'Test User', 'test_1767631377325@test.com', '1234567890', '$2a$10$K5A5Z/1KuUBCry3p742ykOEFd5/7WuSph7XZ78a1oGobwDDOvtupC', 'active', '2026-01-05 16:42:57', NULL, NULL),
+('c5c35ba5-8d7c-43ed-9eb6-fe1a19fe6f94', 'Test User', 'test_1767631170547@test.com', '1234567890', '$2a$10$OXFoboJiCN87YHVowsO7IunlcokOE1YbCThiNmBGWKLfTsx2/UifG', 'active', '2026-01-05 16:39:30', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -533,9 +538,9 @@ CREATE TABLE `vendors` (
 --
 
 INSERT INTO `vendors` (`id`, `name`, `email`, `password_hash`, `phone`, `gst_number`, `bank_details`, `status`, `created_at`, `deleted_at`, `avatar`) VALUES
-('bb60817d-e418-11f0-9f30-00410e2b5e6e', 'Luxury Villas Pvt Ltd', 'vendor1@example.com', '', '9876543230', '29AABCU9603R1ZM', '{\"bank_name\": \"HDFC Bank\", \"account_number\": \"12345678901234\", \"ifsc\": \"HDFC0001234\", \"account_holder\": \"Luxury Villas Pvt Ltd\"}', 'active', '2025-12-28 18:12:12', NULL, NULL),
-('bb6097e5-e418-11f0-9f30-00410e2b5e6e', 'Beach Resorts Group', 'vendor2@example.com', '', '9876543231', '27AABCB1234C1Z5', '{\"bank_name\": \"ICICI Bank\", \"account_number\": \"56789012345678\", \"ifsc\": \"ICIC0005678\", \"account_holder\": \"Beach Resorts Group\"}', 'active', '2025-12-28 18:12:12', NULL, NULL),
-('bb6099c9-e418-11f0-9f30-00410e2b5e6e', 'Mountain Retreats', 'vendor3@example.com', '', '9876543232', '07AABCM9876K1Z8', '{\"bank_name\": \"SBI\", \"account_number\": \"98765432109876\", \"ifsc\": \"SBIN0009876\", \"account_holder\": \"Mountain Retreats\"}', 'active', '2025-12-28 18:12:12', NULL, NULL);
+('bb60817d-e418-11f0-9f30-00410e2b5e6e', 'Luxury Villas Pvt Ltd', 'vendor1@example.com', '$2a$10$gui.vHTx6R8XjrdoznshdO9tv.Hqeu6lv6gY09s6q.P.iYv1.VfzS', '9876543230', '29AABCU9603R1ZM', '{\"bank_name\": \"HDFC Bank\", \"account_number\": \"12345678901234\", \"ifsc\": \"HDFC0001234\", \"account_holder\": \"Luxury Villas Pvt Ltd\"}', 'active', '2025-12-28 18:12:12', NULL, NULL),
+('bb6097e5-e418-11f0-9f30-00410e2b5e6e', 'Beach Resorts Group', 'vendor2@example.com', '$2a$10$gui.vHTx6R8XjrdoznshdO9tv.Hqeu6lv6gY09s6q.P.iYv1.VfzS', '9876543231', '27AABCB1234C1Z5', '{\"bank_name\": \"ICICI Bank\", \"account_number\": \"56789012345678\", \"ifsc\": \"ICIC0005678\", \"account_holder\": \"Beach Resorts Group\"}', 'active', '2025-12-28 18:12:12', NULL, NULL),
+('bb6099c9-e418-11f0-9f30-00410e2b5e6e', 'Mountain Retreats', 'vendor3@example.com', '$2a$10$gui.vHTx6R8XjrdoznshdO9tv.Hqeu6lv6gY09s6q.P.iYv1.VfzS', '9876543232', '07AABCM9876K1Z8', '{\"bank_name\": \"SBI\", \"account_number\": \"98765432109876\", \"ifsc\": \"SBIN0009876\", \"account_holder\": \"Mountain Retreats\"}', 'active', '2025-12-28 18:12:12', NULL, NULL);
 
 -- --------------------------------------------------------
 
