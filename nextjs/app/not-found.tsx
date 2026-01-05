@@ -19,7 +19,7 @@ export default function NotFound() {
 
           <h1 className="not-found-title">Page Not Found</h1>
           <p className="not-found-message">
-            Oops! The page you're looking for doesn't exist. It might have been
+            Oops! The page you&apos;re looking for doesn&apos;t exist. It might have been
             moved or deleted.
           </p>
 
@@ -58,81 +58,6 @@ export default function NotFound() {
             </div>
           </div>
         </div>
-      </div>
-    </div>
-  );
-}
-              paddingTop: "24px",
-              borderTop: "1px solid var(--gray-200)",
-            }}
-          >
-            <p
-              style={{
-                fontSize: "14px",
-                fontWeight: "600",
-                color: "var(--gray-900)",
-                marginBottom: "12px",
-              }}
-            >
-              Quick Links
-            </p>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "center",
-                gap: "16px",
-                flexWrap: "wrap",
-              }}
-            >
-              <Link
-                href="/properties"
-                style={{
-                  fontSize: "14px",
-                  color: "var(--primary)",
-                  textDecoration: "none",
-                  fontWeight: "500",
-                }}
-              >
-                Browse Properties
-              </Link>
-              <span style={{ color: "var(--gray-300)" }}>•</span>
-              <Link
-                href="/profile"
-                style={{
-                  fontSize: "14px",
-                  color: "var(--primary)",
-                  textDecoration: "none",
-                  fontWeight: "500",
-                }}
-              >
-                My Profile
-              </Link>
-              <span style={{ color: "var(--gray-300)" }}>•</span>
-              <Link
-                href="/dashboard"
-                style={{
-                  fontSize: "14px",
-                  color: "var(--primary)",
-                  textDecoration: "none",
-                  fontWeight: "500",
-                }}
-              >
-                Dashboard
-              </Link>
-            </div>
-          </div>
-        </div>
-
-        {/* Help Text */}
-        <p
-          style={{
-            marginTop: "24px",
-            fontSize: "14px",
-            color: "rgba(255, 255, 255, 0.8)",
-          }}
-        >
-          Need help? Contact our support team
-        </p>
       </div>
     </div>
   );
