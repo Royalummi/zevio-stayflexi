@@ -6,6 +6,7 @@ import { FiMenu, FiX, FiUser, FiLogOut, FiHome } from "react-icons/fi";
 import { useAuth } from "@/contexts/AuthContext";
 import LoginModal from "@/components/auth/LoginModal";
 import SignupModal from "@/components/auth/SignupModal";
+import "./Header.css";
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -69,34 +70,12 @@ export default function Header() {
           {/* Desktop CTA */}
           <div className="header-actions">
             {isAuthenticated && user ? (
-              <div style={{ position: "relative" }}>
+              <div className="user-menu-container">
                 <button
                   onClick={() => setShowUserMenu(!showUserMenu)}
                   className="user-menu-button"
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    padding: "8px 16px",
-                    background:
-                      "linear-gradient(135deg, #9333ea 0%, #6366f1 100%)",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "8px",
-                    cursor: "pointer",
-                    fontSize: "14px",
-                    fontWeight: "500",
-                    transition: "transform 0.2s, box-shadow 0.2s",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = "translateY(-2px)";
-                    e.currentTarget.style.boxShadow =
-                      "0 4px 12px rgba(147, 51, 234, 0.4)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = "translateY(0)";
-                    e.currentTarget.style.boxShadow = "none";
-                  }}
+                  aria-label="User menu"
+                  aria-expanded={showUserMenu}
                 >
                   <FiUser size={18} />
                   <span>{user.full_name}</span>
@@ -105,69 +84,21 @@ export default function Header() {
                 {showUserMenu && (
                   <>
                     <div
-                      style={{
-                        position: "fixed",
-                        inset: "0",
-                        zIndex: "998",
-                      }}
+                      className="user-menu-overlay"
                       onClick={() => setShowUserMenu(false)}
+                      aria-hidden="true"
                     />
-                    <div
-                      style={{
-                        position: "absolute",
-                        top: "calc(100% + 8px)",
-                        right: "0",
-                        background: "white",
-                        borderRadius: "12px",
-                        boxShadow: "0 10px 40px rgba(0, 0, 0, 0.15)",
-                        minWidth: "220px",
-                        zIndex: "999",
-                        overflow: "hidden",
-                        border: "1px solid var(--gray-200)",
-                      }}
-                    >
-                      <div
-                        style={{
-                          padding: "16px",
-                          borderBottom: "1px solid var(--gray-200)",
-                          background:
-                            "linear-gradient(135deg, #f3e8ff 0%, #e0e7ff 100%)",
-                        }}
-                      >
-                        <p
-                          style={{
-                            fontWeight: "600",
-                            color: "#1f2937",
-                            marginBottom: "4px",
-                          }}
-                        >
-                          {user.full_name}
-                        </p>
-                        <p style={{ fontSize: "13px", color: "#6b7280" }}>
-                          {user.email}
-                        </p>
+                    <div className="user-menu-dropdown">
+                      <div className="user-menu-header">
+                        <p className="user-menu-name">{user.full_name}</p>
+                        <p className="user-menu-email">{user.email}</p>
                       </div>
 
-                      <div style={{ padding: "8px" }}>
+                      <div className="user-menu-body">
                         <Link
                           href="/dashboard"
                           onClick={() => setShowUserMenu(false)}
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "12px",
-                            padding: "12px 16px",
-                            color: "#374151",
-                            textDecoration: "none",
-                            borderRadius: "8px",
-                            transition: "background 0.2s",
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.background = "#f3f4f6";
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.background = "transparent";
-                          }}
+                          className="user-menu-link"
                         >
                           <FiHome size={18} />
                           <span>My Dashboard</span>
@@ -175,26 +106,7 @@ export default function Header() {
 
                         <button
                           onClick={handleLogout}
-                          style={{
-                            width: "100%",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "12px",
-                            padding: "12px 16px",
-                            color: "#dc2626",
-                            background: "transparent",
-                            border: "none",
-                            borderRadius: "8px",
-                            cursor: "pointer",
-                            fontSize: "14px",
-                            transition: "background 0.2s",
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.background = "#fef2f2";
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.background = "transparent";
-                          }}
+                          className="user-menu-logout"
                         >
                           <FiLogOut size={18} />
                           <span>Logout</span>
@@ -208,29 +120,16 @@ export default function Header() {
               <>
                 <button
                   onClick={() => setShowLogin(true)}
-                  className="nav-link"
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    background: "transparent",
-                    border: "none",
-                    cursor: "pointer",
-                    fontSize: "14px",
-                    color: "#374151",
-                    fontWeight: "500",
-                  }}
+                  className="sign-in-button"
+                  aria-label="Sign in"
                 >
                   <FiUser size={20} />
                   <span>Sign In</span>
                 </button>
                 <button
                   onClick={() => setShowSignup(true)}
-                  className="btn btn-primary"
-                  style={{
-                    border: "none",
-                    cursor: "pointer",
-                  }}
+                  className="sign-up-button"
+                  aria-label="Sign up"
                 >
                   Sign Up
                 </button>
@@ -244,13 +143,7 @@ export default function Header() {
             onClick={toggleMobileMenu}
             aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
             aria-expanded={mobileMenuOpen}
-            style={{
-              padding: "8px",
-              borderRadius: "8px",
-              transition: "all 0.2s",
-              background: mobileMenuOpen ? "var(--gray-100)" : "transparent",
-            }}
-            className="md-hidden"
+            className={`mobile-menu-button ${mobileMenuOpen ? "active" : ""}`}
           >
             {mobileMenuOpen ? <FiX size={24} /> : <FiMenu size={24} />}
           </button>
@@ -259,123 +152,76 @@ export default function Header() {
 
       {/* Mobile Menu */}
       {mobileMenuOpen && (
-        <div style={{ display: "block" }} className="md-hidden">
+        <>
           <div
-            style={{
-              position: "fixed",
-              inset: "0",
-              background: "rgba(0, 0, 0, 0.5)",
-              zIndex: "-1",
-            }}
+            className="mobile-menu-overlay"
             onClick={closeMobileMenu}
+            aria-hidden="true"
           />
-          <div
-            style={{
-              background: "white",
-              borderTop: "1px solid var(--gray-200)",
-              padding: "16px",
-            }}
-          >
-            <nav className="flex flex-col gap-4">
-              {navItems.map((item) => (
-                <Link
-                  key={item.label}
-                  href={item.href}
-                  scroll={item.href.startsWith("#")}
-                  className="nav-link"
-                  onClick={closeMobileMenu}
-                  style={{ padding: "8px 12px" }}
-                >
-                  {item.label}
-                </Link>
-              ))}
-              <hr
-                style={{
-                  margin: "8px 0",
-                  border: "none",
-                  borderTop: "1px solid var(--gray-200)",
-                }}
-              />
-
-              {isAuthenticated && user ? (
-                <>
+          <div className="mobile-menu">
+            <div className="mobile-menu-content">
+              <nav className="mobile-nav">
+                {navItems.map((item) => (
                   <Link
-                    href="/dashboard"
-                    className="nav-link"
+                    key={item.label}
+                    href={item.href}
+                    scroll={item.href.startsWith("#")}
+                    className="mobile-nav-link"
                     onClick={closeMobileMenu}
-                    style={{
-                      padding: "8px 12px",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                      color: "#9333ea",
-                      fontWeight: "600",
-                    }}
                   >
-                    <FiUser size={18} />
-                    <span>{user.full_name}</span>
+                    {item.label}
                   </Link>
-                  <button
-                    onClick={() => {
-                      handleLogout();
-                      closeMobileMenu();
-                    }}
-                    style={{
-                      padding: "8px 12px",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                      color: "#dc2626",
-                      background: "transparent",
-                      border: "none",
-                      cursor: "pointer",
-                      fontSize: "14px",
-                      fontWeight: "500",
-                      textAlign: "left",
-                    }}
-                  >
-                    <FiLogOut size={18} />
-                    <span>Logout</span>
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button
-                    onClick={() => {
-                      setShowLogin(true);
-                      closeMobileMenu();
-                    }}
-                    className="nav-link"
-                    style={{
-                      padding: "8px 12px",
-                      background: "transparent",
-                      border: "none",
-                      cursor: "pointer",
-                      fontSize: "14px",
-                      textAlign: "left",
-                    }}
-                  >
-                    Sign In
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowSignup(true);
-                      closeMobileMenu();
-                    }}
-                    className="btn btn-primary"
-                    style={{
-                      textAlign: "center",
-                      border: "none",
-                      cursor: "pointer",
-                    }}
-                  >
-                    Sign Up
-                  </button>
-                </>
-              )}
-            </nav>
+                ))}
+
+                <hr className="mobile-divider" />
+
+                {isAuthenticated && user ? (
+                  <>
+                    <Link
+                      href="/dashboard"
+                      className="mobile-user-link"
+                      onClick={closeMobileMenu}
+                    >
+                      <FiUser size={18} />
+                      <span>{user.full_name}</span>
+                    </Link>
+                    <button
+                      onClick={() => {
+                        handleLogout();
+                        closeMobileMenu();
+                      }}
+                      className="mobile-logout-button"
+                    >
+                      <FiLogOut size={18} />
+                      <span>Logout</span>
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => {
+                        setShowLogin(true);
+                        closeMobileMenu();
+                      }}
+                      className="mobile-sign-in-button"
+                    >
+                      Sign In
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowSignup(true);
+                        closeMobileMenu();
+                      }}
+                      className="mobile-sign-up-button"
+                    >
+                      Sign Up
+                    </button>
+                  </>
+                )}
+              </nav>
+            </div>
           </div>
-        </div>
+        </>
       )}
 
       {/* Authentication Modals */}

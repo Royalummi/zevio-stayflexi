@@ -72,7 +72,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const response = await api.post("/auth/login", {
         email,
         password,
-        role: "user", // Specify user role
       });
 
       const { accessToken, user: userData } = response.data.data;

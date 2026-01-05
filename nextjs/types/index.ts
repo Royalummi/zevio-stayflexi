@@ -13,6 +13,7 @@ export interface User {
   email: string;
   phone: string | null;
   status: "active" | "inactive" | "blocked";
+  role?: "user" | "vendor" | "employee" | "admin";
   created_at?: string;
 }
 

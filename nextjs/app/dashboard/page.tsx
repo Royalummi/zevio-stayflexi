@@ -84,12 +84,7 @@ export default function Dashboard() {
         {/* Stats Cards */}
         <div className="dashboard-stats">
           <div className="stat-card">
-            <div
-              className="stat-icon"
-              style={{
-                background: "linear-gradient(135deg, #9333ea 0%, #6366f1 100%)",
-              }}
-            >
+            <div className="stat-icon">
               <FiCalendar size={24} color="white" />
             </div>
             <div>
@@ -99,12 +94,7 @@ export default function Dashboard() {
           </div>
 
           <div className="stat-card">
-            <div
-              className="stat-icon"
-              style={{
-                background: "linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%)",
-              }}
-            >
+            <div className="stat-icon">
               <FiHome size={24} color="white" />
             </div>
             <div>
@@ -114,12 +104,7 @@ export default function Dashboard() {
           </div>
 
           <div className="stat-card">
-            <div
-              className="stat-icon"
-              style={{
-                background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
-              }}
-            >
+            <div className="stat-icon">
               <FiCreditCard size={24} color="white" />
             </div>
             <div>
@@ -222,7 +207,6 @@ export default function Dashboard() {
               <button
                 onClick={() => router.push("/properties")}
                 className="btn btn-primary"
-                style={{ marginTop: "16px" }}
               >
                 Browse Properties
               </button>

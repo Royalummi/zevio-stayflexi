@@ -2,13 +2,7 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  FiChevronDown,
-  FiChevronUp,
-  FiMessageCircle,
-  FiMail,
-  FiPhone,
-} from "react-icons/fi";
+import { FiChevronDown, FiChevronUp, FiMail, FiPhone } from "react-icons/fi";
 import "./support.css";
 
 const faqs = [

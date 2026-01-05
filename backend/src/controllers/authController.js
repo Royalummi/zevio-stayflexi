@@ -284,8 +284,8 @@ export const changePassword = asyncHandler(async (req, res) => {
     );
   }
 
-  if (newPassword.length < 6) {
-    return sendError(res, "New password must be at least 6 characters", 400);
+  if (newPassword.length < 8) {
+    return sendError(res, "New password must be at least 8 characters", 400);
   }
 
   let tableName;

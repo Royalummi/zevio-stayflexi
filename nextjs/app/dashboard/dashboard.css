@@ -104,6 +104,7 @@
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    background: var(--brand-teal);
 }
 
 .stat-label {
@@ -293,6 +294,10 @@
 .empty-state p {
     color: #6b7280;
     margin-bottom: 0;
+}
+
+.empty-state .btn {
+    margin-top: 16px;
 }
 
 /* Responsive */
