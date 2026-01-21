@@ -1,0 +1,343 @@
+/* Modify Booking Modal Styles */
+
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    padding: 1rem;
+    animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.modalContent {
+    background: white;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 550px;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: slideUp 0.3s ease-out;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(30px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Header */
+.modalHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.modalTitle {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin: 0;
+}
+
+.closeBtn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: #f3f4f6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.closeBtn:hover {
+    background: #e5e7eb;
+    transform: scale(1.1);
+}
+
+.closeBtn svg {
+    width: 20px;
+    height: 20px;
+    color: #6b7280;
+}
+
+/* Property Section */
+.propertySection {
+    padding: 1.5rem 2rem;
+    background: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.propertyName {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0 0 0.5rem 0;
+}
+
+.propertyPrice {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin: 0;
+}
+
+/* Form Section */
+.formSection {
+    padding: 2rem;
+}
+
+.formRow {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.formRow:last-child {
+    margin-bottom: 0;
+}
+
+.formGroup {
+    display: flex;
+    flex-direction: column;
+}
+
+.label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+}
+
+.label svg {
+    width: 16px;
+    height: 16px;
+    color: #2fa4a9;
+}
+
+.dateInput {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-family: inherit;
+    transition: all 0.2s ease;
+}
+
+.dateInput:focus {
+    outline: none;
+    border-color: #2fa4a9;
+    box-shadow: 0 0 0 3px rgba(47, 164, 169, 0.1);
+}
+
+/* Incrementer */
+.incrementer {
+    display: flex;
+    align-items: center;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.incrementBtn {
+    width: 40px;
+    height: 44px;
+    border: none;
+    background: white;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #2fa4a9;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.incrementBtn:hover:not(:disabled) {
+    background: #f0fdfa;
+}
+
+.incrementBtn:disabled {
+    color: #cbd5e1;
+    cursor: not-allowed;
+}
+
+.incrementValue {
+    flex: 1;
+    text-align: center;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1f2937;
+    padding: 0 1rem;
+}
+
+/* Price Section */
+.priceSection {
+    padding: 1.5rem 2rem;
+    background: #f9fafb;
+    border-top: 1px solid #e5e7eb;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.priceRow {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+    font-size: 0.9375rem;
+    color: #6b7280;
+}
+
+.priceRow:last-child {
+    margin-bottom: 0;
+}
+
+.priceRowTotal {
+    display: flex;
+    justify-content: space-between;
+    padding-top: 0.75rem;
+    margin-top: 0.75rem;
+    border-top: 2px solid #e5e7eb;
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.priceRowTotal span:last-child {
+    color: #2fa4a9;
+}
+
+/* Action Buttons */
+.actionButtons {
+    display: flex;
+    gap: 1rem;
+    padding: 1.5rem 2rem;
+}
+
+.actionButtons button {
+    flex: 1;
+    padding: 1rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.cancelButton {
+    background: white;
+    color: #6b7280;
+    border: 2px solid #e5e7eb;
+}
+
+.cancelButton:hover:not(:disabled) {
+    background: #f9fafb;
+    border-color: #cbd5e1;
+}
+
+.saveButton {
+    background: linear-gradient(135deg, #2fa4a9 0%, #1e7b7f 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(47, 164, 169, 0.3);
+}
+
+.saveButton:hover:not(:disabled) {
+    box-shadow: 0 4px 16px rgba(47, 164, 169, 0.4);
+    transform: translateY(-2px);
+}
+
+.saveButton:disabled,
+.cancelButton:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    .modalContent {
+        border-radius: 16px 16px 0 0;
+        max-height: 95vh;
+    }
+
+    .modalHeader {
+        padding: 1.25rem 1.5rem;
+    }
+
+    .modalTitle {
+        font-size: 1.25rem;
+    }
+
+    .propertySection {
+        padding: 1.25rem 1.5rem;
+    }
+
+    .formSection {
+        padding: 1.5rem;
+    }
+
+    .formRow {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .priceSection {
+        padding: 1.25rem 1.5rem;
+    }
+
+    .actionButtons {
+        padding: 1.25rem 1.5rem;
+        flex-direction: column;
+    }
+
+    .actionButtons button {
+        width: 100%;
+    }
+}

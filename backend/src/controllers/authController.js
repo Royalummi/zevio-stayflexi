@@ -390,3 +390,257 @@ export const uploadAvatar = asyncHandler(async (req, res) => {
 
   sendSuccess(res, { user }, "Avatar uploaded successfully", 200);
 });
+
+// Get user settings
+export const getSettings = asyncHandler(async (req, res) => {
+  const { id } = req.user;
+
+  const [settings] = await db.query(
+    "SELECT * FROM user_settings WHERE user_id = ?",
+    [id]
+  );
+
+  if (settings.length === 0) {
+    // Create default settings if they don't exist
+    const settingsId = generateUUID();
+    await db.query(
+      `INSERT INTO user_settings (id, user_id, email_notifications, email_promotions, email_reminders, 
+       sms_notifications, sms_reminders, push_notifications, profile_visibility, show_wishlist, 
+       share_activity, newsletter_subscription) 
+       VALUES (?, ?, TRUE, TRUE, TRUE, FALSE, FALSE, TRUE, 'private', FALSE, FALSE, TRUE)`,
+      [settingsId, id]
+    );
+
+    const [newSettings] = await db.query(
+      "SELECT * FROM user_settings WHERE id = ?",
+      [settingsId]
+    );
+    return sendSuccess(
+      res,
+      { settings: newSettings[0] },
+      "Default settings created",
+      200
+    );
+  }
+
+  sendSuccess(
+    res,
+    { settings: settings[0] },
+    "Settings retrieved successfully",
+    200
+  );
+});
+
+// Update user settings
+export const updateSettings = asyncHandler(async (req, res) => {
+  const { id } = req.user;
+  const {
+    email_notifications,
+    email_promotions,
+    email_reminders,
+    sms_notifications,
+    sms_reminders,
+    push_notifications,
+    profile_visibility,
+    show_wishlist,
+    share_activity,
+    newsletter_subscription,
+  } = req.body;
+
+  // Check if settings exist
+  const [existing] = await db.query(
+    "SELECT id FROM user_settings WHERE user_id = ?",
+    [id]
+  );
+
+  if (existing.length === 0) {
+    // Create settings if they don't exist
+    const settingsId = generateUUID();
+    await db.query(
+      `INSERT INTO user_settings (id, user_id, email_notifications, email_promotions, email_reminders, 
+       sms_notifications, sms_reminders, push_notifications, profile_visibility, show_wishlist, 
+       share_activity, newsletter_subscription) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        settingsId,
+        id,
+        email_notifications ?? true,
+        email_promotions ?? true,
+        email_reminders ?? true,
+        sms_notifications ?? false,
+        sms_reminders ?? false,
+        push_notifications ?? true,
+        profile_visibility ?? "private",
+        show_wishlist ?? false,
+        share_activity ?? false,
+        newsletter_subscription ?? true,
+      ]
+    );
+  } else {
+    // Update existing settings
+    await db.query(
+      `UPDATE user_settings SET 
+       email_notifications = ?, email_promotions = ?, email_reminders = ?, 
+       sms_notifications = ?, sms_reminders = ?, push_notifications = ?, 
+       profile_visibility = ?, show_wishlist = ?, share_activity = ?, newsletter_subscription = ?
+       WHERE user_id = ?`,
+      [
+        email_notifications,
+        email_promotions,
+        email_reminders,
+        sms_notifications,
+        sms_reminders,
+        push_notifications,
+        profile_visibility,
+        show_wishlist,
+        share_activity,
+        newsletter_subscription,
+        id,
+      ]
+    );
+  }
+
+  // Fetch updated settings
+  const [updated] = await db.query(
+    "SELECT * FROM user_settings WHERE user_id = ?",
+    [id]
+  );
+
+  sendSuccess(
+    res,
+    { settings: updated[0] },
+    "Settings updated successfully",
+    200
+  );
+});
+
+// Get user activity log
+export const getUserActivity = asyncHandler(async (req, res) => {
+  const { id } = req.user;
+  const { page = 1, limit = 10 } = req.query;
+
+  const offset = (page - 1) * limit;
+
+  const [activities] = await db.query(
+    `SELECT * FROM activity_logs 
+     WHERE actor_id = ? AND actor_role = 'user' 
+     ORDER BY created_at DESC 
+     LIMIT ? OFFSET ?`,
+    [id, parseInt(limit), parseInt(offset)]
+  );
+
+  const [[{ total }]] = await db.query(
+    "SELECT COUNT(*) as total FROM activity_logs WHERE actor_id = ? AND actor_role = 'user'",
+    [id]
+  );
+
+  sendSuccess(
+    res,
+    {
+      activities,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    },
+    "Activity log retrieved successfully",
+    200
+  );
+});
+
+// Forgot password - Generate reset token and send email
+export const forgotPassword = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return sendError(res, "Email is required", 400);
+  }
+
+  // Check if user exists
+  const [users] = await db.query(
+    "SELECT id, full_name, email FROM users WHERE email = ? AND status = 'active' AND deleted_at IS NULL",
+    [email]
+  );
+
+  if (users.length === 0) {
+    // Don't reveal if email exists or not for security
+    return sendSuccess(
+      res,
+      {},
+      "If the email exists, a reset link has been sent",
+      200
+    );
+  }
+
+  const user = users[0];
+
+  // Generate reset token (6-character alphanumeric)
+  const resetToken = Math.random().toString(36).substring(2, 8).toUpperCase();
+  const resetTokenExpiry = new Date(Date.now() + 3600000); // 1 hour from now
+
+  // Store token in database
+  await db.query(
+    "UPDATE users SET reset_token = ?, reset_token_expiry = ? WHERE id = ?",
+    [resetToken, resetTokenExpiry, user.id]
+  );
+
+  // TODO: Send email with reset link
+  // For now, just log it (in production, use emailService.js)
+  console.log(`Reset token for ${user.email}: ${resetToken}`);
+  console.log(
+    `Reset link: http://localhost:8000/reset-password?token=${resetToken}`
+  );
+
+  // In production, uncomment and implement:
+  // import { sendEmail } from '../services/emailService.js';
+  // await sendEmail({
+  //   to: user.email,
+  //   subject: 'Password Reset Request - Zevio',
+  //   html: `<p>Click this link to reset your password: <a href="http://localhost:8000/reset-password?token=${resetToken}">Reset Password</a></p>`
+  // });
+
+  sendSuccess(res, {}, "If the email exists, a reset link has been sent", 200);
+});
+
+// Reset password with token
+export const resetPassword = asyncHandler(async (req, res) => {
+  const { token, newPassword } = req.body;
+
+  if (!token || !newPassword) {
+    return sendError(res, "Token and new password are required", 400);
+  }
+
+  if (newPassword.length < 6) {
+    return sendError(res, "Password must be at least 6 characters", 400);
+  }
+
+  // Find user with valid token
+  const [users] = await db.query(
+    "SELECT id, email FROM users WHERE reset_token = ? AND reset_token_expiry > NOW() AND deleted_at IS NULL",
+    [token]
+  );
+
+  if (users.length === 0) {
+    return sendError(res, "Invalid or expired reset token", 400);
+  }
+
+  const user = users[0];
+
+  // Hash new password
+  const hashedPassword = await hashPassword(newPassword);
+
+  // Update password and clear reset token
+  await db.query(
+    "UPDATE users SET password_hash = ?, reset_token = NULL, reset_token_expiry = NULL WHERE id = ?",
+    [hashedPassword, user.id]
+  );
+
+  sendSuccess(
+    res,
+    {},
+    "Password reset successful. You can now login with your new password.",
+    200
+  );
+});

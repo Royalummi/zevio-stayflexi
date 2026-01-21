@@ -1,23 +1,31 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { FiMenu, FiX, FiUser, FiLogOut, FiHome } from "react-icons/fi";
 import { useAuth } from "@/contexts/AuthContext";
 import LoginModal from "@/components/auth/LoginModal";
 import SignupModal from "@/components/auth/SignupModal";
-import "./Header.css";
+import styles from "./Header.module.css";
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [showSignup, setShowSignup] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const { user, isAuthenticated, logout } = useAuth();
+  const [isMounted, setIsMounted] = useState(false);
+  const { user, isAuthenticated, logout, isLoading } = useAuth();
+
+  // Fix hydration mismatch by waiting for client mount
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const navItems = useMemo(
     () => [
-      { href: "/properties", label: "Properties" },
+      { href: "/properties", label: "Villas" },
+      { href: "/service-apartments", label: "Service Apartments" },
+      { href: "/corporate-offers", label: "Corporate" },
       { href: "/destinations", label: "Destinations" },
       { href: "/why-zevio", label: "Why Zevio" },
       { href: "/support", label: "Support" },
@@ -45,21 +53,21 @@ export default function Header() {
   };
 
   return (
-    <header className="header">
-      <div className="container">
-        <div className="header-inner">
+    <header className={styles.header}>
+      <div className={styles.container}>
+        <div className={styles.headerInner}>
           {/* Logo */}
-          <Link href="/" className="logo">
+          <Link href="/" className={styles.logo}>
             Zevio
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="nav">
+          <nav className={styles.nav}>
             {navItems.map((item) => (
               <Link
                 key={item.label}
                 href={item.href}
-                className="nav-link"
+                className={styles.navLink}
                 scroll={item.href.startsWith("#")}
               >
                 {item.label}
@@ -68,12 +76,18 @@ export default function Header() {
           </nav>
 
           {/* Desktop CTA */}
-          <div className="header-actions">
-            {isAuthenticated && user ? (
-              <div className="user-menu-container">
+          <div className={styles.headerActions} suppressHydrationWarning>
+            {!isMounted || isLoading ? (
+              // Loading skeleton to prevent hydration mismatch
+              <div className={styles.authLoadingSkeleton}>
+                <div className={styles.skeletonButton}></div>
+                <div className={styles.skeletonButton}></div>
+              </div>
+            ) : isAuthenticated && user ? (
+              <div className={styles.userMenuContainer}>
                 <button
                   onClick={() => setShowUserMenu(!showUserMenu)}
-                  className="user-menu-button"
+                  className={styles.userMenuButton}
                   aria-label="User menu"
                   aria-expanded={showUserMenu}
                 >
@@ -84,21 +98,21 @@ export default function Header() {
                 {showUserMenu && (
                   <>
                     <div
-                      className="user-menu-overlay"
+                      className={styles.userMenuOverlay}
                       onClick={() => setShowUserMenu(false)}
                       aria-hidden="true"
                     />
-                    <div className="user-menu-dropdown">
-                      <div className="user-menu-header">
-                        <p className="user-menu-name">{user.full_name}</p>
-                        <p className="user-menu-email">{user.email}</p>
+                    <div className={styles.userMenuDropdown}>
+                      <div className={styles.userMenuHeader}>
+                        <p className={styles.userMenuName}>{user.full_name}</p>
+                        <p className={styles.userMenuEmail}>{user.email}</p>
                       </div>
 
-                      <div className="user-menu-body">
+                      <div className={styles.userMenuBody}>
                         <Link
                           href="/dashboard"
                           onClick={() => setShowUserMenu(false)}
-                          className="user-menu-link"
+                          className={styles.userMenuLink}
                         >
                           <FiHome size={18} />
                           <span>My Dashboard</span>
@@ -106,7 +120,7 @@ export default function Header() {
 
                         <button
                           onClick={handleLogout}
-                          className="user-menu-logout"
+                          className={styles.userMenuLogout}
                         >
                           <FiLogOut size={18} />
                           <span>Logout</span>
@@ -120,7 +134,7 @@ export default function Header() {
               <>
                 <button
                   onClick={() => setShowLogin(true)}
-                  className="sign-in-button"
+                  className={styles.signInButton}
                   aria-label="Sign in"
                 >
                   <FiUser size={20} />
@@ -128,7 +142,7 @@ export default function Header() {
                 </button>
                 <button
                   onClick={() => setShowSignup(true)}
-                  className="sign-up-button"
+                  className={styles.signUpButton}
                   aria-label="Sign up"
                 >
                   Sign Up
@@ -143,7 +157,9 @@ export default function Header() {
             onClick={toggleMobileMenu}
             aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
             aria-expanded={mobileMenuOpen}
-            className={`mobile-menu-button ${mobileMenuOpen ? "active" : ""}`}
+            className={`${styles.mobileMenuButton} ${
+              mobileMenuOpen ? styles.active : ""
+            }`}
           >
             {mobileMenuOpen ? <FiX size={24} /> : <FiMenu size={24} />}
           </button>
@@ -154,32 +170,37 @@ export default function Header() {
       {mobileMenuOpen && (
         <>
           <div
-            className="mobile-menu-overlay"
+            className={styles.mobileMenuOverlay}
             onClick={closeMobileMenu}
             aria-hidden="true"
           />
-          <div className="mobile-menu">
-            <div className="mobile-menu-content">
-              <nav className="mobile-nav">
+          <div className={styles.mobileMenu}>
+            <div className={styles.mobileMenuContent}>
+              <nav className={styles.mobileNav}>
                 {navItems.map((item) => (
                   <Link
                     key={item.label}
                     href={item.href}
                     scroll={item.href.startsWith("#")}
-                    className="mobile-nav-link"
+                    className={styles.mobileNavLink}
                     onClick={closeMobileMenu}
                   >
                     {item.label}
                   </Link>
                 ))}
 
-                <hr className="mobile-divider" />
+                <hr className={styles.mobileDivider} />
 
-                {isAuthenticated && user ? (
+                {!isMounted || isLoading ? (
+                  <div className={styles.mobileLoadingSkeleton}>
+                    <div className={styles.mobileSkeletonButton}></div>
+                    <div className={styles.mobileSkeletonButton}></div>
+                  </div>
+                ) : isAuthenticated && user ? (
                   <>
                     <Link
                       href="/dashboard"
-                      className="mobile-user-link"
+                      className={styles.mobileUserLink}
                       onClick={closeMobileMenu}
                     >
                       <FiUser size={18} />
@@ -190,7 +211,7 @@ export default function Header() {
                         handleLogout();
                         closeMobileMenu();
                       }}
-                      className="mobile-logout-button"
+                      className={styles.mobileLogoutButton}
                     >
                       <FiLogOut size={18} />
                       <span>Logout</span>
@@ -203,7 +224,7 @@ export default function Header() {
                         setShowLogin(true);
                         closeMobileMenu();
                       }}
-                      className="mobile-sign-in-button"
+                      className={styles.mobileSignInButton}
                     >
                       Sign In
                     </button>
@@ -212,7 +233,7 @@ export default function Header() {
                         setShowSignup(true);
                         closeMobileMenu();
                       }}
-                      className="mobile-sign-up-button"
+                      className={styles.mobileSignUpButton}
                     >
                       Sign Up
                     </button>

@@ -1,0 +1,336 @@
+/* Profile Page Styles - Using Brand Colors */
+
+.profileContainer {
+    min-height: 100vh;
+    background: var(--brand-grey-light);
+    padding: var(--space-6) var(--space-4);
+}
+
+.profileInner {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.profileLoading {
+    min-height: 50vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-4);
+    color: var(--brand-text-dark);
+}
+
+/* Header */
+.profileHeader {
+    margin-bottom: var(--space-8);
+}
+
+.backButton {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    background: transparent;
+    border: none;
+    color: var(--brand-navy);
+    font-size: var(--text-sm);
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: var(--radius-md);
+    transition: var(--transition-base);
+    margin-bottom: var(--space-4);
+}
+
+.backButton:hover {
+    background: var(--brand-white);
+    color: var(--brand-teal);
+}
+
+.profileTitle {
+    font-size: var(--text-3xl);
+    font-weight: 700;
+    color: var(--brand-navy);
+    margin-bottom: var(--space-2);
+}
+
+.profileSubtitle {
+    color: var(--brand-text-dark);
+    font-size: var(--text-base);
+}
+
+/* Content */
+.profileContent {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+}
+
+/* Avatar Section */
+.avatarSection {
+    background: var(--brand-white);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--brand-border);
+    padding: var(--space-6);
+    display: flex;
+    align-items: center;
+    gap: var(--space-6);
+    box-shadow: var(--shadow-sm);
+}
+
+.avatarContainer {
+    position: relative;
+}
+
+.avatarPlaceholder {
+    width: 96px;
+    height: 96px;
+    background: var(--brand-teal-lighter);
+    color: var(--brand-teal);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.avatarUploadBtn {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 32px;
+    height: 32px;
+    background: var(--brand-teal);
+    color: var(--brand-white);
+    border: 3px solid var(--brand-white);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: var(--transition-base);
+}
+
+.avatarUploadBtn:hover {
+    background: var(--brand-teal-dark);
+    transform: scale(1.1);
+}
+
+.avatarName {
+    font-size: var(--text-xl);
+    font-weight: 600;
+    color: var(--brand-navy);
+    margin-bottom: var(--space-1);
+}
+
+.avatarRole {
+    font-size: var(--text-sm);
+    color: var(--brand-text-dark);
+    text-transform: capitalize;
+}
+
+/* Form */
+.profileForm {
+    background: var(--brand-white);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--brand-border);
+    padding: var(--space-6);
+    box-shadow: var(--shadow-sm);
+}
+
+.formSection {
+    margin-bottom: var(--space-6);
+}
+
+.formSectionTitle {
+    font-size: var(--text-lg);
+    font-weight: 600;
+    color: var(--brand-navy);
+    margin-bottom: var(--space-6);
+    padding-bottom: var(--space-3);
+    border-bottom: 2px solid var(--brand-border);
+}
+
+.formGroup {
+    margin-bottom: var(--space-5);
+}
+
+.formGroup:last-child {
+    margin-bottom: 0;
+}
+
+.formLabel {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--brand-navy);
+    margin-bottom: var(--space-2);
+}
+
+.formLabel svg {
+    color: var(--brand-teal);
+}
+
+.formInput {
+    width: 100%;
+    padding: var(--space-3) var(--space-4);
+    border: 1px solid var(--brand-border);
+    border-radius: var(--radius-md);
+    font-size: var(--text-base);
+    color: var(--brand-navy);
+    background: var(--brand-white);
+    transition: var(--transition-base);
+}
+
+.formInput:focus {
+    outline: none;
+    border-color: var(--brand-teal);
+    box-shadow: 0 0 0 3px var(--brand-teal-lighter);
+}
+
+.formInput:disabled {
+    background: var(--brand-grey-lightest);
+    color: var(--brand-text-dark);
+    cursor: not-allowed;
+}
+
+.formHelp {
+    margin-top: var(--space-2);
+    font-size: var(--text-xs);
+    color: var(--brand-text-dark);
+}
+
+.formActions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--space-3);
+    padding-top: var(--space-6);
+    border-top: 1px solid var(--brand-border);
+}
+
+.btnSecondary {
+    padding: var(--space-3) var(--space-6);
+    background: var(--brand-white);
+    color: var(--brand-navy);
+    border: 1px solid var(--brand-border);
+    border-radius: var(--radius-md);
+    font-size: var(--text-base);
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition-base);
+}
+
+.btnSecondary:hover {
+    background: var(--brand-grey-lightest);
+    border-color: var(--brand-navy);
+}
+
+.btnPrimary {
+    padding: var(--space-3) var(--space-6);
+    background: var(--brand-teal);
+    color: var(--brand-white);
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: var(--text-base);
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition-base);
+}
+
+.btnPrimary:hover:not(:disabled) {
+    background: var(--brand-teal-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(47, 164, 169, 0.3);
+}
+
+.btnPrimary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Account Info */
+.accountInfo {
+    background: var(--brand-white);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--brand-border);
+    padding: var(--space-6);
+    box-shadow: var(--shadow-sm);
+}
+
+.accountInfoTitle {
+    font-size: var(--text-lg);
+    font-weight: 600;
+    color: var(--brand-navy);
+    margin-bottom: var(--space-4);
+    padding-bottom: var(--space-3);
+    border-bottom: 2px solid var(--brand-border);
+}
+
+.accountInfoGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--space-4);
+}
+
+.accountInfoItem {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding: var(--space-4);
+    background: var(--brand-grey-lightest);
+    border-radius: var(--radius-md);
+}
+
+.accountInfoLabel {
+    font-size: var(--text-xs);
+    font-weight: 500;
+    color: var(--brand-text-dark);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.accountInfoValue {
+    font-size: var(--text-base);
+    font-weight: 600;
+    color: var(--brand-navy);
+    text-transform: capitalize;
+}
+
+.statusActive {
+    color: #10b981;
+}
+
+/* Loading Spinner */
+.loadingSpinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--brand-border);
+    border-top-color: var(--brand-teal);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .avatarSection {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .formActions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .accountInfoGrid {
+        grid-template-columns: 1fr;
+    }
+}

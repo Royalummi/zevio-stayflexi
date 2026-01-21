@@ -1,0 +1,1440 @@
+/**
+ * ============================================================================
+ * BOOKING DETAIL PAGE - CLEAN MINIMAL DESIGN (Brand Colors)
+ * ============================================================================
+ */
+
+/* ============================================================================
+   PAGE LAYOUT
+   ============================================================================ */
+.bookingDetailPage {
+    min-height: 100vh;
+    background: #F9FAFB;
+    padding-bottom: 3rem;
+}
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+}
+
+/* ============================================================================
+   HORIZONTAL TIMELINE
+   ============================================================================ */
+.horizontalTimeline {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 0;
+    background: var(--brand-white);
+    border-radius: var(--radius-lg);
+    padding: 2rem 1rem;
+    margin-bottom: 2rem;
+    border: 1px solid var(--brand-border);
+    box-shadow: var(--shadow-sm);
+    overflow-x: auto;
+}
+
+.timelineStep {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    flex: 1;
+    min-width: 100px;
+}
+
+.timelineStepIcon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    margin-bottom: 0.75rem;
+    z-index: 2;
+    flex-shrink: 0;
+}
+
+.timelineStepIcon.completed {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.timelineStepIcon.pending {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.timelineStepIcon.cancelled {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.timelineStepContent {
+    text-align: center;
+    z-index: 2;
+}
+
+.timelineStepTitle {
+    font-weight: 600;
+    color: var(--brand-navy);
+    font-size: 0.875rem;
+    margin-bottom: 0.25rem;
+}
+
+.timelineStepDate {
+    font-size: 0.75rem;
+    color: var(--brand-text-dark);
+}
+
+.timelineStepLine {
+    position: absolute;
+    top: 24px;
+    left: calc(50% + 24px);
+    right: calc(-50% + 24px);
+    height: 2px;
+    background: var(--brand-border);
+    z-index: 1;
+}
+
+/* ============================================================================
+   4-COLUMN CARD GRID
+   ============================================================================ */
+.cardGrid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+@media (max-width: 1200px) {
+    .cardGrid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .cardGrid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.card {
+    background: var(--brand-white);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--brand-border);
+    padding: 1.5rem;
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition-base);
+}
+
+.card:hover {
+    box-shadow: var(--shadow-md);
+}
+
+.cardTitle {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--brand-navy);
+    margin-bottom: 1rem;
+}
+
+/* ============================================================================
+   PROPERTY PREVIEW CARD - NEW DESIGN WITH LARGE IMAGE ON TOP
+   ============================================================================ */
+
+/* Remove default card padding for full-width image */
+.propertyPreviewCard {
+    padding: 0 !important;
+    overflow: hidden;
+}
+
+/* Large Property Image Container - Top Section */
+.propertyImageContainer {
+    width: 100%;
+    height: 220px;
+    /* Big image - 2.75x larger than before */
+    position: relative;
+    background: #F3F4F6;
+    overflow: hidden;
+}
+
+.propertyImageLarge {
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.propertyImageLarge:hover {
+    transform: scale(1.05);
+    /* Subtle zoom on hover */
+}
+
+.propertyImagePlaceholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%);
+    color: #9CA3AF;
+    gap: 0.5rem;
+}
+
+.propertyImagePlaceholder p {
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+/* Property Details Content - Below Image */
+.propertyDetailsContent {
+    padding: 1.5rem;
+}
+
+.propertyNameLarge {
+    font-size: 1.125rem;
+    /* 18px - 20% larger */
+    font-weight: 700;
+    color: var(--brand-navy);
+    margin-bottom: 0.75rem;
+    line-height: 1.4;
+    /* Full title visible - no clamp */
+}
+
+.propertyLocationLarge {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9375rem;
+    /* 15px */
+    color: #6B7280;
+    margin-bottom: 1.25rem;
+    font-weight: 500;
+}
+
+.propertyLocationLarge svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    color: var(--brand-teal);
+}
+
+/* View Property Button - Styled as Full-Width Button */
+.viewPropertyButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.875rem 1rem;
+    background: var(--brand-teal);
+    color: white;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    text-decoration: none;
+    border-radius: var(--radius-md);
+    transition: all 0.2s ease;
+    border: 2px solid var(--brand-teal);
+}
+
+.viewPropertyButton:hover {
+    background: #0D9488;
+    /* Darker teal */
+    border-color: #0D9488;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(20, 184, 166, 0.25);
+    color: #fff;
+}
+
+.viewPropertyButton:active {
+    transform: translateY(0);
+}
+
+.viewPropertyButton svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* OLD STYLES - KEEP FOR BACKWARDS COMPATIBILITY IF NEEDED */
+.propertyPreview {
+    display: flex;
+    gap: 1rem;
+}
+
+.propertyThumbnail {
+    position: relative;
+    width: 80px;
+    height: 80px;
+    flex-shrink: 0;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background: #F3F4F6;
+}
+
+.propertyImage {
+    object-fit: cover;
+}
+
+.propertyInfo {
+    flex: 1;
+    min-width: 0;
+}
+
+.propertyName {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--brand-navy);
+    margin-bottom: 0.5rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.propertyLocation {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 0.8125rem;
+    color: var(--brand-text-dark);
+    margin-bottom: 0.75rem;
+}
+
+.viewPropertyLink {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.8125rem;
+    color: var(--brand-teal);
+    font-weight: 500;
+    transition: var(--transition-base);
+}
+
+.viewPropertyLink:hover {
+    color: var(--brand-teal-dark);
+}
+
+/* ============================================================================
+   BOOKING INFO CARD
+   ============================================================================ */
+.infoList {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.infoItem {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.infoIcon {
+    width: 20px;
+    height: 20px;
+    color: var(--brand-teal);
+    flex-shrink: 0;
+    margin-top: 0.125rem;
+}
+
+.infoLabel {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--brand-text-dark);
+    margin-bottom: 0.25rem;
+    font-weight: 500;
+}
+
+.infoValue {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--brand-navy);
+    margin-bottom: 0.125rem;
+}
+
+.infoHint {
+    font-size: 0.75rem;
+    color: var(--brand-text-dark);
+}
+
+/* ============================================================================
+   PRICE CARD
+   ============================================================================ */
+.priceBreakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.priceItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.priceLabel {
+    font-size: 0.8125rem;
+    color: var(--brand-text-dark);
+    flex: 1;
+}
+
+.priceValue {
+    font-weight: 600;
+    color: var(--brand-navy);
+    font-size: 0.8125rem;
+    white-space: nowrap;
+}
+
+.priceItem.discount .priceValue {
+    color: #22c55e;
+}
+
+.priceDivider {
+    height: 1px;
+    background: var(--brand-border);
+    margin: 0.5rem 0;
+}
+
+.priceTotal .priceLabel {
+    font-weight: 700;
+    color: var(--brand-navy);
+    font-size: 0.9375rem;
+}
+
+.priceTotal .priceValue {
+    font-weight: 700;
+    color: var(--brand-teal);
+    font-size: 1.125rem;
+}
+
+/* ============================================================================
+   ACTIONS CARD
+   ============================================================================ */
+.actionsList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.actionButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    font-size: 0.875rem;
+    transition: var(--transition-base);
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.cancelButton {
+    background: #dc2626;
+    color: white;
+}
+
+.cancelButton:hover:not(:disabled) {
+    background: #b91c1c;
+    transform: translateY(-1px);
+}
+
+.cancelButton:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* SESSION 31: Continue Booking Button */
+.continueBookingButton {
+    background: linear-gradient(135deg, #2FA4A9 0%, #268B8F 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(47, 164, 169, 0.3);
+}
+
+.continueBookingButton:hover {
+    background: linear-gradient(135deg, #268B8F 0%, #1F7479 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(47, 164, 169, 0.4);
+}
+
+.downloadButton {
+    background: var(--brand-teal);
+    color: white;
+}
+
+.downloadButton:hover {
+    background: var(--brand-teal-dark);
+    transform: translateY(-1px);
+}
+
+.supportButton {
+    background: #F3F4F6;
+    color: var(--brand-navy);
+    border: 1px solid var(--brand-border);
+}
+
+.supportButton:hover {
+    background: #E5E7EB;
+    transform: translateY(-1px);
+}
+
+.actionNote {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    padding: 0.75rem;
+    background: #fef3c7;
+    border-radius: var(--radius-md);
+    font-size: 0.75rem;
+    color: #92400e;
+}
+
+.actionNote svg {
+    flex-shrink: 0;
+    margin-top: 0.125rem;
+}
+
+/* ============================================================================
+   PAYMENT HISTORY CARD
+   ============================================================================ */
+.paymentHistoryCard {
+    width: 100%;
+}
+
+.paymentHistoryHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.toggleButton {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.375rem 0.75rem;
+    background: #F3F4F6;
+    border: 1px solid var(--brand-border);
+    border-radius: var(--radius-md);
+    font-size: 0.8125rem;
+    color: var(--brand-navy);
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition-base);
+}
+
+.toggleButton:hover {
+    background: #E5E7EB;
+}
+
+.paymentItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--brand-border);
+    background: #f9fafb;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.paymentItem:last-child {
+    margin-bottom: 0;
+}
+
+.paymentDetails {
+    flex: 1;
+}
+
+.paymentId {
+    font-weight: 600;
+    color: var(--brand-navy);
+    margin-bottom: 0.25rem;
+    font-size: 0.8125rem;
+}
+
+.paymentDate {
+    font-size: 0.75rem;
+    color: var(--brand-text-dark);
+    margin-bottom: 0.25rem;
+}
+
+.paymentMethod {
+    font-size: 0.75rem;
+    color: var(--brand-text-dark);
+    text-transform: capitalize;
+}
+
+.paymentRight {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.5rem;
+}
+
+.paymentAmount {
+    font-weight: 700;
+    color: var(--brand-navy);
+    font-size: 1rem;
+}
+
+/* ============================================================================
+   LOADING & ERROR STATES
+   ============================================================================ */
+.loadingContainer {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #F9FAFB;
+}
+
+.spinner {
+    width: 2rem;
+    height: 2rem;
+    border: 2px solid #E5E7EB;
+    border-top-color: #2FA4A9;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.errorContainer {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    background: #F9FAFB;
+}
+
+.errorIcon {
+    width: 4rem;
+    height: 4rem;
+    color: #ef4444;
+    margin-bottom: 1rem;
+}
+
+.errorTitle {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--brand-navy);
+    margin-bottom: 0.5rem;
+}
+
+.errorMessage {
+    color: var(--brand-text-dark);
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.errorButton {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: var(--brand-teal);
+    color: white;
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: background 0.2s;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.errorButton:hover {
+    background: var(--brand-teal-dark);
+}
+
+/* ============================================================================
+   HEADER
+   ============================================================================ */
+.header {
+    background: var(--brand-white);
+    border-bottom: 1px solid var(--brand-border);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.backLink {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--brand-text-dark);
+    text-decoration: none;
+    margin-bottom: 1rem;
+    transition: color 0.2s;
+    font-size: 0.875rem;
+}
+
+.backLink:hover {
+    color: var(--brand-teal);
+}
+
+.headerContent {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.headerTitle {
+    display: flex;
+    flex-direction: column;
+}
+
+.bookingNumber {
+    font-size: 0.875rem;
+    color: var(--brand-text-dark);
+    margin-bottom: 0.25rem;
+}
+
+.propertyTitle {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--brand-navy);
+    margin: 0;
+}
+
+.statusBadgeContainer {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+/* SESSION 31: Expiry Timer Badge */
+.expiryBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.375rem 0.875rem;
+    background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+    border: 1px solid #FBBF24;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #92400E;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.8;
+    }
+}
+
+/* ============================================================================
+   STATUS BADGES
+   ============================================================================ */
+.statusBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+/* Booking Status Colors */
+.statusBadge.confirmed {
+    background: rgba(34, 197, 94, 0.1);
+    color: #16a34a;
+}
+
+.statusBadge.pending {
+    background: rgba(234, 179, 8, 0.1);
+    color: #ca8a04;
+}
+
+.statusBadge.cancelled {
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+}
+
+.statusBadge.completed {
+    background: rgba(59, 130, 246, 0.1);
+    color: #2563eb;
+}
+
+/* Payment Status Colors */
+.paymentStatusBadge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.125rem 0.625rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.paymentStatusBadge.paid {
+    background: rgba(34, 197, 94, 0.1);
+    color: #16a34a;
+}
+
+.paymentStatusBadge.pending {
+    background: rgba(234, 179, 8, 0.1);
+    color: #ca8a04;
+}
+
+.paymentStatusBadge.failed {
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+}
+
+.paymentStatusBadge.refunded {
+    background: rgba(107, 114, 128, 0.1);
+    color: #6b7280;
+}
+
+/* ============================================================================
+   CARDS
+   ============================================================================ */
+.card {
+    background: var(--brand-white);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--brand-border);
+    overflow: hidden;
+    transition: box-shadow 0.2s;
+}
+
+.card:hover {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+}
+
+.cardPadding {
+    padding: 1.5rem;
+}
+
+/* Property Card */
+.propertyCard {
+    grid-column: span 1;
+}
+
+.propertyImageContainer {
+    position: relative;
+    width: 100%;
+    height: 12rem;
+    background: var(--brand-grey-lighter);
+}
+
+.propertyImage {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.propertyName {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--brand-navy);
+    margin-bottom: 0.75rem;
+}
+
+.propertyImagePlaceholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--brand-text-dark);
+}
+
+.locationInfo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--brand-text-dark);
+    margin-bottom: 1rem;
+    font-size: 0.875rem;
+}
+
+.propertyDescription {
+    color: var(--brand-text-dark);
+    line-height: 1.6;
+    margin-bottom: 1rem;
+}
+
+.viewLink {
+    display: inline-block;
+    margin-top: 1rem;
+    color: var(--brand-teal);
+    font-weight: 500;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.viewLink:hover {
+    color: var(--brand-teal);
+}
+
+/* Details Section */
+.detailsSection {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* Sidebar */
+.sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.sectionTitle {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--brand-navy);
+    margin-bottom: 1.5rem;
+}
+
+.detailsGrid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+    .detailsGrid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.detailItem {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+
+.detailIconContainer {
+    padding: 0.5rem;
+    border-radius: var(--radius-md);
+    flex-shrink: 0;
+}
+
+.detailIconContainer.blue {
+    background: rgba(47, 164, 169, 0.1);
+    color: var(--brand-teal);
+}
+
+.detailIconContainer.purple {
+    background: rgba(31, 58, 95, 0.1);
+    color: var(--brand-navy);
+}
+
+.detailIconContainer.green {
+    background: rgba(34, 197, 94, 0.1);
+    color: #22c55e;
+}
+
+.detailContent {
+    flex: 1;
+}
+
+.detailLabel {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--brand-text-dark);
+    margin-bottom: 0.25rem;
+}
+
+.detailValue {
+    font-size: 0.875rem;
+    color: var(--brand-navy);
+    font-weight: 600;
+}
+
+.detailHint {
+    font-size: 0.75rem;
+    color: var(--brand-text-dark);
+    margin-top: 0.25rem;
+}
+
+/* Price Breakdown */
+.priceBreakdown {
+    margin-top: 2rem;
+}
+
+.priceItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+}
+
+.priceItem.discount .priceValue {
+    color: #22c55e;
+}
+
+.priceDivider {
+    height: 1px;
+    background: var(--brand-border);
+    margin: 0.5rem 0;
+}
+
+.priceList {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.priceLabel {
+    color: var(--brand-text-dark);
+    font-size: 0.875rem;
+}
+
+.priceValue {
+    color: var(--brand-navy);
+    font-weight: 500;
+}
+
+.priceTotal {
+    font-size: 1.125rem;
+    font-weight: 700;
+    border-bottom: none;
+    padding-top: 1rem;
+}
+
+.priceTotal .priceLabel {
+    color: var(--brand-navy);
+    font-weight: 600;
+}
+
+.priceTotal .priceValue {
+    color: var(--brand-teal);
+    font-size: 1.5rem;
+}
+
+/* Payment History */
+.paymentList {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.paymentItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--brand-border);
+    background: var(--brand-grey-lightest, #f9fafb);
+    gap: 1rem;
+}
+
+.paymentDetails {
+    flex: 1;
+}
+
+.paymentAmount {
+    font-weight: 600;
+    color: var(--brand-navy);
+    margin-bottom: 0.25rem;
+}
+
+.paymentDate {
+    font-size: 0.875rem;
+    color: var(--brand-text-dark);
+}
+
+.emptyState {
+    text-align: center;
+    padding: 2rem;
+    color: var(--brand-text-dark);
+}
+
+.invoiceNumber {
+    font-size: 0.875rem;
+    color: var(--brand-text-dark);
+    margin-bottom: 1rem;
+}
+
+.downloadButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: var(--brand-teal);
+    color: white;
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    font-weight: 500;
+    transition: background 0.2s;
+}
+
+.downloadButton:hover {
+    background: var(--brand-teal-dark);
+}
+
+.spinIcon {
+    animation: spin 0.8s linear infinite;
+}
+
+/* Cancel Button */
+.cancelButton {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: var(--brand-grey-lighter);
+    color: var(--brand-navy);
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: background 0.2s;
+    font-size: 0.875rem;
+}
+
+.cancelButton:hover {
+    background: var(--brand-border-light);
+}
+
+/* Cancel Action Card */
+.cancelCard {
+    background: var(--brand-white);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--brand-border);
+    overflow: hidden;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.cancelTitle {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--brand-navy);
+    margin-bottom: 1rem;
+}
+
+.cancelDescription {
+    font-size: 0.875rem;
+    color: var(--brand-text-dark);
+    margin-bottom: 1rem;
+}
+
+.cancelRequestButton {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: #dc2626;
+    color: white;
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: background 0.2s;
+    font-size: 0.875rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.cancelRequestButton:hover:not(:disabled) {
+    background: #b91c1c;
+}
+
+.cancelRequestButton:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Timeline */
+.timelineCard {
+    background: var(--brand-white);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--brand-border);
+    overflow: hidden;
+    padding: 1.5rem;
+}
+
+.timelineItem {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.timelineIconWrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.timelineIcon {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.timelineIcon.completed {
+    background: rgba(34, 197, 94, 0.1);
+    color: #22c55e;
+}
+
+.timelineIcon.pending {
+    background: rgba(234, 179, 8, 0.1);
+    color: #ca8a04;
+}
+
+.timelineIcon.cancelled {
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+}
+
+.timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.timelineLine {
+    width: 0.125rem;
+    height: 100%;
+    background: var(--brand-border-light);
+    margin-top: 0.5rem;
+}
+
+.timelineContent {
+    flex: 1;
+    padding-bottom: 1rem;
+}
+
+.timelineTitle {
+    font-weight: 500;
+    color: var(--brand-navy);
+    margin-bottom: 0.25rem;
+}
+
+.timelineDescription {
+    font-size: 0.875rem;
+    color: var(--brand-text-dark);
+}
+
+/* Payment Item in Payment History */
+.paymentHistoryCard {
+    background: var(--brand-white);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--brand-border);
+    overflow: hidden;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.paymentHistoryList {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.paymentHistoryItem {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    background: var(--brand-grey-lightest);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--brand-border-light);
+}
+
+.paymentHistoryDetails {
+    flex: 1;
+}
+
+.paymentId {
+    font-weight: 500;
+    color: var(--brand-navy);
+    margin-bottom: 0.25rem;
+}
+
+.paymentMethod {
+    font-size: 0.875rem;
+    color: var(--brand-text-dark);
+    text-transform: capitalize;
+}
+
+.paymentRight {
+    text-align: right;
+}
+
+.paymentHistoryAmount {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--brand-navy);
+    margin-bottom: 0.25rem;
+}
+
+/* Toast */
+.toast {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-md);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+    z-index: 9999;
+    color: white;
+    font-size: 0.875rem;
+}
+
+.toast.success {
+    background: #22c55e;
+}
+
+.toast.error {
+    background: #ef4444;
+}
+
+/* ============================================================================
+   RESPONSIVE DESIGN
+   ============================================================================ */
+@media (max-width: 768px) {
+    .horizontalTimeline {
+        padding: 1.5rem 0.75rem;
+        gap: 0.5rem;
+        justify-content: flex-start;
+    }
+
+    .timelineStep {
+        min-width: 80px;
+    }
+
+    .timelineStepIcon {
+        width: 40px;
+        height: 40px;
+        font-size: 1.25rem;
+    }
+
+    .timelineStepTitle {
+        font-size: 0.75rem;
+    }
+
+    .timelineStepDate {
+        font-size: 0.6875rem;
+    }
+
+    .timelineStepLine {
+        left: calc(50% + 20px);
+        right: calc(-50% + 20px);
+    }
+
+    .card {
+        padding: 1rem;
+    }
+
+    .propertyPreview {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .propertyThumbnail {
+        width: 100px;
+        height: 100px;
+    }
+
+    .propertyLocation,
+    .viewPropertyLink {
+        justify-content: center;
+    }
+
+    .paymentItem {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .paymentRight {
+        width: 100%;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .actionButton {
+        padding: 0.875rem 1rem;
+        font-size: 0.9375rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .horizontalTimeline {
+        padding: 1rem 0.5rem;
+    }
+
+    .timelineStep {
+        min-width: 70px;
+    }
+
+    .timelineStepIcon {
+        width: 36px;
+        height: 36px;
+        font-size: 1.125rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .timelineStepTitle {
+        font-size: 0.6875rem;
+    }
+
+    .timelineStepDate {
+        font-size: 0.625rem;
+    }
+
+    .container {
+        padding: 0 1rem;
+    }
+
+    .propertyTitle {
+        font-size: 1.25rem;
+    }
+
+    .statusBadgeContainer {
+        width: 100%;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+    }
+}
+
+.spinIcon {
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}

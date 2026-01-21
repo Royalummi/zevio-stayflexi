@@ -2,37 +2,37 @@
 
 import Link from "next/link";
 import { FiHome, FiSearch, FiArrowLeft } from "react-icons/fi";
-import "./not-found.css";
+import styles from "./not-found.module.css";
 
 export default function NotFound() {
   return (
-    <div className="not-found-container">
-      <div className="not-found-content">
+    <div className={styles.notFoundContainer}>
+      <div className={styles.notFoundContent}>
         {/* 404 Illustration */}
-        <div className="not-found-number">404</div>
+        <div className={styles.notFoundNumber}>404</div>
 
         {/* Error Message Card */}
-        <div className="not-found-card">
-          <div className="not-found-icon">
+        <div className={styles.notFoundCard}>
+          <div className={styles.notFoundIcon}>
             <FiSearch size={40} />
           </div>
 
-          <h1 className="not-found-title">Page Not Found</h1>
-          <p className="not-found-message">
-            Oops! The page you&apos;re looking for doesn&apos;t exist. It might have been
-            moved or deleted.
+          <h1 className={styles.notFoundTitle}>Page Not Found</h1>
+          <p className={styles.notFoundMessage}>
+            Oops! The page you&apos;re looking for doesn&apos;t exist. It might
+            have been moved or deleted.
           </p>
 
           {/* Action Buttons */}
-          <div className="not-found-actions">
-            <Link href="/" className="btn-home">
+          <div className={styles.notFoundActions}>
+            <Link href="/" className={styles.btnHome}>
               <FiHome size={20} />
               Back to Home
             </Link>
 
             <button
               onClick={() => window.history.back()}
-              className="btn-back"
+              className={styles.btnBack}
             >
               <FiArrowLeft size={20} />
               Go Back
@@ -40,19 +40,19 @@ export default function NotFound() {
           </div>
 
           {/* Quick Links */}
-          <div className="quick-links">
-            <p className="quick-links-title">Quick Links</p>
-            <div className="quick-links-grid">
-              <Link href="/properties" className="quick-link">
+          <div className={styles.quickLinks}>
+            <p className={styles.quickLinksTitle}>Quick Links</p>
+            <div className={styles.quickLinksGrid}>
+              <Link href="/properties" className={styles.quickLink}>
                 Browse Properties
               </Link>
-              <Link href="/destinations" className="quick-link">
+              <Link href="/destinations" className={styles.quickLink}>
                 Destinations
               </Link>
-              <Link href="/support" className="quick-link">
+              <Link href="/support" className={styles.quickLink}>
                 Contact Support
               </Link>
-              <Link href="/about" className="quick-link">
+              <Link href="/about" className={styles.quickLink}>
                 About Us
               </Link>
             </div>

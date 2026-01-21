@@ -1,5 +1,14 @@
 import db from "../config/database.js";
 import { asyncHandler, sendSuccess, sendError } from "../utils/response.js";
+import {
+  getPricingSelectClause,
+  getPricingJoinClause,
+} from "../services/pricingService.js";
+import {
+  getAmenitiesSelectClause,
+  getAmenitiesJoinClause,
+} from "../services/amenitiesService.js";
+import featuresService from "../services/featuresService.js";
 
 // Get all active cities
 export const getCities = asyncHandler(async (req, res) => {
@@ -37,15 +46,18 @@ export const getProperties = asyncHandler(async (req, res) => {
       p.bedrooms,
       p.bathrooms,
       p.max_guests,
-      p.amenities,
+      ${getAmenitiesSelectClause("p", "pa", "a")},
+      ${featuresService.getFeaturesSelectClause("p", "pf", "f")},
       p.photos,
       p.rating,
       p.reviews_count,
-      p.price_per_night,
-      p.gst_percentage,
+      ${getPricingSelectClause("pr")},
       p.status
     FROM properties p
     INNER JOIN cities c ON p.city_id = c.id
+    ${getPricingJoinClause("p", "pr")}
+    ${getAmenitiesJoinClause("p", "pa", "a")}
+    ${featuresService.getFeaturesJoinClause("p", "pf", "f")}
     WHERE p.status = 'approved' 
     AND p.deleted_at IS NULL
   `;
@@ -60,13 +72,13 @@ export const getProperties = asyncHandler(async (req, res) => {
   // Validate and parse price filters
   const minPriceNum = parseFloat(min_price);
   if (min_price && !isNaN(minPriceNum) && minPriceNum >= 0) {
-    query += ` AND p.price_per_night >= ?`;
+    query += ` AND pr.price_per_night >= ?`;
     params.push(minPriceNum);
   }
 
   const maxPriceNum = parseFloat(max_price);
   if (max_price && !isNaN(maxPriceNum) && maxPriceNum >= 0) {
-    query += ` AND p.price_per_night <= ?`;
+    query += ` AND pr.price_per_night <= ?`;
     params.push(maxPriceNum);
   }
 
@@ -75,11 +87,32 @@ export const getProperties = asyncHandler(async (req, res) => {
     params.push(`%${search}%`, `%${search}%`);
   }
 
-  // Count total
-  const countQuery = query.replace(
-    /SELECT.*FROM/,
-    "SELECT COUNT(*) as total FROM"
-  );
+  // Add GROUP BY for amenities aggregation
+  query += ` GROUP BY p.id`;
+
+  // Count total (need to count distinct properties)
+  let countQuery = `
+    SELECT COUNT(DISTINCT p.id) as total
+    FROM properties p
+    INNER JOIN cities c ON p.city_id = c.id
+    ${getPricingJoinClause("p", "pr")}
+    WHERE p.status = 'approved' 
+    AND p.deleted_at IS NULL
+  `;
+
+  if (city) {
+    countQuery += " AND c.id = ?";
+  }
+  if (min_price && !isNaN(parseFloat(min_price))) {
+    countQuery += " AND pr.price_per_night >= ?";
+  }
+  if (max_price && !isNaN(parseFloat(max_price))) {
+    countQuery += " AND pr.price_per_night <= ?";
+  }
+  if (search) {
+    countQuery += " AND (p.title LIKE ? OR p.description LIKE ?)";
+  }
+
   const [countResult] = await db.query(countQuery, params);
   const total = countResult[0].total;
 
@@ -90,11 +123,12 @@ export const getProperties = asyncHandler(async (req, res) => {
 
   const [properties] = await db.query(query, params);
 
-  // Parse JSON fields (amenities and photos) for each property
+  // Parse JSON fields (photos only, amenities now come from JOIN)
   const parsedProperties = properties.map((property) => {
     try {
+      // Convert comma-separated amenities to array
       property.amenities = property.amenities
-        ? JSON.parse(property.amenities)
+        ? property.amenities.split(", ")
         : [];
       property.photos = property.photos ? JSON.parse(property.photos) : [];
     } catch (error) {
@@ -129,7 +163,7 @@ export const getPropertyDetails = asyncHandler(async (req, res) => {
     `SELECT 
       p.id, 
       p.title, 
-      p.property_type,
+      pt.name as property_type,
       p.description,
       p.address,
       c.name as city,
@@ -137,28 +171,32 @@ export const getPropertyDetails = asyncHandler(async (req, res) => {
       p.pincode,
       p.bedrooms,
       p.bathrooms,
-      p.max_guests,
       p.check_in_time,
       p.check_out_time,
-      p.amenities,
+      ${getAmenitiesSelectClause("p", "pa", "a")},
+      ${featuresService.getFeaturesSelectClause("p", "pf", "f")},
       p.house_rules,
       p.cancellation_policy,
       p.photos,
       p.rating,
       p.reviews_count,
-      p.price_per_night,
-      p.gst_percentage,
+      ${getPricingSelectClause("pr")},
       p.status,
       c.id as city_id,
       v.name as vendor_name,
       e.name as employee_name
     FROM properties p
     INNER JOIN cities c ON p.city_id = c.id
+    LEFT JOIN property_types pt ON p.property_type_id = pt.id
     LEFT JOIN vendors v ON p.vendor_id = v.id
     LEFT JOIN employees e ON p.employee_id = e.id
+    ${getPricingJoinClause("p", "pr")}
+    ${getAmenitiesJoinClause("p", "pa", "a")}
+    ${featuresService.getFeaturesJoinClause("p", "pf", "f")}
     WHERE p.id = ? 
     AND p.status = 'approved' 
-    AND p.deleted_at IS NULL`,
+    AND p.deleted_at IS NULL
+    GROUP BY p.id`,
     [id]
   );
 
@@ -170,8 +208,9 @@ export const getPropertyDetails = asyncHandler(async (req, res) => {
 
   // Parse JSON fields
   try {
+    // Convert comma-separated amenities to array
     property.amenities = property.amenities
-      ? JSON.parse(property.amenities)
+      ? property.amenities.split(", ")
       : [];
     property.photos = property.photos ? JSON.parse(property.photos) : [];
     // Parse house_rules if it exists

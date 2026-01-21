@@ -14,6 +14,7 @@ export interface User {
   phone: string | null;
   status: "active" | "inactive" | "blocked";
   role?: "user" | "vendor" | "employee" | "admin";
+  corporate_verified?: boolean;
   created_at?: string;
 }
 
@@ -57,6 +58,7 @@ export interface Property {
   rating: number;
   reviews_count: number;
   status: "active" | "inactive" | "maintenance";
+  corporate_discount_percentage?: number; // Corporate discount percentage
   created_at?: string;
   updated_at?: string;
 }
@@ -82,6 +84,7 @@ export interface City {
   country?: string;
   status: "active" | "inactive";
   property_count?: number;
+  area?: string; // For service apartments: specific area/locality within city
 }
 
 // ============================================================================

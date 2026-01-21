@@ -1,0 +1,544 @@
+/* ========================================
+   ABOUT PAGE - BRAND COLORS
+   ======================================== */
+
+.aboutPage {
+    min-height: 100vh;
+    background: var(--brand-white);
+}
+
+/* ========================================
+   HERO SECTION
+   ======================================== */
+
+.aboutHero {
+    background: linear-gradient(135deg, var(--brand-navy) 0%, var(--brand-navy-dark) 100%);
+    padding: 8rem 1rem 5rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.aboutHero::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+    opacity: 0.5;
+}
+
+.heroContent {
+    max-width: 800px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+}
+
+.heroTitle {
+    font-size: 4rem;
+    font-weight: 800;
+    color: var(--brand-white);
+    margin-bottom: 1rem;
+    letter-spacing: -0.02em;
+}
+
+.heroSubtitle {
+    font-size: 1.5rem;
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 500;
+}
+
+/* ========================================
+   STORY SECTION
+   ======================================== */
+
+.storySection {
+    padding: 6rem 1rem;
+    background: var(--brand-white);
+}
+
+.storyContainer {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.storyContent {
+    text-align: left;
+}
+
+.sectionTitle {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--brand-navy);
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.storyText {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.storyText p {
+    font-size: 1.125rem;
+    line-height: 1.9;
+    color: var(--brand-text-dark);
+    text-align: justify;
+}
+
+/* ========================================
+   VALUES SECTION
+   ======================================== */
+
+.valuesSection {
+    padding: 5rem 1rem;
+    background: var(--brand-grey-lightest);
+}
+
+.valuesContainer {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.sectionHeader {
+    text-align: center;
+    margin-bottom: 4rem;
+}
+
+.sectionSubtitle {
+    font-size: 1.125rem;
+    color: var(--brand-text-dark);
+    margin-top: 1rem;
+}
+
+.valuesGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+}
+
+.valueCard {
+    background: var(--brand-white);
+    padding: 2.5rem 2rem;
+    border-radius: 16px;
+    box-shadow: 0 2px 8px rgba(31, 58, 95, 0.08);
+    border: 1px solid var(--brand-border-light);
+    transition: all 0.3s ease;
+}
+
+.valueCard:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 32px rgba(31, 58, 95, 0.15);
+    border-color: var(--brand-teal-light);
+}
+
+.valueIcon {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, var(--brand-teal) 0%, var(--brand-teal-dark) 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.75rem;
+    color: var(--brand-white);
+    margin-bottom: 1.5rem;
+}
+
+.valueTitle {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--brand-navy);
+    margin-bottom: 0.75rem;
+}
+
+.valueDescription {
+    color: var(--brand-text-dark);
+    line-height: 1.8;
+    font-size: 0.9375rem;
+}
+
+/* ========================================
+   MILESTONES SECTION
+   ======================================== */
+
+.milestonesSection {
+    padding: 5rem 1rem;
+    background: var(--brand-white);
+}
+
+.milestonesContainer {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.timeline {
+    position: relative;
+    padding-left: 2rem;
+}
+
+.timeline::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(180deg, var(--brand-teal) 0%, var(--brand-teal-dark) 100%);
+}
+
+.milestoneItem {
+    position: relative;
+    padding-bottom: 3rem;
+    padding-left: 2rem;
+}
+
+.milestoneItem:last-child {
+    padding-bottom: 0;
+}
+
+.milestoneItem::before {
+    content: "";
+    position: absolute;
+    left: -2.5rem;
+    top: 0.5rem;
+    width: 16px;
+    height: 16px;
+    background: var(--brand-teal);
+    border-radius: 50%;
+    border: 3px solid var(--brand-white);
+    box-shadow: 0 0 0 3px var(--brand-teal-light);
+}
+
+.milestoneYear {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--brand-teal);
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.milestoneTitle {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--brand-navy);
+    margin-bottom: 0.5rem;
+}
+
+.milestoneDescription {
+    color: var(--brand-text-dark);
+    line-height: 1.7;
+    font-size: 0.9375rem;
+}
+
+/* ========================================
+   TEAM SECTION
+   ======================================== */
+
+.teamSection {
+    padding: 5rem 1rem;
+    background: var(--brand-grey-lightest);
+}
+
+.teamContainer {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.teamGrid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+}
+
+.teamCard {
+    background: var(--brand-white);
+    padding: 2.5rem 2rem;
+    border-radius: 16px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(31, 58, 95, 0.08);
+    border: 1px solid var(--brand-border-light);
+    transition: all 0.3s ease;
+}
+
+.teamCard:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 32px rgba(31, 58, 95, 0.15);
+    border-color: var(--brand-teal-light);
+}
+
+.teamIcon {
+    width: 70px;
+    height: 70px;
+    background: linear-gradient(135deg, var(--brand-navy) 0%, var(--brand-navy-dark) 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    color: var(--brand-white);
+    margin: 0 auto 1.5rem;
+}
+
+.teamName {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--brand-navy);
+    margin-bottom: 0.75rem;
+}
+
+.teamDescription {
+    color: var(--brand-text-dark);
+    line-height: 1.7;
+    font-size: 0.9375rem;
+}
+
+/* ========================================
+   STATS BANNER
+   ======================================== */
+
+.statsBanner {
+    background: linear-gradient(135deg, var(--brand-navy) 0%, var(--brand-navy-dark) 100%);
+    padding: 4rem 1rem;
+}
+
+.statsBannerContainer {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2rem;
+}
+
+.statItem {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.statIcon {
+    font-size: 2.5rem;
+    color: var(--brand-teal);
+    flex-shrink: 0;
+}
+
+.statContent {
+    text-align: left;
+}
+
+.statNumber {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--brand-white);
+    line-height: 1;
+    margin-bottom: 0.25rem;
+}
+
+.statLabel {
+    font-size: 0.9375rem;
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 500;
+}
+
+/* ========================================
+   CTA SECTION
+   ======================================== */
+
+.aboutCta {
+    background: var(--brand-grey-lightest);
+    padding: 5rem 1rem;
+    text-align: center;
+}
+
+.ctaContent {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.ctaTitle {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--brand-navy);
+    margin-bottom: 1rem;
+}
+
+.ctaDescription {
+    font-size: 1.125rem;
+    color: var(--brand-text-dark);
+    margin-bottom: 2.5rem;
+    line-height: 1.7;
+}
+
+.ctaButtons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.ctaButton {
+    padding: 1rem 2.5rem;
+    border-radius: 50px;
+    border: none;
+    font-size: 1.125rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.ctaButton.primary {
+    background: var(--brand-teal);
+    color: var(--brand-white);
+    box-shadow: 0 4px 16px rgba(47, 164, 169, 0.3);
+}
+
+.ctaButton.primary:hover {
+    background: var(--brand-teal-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(47, 164, 169, 0.4);
+}
+
+.ctaButton.secondary {
+    background: var(--brand-white);
+    color: var(--brand-navy);
+    border: 2px solid var(--brand-navy);
+}
+
+.ctaButton.secondary:hover {
+    background: var(--brand-navy);
+    color: var(--brand-white);
+    transform: translateY(-2px);
+}
+
+/* ========================================
+   RESPONSIVE DESIGN
+   ======================================== */
+
+@media (max-width: 1024px) {
+    .statsBannerContainer {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .teamGrid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .heroTitle {
+        font-size: 3rem;
+    }
+
+    .heroSubtitle {
+        font-size: 1.25rem;
+    }
+
+    .sectionTitle {
+        font-size: 2rem;
+    }
+
+    .storyText p {
+        font-size: 1rem;
+        text-align: left;
+    }
+
+    .valuesGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .statsBannerContainer {
+        grid-template-columns: 1fr;
+    }
+
+    .statItem {
+        justify-content: center;
+    }
+
+    .ctaButtons {
+        flex-direction: column;
+    }
+
+    .ctaButton {
+        width: 100%;
+        max-width: 300px;
+    }
+}
+
+@media (max-width: 480px) {
+    .aboutHero {
+        padding: 5rem 1rem 3rem;
+    }
+
+    .heroTitle {
+        font-size: 2.5rem;
+    }
+
+    .heroSubtitle {
+        font-size: 1.125rem;
+    }
+
+    .storySection,
+    .valuesSection,
+    .milestonesSection,
+    .teamSection,
+    .aboutCta {
+        padding: 3rem 1rem;
+    }
+
+    .sectionTitle {
+        font-size: 1.75rem;
+    }
+
+    .sectionSubtitle {
+        font-size: 1rem;
+    }
+
+    .valueIcon,
+    .teamIcon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.5rem;
+    }
+
+    .valueTitle,
+    .milestoneTitle {
+        font-size: 1.25rem;
+    }
+
+    .timeline {
+        padding-left: 1.5rem;
+    }
+
+    .milestoneItem {
+        padding-left: 1.5rem;
+    }
+
+    .statsBanner {
+        padding: 3rem 1rem;
+    }
+
+    .statNumber {
+        font-size: 2rem;
+    }
+
+    .statIcon {
+        font-size: 2rem;
+    }
+
+    .ctaTitle {
+        font-size: 2rem;
+    }
+
+    .ctaDescription {
+        font-size: 1rem;
+    }
+}

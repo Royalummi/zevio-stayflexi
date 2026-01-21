@@ -35,6 +35,9 @@ export default function PropertyDetail() {
     check_in: "",
     check_out: "",
     coupon_code: "",
+    guest_count: 1,
+    children_count: 0,
+    infants_count: 0,
   });
   const [availability, setAvailability] = useState(null);
   const [checkingAvailability, setCheckingAvailability] = useState(false);
@@ -93,10 +96,43 @@ export default function PropertyDetail() {
     if (!nights || !property) return { base: 0, gst: 0, total: 0 };
 
     const base = property.price_per_night * nights;
-    const gst = (base * property.gst_percentage) / 100;
-    const total = base + gst;
 
-    return { base, gst, total, nights };
+    // Calculate extra guest charges
+    let extraGuestCharges = 0;
+    if (property.min_guests && property.extra_guest_charge) {
+      const extraGuests = Math.max(
+        0,
+        bookingData.guest_count - property.min_guests
+      );
+      extraGuestCharges = extraGuests * property.extra_guest_charge * nights;
+    }
+
+    // Calculate extra children charges
+    let extraChildrenCharges = 0;
+    if (property.min_children !== undefined && property.extra_child_charge) {
+      const extraChildren = Math.max(
+        0,
+        bookingData.children_count - (property.min_children || 0)
+      );
+      extraChildrenCharges =
+        extraChildren * property.extra_child_charge * nights;
+    }
+
+    // Infants are always FREE - no charges
+
+    const subtotal = base + extraGuestCharges + extraChildrenCharges;
+    const gst = (subtotal * property.gst_percentage) / 100;
+    const total = subtotal + gst;
+
+    return {
+      base,
+      extraGuestCharges,
+      extraChildrenCharges,
+      subtotal,
+      gst,
+      total,
+      nights,
+    };
   };
 
   const handleBooking = async () => {
@@ -116,12 +152,34 @@ export default function PropertyDetail() {
       return;
     }
 
+    // Validate guest count
+    if (bookingData.guest_count < 1) {
+      toast.error("At least 1 guest is required");
+      return;
+    }
+
+    if (property.max_guests && bookingData.guest_count > property.max_guests) {
+      toast.error(`Maximum ${property.max_guests} guests allowed`);
+      return;
+    }
+
+    if (
+      property.max_children &&
+      bookingData.children_count > property.max_children
+    ) {
+      toast.error(`Maximum ${property.max_children} children allowed`);
+      return;
+    }
+
     setBookingLoading(true);
     try {
       const response = await api.post("/bookings", {
         property_id: id,
         check_in: bookingData.check_in,
         check_out: bookingData.check_out,
+        guest_count: bookingData.guest_count,
+        children_count: bookingData.children_count,
+        infants_count: bookingData.infants_count,
         coupon_code: bookingData.coupon_code || undefined,
       });
 
@@ -332,6 +390,172 @@ export default function PropertyDetail() {
                   />
                 </div>
 
+                {/* Guest Counters */}
+                <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                  {/* Adults/Guests */}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        <Users className="h-4 w-4 inline mr-1" />
+                        Adults
+                      </label>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Age 13+
+                        {property.min_guests &&
+                          ` • Minimum ${property.min_guests} required`}
+                      </p>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-8 w-8 p-0 rounded-full"
+                        onClick={() =>
+                          setBookingData({
+                            ...bookingData,
+                            guest_count: Math.max(
+                              1,
+                              bookingData.guest_count - 1
+                            ),
+                          })
+                        }
+                        disabled={bookingData.guest_count <= 1}
+                      >
+                        -
+                      </Button>
+                      <span className="text-base font-medium min-w-[2rem] text-center text-gray-900 dark:text-white">
+                        {bookingData.guest_count}
+                      </span>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-8 w-8 p-0 rounded-full"
+                        onClick={() =>
+                          setBookingData({
+                            ...bookingData,
+                            guest_count: bookingData.guest_count + 1,
+                          })
+                        }
+                        disabled={
+                          property.max_guests &&
+                          bookingData.guest_count >= property.max_guests
+                        }
+                      >
+                        +
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Children */}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Children
+                      </label>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Age 3-12
+                        {property.extra_child_charge > 0 &&
+                          ` • ₹${property.extra_child_charge}/night extra`}
+                      </p>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-8 w-8 p-0 rounded-full"
+                        onClick={() =>
+                          setBookingData({
+                            ...bookingData,
+                            children_count: Math.max(
+                              0,
+                              bookingData.children_count - 1
+                            ),
+                          })
+                        }
+                        disabled={bookingData.children_count <= 0}
+                      >
+                        -
+                      </Button>
+                      <span className="text-base font-medium min-w-[2rem] text-center text-gray-900 dark:text-white">
+                        {bookingData.children_count}
+                      </span>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-8 w-8 p-0 rounded-full"
+                        onClick={() =>
+                          setBookingData({
+                            ...bookingData,
+                            children_count: bookingData.children_count + 1,
+                          })
+                        }
+                        disabled={
+                          property.max_children &&
+                          bookingData.children_count >= property.max_children
+                        }
+                      >
+                        +
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Infants */}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Infants
+                      </label>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Age 0-2 •{" "}
+                        <span className="text-green-600 dark:text-green-400 font-medium">
+                          FREE
+                        </span>
+                      </p>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-8 w-8 p-0 rounded-full"
+                        onClick={() =>
+                          setBookingData({
+                            ...bookingData,
+                            infants_count: Math.max(
+                              0,
+                              bookingData.infants_count - 1
+                            ),
+                          })
+                        }
+                        disabled={bookingData.infants_count <= 0}
+                      >
+                        -
+                      </Button>
+                      <span className="text-base font-medium min-w-[2rem] text-center text-gray-900 dark:text-white">
+                        {bookingData.infants_count}
+                      </span>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-8 w-8 p-0 rounded-full"
+                        onClick={() =>
+                          setBookingData({
+                            ...bookingData,
+                            infants_count: bookingData.infants_count + 1,
+                          })
+                        }
+                      >
+                        +
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Availability Status */}
                 {bookingData.check_in && bookingData.check_out && (
                   <div className="p-3 rounded-md bg-gray-50 dark:bg-gray-700">
@@ -377,14 +601,55 @@ export default function PropertyDetail() {
                     <div className="flex justify-between text-sm text-gray-700 dark:text-gray-300">
                       <span>
                         {formatCurrency(property.price_per_night)} ×{" "}
-                        {pricing.nights} nights
+                        {pricing.nights}{" "}
+                        {pricing.nights === 1 ? "night" : "nights"}
                       </span>
                       <span>{formatCurrency(pricing.base)}</span>
                     </div>
+
+                    {pricing.extraGuestCharges > 0 && (
+                      <div className="flex justify-between text-sm text-gray-700 dark:text-gray-300">
+                        <span>
+                          Extra guest charges (
+                          {Math.max(
+                            0,
+                            bookingData.guest_count - (property.min_guests || 0)
+                          )}{" "}
+                          × ₹{property.extra_guest_charge} × {pricing.nights})
+                        </span>
+                        <span>{formatCurrency(pricing.extraGuestCharges)}</span>
+                      </div>
+                    )}
+
+                    {pricing.extraChildrenCharges > 0 && (
+                      <div className="flex justify-between text-sm text-gray-700 dark:text-gray-300">
+                        <span>
+                          Extra children charges (
+                          {Math.max(
+                            0,
+                            bookingData.children_count -
+                              (property.min_children || 0)
+                          )}{" "}
+                          × ₹{property.extra_child_charge} × {pricing.nights})
+                        </span>
+                        <span>
+                          {formatCurrency(pricing.extraChildrenCharges)}
+                        </span>
+                      </div>
+                    )}
+
+                    {bookingData.infants_count > 0 && (
+                      <div className="flex justify-between text-sm text-green-600 dark:text-green-400">
+                        <span>Infants ({bookingData.infants_count})</span>
+                        <span className="font-medium">FREE</span>
+                      </div>
+                    )}
+
                     <div className="flex justify-between text-sm text-gray-700 dark:text-gray-300">
                       <span>GST ({property.gst_percentage}%)</span>
                       <span>{formatCurrency(pricing.gst)}</span>
                     </div>
+
                     <div className="flex justify-between text-lg font-bold pt-2 border-t border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white">
                       <span>Total</span>
                       <span>{formatCurrency(pricing.total)}</span>

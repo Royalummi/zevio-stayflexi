@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { FiX, FiMail, FiLock, FiEye, FiEyeOff } from "react-icons/fi";
+import { FiX, FiEye, FiEyeOff } from "react-icons/fi";
 import { useAuth } from "@/contexts/AuthContext";
 import ModalPortal from "@/components/ui/ModalPortal";
-import Button from "@/components/ui/Button";
+import ForgotPasswordModal from "./ForgotPasswordModal";
 import { validateEmail } from "@/lib/utils";
-import "./auth-modals.css";
+import styles from "./auth-modals.module.css";
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -25,6 +25,7 @@ export default function LoginModal({
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,106 +65,134 @@ export default function LoginModal({
   };
 
   return (
-    <ModalPortal isOpen={isOpen}>
-      <div className="auth-modal-overlay" onClick={handleOverlayClick}>
-        <div className="auth-modal">
-          {/* Close Button */}
-          <button className="auth-modal-close" onClick={onClose}>
-            <FiX />
-          </button>
-
-          {/* Header */}
-          <div className="auth-modal-header">
-            <h2 className="auth-modal-title">Welcome Back</h2>
-            <p className="auth-modal-subtitle">
-              Sign in to book your dream villa
-            </p>
-          </div>
-
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="auth-modal-form">
-            {/* Error Message */}
-            {error && <div className="auth-error-message">{error}</div>}
-
-            {/* Email Field */}
-            <div className="auth-form-group">
-              <label className="auth-form-label">
-                <FiMail />
-                Email Address
-              </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="your@email.com"
-                className="auth-form-input"
-                required
-                autoFocus
-              />
-            </div>
-
-            {/* Password Field */}
-            <div className="auth-form-group">
-              <label className="auth-form-label">
-                <FiLock />
-                Password
-              </label>
-              <div className="auth-password-input">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter your password"
-                  className="auth-form-input"
-                  required
-                />
-                <button
-                  type="button"
-                  className="auth-password-toggle"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? <FiEyeOff /> : <FiEye />}
-                </button>
-              </div>
-            </div>
-
-            {/* Forgot Password */}
-            <div className="auth-forgot-password">
-              <button type="button" className="auth-link-btn">
-                Forgot Password?
-              </button>
-            </div>
-
-            {/* Submit Button */}
-            <Button
-              type="submit"
-              variant="primary"
-              size="lg"
-              fullWidth
-              isLoading={isLoading}
+    <>
+      <ModalPortal isOpen={isOpen}>
+        <div className={styles.authModalOverlay} onClick={handleOverlayClick}>
+          <div className={styles.authModal}>
+            {/* Close Button */}
+            <button
+              className={styles.authModalClose}
+              onClick={onClose}
+              aria-label="Close"
             >
-              Sign In
-            </Button>
+              <FiX />
+            </button>
 
-            {/* Divider */}
-            <div className="auth-divider">
-              <span>Or</span>
-            </div>
+            {/* Scrollable Content */}
+            <div className={styles.authModalContent}>
+              {/* Header */}
+              <div className={styles.authModalHeader}>
+                <h2 className={styles.authModalTitle}>Welcome Back</h2>
+                <p className={styles.authModalSubtitle}>
+                  Sign in to book your dream villa
+                </p>
+              </div>
 
-            {/* Switch to Signup */}
-            <div className="auth-switch">
-              <span>Don&apos;t have an account?</span>
-              <button
-                type="button"
-                className="auth-switch-btn"
-                onClick={onSwitchToSignup}
-              >
-                Create Account
-              </button>
+              {/* Form */}
+              <form onSubmit={handleSubmit} className={styles.authModalForm}>
+                {/* Error Message */}
+                {error && (
+                  <div className={styles.authErrorMessage}>{error}</div>
+                )}
+
+                {/* Email Field */}
+                <div className={styles.authFormGroup}>
+                  <label className={styles.authFormLabel} htmlFor="login-email">
+                    Email Address
+                  </label>
+                  <input
+                    id="login-email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="your@email.com"
+                    className={styles.authFormInput}
+                    required
+                    autoFocus
+                  />
+                </div>
+
+                {/* Password Field */}
+                <div className={styles.authFormGroup}>
+                  <label
+                    className={styles.authFormLabel}
+                    htmlFor="login-password"
+                  >
+                    Password
+                  </label>
+                  <div className={styles.authPasswordInput}>
+                    <input
+                      id="login-password"
+                      type={showPassword ? "text" : "password"}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Enter your password"
+                      className={styles.authFormInput}
+                      required
+                    />
+                    <button
+                      type="button"
+                      className={styles.authPasswordToggle}
+                      onClick={() => setShowPassword(!showPassword)}
+                      aria-label={
+                        showPassword ? "Hide password" : "Show password"
+                      }
+                    >
+                      {showPassword ? <FiEyeOff /> : <FiEye />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Forgot Password */}
+                <div className={styles.authForgotPassword}>
+                  <button
+                    type="button"
+                    className={styles.authLinkBtn}
+                    onClick={() => {
+                      onClose();
+                      setShowForgotPassword(true);
+                    }}
+                  >
+                    Forgot Password?
+                  </button>
+                </div>
+
+                {/* Submit Button */}
+                <button
+                  type="submit"
+                  className={styles.authSubmitBtn}
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Signing In..." : "Sign In"}
+                </button>
+
+                {/* Divider */}
+                <div className={styles.authDivider}>
+                  <span>Or</span>
+                </div>
+
+                {/* Switch to Signup */}
+                <div className={styles.authSwitch}>
+                  <span>Don&apos;t have an account?</span>
+                  <button
+                    type="button"
+                    className={styles.authSwitchBtn}
+                    onClick={onSwitchToSignup}
+                  >
+                    Create Account
+                  </button>
+                </div>
+              </form>
             </div>
-          </form>
+          </div>
         </div>
-      </div>
-    </ModalPortal>
+      </ModalPortal>
+
+      {/* Forgot Password Modal */}
+      <ForgotPasswordModal
+        isOpen={showForgotPassword}
+        onClose={() => setShowForgotPassword(false)}
+      />
+    </>
   );
 }

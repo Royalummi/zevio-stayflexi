@@ -1,0 +1,18 @@
+{
+  "watch": ["src", "server.js"],
+  "ignore": [
+    "uploads/**",
+    "test*.js",
+    "check*.js",
+    "populate*.js",
+    "add_*.js",
+    "run_*.js",
+    "migrations/*.sql",
+    "node_modules/**",
+    "*.log"
+  ],
+  "ext": "js,json",
+  "execMap": {
+    "js": "node"
+  }
+}

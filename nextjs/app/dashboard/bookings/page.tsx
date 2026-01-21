@@ -9,30 +9,90 @@ import {
   FiCreditCard,
   FiMapPin,
   FiArrowLeft,
+  FiDownload,
+  FiSearch,
+  FiFilter,
+  FiX,
+  FiCheckCircle,
+  FiClock,
+  FiXCircle,
+  FiAlertCircle,
+  FiEye,
+  FiFileText,
 } from "react-icons/fi";
-import "./bookings.css";
+import { api } from "@/lib/axios";
+import { API_ENDPOINTS } from "@/lib/constants";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import styles from "./bookings.module.css";
 
 interface Booking {
   id: string;
   property_id: string;
-  property_name: string;
-  property_location: string;
+  property_title: string; // Backend returns 'property_title' not 'property_name'
+  property_city: string;
   check_in: string;
   check_out: string;
-  guests: number;
+  nights: number;
+  guest_count: number;
+  children_count?: number;
   total_amount: number;
-  status: string;
+  base_amount: number;
+  extra_guest_charges?: number;
+  gst_amount: number;
+  status:
+    | "confirmed"
+    | "pending_payment"
+    | "completed"
+    | "cancelled"
+    | "pending"
+    | "expired";
   created_at: string;
+  expires_at?: string; // SESSION 30: 12-hour expiry timestamp
 }
 
-export default function BookingsPage() {
+type StatusType =
+  | "all"
+  | "confirmed"
+  | "pending_payment"
+  | "completed"
+  | "cancelled";
+
+export default function BookingsEnhanced() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
+
   const [bookings, setBookings] = useState<Booking[]>([]);
-  const [loadingBookings, setLoadingBookings] = useState(true);
-  const [activeTab, setActiveTab] = useState<"all" | "upcoming" | "past">(
-    "all"
-  );
+  const [filteredBookings, setFilteredBookings] = useState<Booking[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [activeStatus, setActiveStatus] = useState<StatusType>("all");
+
+  // SESSION 34: Confirmation modal for delete
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [bookingToDelete, setBookingToDelete] = useState<Booking | null>(null);
+
+  // SESSION 34: Bulk cancel for pending bookings
+  const [selectedBookings, setSelectedBookings] = useState<string[]>([]);
+  const [showBulkCancelModal, setShowBulkCancelModal] = useState(false);
+
+  // SESSION 30: Force re-render every minute for countdown timer updates
+  const [, setTimerTick] = useState(0);
+
+  // Filters
+  const [searchQuery, setSearchQuery] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [minAmount, setMinAmount] = useState("");
+  const [maxAmount, setMaxAmount] = useState("");
+
+  // Pagination
+  const [page, setPage] = useState(1);
+  const itemsPerPage = 10;
+
+  // Toast
+  const [toast, setToast] = useState<{
+    message: string;
+    type: "success" | "error";
+  } | null>(null);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -42,210 +102,916 @@ export default function BookingsPage() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      // Fetch user bookings
-      // TODO: Implement API call to fetch bookings
-      // For now, using mock data
-      setTimeout(() => {
-        setBookings([]);
-        setLoadingBookings(false);
-      }, 1000);
+      fetchBookings();
     }
   }, [isAuthenticated]);
 
-  if (isLoading) {
+  // SESSION 30: Update countdown timer every minute
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTimerTick((prev) => prev + 1);
+    }, 60000); // 60 seconds
+    return () => clearInterval(interval);
+  }, []);
+
+  // Auto-hide toast
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
+
+  const fetchBookings = async () => {
+    try {
+      setLoading(true);
+      const response = await api.get(API_ENDPOINTS.BOOKINGS.MY_BOOKINGS);
+
+      let bookingsData =
+        response.data.data?.bookings || response.data.data || [];
+
+      // SESSION 30: Filter out expired bookings completely
+      const now = new Date();
+      bookingsData = bookingsData.filter((booking: Booking) => {
+        if (
+          (booking.status === "pending" ||
+            booking.status === "pending_payment") &&
+          booking.expires_at
+        ) {
+          const expiryDate = new Date(booking.expires_at);
+          return expiryDate > now; // Only show if not expired
+        }
+        return true; // Show all non-pending bookings
+      });
+
+      setBookings(bookingsData);
+      setFilteredBookings(bookingsData);
+    } catch (error) {
+      console.error("Failed to fetch bookings:", error);
+      setToast({
+        message: "Failed to load bookings. Please try again.",
+        type: "error",
+      });
+      setBookings([]);
+      setFilteredBookings([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const applyFilters = () => {
+    let filtered = [...bookings];
+
+    // Status filter
+    if (activeStatus !== "all") {
+      filtered = filtered.filter((b) => b.status === activeStatus);
+    }
+
+    // Search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(
+        (b) =>
+          b.property_title?.toLowerCase().includes(query) ||
+          b.property_city?.toLowerCase().includes(query) ||
+          b.id.toLowerCase().includes(query)
+      );
+    }
+
+    // Date range filter
+    if (dateFrom) {
+      filtered = filtered.filter(
+        (b) => new Date(b.check_in) >= new Date(dateFrom)
+      );
+    }
+    if (dateTo) {
+      filtered = filtered.filter(
+        (b) => new Date(b.check_out) <= new Date(dateTo)
+      );
+    }
+
+    // Amount range filter
+    if (minAmount) {
+      filtered = filtered.filter(
+        (b) => b.total_amount >= parseFloat(minAmount)
+      );
+    }
+    if (maxAmount) {
+      filtered = filtered.filter(
+        (b) => b.total_amount <= parseFloat(maxAmount)
+      );
+    }
+
+    setFilteredBookings(filtered);
+    setPage(1); // Reset to first page
+  };
+
+  const clearFilters = () => {
+    setSearchQuery("");
+    setDateFrom("");
+    setDateTo("");
+    setMinAmount("");
+    setMaxAmount("");
+    setActiveStatus("all");
+    setFilteredBookings(bookings);
+    setPage(1);
+  };
+
+  // ============================================
+  // NEW FEATURE: Export to CSV using backend API
+  // ============================================
+  const exportToCSV = async () => {
+    try {
+      // Build query params
+      const params = new URLSearchParams();
+      params.append("export", "true");
+
+      if (activeStatus !== "all") {
+        params.append("status", activeStatus);
+      }
+
+      // Download CSV from backend
+      const response = await api.get(
+        `${API_ENDPOINTS.BOOKINGS.MY_BOOKINGS}?${params.toString()}`,
+        {
+          responseType: "blob", // Important for file download
+        }
+      );
+
+      // Create download link
+      const blob = new Blob([response.data], { type: "text/csv" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `bookings_${new Date().toISOString().split("T")[0]}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      setToast({
+        message: "Bookings exported successfully!",
+        type: "success",
+      });
+    } catch (error) {
+      console.error("Export failed:", error);
+      setToast({
+        message: "Failed to export bookings. Please try again.",
+        type: "error",
+      });
+    }
+  };
+
+  const exportToPDF = () => {
+    // TODO: Implement PDF export with jsPDF library
+    setToast({
+      message: "PDF export coming soon!",
+      type: "success",
+    });
+  };
+
+  // SESSION 30: Handle Continue Booking (navigate to booking-review with bookingId)
+  const handleContinueBooking = (booking: Booking) => {
+    router.push(`/booking-review?bookingId=${booking.id}`);
+  };
+
+  // SESSION 34: Handle Delete/Cancel Pending Booking
+  const handleDeletePendingBooking = (booking: Booking) => {
+    setBookingToDelete(booking);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteBooking = async () => {
+    if (!bookingToDelete) return;
+
+    try {
+      await api.delete(`/bookings/${bookingToDelete.id}/cancel-pending`);
+      setToast({
+        message: "Pending booking cancelled successfully!",
+        type: "success",
+      });
+      setShowDeleteModal(false);
+      setBookingToDelete(null);
+      fetchBookings(); // Refresh bookings list
+    } catch (error) {
+      console.error("Cancel booking error:", error);
+      setToast({
+        message: "Failed to cancel booking. Please try again.",
+        type: "error",
+      });
+      setShowDeleteModal(false);
+    }
+  };
+
+  // SESSION 34: Bulk Cancel Handlers
+  const handleSelectBooking = (bookingId: string) => {
+    setSelectedBookings((prev) =>
+      prev.includes(bookingId)
+        ? prev.filter((id) => id !== bookingId)
+        : [...prev, bookingId]
+    );
+  };
+
+  const handleSelectAll = () => {
+    const pendingBookings = paginatedBookings.filter(
+      (b) => b.status === "pending" || b.status === "pending_payment"
+    );
+
+    if (selectedBookings.length === pendingBookings.length) {
+      setSelectedBookings([]);
+    } else {
+      setSelectedBookings(pendingBookings.map((b) => b.id));
+    }
+  };
+
+  const handleBulkCancel = () => {
+    if (selectedBookings.length === 0) return;
+    setShowBulkCancelModal(true);
+  };
+
+  const confirmBulkCancel = async () => {
+    try {
+      await Promise.all(
+        selectedBookings.map((id) =>
+          api.delete(`/bookings/${id}/cancel-pending`)
+        )
+      );
+
+      setToast({
+        message: `${selectedBookings.length} booking(s) cancelled successfully!`,
+        type: "success",
+      });
+
+      setShowBulkCancelModal(false);
+      setSelectedBookings([]);
+      fetchBookings();
+    } catch (error) {
+      console.error("Bulk cancel failed:", error);
+      setToast({
+        message: "Some bookings failed to cancel. Please try again.",
+        type: "error",
+      });
+      setShowBulkCancelModal(false);
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case "confirmed":
+        return <FiCheckCircle size={18} />;
+      case "pending_payment":
+      case "pending":
+        return <FiClock size={18} />;
+      case "completed":
+        return <FiCheckCircle size={18} />;
+      case "cancelled":
+        return <FiXCircle size={18} />;
+      default:
+        return <FiAlertCircle size={18} />;
+    }
+  };
+
+  const getStatusClass = (status: string) => {
+    switch (status) {
+      case "confirmed":
+        return styles.statusConfirmed;
+      case "pending_payment":
+        return styles.statusPendingPayment;
+      case "pending":
+        return styles.statusPending;
+      case "completed":
+        return styles.statusCompleted;
+      case "cancelled":
+        return styles.statusCancelled;
+      default:
+        return styles.statusPending;
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("en-US", {
+      weekday: "short",
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
+  // SESSION 30: Calculate countdown timer for pending bookings
+  const calculateTimeLeft = (expiresAt: string) => {
+    const now = new Date();
+    const expiry = new Date(expiresAt);
+    const diff = expiry.getTime() - now.getTime();
+
+    if (diff <= 0) {
+      return "Expired";
+    }
+
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+    if (hours > 0) {
+      return `Expires in ${hours}h ${minutes}m`;
+    } else {
+      return `Expires in ${minutes}m`;
+    }
+  };
+
+  const getStatusCounts = () => {
+    return {
+      all: bookings.length,
+      confirmed: bookings.filter((b) => b.status === "confirmed").length,
+      pending_payment: bookings.filter(
+        (b) => b.status === "pending_payment" || b.status === "pending"
+      ).length,
+      completed: bookings.filter((b) => b.status === "completed").length,
+      cancelled: bookings.filter((b) => b.status === "cancelled").length,
+    };
+  };
+
+  const paginatedBookings = filteredBookings.slice(
+    (page - 1) * itemsPerPage,
+    page * itemsPerPage
+  );
+
+  if (isLoading || !user) {
     return (
-      <div className="bookings-loading-page">
-        <div className="loading-spinner"></div>
-        <p>Loading your bookings...</p>
+      <div className={styles.loadingPage}>
+        <div className={styles.loadingSpinner}></div>
+        <p>Loading bookings...</p>
       </div>
     );
   }
 
-  if (!isAuthenticated || !user) {
-    return null;
-  }
-
-  const now = new Date();
-  const filteredBookings = bookings.filter((booking) => {
-    if (activeTab === "upcoming") {
-      return new Date(booking.check_in) > now;
-    } else if (activeTab === "past") {
-      return new Date(booking.check_out) < now;
-    }
-    return true;
-  });
+  const statusCounts = getStatusCounts();
 
   return (
-    <div className="bookings-page-container">
-      <div className="bookings-page-inner">
+    <div className={styles.bookingsContainer}>
+      <div className={styles.bookingsInner}>
         {/* Header */}
-        <div className="bookings-header">
+        <div className={styles.bookingsHeader}>
           <button
             onClick={() => router.push("/dashboard")}
-            className="back-button"
+            className={styles.backButton}
           >
             <FiArrowLeft size={20} />
             <span>Back to Dashboard</span>
           </button>
-          <h1 className="bookings-page-title">My Bookings</h1>
-          <p className="bookings-page-subtitle">
-            View and manage all your property bookings
-          </p>
+
+          <div className={styles.headerContent}>
+            <div className={styles.headerLeft}>
+              <h1>My Bookings</h1>
+              <p>
+                {filteredBookings.length > 0
+                  ? `${filteredBookings.length} ${
+                      filteredBookings.length === 1 ? "booking" : "bookings"
+                    } found`
+                  : "No bookings found"}
+              </p>
+            </div>
+
+            <div className={styles.headerActions}>
+              <button
+                onClick={exportToCSV}
+                className={styles.exportBtn}
+                disabled={filteredBookings.length === 0}
+              >
+                <FiDownload size={18} />
+                Export CSV
+              </button>
+              <button
+                onClick={exportToPDF}
+                className={styles.exportBtn}
+                disabled={filteredBookings.length === 0}
+              >
+                <FiFileText size={18} />
+                Export PDF
+              </button>
+            </div>
+          </div>
         </div>
 
-        {/* Tabs */}
-        <div className="bookings-tabs">
+        {/* Filters Section */}
+        <div className={styles.filtersSection}>
+          <div className={styles.filtersGrid}>
+            <div className={styles.filterGroup}>
+              <label className={styles.filterLabel}>
+                <FiSearch size={16} />
+                Search
+              </label>
+              <input
+                type="text"
+                placeholder="Search by property name or ID..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className={styles.filterInput}
+              />
+            </div>
+
+            <div className={styles.filterGroup}>
+              <label className={styles.filterLabel}>
+                <FiCalendar size={16} />
+                Check-in From
+              </label>
+              <input
+                type="date"
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+                className={styles.filterInput}
+              />
+            </div>
+
+            <div className={styles.filterGroup}>
+              <label className={styles.filterLabel}>
+                <FiCalendar size={16} />
+                Check-out To
+              </label>
+              <input
+                type="date"
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+                className={styles.filterInput}
+              />
+            </div>
+
+            <div className={styles.filterGroup}>
+              <label className={styles.filterLabel}>
+                <FiCreditCard size={16} />
+                Min Amount (₹)
+              </label>
+              <input
+                type="number"
+                placeholder="Min amount"
+                value={minAmount}
+                onChange={(e) => setMinAmount(e.target.value)}
+                className={styles.filterInput}
+              />
+            </div>
+
+            <div className={styles.filterGroup}>
+              <label className={styles.filterLabel}>
+                <FiCreditCard size={16} />
+                Max Amount (₹)
+              </label>
+              <input
+                type="number"
+                placeholder="Max amount"
+                value={maxAmount}
+                onChange={(e) => setMaxAmount(e.target.value)}
+                className={styles.filterInput}
+              />
+            </div>
+          </div>
+
+          <div className={styles.filterActions}>
+            <button onClick={clearFilters} className={styles.clearFiltersBtn}>
+              <FiX size={18} />
+              Clear Filters
+            </button>
+            <button onClick={applyFilters} className={styles.applyFiltersBtn}>
+              <FiFilter size={18} />
+              Apply Filters
+            </button>
+          </div>
+        </div>
+
+        {/* Status Tabs */}
+        <div className={styles.statusTabs}>
           <button
-            onClick={() => setActiveTab("all")}
-            className={`tab-button ${activeTab === "all" ? "active" : ""}`}
+            onClick={() => {
+              setActiveStatus("all");
+              setPage(1);
+            }}
+            className={`${styles.statusTab} ${
+              activeStatus === "all" ? styles.active : ""
+            }`}
           >
             All Bookings
-            <span className="tab-badge">{bookings.length}</span>
+            <span className={styles.statusBadge}>{statusCounts.all}</span>
           </button>
           <button
-            onClick={() => setActiveTab("upcoming")}
-            className={`tab-button ${activeTab === "upcoming" ? "active" : ""}`}
+            onClick={() => {
+              setActiveStatus("confirmed");
+              setPage(1);
+            }}
+            className={`${styles.statusTab} ${
+              activeStatus === "confirmed" ? styles.active : ""
+            }`}
           >
-            Upcoming
-            <span className="tab-badge">
-              {bookings.filter((b) => new Date(b.check_in) > now).length}
+            Confirmed
+            <span className={styles.statusBadge}>{statusCounts.confirmed}</span>
+          </button>
+          <button
+            onClick={() => {
+              setActiveStatus("pending_payment");
+              setPage(1);
+            }}
+            className={`${styles.statusTab} ${
+              activeStatus === "pending_payment" ? styles.active : ""
+            }`}
+          >
+            Pending
+            <span className={styles.statusBadge}>
+              {statusCounts.pending_payment}
             </span>
           </button>
           <button
-            onClick={() => setActiveTab("past")}
-            className={`tab-button ${activeTab === "past" ? "active" : ""}`}
+            onClick={() => {
+              setActiveStatus("completed");
+              setPage(1);
+            }}
+            className={`${styles.statusTab} ${
+              activeStatus === "completed" ? styles.active : ""
+            }`}
           >
-            Past
-            <span className="tab-badge">
-              {bookings.filter((b) => new Date(b.check_out) < now).length}
-            </span>
+            Completed
+            <span className={styles.statusBadge}>{statusCounts.completed}</span>
+          </button>
+          <button
+            onClick={() => {
+              setActiveStatus("cancelled");
+              setPage(1);
+            }}
+            className={`${styles.statusTab} ${
+              activeStatus === "cancelled" ? styles.active : ""
+            }`}
+          >
+            Cancelled
+            <span className={styles.statusBadge}>{statusCounts.cancelled}</span>
           </button>
         </div>
 
-        {/* Bookings List */}
-        <div className="bookings-content">
-          {loadingBookings ? (
-            <div className="bookings-loading-state">
-              <div className="loading-spinner"></div>
-              <p>Loading your bookings...</p>
+        {/* SESSION 34: Bulk Actions Toolbar */}
+        {(activeStatus === "pending_payment" || activeStatus === "all") &&
+          paginatedBookings.some(
+            (b) => b.status === "pending" || b.status === "pending_payment"
+          ) && (
+            <div className={styles.bulkActionsToolbar}>
+              <label className={styles.selectAllCheckbox}>
+                <input
+                  type="checkbox"
+                  checked={
+                    selectedBookings.length > 0 &&
+                    selectedBookings.length ===
+                      paginatedBookings.filter(
+                        (b) =>
+                          b.status === "pending" ||
+                          b.status === "pending_payment"
+                      ).length
+                  }
+                  onChange={handleSelectAll}
+                />
+                <span>
+                  Select All Pending (
+                  {
+                    paginatedBookings.filter(
+                      (b) =>
+                        b.status === "pending" || b.status === "pending_payment"
+                    ).length
+                  }
+                  )
+                </span>
+              </label>
+
+              {selectedBookings.length > 0 && (
+                <button
+                  onClick={handleBulkCancel}
+                  className={styles.bulkCancelBtn}
+                >
+                  <FiXCircle size={18} />
+                  Cancel {selectedBookings.length} Selected
+                </button>
+              )}
             </div>
-          ) : filteredBookings.length > 0 ? (
-            <div className="bookings-list">
-              {filteredBookings.map((booking) => (
-                <div key={booking.id} className="booking-item">
-                  <div className="booking-item-header">
-                    <div>
-                      <h3 className="booking-item-property">
-                        {booking.property_name}
+          )}
+
+        {/* Bookings List */}
+        {loading ? (
+          <div className={styles.loadingPage}>
+            <LoadingSpinner />
+            <p>Loading bookings...</p>
+          </div>
+        ) : paginatedBookings.length > 0 ? (
+          <>
+            <div className={styles.bookingsList}>
+              {paginatedBookings.map((booking) => (
+                <div key={booking.id} className={styles.bookingCard}>
+                  {/* SESSION 34: Checkbox for bulk selection */}
+                  {(booking.status === "pending" ||
+                    booking.status === "pending_payment") && (
+                    <label className={styles.bookingCheckbox}>
+                      <input
+                        type="checkbox"
+                        checked={selectedBookings.includes(booking.id)}
+                        onChange={() => handleSelectBooking(booking.id)}
+                      />
+                    </label>
+                  )}
+
+                  <div className={styles.bookingCardHeader}>
+                    <div className={styles.bookingPropertyInfo}>
+                      <h3 className={styles.bookingPropertyName}>
+                        <FiHome size={20} />
+                        {booking.property_title || "Property"}
+                        <span className={styles.bookingId}>
+                          #{booking.id.slice(0, 8)}
+                        </span>
                       </h3>
-                      <div className="booking-item-location">
-                        <FiMapPin size={14} />
-                        <span>{booking.property_location}</span>
+                      <div className={styles.bookingLocation}>
+                        <FiMapPin size={16} />
+                        {booking.property_city || "Location"}
                       </div>
                     </div>
-                    <span
-                      className={`booking-item-status status-${booking.status}`}
-                    >
-                      {booking.status}
-                    </span>
+                    <div className={styles.badgeGroup}>
+                      <span
+                        className={`${
+                          styles.bookingStatusBadge
+                        } ${getStatusClass(booking.status)}`}
+                      >
+                        {getStatusIcon(booking.status)}
+                        {booking.status.replace("_", " ")}
+                      </span>
+                      {/* SESSION 30: Show countdown timer for pending bookings */}
+                      {(booking.status === "pending" ||
+                        booking.status === "pending_payment") &&
+                        booking.expires_at && (
+                          <span className={styles.expiryBadge}>
+                            <FiClock size={14} />
+                            {calculateTimeLeft(booking.expires_at)}
+                          </span>
+                        )}
+                    </div>
                   </div>
 
-                  <div className="booking-item-body">
-                    <div className="booking-item-info">
-                      <div className="info-item">
-                        <FiCalendar size={18} color="#9333ea" />
-                        <div>
-                          <p className="info-label">Check-in</p>
-                          <p className="info-value">
-                            {new Date(booking.check_in).toLocaleDateString(
-                              "en-US",
-                              {
-                                weekday: "short",
-                                year: "numeric",
-                                month: "short",
-                                day: "numeric",
-                              }
-                            )}
-                          </p>
-                        </div>
+                  <div className={styles.bookingDetailsGrid}>
+                    <div className={styles.detailItem}>
+                      <div className={styles.detailIcon}>
+                        <FiCalendar size={18} />
                       </div>
-
-                      <div className="info-item">
-                        <FiCalendar size={18} color="#9333ea" />
-                        <div>
-                          <p className="info-label">Check-out</p>
-                          <p className="info-value">
-                            {new Date(booking.check_out).toLocaleDateString(
-                              "en-US",
-                              {
-                                weekday: "short",
-                                year: "numeric",
-                                month: "short",
-                                day: "numeric",
-                              }
-                            )}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="info-item">
-                        <FiHome size={18} color="#9333ea" />
-                        <div>
-                          <p className="info-label">Guests</p>
-                          <p className="info-value">{booking.guests} Guests</p>
-                        </div>
-                      </div>
-
-                      <div className="info-item">
-                        <FiCreditCard size={18} color="#9333ea" />
-                        <div>
-                          <p className="info-label">Total Amount</p>
-                          <p className="info-value">
-                            ₹{booking.total_amount.toLocaleString()}
-                          </p>
-                        </div>
+                      <div className={styles.detailContent}>
+                        <p className={styles.detailLabel}>Check-in</p>
+                        <p className={styles.detailValue}>
+                          {formatDate(booking.check_in)}
+                        </p>
                       </div>
                     </div>
 
-                    <div className="booking-item-actions">
+                    <div className={styles.detailItem}>
+                      <div className={styles.detailIcon}>
+                        <FiCalendar size={18} />
+                      </div>
+                      <div className={styles.detailContent}>
+                        <p className={styles.detailLabel}>Check-out</p>
+                        <p className={styles.detailValue}>
+                          {formatDate(booking.check_out)}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className={styles.detailItem}>
+                      <div className={styles.detailIcon}>
+                        <FiHome size={18} />
+                      </div>
+                      <div className={styles.detailContent}>
+                        <p className={styles.detailLabel}>Guests</p>
+                        <p className={styles.detailValue}>
+                          {booking.guest_count}{" "}
+                          {booking.guest_count === 1 ? "Guest" : "Guests"}
+                          {booking.children_count &&
+                            booking.children_count > 0 &&
+                            ` + ${booking.children_count} Children`}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className={styles.detailItem}>
+                      <div className={styles.detailIcon}>
+                        <FiCreditCard size={18} />
+                      </div>
+                      <div className={styles.detailContent}>
+                        <p className={styles.detailLabel}>Total Amount</p>
+                        <p className={styles.detailValueLarge}>
+                          ₹{booking.total_amount.toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className={styles.bookingActions}>
+                    <button
+                      onClick={() =>
+                        router.push(`/properties/${booking.property_id}`)
+                      }
+                      className={`${styles.actionBtn} ${styles.actionBtnSecondary}`}
+                    >
+                      <FiHome size={16} />
+                      View Property
+                    </button>
+
+                    {/* SESSION 34: Show Continue/Delete buttons for pending bookings */}
+                    {booking.status === "pending" ||
+                    booking.status === "pending_payment" ? (
+                      <>
+                        <button
+                          className={`${styles.actionBtn} ${styles.actionBtnPrimary}`}
+                          onClick={() => handleContinueBooking(booking)}
+                        >
+                          <FiCheckCircle size={16} />
+                          Continue Booking
+                        </button>
+                        <button
+                          className={`${styles.actionBtn} ${styles.actionBtnDanger}`}
+                          onClick={() => handleDeletePendingBooking(booking)}
+                        >
+                          <FiXCircle size={16} />
+                          Cancel
+                        </button>
+                      </>
+                    ) : (
                       <button
+                        className={`${styles.actionBtn} ${styles.actionBtnPrimary}`}
                         onClick={() =>
-                          router.push(`/properties/${booking.property_id}`)
+                          router.push(`/dashboard/bookings/${booking.id}`)
                         }
-                        className="action-button action-button-secondary"
                       >
-                        View Property
-                      </button>
-                      <button className="action-button action-button-primary">
+                        <FiEye size={16} />
                         View Details
                       </button>
-                    </div>
+                    )}
+
+                    {booking.status === "confirmed" && (
+                      <button
+                        className={`${styles.actionBtn} ${styles.actionBtnDanger}`}
+                        onClick={() => {
+                          setToast({
+                            message: "Cancellation feature coming soon!",
+                            type: "success",
+                          });
+                        }}
+                      >
+                        <FiXCircle size={16} />
+                        Request Cancellation
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
             </div>
-          ) : (
-            <div className="bookings-empty-state">
-              <FiCalendar size={64} color="#d1d5db" />
-              <h3>No bookings found</h3>
-              <p>
-                {activeTab === "upcoming"
-                  ? "You don't have any upcoming bookings."
-                  : activeTab === "past"
-                  ? "You don't have any past bookings."
-                  : "Start exploring our luxury villas and make your first booking!"}
+
+            {/* Pagination */}
+            {filteredBookings.length > itemsPerPage && (
+              <div className={styles.pagination}>
+                <button
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                  className={styles.paginationBtn}
+                >
+                  Previous
+                </button>
+                <span className={styles.paginationInfo}>
+                  Page {page} of{" "}
+                  {Math.ceil(filteredBookings.length / itemsPerPage)}
+                </span>
+                <button
+                  onClick={() =>
+                    setPage((p) =>
+                      Math.min(
+                        Math.ceil(filteredBookings.length / itemsPerPage),
+                        p + 1
+                      )
+                    )
+                  }
+                  disabled={
+                    page === Math.ceil(filteredBookings.length / itemsPerPage)
+                  }
+                  className={styles.paginationBtn}
+                >
+                  Next
+                </button>
+              </div>
+            )}
+          </>
+        ) : (
+          <div className={styles.emptyState}>
+            <div className={styles.emptyIcon}>
+              <FiCalendar size={48} />
+            </div>
+            <h3 className={styles.emptyTitle}>No bookings found</h3>
+            <p className={styles.emptyText}>
+              {activeStatus !== "all"
+                ? `You don't have any ${activeStatus.replace(
+                    "_",
+                    " "
+                  )} bookings.`
+                : "Start exploring our luxury villas and make your first booking!"}
+            </p>
+            <button
+              onClick={() => router.push("/properties")}
+              className={styles.emptyAction}
+            >
+              <FiHome size={18} />
+              Browse Properties
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* SESSION 34: Delete Confirmation Modal */}
+      {showDeleteModal && bookingToDelete && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modal}>
+            <div className={styles.modalHeader}>
+              <FiAlertCircle size={48} color="#EF4444" />
+              <h2 className={styles.modalTitle}>Cancel Pending Booking?</h2>
+            </div>
+            <div className={styles.modalBody}>
+              <p className={styles.modalText}>
+                Are you sure you want to cancel your pending booking for{" "}
+                <strong>{bookingToDelete.property_title}</strong>?
               </p>
+              <p className={styles.modalWarning}>
+                This action cannot be undone. You&apos;ll need to create a new
+                booking if you change your mind.
+              </p>
+            </div>
+            <div className={styles.modalActions}>
               <button
-                onClick={() => router.push("/properties")}
-                className="btn btn-primary"
-                style={{ marginTop: "1.5rem" }}
+                className={styles.modalBtnSecondary}
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setBookingToDelete(null);
+                }}
               >
-                Browse Properties
+                Keep Booking
+              </button>
+              <button
+                className={styles.modalBtnDanger}
+                onClick={confirmDeleteBooking}
+              >
+                Yes, Cancel Booking
               </button>
             </div>
-          )}
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* SESSION 34: Bulk Cancel Modal */}
+      {showBulkCancelModal && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modal}>
+            <div className={styles.modalHeader}>
+              <FiAlertCircle size={48} color="#EF4444" />
+              <h2 className={styles.modalTitle}>
+                Cancel {selectedBookings.length} Booking(s)?
+              </h2>
+            </div>
+            <div className={styles.modalBody}>
+              <p className={styles.modalText}>
+                Are you sure you want to cancel{" "}
+                <strong>{selectedBookings.length} pending booking(s)</strong>?
+              </p>
+              <p className={styles.modalWarning}>
+                This action cannot be undone. You&apos;ll need to create new
+                bookings if you change your mind.
+              </p>
+            </div>
+            <div className={styles.modalActions}>
+              <button
+                className={styles.modalBtnSecondary}
+                onClick={() => {
+                  setShowBulkCancelModal(false);
+                }}
+              >
+                Keep Bookings
+              </button>
+              <button
+                className={styles.modalBtnDanger}
+                onClick={confirmBulkCancel}
+              >
+                Yes, Cancel All Selected
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {toast && (
+        <div
+          className={`${styles.toast} ${
+            toast.type === "success" ? styles.toastSuccess : styles.toastError
+          }`}
+        >
+          <div className={styles.toastIcon}>
+            {toast.type === "success" ? (
+              <FiCheckCircle size={24} color="#059669" />
+            ) : (
+              <FiXCircle size={24} color="#DC2626" />
+            )}
+          </div>
+          <span className={styles.toastMessage}>{toast.message}</span>
+        </div>
+      )}
     </div>
   );
 }

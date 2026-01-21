@@ -2,6 +2,7 @@ import express from "express";
 import { body } from "express-validator";
 import { validate } from "../middlewares/validator.js";
 import { authenticate, authorize } from "../middlewares/auth.js";
+import { validatePagination } from "../middlewares/pagination.js";
 import {
   getAllBookings,
   getBookingStats,
@@ -25,6 +26,12 @@ import {
   getPropertyPerformance,
   getVendorPerformance,
   getEmployeePerformance,
+  getAllCities,
+  getAllVendors,
+  getAllEmployees,
+  createProperty,
+  updateProperty,
+  deleteProperty,
 } from "../controllers/adminController.js";
 
 const router = express.Router();
@@ -36,8 +43,8 @@ router.use(authorize("admin", "super_admin"));
 // Dashboard
 router.get("/dashboard/stats", getDashboardStats);
 
-// Bookings
-router.get("/bookings", getAllBookings);
+// Bookings (with pagination)
+router.get("/bookings", validatePagination, getAllBookings);
 router.get("/bookings/stats", getBookingStats);
 
 // Refunds
@@ -53,8 +60,8 @@ router.post(
   processRefund
 );
 
-// Vendor settlements
-router.get("/settlements/vendor", getVendorSettlements);
+// Vendor settlements (with pagination)
+router.get("/settlements/vendor", validatePagination, getVendorSettlements);
 router.post(
   "/settlements/vendor/mark-paid",
   [
@@ -65,8 +72,8 @@ router.post(
   markSettlementPaid
 );
 
-// Employee claims
-router.get("/claims/employee", getEmployeeClaims);
+// Employee claims (with pagination)
+router.get("/claims/employee", validatePagination, getEmployeeClaims);
 router.post(
   "/claims/employee/process",
   [
@@ -80,10 +87,30 @@ router.post(
   processEmployeeClaim
 );
 
-// Properties management
-router.get("/properties", getAllProperties);
+// Dropdown data (small datasets - no pagination needed)
+router.get("/cities", getAllCities);
+router.get("/vendors", getAllVendors);
+router.get("/employees", getAllEmployees);
+
+// Properties management (with pagination)
+router.get("/properties", validatePagination, getAllProperties);
 router.get("/properties/stats", getPropertyStats);
 router.get("/properties/:id", getPropertyDetails);
+router.post(
+  "/properties",
+  [
+    body("title").notEmpty().withMessage("Title is required"),
+    body("vendor_id").notEmpty().withMessage("Vendor is required"),
+    body("city_id").notEmpty().withMessage("City is required"),
+    body("price_per_night")
+      .isFloat({ min: 0 })
+      .withMessage("Valid price is required"),
+    validate,
+  ],
+  createProperty
+);
+router.put("/properties/:id", updateProperty);
+router.delete("/properties/:id", deleteProperty);
 router.put(
   "/properties/:id/status",
   [
@@ -96,8 +123,8 @@ router.put(
   updatePropertyStatus
 );
 
-// User management
-router.get("/users", getAllUsers);
+// User management (with pagination)
+router.get("/users", validatePagination, getAllUsers);
 router.get("/users/stats", getUserStats);
 router.get("/users/:id", getUserDetails);
 router.put(
@@ -112,7 +139,7 @@ router.put(
   updateUserStatus
 );
 
-// Reports & Analytics
+// Reports & Analytics (stats - no pagination needed)
 router.get("/reports/revenue", getRevenueAnalytics);
 router.get("/reports/booking-trends", getBookingTrends);
 router.get("/reports/user-activity", getUserActivityReport);

@@ -1,5 +1,5 @@
 import React from "react";
-import "./Button.css";
+import styles from "./Button.module.css";
 
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -26,11 +26,12 @@ export default function Button({
   disabled,
   ...props
 }: ButtonProps) {
-  const baseClass = "zevio-button";
-  const variantClass = `zevio-button--${variant}`;
-  const sizeClass = `zevio-button--${size}`;
-  const fullWidthClass = fullWidth ? "zevio-button--full" : "";
-  const loadingClass = isLoading ? "zevio-button--loading" : "";
+  const baseClass = styles.zevioButton;
+  const variantClass =
+    styles[`zevioButton${variant.charAt(0).toUpperCase() + variant.slice(1)}`];
+  const sizeClass = styles[`zevioButton${size.toUpperCase()}`];
+  const fullWidthClass = fullWidth ? styles.zevioButtonFull : "";
+  const loadingClass = isLoading ? styles.zevioButtonLoading : "";
 
   const combinedClassName = [
     baseClass,
@@ -50,14 +51,16 @@ export default function Button({
       {...props}
     >
       {isLoading && (
-        <span className="zevio-button__spinner">
+        <span className={styles.zevioButtonSpinner}>
           <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <circle cx="12" cy="12" r="10" />
           </svg>
         </span>
       )}
-      {icon && !isLoading && <span className="zevio-button__icon">{icon}</span>}
-      <span className="zevio-button__text">{children}</span>
+      {icon && !isLoading && (
+        <span className={styles.zevioButtonIcon}>{icon}</span>
+      )}
+      <span className={styles.zevioButtonText}>{children}</span>
     </button>
   );
 }

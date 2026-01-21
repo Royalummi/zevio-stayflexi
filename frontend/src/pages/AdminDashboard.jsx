@@ -11,6 +11,7 @@ import {
   CheckCircle,
   XCircle,
   Clock,
+  Plus,
 } from "lucide-react";
 import api from "../lib/api";
 import { useAuthStore } from "../store/authStore";
@@ -22,11 +23,14 @@ import {
   CardTitle,
   CardContent,
 } from "../components/ui/card";
+import AdminPropertyForm from "../components/admin/AdminPropertyForm";
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
   const [loading, setLoading] = useState(true);
+  const [showPropertyForm, setShowPropertyForm] = useState(false);
+  const [editingPropertyId, setEditingPropertyId] = useState(null);
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalProperties: 0,
@@ -236,6 +240,19 @@ export default function AdminDashboard() {
               <Button
                 className="h-auto py-4"
                 variant="outline"
+                onClick={() => {
+                  setEditingPropertyId(null);
+                  setShowPropertyForm(true);
+                }}
+              >
+                <div className="flex flex-col items-center">
+                  <Plus className="h-8 w-8 mb-2" />
+                  <span>Add Property</span>
+                </div>
+              </Button>
+              <Button
+                className="h-auto py-4"
+                variant="outline"
                 onClick={() => navigate("/admin/bookings")}
               >
                 <div className="flex flex-col items-center">
@@ -277,6 +294,48 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
       </main>
+
+      {/* Property Form Modal */}
+      {showPropertyForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between z-10">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                {editingPropertyId ? "Edit Property" : "Add New Property"}
+              </h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setShowPropertyForm(false);
+                  setEditingPropertyId(null);
+                }}
+              >
+                ✕
+              </Button>
+            </div>
+            <div className="p-6">
+              <AdminPropertyForm
+                propertyId={editingPropertyId}
+                onSuccess={() => {
+                  setShowPropertyForm(false);
+                  setEditingPropertyId(null);
+                  fetchDashboardStats(); // Refresh data
+                  toast.success(
+                    editingPropertyId
+                      ? "Property updated successfully!"
+                      : "Property created successfully!"
+                  );
+                }}
+                onCancel={() => {
+                  setShowPropertyForm(false);
+                  setEditingPropertyId(null);
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

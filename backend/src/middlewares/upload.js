@@ -41,11 +41,44 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-// Multer upload configuration
+// Multer upload configuration for avatars
 export const uploadAvatar = multer({
   storage: storage,
   limits: {
     fileSize: 2 * 1024 * 1024, // 2MB max file size
+  },
+  fileFilter: fileFilter,
+});
+
+// ========================================
+// Property Images Upload Configuration
+// ========================================
+
+// Ensure property uploads directory exists
+const propertyUploadsDir = path.join(__dirname, "../../uploads/properties");
+if (!fs.existsSync(propertyUploadsDir)) {
+  fs.mkdirSync(propertyUploadsDir, { recursive: true });
+}
+
+// Configure storage for property images
+const propertyStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, propertyUploadsDir);
+  },
+  filename: function (req, file, cb) {
+    // Generate unique filename: property-propertyId-timestamp.extension
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    const ext = path.extname(file.originalname);
+    const propertyId = req.params.id || "unknown";
+    cb(null, `property-${propertyId}-${uniqueSuffix}${ext}`);
+  },
+});
+
+// Multer upload configuration for property images (multiple files)
+export const uploadPropertyImages = multer({
+  storage: propertyStorage,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB max file size per image
   },
   fileFilter: fileFilter,
 });

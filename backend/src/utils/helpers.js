@@ -16,14 +16,59 @@ export const calculateBookingAmount = (
   pricePerNight,
   nights,
   gstPercentage,
-  discountAmount = 0
+  discountAmount = 0,
+  propertyPricing = {},
+  guestCounts = {}
 ) => {
+  // Base amount (includes minimum guests/children in property price)
   const baseAmount = pricePerNight * nights;
-  const gstAmount = (baseAmount * gstPercentage) / 100;
-  const totalAmount = baseAmount + gstAmount - discountAmount;
+
+  // Calculate extra guest charges
+  let extraGuestCharges = 0;
+  if (
+    guestCounts.guest_count &&
+    propertyPricing.min_guests &&
+    propertyPricing.extra_guest_charge
+  ) {
+    const extraGuests = Math.max(
+      0,
+      guestCounts.guest_count - propertyPricing.min_guests
+    );
+    extraGuestCharges =
+      extraGuests * propertyPricing.extra_guest_charge * nights;
+  }
+
+  // Calculate extra children charges (children age 0-12, excluding infants 0-2)
+  let extraChildrenCharges = 0;
+  if (
+    guestCounts.children_count &&
+    propertyPricing.min_children !== undefined &&
+    propertyPricing.extra_child_charge
+  ) {
+    const extraChildren = Math.max(
+      0,
+      guestCounts.children_count - propertyPricing.min_children
+    );
+    extraChildrenCharges =
+      extraChildren * propertyPricing.extra_child_charge * nights;
+  }
+
+  // Note: Infants (0-2 years) are FREE - no charges
+
+  // Subtotal before GST
+  const subtotal =
+    baseAmount + extraGuestCharges + extraChildrenCharges - discountAmount;
+
+  // Calculate GST on total (base + extra guests + extra children - discount)
+  const gstAmount = (subtotal * gstPercentage) / 100;
+
+  // Final total
+  const totalAmount = subtotal + gstAmount;
 
   return {
     baseAmount: parseFloat(baseAmount.toFixed(2)),
+    extraGuestCharges: parseFloat(extraGuestCharges.toFixed(2)),
+    extraChildrenCharges: parseFloat(extraChildrenCharges.toFixed(2)),
     gstAmount: parseFloat(gstAmount.toFixed(2)),
     discountAmount: parseFloat(discountAmount.toFixed(2)),
     totalAmount: parseFloat(totalAmount.toFixed(2)),

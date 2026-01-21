@@ -1,0 +1,509 @@
+/* ============================================================================
+   ZEVIO PROPERTY CARD - BRAND REDESIGN (Client Approved Colors)
+   Created: January 4, 2026
+   Colors: Navy (#1F3A5F) + Teal (#2FA4A9) + Light Grey (#E6E9EE)
+   ============================================================================ */
+
+.propertyCard {
+  cursor: pointer;
+  transition: all var(--transition-base);
+  border-radius: var(--radius-lg);
+  overflow: visible;
+  background: var(--brand-white);
+  position: relative;
+  border: 1px solid var(--brand-border-light);
+}
+
+.propertyCard:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-xl);
+  border-color: var(--brand-teal-light);
+}
+
+/* ============================================================================
+   IMAGE CONTAINER - 3:2 Aspect Ratio with Brand Colors
+   ============================================================================ */
+
+.propertyCardImageContainer {
+  position: relative;
+  width: 100%;
+  padding-bottom: 66.67%;
+  /* 3:2 aspect ratio */
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, var(--brand-grey-lighter) 0%, var(--brand-grey-light) 100%);
+  box-shadow: var(--shadow-md);
+  transition: all var(--transition-base);
+}
+
+.propertyCard:hover .propertyCardImageContainer {
+  box-shadow: var(--shadow-lg);
+}
+
+.propertyCardImage {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.propertyCard:hover .propertyCardImage {
+  transform: scale(1.08);
+}
+
+.propertyImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ============================================================================
+   WISHLIST BUTTON - Teal Brand Color
+   ============================================================================ */
+
+.wishlistBtn {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-full);
+  border: none;
+  background: var(--brand-white-translucent);
+  backdrop-filter: blur(20px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 3;
+  transition: all var(--transition-base);
+  box-shadow: var(--shadow-md);
+}
+
+.wishlistBtn:hover {
+  transform: scale(1.15);
+  background: var(--brand-white);
+  box-shadow: var(--shadow-lg);
+}
+
+.wishlistBtn svg {
+  width: 18px;
+  height: 18px;
+  color: var(--brand-navy);
+  stroke-width: 2.5;
+  transition: all var(--transition-base);
+}
+
+.wishlistBtn.active {
+  background: linear-gradient(135deg, var(--brand-teal) 0%, var(--brand-teal-dark) 100%);
+  transform: scale(1.15);
+}
+
+.wishlistBtn.active svg {
+  fill: var(--brand-white);
+  stroke: var(--brand-white);
+  animation: heartBeat 0.5s ease;
+}
+
+.wishlistBtn.processing {
+  opacity: 0.6;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.wishlistBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@keyframes heartBeat {
+
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.3);
+  }
+}
+
+/* ============================================================================
+   PHOTO NAVIGATION BUTTONS - Brand Navy
+   ============================================================================ */
+
+.photoNavBtn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--brand-border);
+  background: var(--brand-white-translucent);
+  backdrop-filter: blur(20px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 2;
+  opacity: 0;
+  transition: all var(--transition-base);
+  box-shadow: var(--shadow-md);
+}
+
+.propertyCardImageContainer:hover .photoNavBtn {
+  opacity: 1;
+}
+
+.photoNavBtn:hover {
+  background: var(--brand-navy);
+  border-color: var(--brand-navy);
+  transform: translateY(-50%) scale(1.2);
+  box-shadow: var(--shadow-lg);
+}
+
+.photoNavBtn.prev {
+  left: 14px;
+}
+
+.photoNavBtn.next {
+  right: 14px;
+}
+
+.photoNavBtn svg {
+  color: var(--brand-navy);
+  stroke-width: 2.5;
+  transition: color var(--transition-fast);
+}
+
+.photoNavBtn:hover svg {
+  color: var(--brand-white);
+}
+
+/* ============================================================================
+   PHOTO INDICATORS - Enhanced Dots
+   ============================================================================ */
+
+.photoIndicators {
+  position: absolute;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+  z-index: 2;
+  padding: 6px 12px;
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(20px);
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.indicator {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+.indicator:hover {
+  background: rgba(255, 255, 255, 0.8);
+  transform: scale(1.2);
+}
+
+.indicator.active {
+  background: white;
+  width: 20px;
+  height: 7px;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(255, 255, 255, 0.3);
+}
+
+/* ============================================================================
+   VERIFIED BADGE - Teal Accent
+   ============================================================================ */
+
+.verifiedBadge {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  background: var(--brand-teal);
+  padding: 7px 14px;
+  border-radius: var(--radius-2xl);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: var(--font-bold);
+  color: var(--brand-white);
+  box-shadow: var(--shadow-md);
+  z-index: 3;
+  backdrop-filter: blur(10px);
+  transition: all var(--transition-base);
+}
+
+.verifiedBadge:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+  background: var(--brand-teal-light);
+}
+
+.verifiedBadge svg {
+  width: 15px;
+  height: 15px;
+  color: var(--brand-white);
+  fill: var(--brand-white);
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+/* Corporate Badge - For corporate verified users only */
+.corporateBadge {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: linear-gradient(135deg, #1F3A5F 0%, #2D4A6F 100%);
+  padding: 7px 14px;
+  border-radius: var(--radius-2xl);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: var(--font-bold);
+  color: var(--brand-white);
+  box-shadow: var(--shadow-md);
+  z-index: 3;
+  backdrop-filter: blur(10px);
+  transition: all var(--transition-base);
+}
+
+.corporateBadge:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.corporateBadge svg {
+  width: 15px;
+  height: 15px;
+  color: var(--brand-white);
+}
+
+/* Corporate Pricing Styles */
+.corporatePricing {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.originalPrice {
+  font-size: 14px;
+  color: #9ca3af;
+  text-decoration: line-through;
+  font-weight: 500;
+}
+
+.savingsText {
+  font-size: 12px;
+  color: #10b981;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+/* ============================================================================
+   PROPERTY CONTENT - Brand Typography
+   ============================================================================ */
+
+.propertyCardContent {
+  padding: var(--space-4) var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* Header: Location & Rating */
+.propertyCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.propertyLocation {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.locationIcon {
+  width: 14px;
+  height: 14px;
+  color: var(--brand-text-dark);
+  flex-shrink: 0;
+}
+
+.locationText {
+  font-size: var(--text-sm);
+  color: var(--brand-text-dark);
+  font-weight: var(--font-normal);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.propertyRating {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.starIcon {
+  width: 12px;
+  height: 12px;
+  color: var(--brand-teal);
+  fill: var(--brand-teal);
+}
+
+.ratingValue {
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  color: var(--brand-navy);
+}
+
+.ratingCount {
+  font-size: var(--text-sm);
+  color: var(--brand-text-dark);
+  font-weight: var(--font-normal);
+}
+
+/* Property Name */
+.propertyCardName {
+  font-size: var(--text-lg);
+  font-weight: var(--font-semibold);
+  color: var(--brand-navy);
+  margin: 0;
+  line-height: var(--leading-tight);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-height: 2.8em;
+  transition: color var(--transition-fast);
+}
+
+.propertyCard:hover .propertyCardName {
+  color: var(--brand-teal);
+}
+
+/* Property Details */
+.propertyCardDetails {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.detailItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-sm);
+  color: var(--brand-text-dark);
+  font-weight: var(--font-normal);
+}
+
+.detailItem svg {
+  width: 16px;
+  height: 16px;
+  color: var(--brand-teal);
+}
+
+/* Price Footer - Brand Colors */
+.propertyCardFooter {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-top: var(--space-2);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--brand-border);
+}
+
+.propertyPrice {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+}
+
+.priceAmount {
+  font-size: var(--text-xl);
+  font-weight: var(--font-bold);
+  color: var(--brand-navy);
+}
+
+.pricePeriod {
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--brand-text-dark);
+}
+
+/* ============================================================================
+   RESPONSIVE DESIGN
+   ============================================================================ */
+
+@media (max-width: 640px) {
+  .propertyCardName {
+    font-size: 15px;
+  }
+
+  .priceAmount {
+    font-size: 16px;
+  }
+
+  .verifiedBadge {
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+}
+
+/* Grid Layout for Property Cards */
+.propertiesGrid {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 40px 24px;
+  padding: 24px 0;
+}
+
+@media (min-width: 640px) {
+  .propertiesGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .propertiesGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1280px) {
+  .propertiesGrid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* Hover Effect on Desktop Only */
+@media (hover: hover) {
+  .propertyCard:hover {
+    box-shadow: var(--shadow-xl);
+    border-color: var(--brand-teal);
+  }
+}

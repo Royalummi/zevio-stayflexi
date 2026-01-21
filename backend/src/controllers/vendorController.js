@@ -1,5 +1,6 @@
 import db from "../config/database.js";
 import { asyncHandler, sendSuccess, sendError } from "../utils/response.js";
+import { sanitizeRichText } from "../utils/sanitize.js";
 
 /**
  * @route   GET /api/vendor/dashboard

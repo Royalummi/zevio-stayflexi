@@ -9,10 +9,13 @@ import PropertyFilters, {
   PropertyFiltersState,
 } from "@/components/properties/PropertyFilters";
 import { FiHome } from "react-icons/fi";
-import "./properties.css";
+import { useToast } from "@/hooks/useToast";
+import ToastContainer from "@/components/ui/ToastContainer";
+import styles from "./properties.module.css";
 
 export default function PropertiesPage() {
   const searchParams = useSearchParams();
+  const toast = useToast();
   const [properties, setProperties] = useState<Property[]>([]);
   const [filteredProperties, setFilteredProperties] = useState<Property[]>([]);
   const [cities, setCities] = useState<City[]>([]);
@@ -22,10 +25,16 @@ export default function PropertiesPage() {
   const [filters, setFilters] = useState<PropertyFiltersState>(() => {
     const cityParam = searchParams.get("city");
     const guestsParam = searchParams.get("guests");
+    const childrenParam = searchParams.get("children");
     const checkinParam = searchParams.get("checkin");
     const checkoutParam = searchParams.get("checkout");
 
-    console.log("URL Params - guests:", guestsParam);
+    console.log(
+      "URL Params - guests:",
+      guestsParam,
+      "children:",
+      childrenParam
+    );
 
     // Capitalize first letter of city for display
     const formattedCity = cityParam
@@ -37,6 +46,7 @@ export default function PropertiesPage() {
       minPrice: "",
       maxPrice: "",
       guests: guestsParam || "",
+      children: childrenParam || "",
       bedrooms: "",
       checkin: checkinParam || "",
       checkout: checkoutParam || "",
@@ -139,6 +149,7 @@ export default function PropertiesPage() {
       minPrice: "",
       maxPrice: "",
       guests: "",
+      children: "",
       bedrooms: "",
       checkin: "",
       checkout: "",
@@ -146,13 +157,40 @@ export default function PropertiesPage() {
     });
   };
 
-  const handleWishlistToggle = (propertyId: string, isWishlisted: boolean) => {
-    // TODO: Implement wishlist functionality with backend API
-    console.log(`Property ${propertyId} wishlist status: ${isWishlisted}`);
+  const handleWishlistToggle = async (
+    propertyId: string,
+    isWishlisted: boolean
+  ) => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      toast.error("Please login to manage your wishlist");
+      return;
+    }
+
+    try {
+      if (isWishlisted) {
+        // Remove from wishlist
+        await api.delete(`/wishlist/${propertyId}`);
+      } else {
+        // Add to wishlist
+        await api.post("/wishlist", { property_id: propertyId });
+      }
+
+      // Refresh property to get updated wishlist status
+      // The PropertyCard component will update its own state
+    } catch (error) {
+      console.error("Wishlist error:", error);
+      const errorMessage =
+        error instanceof Error
+          ? (error as Error & { response?: { data?: { message?: string } } })
+              .response?.data?.message || "Failed to update wishlist"
+          : "Failed to update wishlist";
+      toast.error(errorMessage);
+    }
   };
 
   return (
-    <div className="properties-page">
+    <div className={styles.propertiesPage}>
       {/* Filters Component */}
       <PropertyFilters
         cities={cities}
@@ -163,28 +201,28 @@ export default function PropertiesPage() {
       />
 
       {/* Main Content */}
-      <div className="main-content">
+      <div className={styles.mainContent}>
         {loading ? (
-          <div className="loading-container">
-            <div className="loading-spinner"></div>
-            <p className="loading-text">Loading amazing properties...</p>
+          <div className={styles.loadingContainer}>
+            <div className={styles.loadingSpinner}></div>
+            <p className={styles.loadingText}>Loading amazing properties...</p>
           </div>
         ) : filteredProperties.length === 0 ? (
-          <div className="empty-state">
-            <div className="empty-icon">
+          <div className={styles.emptyState}>
+            <div className={styles.emptyIcon}>
               <FiHome />
             </div>
-            <h3 className="empty-title">No Properties Found</h3>
-            <p className="empty-message">
+            <h3 className={styles.emptyTitle}>No Properties Found</h3>
+            <p className={styles.emptyMessage}>
               We couldn&apos;t find any properties matching your criteria. Try
               adjusting your filters.
             </p>
-            <button onClick={clearFilters} className="empty-cta-btn">
+            <button onClick={clearFilters} className={styles.emptyCtaBtn}>
               Clear All Filters
             </button>
           </div>
         ) : (
-          <div className="properties-grid">
+          <div className={styles.propertiesGrid}>
             {filteredProperties.map((property) => (
               <PropertyCard
                 key={property.id}
@@ -195,6 +233,7 @@ export default function PropertiesPage() {
           </div>
         )}
       </div>
+      <ToastContainer toasts={toast.toasts} removeToast={toast.removeToast} />
     </div>
   );
 }

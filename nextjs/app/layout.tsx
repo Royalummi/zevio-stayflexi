@@ -4,6 +4,8 @@ import "./globals.css";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { AuthModalProvider } from "@/contexts/AuthModalContext";
+import { BookingProvider } from "@/contexts/BookingContext";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -30,15 +32,24 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={inter.className} suppressHydrationWarning>
+    <html
+      lang="en"
+      className={inter.className}
+      suppressHydrationWarning
+      data-scroll-behavior="smooth"
+    >
       <body
         className="antialiased min-h-screen flex flex-col"
         suppressHydrationWarning
       >
         <AuthProvider>
-          <Header />
-          <main className="flex-1">{children}</main>
-          <Footer />
+          <AuthModalProvider>
+            <BookingProvider>
+              <Header />
+              <main className="flex-1">{children}</main>
+              <Footer />
+            </BookingProvider>
+          </AuthModalProvider>
         </AuthProvider>
       </body>
     </html>

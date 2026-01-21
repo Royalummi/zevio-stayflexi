@@ -1,4 +1,5 @@
 import express from "express";
+import { validatePagination } from "../middlewares/pagination.js";
 import {
   getCities,
   getProperties,
@@ -9,8 +10,8 @@ import {
 const router = express.Router();
 
 // Public routes (no authentication required)
-router.get("/cities", getCities);
-router.get("/properties", getProperties);
+router.get("/cities", getCities); // Small dataset - no pagination
+router.get("/properties", validatePagination, getProperties); // CRITICAL: Paginate property listings
 router.get("/property/:id", getPropertyDetails);
 router.get("/availability", checkAvailability);
 

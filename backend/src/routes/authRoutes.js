@@ -1,5 +1,6 @@
 import express from "express";
 import { body } from "express-validator";
+import rateLimit from "express-rate-limit";
 import { validate } from "../middlewares/validator.js";
 import { authenticate } from "../middlewares/auth.js";
 import { uploadAvatar as uploadAvatarMiddleware } from "../middlewares/upload.js";
@@ -12,9 +13,28 @@ import {
   updateProfile,
   changePassword,
   uploadAvatar,
+  getSettings,
+  updateSettings,
+  getUserActivity,
+  forgotPassword,
+  resetPassword,
 } from "../controllers/authController.js";
 
 const router = express.Router();
+
+// Rate limiter for refresh token endpoint
+// Limit: 5 refresh attempts per minute per IP
+const refreshTokenLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 5, // limit each IP to 5 requests per windowMs
+  message: {
+    success: false,
+    message:
+      "Too many refresh attempts. Please wait a moment before trying again.",
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 // Validation rules
 const loginValidation = [
@@ -58,10 +78,33 @@ const changePasswordValidation = [
   validate,
 ];
 
+const forgotPasswordValidation = [
+  body("email")
+    .isEmail()
+    .normalizeEmail()
+    .withMessage("Valid email is required"),
+  validate,
+];
+
+const resetPasswordValidation = [
+  body("token").notEmpty().withMessage("Reset token is required"),
+  body("newPassword")
+    .isLength({ min: 6 })
+    .withMessage("Password must be at least 6 characters"),
+  validate,
+];
+
 // Public routes
 router.post("/login", loginValidation, login);
 router.post("/register", registerValidation, register);
-router.post("/refresh", refreshTokenValidation, refreshToken);
+router.post(
+  "/refresh",
+  refreshTokenLimiter,
+  refreshTokenValidation,
+  refreshToken
+);
+router.post("/forgot-password", forgotPasswordValidation, forgotPassword);
+router.post("/reset-password", resetPasswordValidation, resetPassword);
 
 // Protected routes
 router.post("/logout", authenticate, logout);
@@ -79,5 +122,8 @@ router.post(
   uploadAvatarMiddleware.single("avatar"),
   uploadAvatar
 );
+router.get("/settings", authenticate, getSettings);
+router.put("/settings", authenticate, updateSettings);
+router.get("/activity", authenticate, getUserActivity);
 
 export default router;

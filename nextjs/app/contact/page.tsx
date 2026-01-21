@@ -8,7 +8,7 @@ import {
   FiSend,
   FiMessageCircle,
 } from "react-icons/fi";
-import "./contact.css";
+import styles from "./contact.module.css";
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -55,12 +55,12 @@ export default function ContactPage() {
   };
 
   return (
-    <div className="contact-page">
+    <div className={styles.contactPage}>
       {/* Hero Section */}
-      <section className="contact-hero">
-        <div className="hero-content">
-          <h1 className="hero-title">Get in Touch</h1>
-          <p className="hero-description">
+      <section className={styles.contactHero}>
+        <div className={styles.heroContent}>
+          <h1 className={styles.heroTitle}>Get in Touch</h1>
+          <p className={styles.heroDescription}>
             Have a question or need assistance? We&apos;re here to help. Reach
             out to us and we&apos;ll get back to you within 24 hours.
           </p>
@@ -68,65 +68,67 @@ export default function ContactPage() {
       </section>
 
       {/* Contact Section */}
-      <section className="contact-section">
-        <div className="contact-container">
+      <section className={styles.contactSection}>
+        <div className={styles.contactContainer}>
           {/* Contact Info */}
-          <div className="contact-info-cards">
-            <div className="info-card">
-              <div className="info-icon">
+          <div className={styles.contactInfoCards}>
+            <div className={styles.infoCard}>
+              <div className={styles.infoIcon}>
                 <FiMail />
               </div>
-              <h3 className="info-title">Email Us</h3>
-              <p className="info-text">support@zevio.com</p>
-              <p className="info-description">
+              <h3 className={styles.infoTitle}>Email Us</h3>
+              <p className={styles.infoText}>support@zevio.com</p>
+              <p className={styles.infoDescription}>
                 We&apos;ll respond within 24 hours
               </p>
             </div>
 
-            <div className="info-card">
-              <div className="info-icon">
+            <div className={styles.infoCard}>
+              <div className={styles.infoIcon}>
                 <FiPhone />
               </div>
-              <h3 className="info-title">Call Us</h3>
-              <p className="info-text">+91 98765 43210</p>
-              <p className="info-description">Available 24/7 for support</p>
+              <h3 className={styles.infoTitle}>Call Us</h3>
+              <p className={styles.infoText}>+91 98765 43210</p>
+              <p className={styles.infoDescription}>
+                Available 24/7 for support
+              </p>
             </div>
 
-            <div className="info-card">
-              <div className="info-icon">
+            <div className={styles.infoCard}>
+              <div className={styles.infoIcon}>
                 <FiMapPin />
               </div>
-              <h3 className="info-title">Visit Us</h3>
-              <p className="info-text">Mumbai, Maharashtra</p>
-              <p className="info-description">India</p>
+              <h3 className={styles.infoTitle}>Visit Us</h3>
+              <p className={styles.infoText}>Mumbai, Maharashtra</p>
+              <p className={styles.infoDescription}>India</p>
             </div>
 
-            <div className="info-card">
-              <div className="info-icon">
+            <div className={styles.infoCard}>
+              <div className={styles.infoIcon}>
                 <FiMessageCircle />
               </div>
-              <h3 className="info-title">Live Chat</h3>
-              <p className="info-text">Chat with our team</p>
-              <p className="info-description">
+              <h3 className={styles.infoTitle}>Live Chat</h3>
+              <p className={styles.infoText}>Chat with our team</p>
+              <p className={styles.infoDescription}>
                 Instant responses during business hours
               </p>
             </div>
           </div>
 
           {/* Contact Form */}
-          <div className="contact-form-section">
-            <div className="form-header">
-              <h2 className="form-title">Send us a Message</h2>
-              <p className="form-subtitle">
+          <div className={styles.contactFormSection}>
+            <div className={styles.formHeader}>
+              <h2 className={styles.formTitle}>Send us a Message</h2>
+              <p className={styles.formSubtitle}>
                 Fill out the form below and we&apos;ll get back to you as soon
                 as possible
               </p>
             </div>
 
-            <form onSubmit={handleSubmit} className="contact-form">
-              <div className="form-row">
-                <div className="form-group">
-                  <label htmlFor="name" className="form-label">
+            <form onSubmit={handleSubmit} className={styles.contactForm}>
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
+                  <label htmlFor="name" className={styles.formLabel}>
                     Full Name *
                   </label>
                   <input
@@ -136,13 +138,13 @@ export default function ContactPage() {
                     value={formData.name}
                     onChange={handleChange}
                     required
-                    className="form-input"
+                    className={styles.formInput}
                     placeholder="John Doe"
                   />
                 </div>
 
-                <div className="form-group">
-                  <label htmlFor="email" className="form-label">
+                <div className={styles.formGroup}>
+                  <label htmlFor="email" className={styles.formLabel}>
                     Email Address *
                   </label>
                   <input
@@ -152,15 +154,15 @@ export default function ContactPage() {
                     value={formData.email}
                     onChange={handleChange}
                     required
-                    className="form-input"
+                    className={styles.formInput}
                     placeholder="john@example.com"
                   />
                 </div>
               </div>
 
-              <div className="form-row">
-                <div className="form-group">
-                  <label htmlFor="phone" className="form-label">
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
+                  <label htmlFor="phone" className={styles.formLabel}>
                     Phone Number
                   </label>
                   <input
@@ -169,13 +171,13 @@ export default function ContactPage() {
                     name="phone"
                     value={formData.phone}
                     onChange={handleChange}
-                    className="form-input"
+                    className={styles.formInput}
                     placeholder="+91 98765 43210"
                   />
                 </div>
 
-                <div className="form-group">
-                  <label htmlFor="subject" className="form-label">
+                <div className={styles.formGroup}>
+                  <label htmlFor="subject" className={styles.formLabel}>
                     Subject *
                   </label>
                   <select
@@ -184,7 +186,7 @@ export default function ContactPage() {
                     value={formData.subject}
                     onChange={handleChange}
                     required
-                    className="form-input"
+                    className={styles.formInput}
                   >
                     <option value="">Select a subject</option>
                     <option value="general">General Inquiry</option>
@@ -197,8 +199,8 @@ export default function ContactPage() {
                 </div>
               </div>
 
-              <div className="form-group">
-                <label htmlFor="message" className="form-label">
+              <div className={styles.formGroup}>
+                <label htmlFor="message" className={styles.formLabel}>
                   Message *
                 </label>
                 <textarea
@@ -208,13 +210,13 @@ export default function ContactPage() {
                   onChange={handleChange}
                   required
                   rows={6}
-                  className="form-textarea"
+                  className={styles.formTextarea}
                   placeholder="Tell us how we can help you..."
                 ></textarea>
               </div>
 
               {formStatus === "success" && (
-                <div className="form-success">
+                <div className={styles.formSuccess}>
                   <p>
                     ✓ Thank you for contacting us! We&apos;ve received your
                     message and will respond within 24 hours.
@@ -223,7 +225,7 @@ export default function ContactPage() {
               )}
 
               {formStatus === "error" && (
-                <div className="form-error">
+                <div className={styles.formError}>
                   <p>
                     ✗ Something went wrong. Please try again or contact us
                     directly at support@zevio.com
@@ -233,12 +235,12 @@ export default function ContactPage() {
 
               <button
                 type="submit"
-                className="submit-button"
+                className={styles.submitButton}
                 disabled={formStatus === "sending"}
               >
                 {formStatus === "sending" ? (
                   <>
-                    <span className="spinner"></span>
+                    <span className={styles.spinner}></span>
                     Sending...
                   </>
                 ) : (
@@ -254,10 +256,10 @@ export default function ContactPage() {
       </section>
 
       {/* Map Section (Placeholder) */}
-      <section className="map-section">
-        <div className="map-placeholder">
-          <FiMapPin className="map-icon" />
-          <p className="map-text">Map Integration Coming Soon</p>
+      <section className={styles.mapSection}>
+        <div className={styles.mapPlaceholder}>
+          <FiMapPin className={styles.mapIcon} />
+          <p className={styles.mapText}>Map Integration Coming Soon</p>
         </div>
       </section>
     </div>

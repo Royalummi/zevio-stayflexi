@@ -1,0 +1,515 @@
+/* Booking Review Page Styles */
+
+.pageContainer {
+    min-height: calc(100vh - 80px);
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    padding: 2rem 0;
+}
+
+.innerContainer {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+}
+
+/* SESSION 31: Loading State */
+.loadingContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
+    gap: 1rem;
+}
+
+.loadingSpinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid #e5e7eb;
+    border-top-color: #2FA4A9;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.loadingText {
+    font-size: 1rem;
+    color: #64748b;
+    font-weight: 500;
+}
+
+/* Page Header */
+.pageHeader {
+    text-align: center;
+    margin-bottom: 2.5rem;
+    position: relative;
+}
+
+.backButton {
+    position: absolute;
+    left: 0;
+    top: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1.25rem;
+    background: white;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    color: #2c3e50;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.backButton:hover {
+    background: #f9fafb;
+    border-color: #2FA4A9;
+    color: #2FA4A9;
+    transform: translateX(-2px);
+}
+
+.backButton svg {
+    width: 18px;
+    height: 18px;
+}
+
+.pageTitle {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+}
+
+.pageSubtitle {
+    font-size: 1.125rem;
+    color: #64748b;
+}
+
+/* Main Grid Layout */
+.contentGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    align-items: start;
+}
+
+/* Left Column - Property & Price Summary */
+.leftColumn {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* Right Column - Guest Form */
+.rightColumn {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    position: sticky;
+    top: 6rem;
+}
+
+/* Card Styles */
+.propertyCard,
+.detailsCard,
+.priceCard,
+.formCard,
+.termsCard {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: box-shadow 0.3s ease;
+}
+
+.propertyCard:hover,
+.detailsCard:hover,
+.priceCard:hover,
+.formCard:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.sectionTitle {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+/* Property Card */
+.propertyContent {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+}
+
+.propertyImage {
+    width: 120px;
+    height: 90px;
+    border-radius: 8px;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.propertyInfo {
+    flex: 1;
+}
+
+.propertyName {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+}
+
+.propertyLocation {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #64748b;
+    font-size: 0.9375rem;
+}
+
+.propertyLocation svg {
+    color: #2fa4a9;
+}
+
+/* Details Card */
+.detailsGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.25rem;
+}
+
+.detailItem {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+
+.detailIcon {
+    color: #2fa4a9;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+    margin-top: 0.125rem;
+}
+
+.detailLabel {
+    font-size: 0.875rem;
+    color: #64748b;
+    margin-bottom: 0.25rem;
+}
+
+.detailValue {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+/* Price Breakdown */
+.priceBreakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.priceRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 0.5rem 0;
+    color: #64748b;
+    font-size: 0.9375rem;
+    line-height: 1.5;
+}
+
+.priceRow span:first-child {
+    flex: 1;
+    padding-right: 1rem;
+}
+
+.priceRow span:last-child {
+    font-weight: 600;
+    color: #1e293b;
+    white-space: nowrap;
+}
+
+.priceNote {
+    display: block;
+    font-size: 0.8125rem;
+    color: #94a3b8;
+    font-weight: 400;
+    margin-top: 0.25rem;
+}
+
+.priceRowTotal {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 0 0.5rem 0;
+    border-top: 2px solid #e5e7eb;
+    font-weight: 700;
+    font-size: 1.25rem;
+    color: #2c3e50;
+    margin-top: 0.5rem;
+}
+
+.priceRowTotal span:last-child {
+    color: #2fa4a9;
+}
+
+/* Form Styles */
+.formGroup {
+    margin-bottom: 1.25rem;
+}
+
+.label {
+    display: block;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+}
+
+.required {
+    color: #ff6b35;
+}
+
+.input {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 1rem;
+    color: #2c3e50;
+    transition: all 0.2s ease;
+}
+
+.input:focus {
+    outline: none;
+    border-color: #2fa4a9;
+    box-shadow: 0 0 0 3px rgba(47, 164, 169, 0.1);
+}
+
+.input::placeholder {
+    color: #94a3b8;
+}
+
+/* Special Requests */
+.requestsSubtitle {
+    font-size: 0.875rem;
+    color: #64748b;
+    margin-bottom: 1rem;
+}
+
+.checkboxGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.checkboxLabel {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    font-size: 0.9375rem;
+    color: #2c3e50;
+    padding: 0.75rem;
+    border-radius: 8px;
+    transition: background-color 0.2s ease;
+}
+
+.checkboxLabel:hover {
+    background-color: #f8fafc;
+}
+
+.checkbox {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: #2fa4a9;
+}
+
+/* Terms Card */
+.termsCard {
+    background: #fff8f0;
+    border: 2px solid #ff6b35;
+    padding: 1.25rem;
+}
+
+.termsLabel {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    cursor: pointer;
+    font-size: 0.9375rem;
+    color: #2c3e50;
+}
+
+.termsLink {
+    color: #2fa4a9;
+    font-weight: 600;
+    text-decoration: underline;
+    transition: color 0.2s ease;
+}
+
+.termsLink:hover {
+    color: #ff6b35;
+}
+
+/* Payment Button */
+.paymentButton {
+    width: 100%;
+    padding: 1.25rem;
+    background: linear-gradient(135deg, #2fa4a9 0%, #1e7b7f 100%);
+    color: white;
+    font-size: 1.125rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(47, 164, 169, 0.3);
+}
+
+.paymentButton:hover:not(:disabled) {
+    background: linear-gradient(135deg, #1e7b7f 0%, #2fa4a9 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(47, 164, 169, 0.4);
+}
+
+.paymentButton:disabled {
+    background: #cbd5e1;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+}
+
+.paymentButton svg {
+    font-size: 1.25rem;
+}
+
+/* SESSION 34: Loading States for Payment Button */
+.loadingWrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    justify-content: center;
+}
+
+.spinner {
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spinButton 0.8s linear infinite;
+}
+
+@keyframes spinButton {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .contentGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .rightColumn {
+        position: static;
+    }
+}
+
+@media (max-width: 768px) {
+    .pageTitle {
+        font-size: 2rem;
+    }
+
+    .pageSubtitle {
+        font-size: 1rem;
+    }
+
+    .detailsGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .propertyContent {
+        flex-direction: column;
+    }
+
+    .propertyImage {
+        width: 100%;
+        height: 200px;
+    }
+}
+
+@media (max-width: 480px) {
+    .pageContainer {
+        padding: 1rem 0;
+    }
+
+    .innerContainer {
+        padding: 0 1rem;
+    }
+
+    .pageTitle {
+        font-size: 1.75rem;
+    }
+
+    .propertyCard,
+    .detailsCard,
+    .priceCard,
+    .formCard,
+    .termsCard {
+        padding: 1.25rem;
+    }
+
+    .paymentButton {
+        font-size: 1rem;
+        padding: 1rem;
+    }
+}
+
+/* SESSION 34: Loading States */
+.loadingWrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    justify-content: center;
+}
+
+.spinner {
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}

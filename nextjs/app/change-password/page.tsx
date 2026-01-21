@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import api from "@/lib/api";
+import { api } from "@/lib/axios";
 import { FiLock, FiEye, FiEyeOff } from "react-icons/fi";
 import Link from "next/link";
 

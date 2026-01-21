@@ -1,6 +1,7 @@
 import express from "express";
 import vendorController from "../controllers/vendorController.js";
 import { authenticate, authorize } from "../middlewares/auth.js";
+import { validatePagination } from "../middlewares/pagination.js";
 
 const router = express.Router();
 
@@ -8,19 +9,19 @@ const router = express.Router();
 router.use(authenticate);
 router.use(authorize(["vendor"]));
 
-// Dashboard
+// Dashboard (stats - no pagination)
 router.get("/dashboard", vendorController.getDashboardStats);
 
-// Properties
-router.get("/properties", vendorController.getProperties);
+// Properties (with pagination)
+router.get("/properties", validatePagination, vendorController.getProperties);
 
-// Bookings
-router.get("/bookings", vendorController.getBookings);
+// Bookings (with pagination)
+router.get("/bookings", validatePagination, vendorController.getBookings);
 
-// Settlements
-router.get("/settlements", vendorController.getSettlements);
+// Settlements (with pagination)
+router.get("/settlements", validatePagination, vendorController.getSettlements);
 
-// Analytics
+// Analytics (stats - no pagination)
 router.get("/analytics", vendorController.getAnalytics);
 
 export default router;

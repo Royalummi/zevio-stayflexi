@@ -1,0 +1,637 @@
+/**
+ * ============================================================================
+ * AUTH MODALS - MINIMALIST CLEAN DESIGN (Session 20)
+ * ============================================================================
+ * 
+ * Design System: Minimalist Clean UI
+ * Brand Colors: Navy (#1F3A5F) & Teal (#2FA4A9)
+ * Principles: Clean, Simple, Typography-focused, No Glassmorphism
+ * 
+ * Key Features:
+ * - Pure white background with simple borders
+ * - No scrollbar (responsive height)
+ * - Login: Single column, fits viewport
+ * - Signup: Two-column desktop, single mobile
+ * - Clean typography hierarchy
+ * - Smooth interactions
+ * ============================================================================
+ */
+
+/* ============================================================================
+   CSS VARIABLES
+   ============================================================================ */
+:root {
+    --brand-navy: #1F3A5F;
+    --brand-navy-dark: #152844;
+    --brand-teal: #2FA4A9;
+    --brand-teal-dark: #238B8F;
+    --brand-teal-light: #4ABBC0;
+    --brand-border: #E5E7EB;
+    --brand-text: #111827;
+    --brand-text-light: #6B7280;
+    --brand-bg: #F9FAFB;
+}
+
+/* ============================================================================
+   MODAL OVERLAY
+   ============================================================================ */
+.authModalOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 99999;
+    padding: 1rem;
+    animation: overlayFadeIn 0.2s ease;
+}
+
+@keyframes overlayFadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+/* ============================================================================
+   MODAL CONTAINER - Responsive, no scrollbar
+   ============================================================================ */
+.authModal {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    border: 1px solid var(--brand-border);
+    max-width: 440px;
+    width: 100%;
+    max-height: calc(100vh - 2rem);
+    overflow: hidden;
+    position: relative;
+    animation: modalSlideUp 0.3s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Signup modal - two column layout desktop */
+.authModal.signup {
+    max-width: 880px;
+}
+
+@keyframes modalSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ============================================================================
+   MODAL CONTENT - Scrollable if needed
+   ============================================================================ */
+.authModalContent {
+    overflow-y: auto;
+    overflow-x: hidden;
+    flex: 1;
+}
+
+/* Hide scrollbar but keep functionality */
+.authModalContent::-webkit-scrollbar {
+    width: 0;
+    display: none;
+}
+
+.authModalContent {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+/* ============================================================================
+   CLOSE BUTTON
+   ============================================================================ */
+.authModalClose {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    width: 36px;
+    height: 36px;
+    border: 1.5px solid var(--brand-border);
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--brand-text-light);
+    z-index: 10;
+    font-size: 1.25rem;
+}
+
+.authModalClose:hover {
+    background: var(--brand-navy);
+    color: white;
+    border-color: var(--brand-navy);
+    transform: rotate(90deg);
+}
+
+/* ============================================================================
+   HEADER
+   ============================================================================ */
+.authModalHeader {
+    padding: 2.5rem 2rem 1.5rem;
+    text-align: center;
+    border-bottom: 1px solid var(--brand-border);
+}
+
+.authModalTitle {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--brand-navy);
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.01em;
+}
+
+.authModalSubtitle {
+    font-size: 0.9375rem;
+    color: var(--brand-text-light);
+    line-height: 1.5;
+}
+
+/* ============================================================================
+   FORM - Two column layout for signup
+   ============================================================================ */
+.authModalForm {
+    padding: 2rem;
+}
+
+/* Two column grid for signup on desktop */
+.authModal.signup .authModalForm {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem 2rem;
+}
+
+/* Full width elements in two column */
+.authModal.signup .authFormGroup.fullWidth,
+.authModal.signup .authErrorMessage,
+.authModal.signup .authSubmitBtn,
+.authModal.signup .authDivider,
+.authModal.signup .authSwitch,
+.authModal.signup .authTerms {
+    grid-column: 1 / -1;
+}
+
+/* Form Group */
+.authFormGroup {
+    margin-bottom: 1.25rem;
+}
+
+.authModal.signup .authFormGroup {
+    margin-bottom: 0;
+}
+
+/* ============================================================================
+   FORM LABEL
+   ============================================================================ */
+.authFormLabel {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--brand-navy);
+    margin-bottom: 0.5rem;
+}
+
+/* ============================================================================
+   FORM INPUT
+   ============================================================================ */
+.authFormInput {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1.5px solid var(--brand-border);
+    border-radius: 10px;
+    font-size: 0.9375rem;
+    transition: all 0.2s ease;
+    color: var(--brand-text);
+    background: white;
+    font-family: inherit;
+}
+
+.authFormInput:hover {
+    border-color: var(--brand-teal-light);
+}
+
+.authFormInput:focus {
+    outline: none;
+    border-color: var(--brand-teal);
+    box-shadow: 0 0 0 3px rgba(47, 164, 169, 0.1);
+}
+
+.authFormInput::placeholder {
+    color: var(--brand-text-light);
+}
+
+/* Error state */
+.authFormInput.error {
+    border-color: #EF4444;
+    background: rgba(239, 68, 68, 0.05);
+}
+
+/* ============================================================================
+   PASSWORD INPUT
+   ============================================================================ */
+.authPasswordInput {
+    position: relative;
+}
+
+.authPasswordToggle {
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--brand-text-light);
+    cursor: pointer;
+    padding: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s;
+    border-radius: 6px;
+}
+
+.authPasswordToggle:hover {
+    color: var(--brand-teal);
+}
+
+.authPasswordInput .authFormInput {
+    padding-right: 3rem;
+}
+
+/* ============================================================================
+   ERROR MESSAGE
+   ============================================================================ */
+.authErrorMessage {
+    background: #FEF2F2;
+    border: 1px solid #FECACA;
+    color: #991B1B;
+    padding: 0.875rem 1rem;
+    border-radius: 10px;
+    font-size: 0.875rem;
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.625rem;
+}
+
+.authErrorMessage svg {
+    flex-shrink: 0;
+    font-size: 1rem;
+    margin-top: 0.125rem;
+}
+
+/* ============================================================================
+   FORGOT PASSWORD
+   ============================================================================ */
+.authForgotPassword {
+    text-align: right;
+    margin-bottom: 1.5rem;
+}
+
+.authLinkBtn {
+    background: none;
+    border: none;
+    color: var(--brand-teal);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: color 0.2s;
+    padding: 0.25rem;
+}
+
+.authLinkBtn:hover {
+    color: var(--brand-teal-dark);
+    text-decoration: underline;
+}
+
+/* ============================================================================
+   SUBMIT BUTTON - Fixed styling
+   ============================================================================ */
+.authSubmitBtn {
+    width: 100%;
+    padding: 0.875rem 1.5rem;
+    background: linear-gradient(135deg, var(--brand-teal), var(--brand-teal-dark));
+    border: none;
+    border-radius: 10px;
+    color: white;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(47, 164, 169, 0.2);
+    margin-bottom: 1rem;
+}
+
+.authSubmitBtn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(47, 164, 169, 0.3);
+}
+
+.authSubmitBtn:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.authSubmitBtn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Loading spinner */
+.authSubmitBtn:disabled::after {
+    content: '';
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    margin-left: 0.625rem;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ============================================================================
+   DIVIDER
+   ============================================================================ */
+.authDivider {
+    position: relative;
+    text-align: center;
+    margin: 1.5rem 0;
+}
+
+.authDivider::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    height: 1px;
+    background: var(--brand-border);
+}
+
+.authDivider span {
+    position: relative;
+    background: white;
+    padding: 0 0.875rem;
+    color: var(--brand-text-light);
+    font-size: 0.8125rem;
+    font-weight: 500;
+}
+
+/* ============================================================================
+   SWITCH ACCOUNT
+   ============================================================================ */
+.authSwitch {
+    text-align: center;
+    font-size: 0.875rem;
+    color: var(--brand-text-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+}
+
+.authSwitchBtn {
+    background: none;
+    border: none;
+    color: var(--brand-teal);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.authSwitchBtn:hover {
+    color: var(--brand-teal-dark);
+    text-decoration: underline;
+}
+
+/* ============================================================================
+   TERMS
+   ============================================================================ */
+.authTerms {
+    font-size: 0.75rem;
+    color: var(--brand-text-light);
+    text-align: center;
+    margin-top: 1rem;
+    line-height: 1.5;
+}
+
+.authTerms a {
+    color: var(--brand-teal);
+    text-decoration: none;
+}
+
+.authTerms a:hover {
+    text-decoration: underline;
+}
+
+/* ============================================================================
+   RESPONSIVE - Mobile first
+   ============================================================================ */
+
+/* Stack signup columns on mobile */
+@media (max-width: 768px) {
+    .authModal.signup {
+        max-width: 440px;
+    }
+
+    .authModal.signup .authModalForm {
+        grid-template-columns: 1fr;
+        gap: 1.25rem;
+    }
+
+    .authModal.signup .authFormGroup {
+        margin-bottom: 0;
+    }
+
+    .authModalHeader {
+        padding: 2rem 1.5rem 1.25rem;
+    }
+
+    .authModalTitle {
+        font-size: 1.5rem;
+    }
+
+    .authModalForm {
+        padding: 1.5rem;
+    }
+
+    .authFormGroup {
+        margin-bottom: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .authModalOverlay {
+        padding: 0.5rem;
+    }
+
+    .authModal {
+        border-radius: 12px;
+    }
+
+    .authModalHeader {
+        padding: 1.75rem 1.25rem 1rem;
+    }
+
+    .authModalTitle {
+        font-size: 1.375rem;
+    }
+
+    .authModalForm {
+        padding: 1.25rem;
+    }
+
+    .authFormInput {
+        font-size: 16px;
+        /* Prevents iOS zoom */
+    }
+}
+
+/* ============================================================================
+   ACCESSIBILITY
+   ============================================================================ */
+
+/* Focus visible for keyboard navigation */
+.authModalClose:focus-visible,
+.authFormInput:focus-visible,
+.authPasswordToggle:focus-visible,
+.authLinkBtn:focus-visible,
+.authSwitchBtn:focus-visible,
+.authSubmitBtn:focus-visible {
+    outline: 2px solid var(--brand-teal);
+    outline-offset: 2px;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+
+    .authModalOverlay,
+    .authModal,
+    .authModalClose,
+    .authFormInput,
+    .authSubmitBtn,
+    .authSwitchBtn {
+        animation: none !important;
+        transition: none !important;
+    }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+    .authModal {
+        border: 2px solid var(--brand-navy);
+    }
+
+    .authFormInput {
+        border-width: 2px;
+    }
+}/* ============================================================================
+   CORPORATE REGISTRATION
+   ============================================================================ */
+
+/* Success Message */
+.authSuccessMessage {
+    background: #F0FDF4;
+    border: 1px solid #86EFAC;
+    color: #166534;
+    padding: 1rem 1.125rem;
+    border-radius: 10px;
+    font-size: 0.875rem;
+    margin-bottom: 1.25rem;
+    line-height: 1.5;
+}
+
+/* Corporate Toggle Section */
+.corporateToggle {
+    grid-column: 1 / -1;
+    background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%);
+    border: 2px solid #3B82F6;
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.corporateCheckbox {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    font-weight: 500;
+    color: #1E40AF;
+    font-size: 1rem;
+}
+
+.corporateCheckbox input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: #3B82F6;
+}
+
+.corporateIcon {
+    font-size: 1.25rem;
+    color: #3B82F6;
+}
+
+.corporateNote {
+    margin: 0.75rem 0 0 2.75rem;
+    font-size: 0.875rem;
+    color: #1E3A8A;
+    line-height: 1.5;
+    padding-left: 1rem;
+    border-left: 3px solid #3B82F6;
+}
+
+/* Field Hint */
+.fieldHint {
+    display: block;
+    margin-top: 0.5rem;
+    font-size: 0.8125rem;
+    color: #6B7280;
+    font-style: italic;
+}
+
+/* Responsive - Corporate Toggle */
+@media (max-width: 768px) {
+    .corporateToggle {
+        padding: 1rem;
+    }
+
+    .corporateCheckbox {
+        font-size: 0.9375rem;
+    }
+
+    .corporateNote {
+        margin-left: 0;
+        padding-left: 0.75rem;
+        font-size: 0.8125rem;
+    }
+
+    .fieldHint {
+        font-size: 0.75rem;
+    }
+}

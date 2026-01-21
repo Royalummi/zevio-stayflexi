@@ -7,6 +7,8 @@ import {
   TrendingUp,
   Eye,
   Clock,
+  Plus,
+  Edit,
 } from "lucide-react";
 import {
   Card,
@@ -18,6 +20,7 @@ import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/button";
 import api from "../../lib/api";
 import { formatCurrency, formatDate } from "../../lib/utils";
+import VendorPropertyForm from "../../components/vendor/VendorPropertyForm";
 
 const VendorDashboard = () => {
   const [properties, setProperties] = useState([]);
@@ -25,6 +28,8 @@ const VendorDashboard = () => {
   const [settlements, setSettlements] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showPropertyForm, setShowPropertyForm] = useState(false);
+  const [editingPropertyId, setEditingPropertyId] = useState(null);
 
   useEffect(() => {
     fetchDashboardData();
@@ -108,8 +113,14 @@ const VendorDashboard = () => {
             Manage your properties and track earnings
           </p>
         </div>
-        <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-          <Building2 className="h-4 w-4 mr-2" />
+        <Button
+          className="bg-blue-600 hover:bg-blue-700 text-white"
+          onClick={() => {
+            setEditingPropertyId(null);
+            setShowPropertyForm(true);
+          }}
+        >
+          <Plus className="h-4 w-4 mr-2" />
           Add Property
         </Button>
       </div>
@@ -166,15 +177,27 @@ const VendorDashboard = () => {
                       </span>
                     </div>
                   </div>
-                  <Badge
-                    className={
-                      property.status === "approved"
-                        ? "bg-green-100 text-green-800"
-                        : "bg-yellow-100 text-yellow-800"
-                    }
-                  >
-                    {property.status.replace("_", " ")}
-                  </Badge>
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        setEditingPropertyId(property.id);
+                        setShowPropertyForm(true);
+                      }}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Badge
+                      className={
+                        property.status === "approved"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-yellow-100 text-yellow-800"
+                      }
+                    >
+                      {property.status.replace("_", " ")}
+                    </Badge>
+                  </div>
                 </div>
               ))}
             </div>
@@ -218,6 +241,48 @@ const VendorDashboard = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Property Form Modal */}
+      {showPropertyForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between z-10">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                {editingPropertyId ? "Edit Property" : "Add New Property"}
+              </h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setShowPropertyForm(false);
+                  setEditingPropertyId(null);
+                }}
+              >
+                ✕
+              </Button>
+            </div>
+            <div className="p-6">
+              <VendorPropertyForm
+                propertyId={editingPropertyId}
+                onSuccess={() => {
+                  setShowPropertyForm(false);
+                  setEditingPropertyId(null);
+                  fetchDashboardData(); // Refresh data
+                  toast.success(
+                    editingPropertyId
+                      ? "Property updated successfully!"
+                      : "Property created and submitted for approval!"
+                  );
+                }}
+                onCancel={() => {
+                  setShowPropertyForm(false);
+                  setEditingPropertyId(null);
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

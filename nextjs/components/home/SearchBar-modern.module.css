@@ -1,0 +1,1544 @@
+/* ============================================================================
+   MODERN SEARCHBAR - ELEGANT SPACIOUS DESIGN
+   ============================================================================ */
+
+/* Modal Overlay - Covers entire viewport including header */
+.searchOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 9999;
+    cursor: pointer;
+    opacity: 0;
+    animation: overlayFadeIn 0.3s ease-out forwards;
+}
+
+.overlayActive {
+    opacity: 1;
+}
+
+/* SearchBar Base Styles */
+.searchBarModern {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+    position: relative;
+    overflow: visible;
+    z-index: 10000;
+    isolation: isolate;
+}
+
+/* Keyframe Animations */
+@keyframes overlayFadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+/* Toggle Container for Property Type Pills - Always visible above overlay */
+.toggleContainer {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+    justify-content: center;
+    position: relative;
+    z-index: 10001;
+}
+
+.togglePill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 24px;
+    border-radius: 50px;
+    border: 2px solid rgba(31, 58, 95, 0.15);
+    background: rgba(255, 255, 255, 0.95);
+    color: var(--brand-navy);
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 8px rgba(31, 58, 95, 0.06);
+    position: relative;
+    z-index: 10002;
+}
+
+.togglePill:hover {
+    border-color: var(--brand-teal);
+    background: rgba(255, 255, 255, 1);
+    box-shadow: 0 4px 16px rgba(31, 58, 95, 0.12);
+    transform: translateY(-1px);
+}
+
+.togglePill.active {
+    background: var(--brand-teal);
+    border-color: var(--brand-teal);
+    color: white;
+    box-shadow: 0 6px 20px rgba(21, 180, 179, 0.3);
+}
+
+.togglePill.active:hover {
+    background: var(--brand-teal-dark);
+    border-color: var(--brand-teal-dark);
+    transform: translateY(-1px);
+}
+
+.toggleIcon {
+    font-size: 1.1rem;
+}
+
+.searchWrapper {
+    display: flex;
+    align-items: stretch;
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(20px);
+    border-radius: 70px;
+    padding: 12px;
+    box-shadow:
+        0 10px 40px rgba(31, 58, 95, 0.14),
+        0 4px 12px rgba(31, 58, 95, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: visible;
+    z-index: 1;
+    width: 80%;
+    margin: 0 auto;
+}
+
+.searchWrapper:hover {
+    box-shadow:
+        0 16px 56px rgba(31, 58, 95, 0.18),
+        0 6px 16px rgba(31, 58, 95, 0.12);
+}
+
+/* Search Fields */
+.searchFieldModern {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    transition: box-shadow 0.2s ease, background 0.2s ease;
+    border-radius: 52px;
+    overflow: visible;
+    z-index: 1;
+    /* Reserve space for shadow to prevent layout shift */
+    box-shadow: inset 0 0 0 0 transparent, 0 0 0 rgba(31, 58, 95, 0);
+}
+
+.searchFieldModern.fieldActive {
+    background: var(--brand-white);
+    box-shadow: inset 0 0 0 1px rgba(31, 58, 95, 0.08), 0 4px 16px rgba(31, 58, 95, 0.08);
+    z-index: 100;
+}
+
+.fieldWithButton {
+    flex: 1.5;
+    display: flex;
+    gap: 12px;
+}
+
+.fieldInner {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 18px 24px;
+    cursor: pointer;
+    border-radius: 52px;
+    transition: background 0.2s ease;
+    min-height: 68px;
+}
+
+.fieldInner:hover {
+    background: rgba(31, 58, 95, 0.03);
+}
+
+.fieldIcon {
+    font-size: 22px;
+    color: var(--brand-teal);
+    flex-shrink: 0;
+    transition: transform 0.2s ease;
+}
+
+.fieldActive .fieldIcon {
+    color: var(--brand-teal-dark);
+}
+
+.fieldTextWrapper {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.fieldLabelModern {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--brand-navy);
+    white-space: nowrap;
+    text-align: left;
+}
+
+.fieldInputModern {
+    width: 100%;
+    border: none;
+    background: transparent;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--brand-navy);
+    outline: none;
+    padding: 0;
+    line-height: 1.4;
+}
+
+.fieldInputModern::placeholder {
+    color: var(--brand-text-darker);
+    font-weight: 400;
+}
+
+.fieldValueModern {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--brand-navy);
+    line-height: 1.4;
+    text-align: left;
+}
+
+.datePickerModern {
+    cursor: pointer !important;
+}
+
+.clearBtnModern {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: none;
+    background: var(--brand-grey-light);
+    color: var(--brand-text-dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.clearBtnModern:hover {
+    background: var(--brand-border);
+    color: var(--brand-navy);
+    transform: scale(1.15);
+}
+
+/* Dividers */
+.dividerModern {
+    width: 1px;
+    height: 44px;
+    background: var(--brand-border-light);
+    align-self: center;
+    opacity: 0.6;
+}
+
+/* Search Button */
+.searchBtnModern {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 18px 40px;
+    background: linear-gradient(135deg, var(--brand-teal) 0%, var(--brand-teal-dark) 100%);
+    color: white;
+    border: none;
+    border-radius: 52px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow:
+        0 6px 16px rgba(47, 164, 169, 0.35),
+        inset 0 -2px 0 rgba(0, 0, 0, 0.1);
+    white-space: nowrap;
+    letter-spacing: 0.3px;
+}
+
+.searchBtnModern:hover {
+    background: linear-gradient(135deg, var(--brand-teal-light) 0%, var(--brand-teal) 100%);
+    transform: translateY(-2px);
+    box-shadow:
+        0 10px 24px rgba(47, 164, 169, 0.45),
+        inset 0 -2px 0 rgba(0, 0, 0, 0.1);
+}
+
+.searchBtnModern:active {
+    transform: translateY(0);
+    box-shadow:
+        0 4px 12px rgba(47, 164, 169, 0.35),
+        inset 0 -2px 0 rgba(0, 0, 0, 0.1);
+}
+
+.searchIcon {
+    font-size: 20px;
+}
+
+.searchText {
+    font-weight: 700;
+    letter-spacing: 0.3px;
+}
+
+/* Dropdown Menus */
+.dropdownModern {
+    position: absolute;
+    top: calc(100% + 20px);
+    left: 0;
+    min-width: 350px;
+    background: #ffffff;
+    border-radius: 24px;
+    box-shadow:
+        0 20px 60px rgba(31, 58, 95, 0.25),
+        0 0 0 1px rgba(31, 58, 95, 0.08);
+    z-index: 10000;
+    animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    max-height: 480px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    will-change: transform, opacity;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+}
+
+/* Custom Scrollbar */
+.dropdownModern::-webkit-scrollbar {
+    width: 6px;
+}
+
+.dropdownModern::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.dropdownModern::-webkit-scrollbar-thumb {
+    background: var(--brand-border);
+    border-radius: 3px;
+}
+
+.dropdownModern::-webkit-scrollbar-thumb:hover {
+    background: var(--brand-text-darker);
+}
+
+/* Dropdown List */
+.dropdownListModern {
+    padding: 8px 0;
+}
+
+.dropdownItemModern {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 10px 18px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.dropdownItemModern:hover {
+    background: var(--brand-grey-lightest);
+    transform: translateX(4px);
+}
+
+.dropdownItemModern.itemHighlighted {
+    background: var(--brand-teal-lighter);
+    transform: translateX(4px);
+}
+
+.dropdownItemModern.itemSelected {
+    background: var(--brand-teal);
+    color: white;
+    transform: translateX(4px);
+}
+
+.dropdownItemModern.itemSelected .itemTitleModern,
+.dropdownItemModern.itemSelected .itemSubtitleModern {
+    color: white;
+}
+
+.dropdownItemModern.itemSelected .itemIconModern {
+    color: white;
+}
+
+.itemIconWrapper {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    background: var(--brand-grey-lightest);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+
+.dropdownItemModern:hover .itemIconWrapper {
+    background: var(--brand-teal-lighter);
+    transform: scale(1.05);
+}
+
+.dropdownItemModern.itemSelected .itemIconWrapper {
+    background: rgba(255, 255, 255, 0.25);
+}
+
+.itemIconModern {
+    font-size: 20px;
+    color: var(--brand-teal);
+}
+
+.itemText {
+    flex: 1;
+    min-width: 0;
+}
+
+.itemTitleModern {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--brand-navy);
+    margin-bottom: 4px;
+    line-height: 1.3;
+    text-align: left;
+}
+
+.itemSubtitleModern {
+    font-size: 14px;
+    color: var(--brand-text-dark);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    line-height: 1.4;
+}
+
+.itemCount {
+    color: var(--brand-text-darker);
+    font-weight: 500;
+    font-size: 13px;
+}
+
+/* Empty State */
+.dropdownEmptyModern {
+    padding: 48px 24px;
+    text-align: center;
+    color: var(--brand-text-dark);
+}
+
+.emptyIcon {
+    font-size: 48px;
+    color: var(--brand-border);
+    margin-bottom: 16px;
+}
+
+.dropdownItemModern:hover .itemIconModern {
+    color: var(--brand-white);
+}
+
+.dropdownEmptyModern div:first-of-type {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--brand-navy);
+    margin-bottom: 8px;
+}
+
+.emptySubtitle {
+    font-size: 14px;
+    color: var(--brand-text-dark);
+}
+
+/* Guests Dropdown - Compact Design */
+.guestsDropdownModern {
+    min-width: 320px;
+    max-width: 340px;
+    right: 0;
+    left: auto;
+    padding: 18px;
+    backdrop-filter: blur(20px);
+}
+
+.guestsControlModern {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+}
+
+.guestsDivider {
+    height: 1px;
+    background: linear-gradient(90deg,
+            rgba(31, 58, 95, 0.05) 0%,
+            rgba(31, 58, 95, 0.1) 50%,
+            rgba(31, 58, 95, 0.05) 100%);
+    margin: 8px 0;
+}
+
+.guestsInfoModern {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.guestsLabelModern {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--brand-navy);
+    line-height: 1.2;
+}
+
+.guestsSublabelModern {
+    font-size: 12px;
+    color: var(--brand-text-dark);
+    line-height: 1.3;
+}
+
+.guestsCounter {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.counterBtn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1.5px solid var(--brand-teal);
+    background: white;
+    color: var(--brand-teal);
+    font-size: 18px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.counterBtn:hover:not(:disabled) {
+    background: var(--brand-teal);
+    color: white;
+    transform: scale(1.08);
+    box-shadow: 0 4px 12px rgba(47, 164, 169, 0.3);
+}
+
+.counterBtn:active:not(:disabled) {
+    transform: scale(0.98);
+}
+
+.counterBtn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    border-color: var(--brand-border);
+    color: var(--brand-text-darker);
+}
+
+.counterValue {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--brand-navy);
+    min-width: 32px;
+    text-align: center;
+}
+
+/* ============================================================================
+   ANIMATIONS
+   ============================================================================ */
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.8;
+    }
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.fieldActive .fieldLabelModern {
+    animation: pulse 2s ease-in-out infinite;
+}
+
+/* ============================================================================
+   DATEPICKER CUSTOM STYLING
+   ============================================================================ */
+
+/* DatePicker Wrapper */
+.react-datepicker-wrapper {
+    width: 100%;
+}
+
+.react-datepicker__input-container {
+    width: 100%;
+}
+
+.datePickerModern {
+    cursor: pointer !important;
+}
+
+:global(.react-datepicker-wrapper) {
+    width: auto !important;
+    display: inline-block !important;
+}
+
+:global(.react-datepicker__input-container) {
+    width: auto !important;
+    display: inline-block !important;
+}
+
+/* DatePicker Calendar Popup - Airbnb Style with Global Selectors */
+:global(.react-datepicker) {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+    border: none !important;
+    border-radius: 16px !important;
+    box-shadow: 0 10px 40px rgba(31, 58, 95, 0.15), 0 4px 12px rgba(31, 58, 95, 0.08) !important;
+    padding: 12px !important;
+    background: white !important;
+    z-index: 10003 !important;
+}
+
+:global(.react-datepicker-popper) {
+    z-index: 10003 !important;
+}
+
+:global(.react-datepicker__header) {
+    background-color: transparent !important;
+    border-bottom: none !important;
+    padding-top: 0 !important;
+    padding-bottom: 12px !important;
+}
+
+:global(.react-datepicker__current-month) {
+    font-size: 16px !important;
+    font-weight: 700 !important;
+    color: var(--brand-navy) !important;
+    margin-bottom: 12px !important;
+    text-align: center !important;
+    letter-spacing: -0.3px !important;
+}
+
+:global(.react-datepicker__day-names) {
+    display: flex !important;
+    justify-content: space-around !important;
+    margin-bottom: 8px !important;
+}
+
+:global(.react-datepicker__day-name) {
+    color: var(--brand-text-dark) !important;
+    font-weight: 600 !important;
+    font-size: 11px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    width: 36px !important;
+    line-height: 36px !important;
+    margin: 0 !important;
+}
+
+:global(.react-datepicker__week) {
+    display: flex !important;
+    justify-content: space-around !important;
+    margin-bottom: 4px !important;
+}
+
+:global(.react-datepicker__day) {
+    color: var(--brand-navy) !important;
+    font-weight: 500 !important;
+    border-radius: 50% !important;
+    margin: 0 !important;
+    width: 36px !important;
+    height: 36px !important;
+    line-height: 36px !important;
+    font-size: 13px !important;
+    transition: all 0.2s ease !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+:global(.react-datepicker__day:hover) {
+    background-color: var(--brand-grey-lighter) !important;
+    color: var(--brand-navy) !important;
+    transform: scale(1.05) !important;
+}
+
+:global(.react-datepicker__day--selected),
+:global(.react-datepicker__day--keyboard-selected) {
+    background-color: var(--brand-navy) !important;
+    color: white !important;
+    font-weight: 700 !important;
+}
+
+:global(.react-datepicker__day--selected:hover),
+:global(.react-datepicker__day--keyboard-selected:hover) {
+    background-color: var(--brand-navy-dark) !important;
+}
+
+:global(.react-datepicker__day--in-range) {
+    background-color: rgba(47, 164, 169, 0.15) !important;
+    color: var(--brand-navy) !important;
+    border-radius: 0 !important;
+}
+
+:global(.react-datepicker__day--in-selecting-range) {
+    background-color: rgba(47, 164, 169, 0.08) !important;
+    color: var(--brand-navy) !important;
+    border-radius: 0 !important;
+}
+
+:global(.react-datepicker__day--range-start),
+:global(.react-datepicker__day--range-end) {
+    background-color: var(--brand-navy) !important;
+    color: white !important;
+    font-weight: 700 !important;
+    border-radius: 50% !important;
+}
+
+:global(.react-datepicker__day--today) {
+    font-weight: 600 !important;
+    box-shadow: inset 0 0 0 2px var(--brand-teal) !important;
+}
+
+:global(.react-datepicker__day--disabled) {
+    color: var(--brand-text-lighter) !important;
+    cursor: not-allowed !important;
+    opacity: 0.3 !important;
+}
+
+:global(.react-datepicker__day--disabled:hover) {
+    background-color: transparent !important;
+    transform: none !important;
+}
+
+/* Navigation Arrows - Circular Buttons */
+:global(.react-datepicker__navigation) {
+    top: 8px !important;
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 50% !important;
+    border: none !important;
+    background: var(--brand-grey-lighter) !important;
+    transition: all 0.2s ease !important;
+}
+
+:global(.react-datepicker__navigation:hover) {
+    background: var(--brand-grey-light) !important;
+    transform: scale(1.1) !important;
+}
+
+:global(.react-datepicker__navigation--previous) {
+    left: 16px !important;
+}
+
+:global(.react-datepicker__navigation--next) {
+    right: 16px !important;
+}
+
+:global(.react-datepicker__navigation-icon::before) {
+    border-color: var(--brand-navy) !important;
+    border-width: 2px 2px 0 0 !important;
+}
+
+/* Month containers - side by side */
+:global(.react-datepicker__month-container) {
+    float: left !important;
+    padding: 0 8px !important;
+}
+
+:global(.react-datepicker__month-container:first-child) {
+    padding-left: 0 !important;
+}
+
+:global(.react-datepicker__month-container:last-child) {
+    padding-right: 0 !important;
+}
+
+:global(.react-datepicker__month) {
+    margin: 0 !important;
+}
+
+/* Week rows */
+:global(.react-datepicker__week) {
+    display: flex !important;
+    justify-content: space-between !important;
+    margin-bottom: 2px !important;
+}
+
+/* Month Container */
+.react-datepicker__month-container {
+    padding: 0 8px 8px 8px !important;
+}
+
+/* Today Highlight */
+.react-datepicker__day--today {
+    font-weight: 700 !important;
+    border: 2px solid var(--brand-teal) !important;
+    background-color: transparent !important;
+}
+
+.react-datepicker__day--today:hover {
+    background-color: var(--brand-teal-lighter) !important;
+}
+
+/* Outside Month Days */
+.react-datepicker__day--outside-month {
+    color: var(--brand-border) !important;
+    opacity: 0.5 !important;
+}
+
+/* Consistent styling for all date inputs */
+.datePickerModern {
+    cursor: pointer !important;
+    width: 100% !important;
+}
+
+/* Ensure consistent z-index for all datepicker popups */
+.react-datepicker-popper {
+    z-index: 99999 !important;
+}
+
+/* ============================================================================
+   APARTMENT DATEPICKER STYLING (Villa Theme)
+   ============================================================================ */
+
+.datePickerApartment {
+    cursor: pointer !important;
+    width: 100% !important;
+}
+
+.datePickerWrapperApartment {
+    width: 100%;
+}
+
+.datePickerWrapperApartment .react-datepicker__input-container {
+    width: 100%;
+}
+
+/* Apartment DatePicker Calendar - Villa Theme */
+.calendarApartment.react-datepicker {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+    border: none !important;
+    border-radius: 20px !important;
+    box-shadow: 0 20px 60px rgba(31, 58, 95, 0.25), 0 0 0 1px rgba(31, 58, 95, 0.1) !important;
+    padding: 8px !important;
+    z-index: 99999 !important;
+    background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%) !important;
+}
+
+.calendarApartment .react-datepicker__header {
+    background: linear-gradient(135deg, #1F3A5F 0%, #2D4A6F 100%) !important;
+    border-bottom: none !important;
+    border-radius: 16px 16px 0 0 !important;
+    padding: 20px 16px 16px 16px !important;
+    box-shadow: 0 4px 12px rgba(31, 58, 95, 0.15) !important;
+}
+
+.calendarApartment .react-datepicker__current-month {
+    font-size: 17px !important;
+    font-weight: 700 !important;
+    color: white !important;
+    margin-bottom: 14px !important;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
+
+.calendarApartment .react-datepicker__day-name {
+    color: rgba(255, 255, 255, 0.95) !important;
+    font-weight: 700 !important;
+    font-size: 13px !important;
+    margin: 6px !important;
+    width: 36px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+}
+
+.calendarApartment .react-datepicker__day {
+    color: var(--brand-navy) !important;
+    font-weight: 600 !important;
+    border-radius: 12px !important;
+    margin: 6px !important;
+    width: 36px !important;
+    height: 36px !important;
+    line-height: 36px !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    position: relative !important;
+}
+
+.calendarApartment .react-datepicker__day:hover {
+    background: linear-gradient(135deg, var(--brand-teal) 0%, #3BB4B9 100%) !important;
+    color: white !important;
+    transform: scale(1.1) translateY(-2px) !important;
+    box-shadow: 0 6px 16px rgba(47, 164, 169, 0.3) !important;
+    font-weight: 700 !important;
+}
+
+.calendarApartment .react-datepicker__day--selected,
+.calendarApartment .react-datepicker__day--keyboard-selected {
+    background: linear-gradient(135deg, var(--brand-teal) 0%, #3BB4B9 100%) !important;
+    color: white !important;
+    font-weight: 800 !important;
+    box-shadow: 0 4px 12px rgba(47, 164, 169, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.2) !important;
+    transform: scale(1.05) !important;
+}
+
+.calendarApartment .react-datepicker__day--selected:hover,
+.calendarApartment .react-datepicker__day--keyboard-selected:hover {
+    background: linear-gradient(135deg, #2A9499 0%, var(--brand-teal) 100%) !important;
+    transform: scale(1.12) translateY(-2px) !important;
+    box-shadow: 0 8px 20px rgba(47, 164, 169, 0.45) !important;
+}
+
+.calendarApartment .react-datepicker__day--in-range {
+    background: linear-gradient(135deg, var(--brand-teal-lighter) 0%, rgba(47, 164, 169, 0.15) 100%) !important;
+    color: var(--brand-navy) !important;
+    font-weight: 600 !important;
+}
+
+.calendarApartment .react-datepicker__day--in-selecting-range {
+    background: linear-gradient(135deg, var(--brand-teal-lighter) 0%, rgba(47, 164, 169, 0.2) 100%) !important;
+    color: var(--brand-navy) !important;
+}
+
+.calendarApartment .react-datepicker__day--range-start,
+.calendarApartment .react-datepicker__day--range-end {
+    background: linear-gradient(135deg, var(--brand-teal) 0%, #3BB4B9 100%) !important;
+    color: white !important;
+    font-weight: 800 !important;
+    box-shadow: 0 6px 16px rgba(47, 164, 169, 0.4) !important;
+}
+
+.calendarApartment .react-datepicker__day--disabled {
+    color: var(--brand-border) !important;
+    cursor: not-allowed !important;
+    opacity: 0.4 !important;
+}
+
+.calendarApartment .react-datepicker__day--disabled:hover {
+    background-color: transparent !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+/* Navigation Arrows for Apartments */
+.calendarApartment .react-datepicker__navigation {
+    top: 20px !important;
+    width: 34px !important;
+    height: 34px !important;
+    border-radius: 10px !important;
+    transition: all 0.25s ease !important;
+    background: rgba(255, 255, 255, 0.15) !important;
+    backdrop-filter: blur(8px) !important;
+}
+
+.calendarApartment .react-datepicker__navigation:hover {
+    background: rgba(255, 255, 255, 0.3) !important;
+    transform: scale(1.1) !important;
+}
+
+.calendarApartment .react-datepicker__navigation-icon::before {
+    border-color: white !important;
+    border-width: 2.5px 2.5px 0 0 !important;
+    width: 8px !important;
+    height: 8px !important;
+}
+
+/* Month Container for Apartments */
+.calendarApartment .react-datepicker__month-container {
+    padding: 12px 8px 8px 8px !important;
+    background: white !important;
+}
+
+/* Today Highlight for Apartments */
+.calendarApartment .react-datepicker__day--today {
+    font-weight: 800 !important;
+    border: 2.5px solid var(--brand-teal) !important;
+    background: linear-gradient(135deg, rgba(47, 164, 169, 0.08) 0%, rgba(47, 164, 169, 0.12) 100%) !important;
+    box-shadow: 0 2px 8px rgba(47, 164, 169, 0.2) !important;
+}
+
+.calendarApartment .react-datepicker__day--today:hover {
+    background: linear-gradient(135deg, var(--brand-teal-lighter) 0%, rgba(47, 164, 169, 0.25) 100%) !important;
+    border-color: var(--brand-teal) !important;
+}
+
+/* Outside Month Days for Apartments */
+.calendarApartment .react-datepicker__day--outside-month {
+    color: var(--brand-border) !important;
+    opacity: 0.35 !important;
+}
+
+/* Week Numbers (if enabled) */
+.calendarApartment .react-datepicker__week-number {
+    color: var(--brand-text-light) !important;
+    font-weight: 600 !important;
+}
+
+.react-datepicker__day--outside-month {
+    color: var(--brand-text-darker) !important;
+    opacity: 0.4;
+}
+
+.react-datepicker__navigation {
+    top: 18px !important;
+}
+
+.react-datepicker__navigation-icon::before {
+    border-color: var(--brand-teal) !important;
+    border-width: 2px 2px 0 0 !important;
+}
+
+.react-datepicker__navigation:hover .react-datepicker__navigation-icon::before {
+    border-color: var(--brand-teal-dark) !important;
+}
+
+.react-datepicker__month {
+    margin: 8px !important;
+}
+
+.react-datepicker__triangle {
+    display: none !important;
+}
+
+.react-datepicker-popper {
+    z-index: 99999 !important;
+    will-change: transform;
+}
+
+.react-datepicker-popper[data-placement^="bottom"] {
+    padding-top: 12px !important;
+    margin-top: 0 !important;
+}
+
+.react-datepicker-popper[data-placement^="top"] {
+    padding-bottom: 12px !important;
+    margin-bottom: 0 !important;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .searchWrapper {
+        flex-wrap: wrap;
+        border-radius: 24px;
+        padding: 12px;
+    }
+
+    .searchFieldModern {
+        flex: 1 1 calc(50% - 8px);
+        min-width: calc(50% - 8px);
+    }
+
+    .fieldWithButton {
+        flex: 1 1 100%;
+        width: 100%;
+    }
+
+    .dividerModern {
+        display: none;
+    }
+
+    .searchBtnModern {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 768px) {
+    .searchBarModern {
+        padding: 0 0.75rem;
+    }
+
+    .searchWrapper {
+        flex-direction: column;
+        gap: 8px;
+        border-radius: 20px;
+        padding: 10px;
+    }
+
+    .searchFieldModern {
+        flex: 1 1 100%;
+        min-width: 100%;
+    }
+
+    .fieldInner {
+        padding: 12px 16px;
+    }
+
+    .fieldIcon {
+        font-size: 18px;
+    }
+
+    .fieldLabelModern {
+        font-size: 10px;
+    }
+
+    .fieldInputModern,
+    .fieldValueModern {
+        font-size: 13px;
+    }
+
+    .searchBtnModern {
+        padding: 14px 24px;
+        font-size: 14px;
+    }
+
+    .dropdownModern {
+        border-radius: 16px;
+    }
+
+    .guestsDropdownModern {
+        min-width: 100%;
+    }
+}
+
+/* Additional Enhancement Styles */
+
+/* Dropdown Header (for location search hint) */
+.dropdownHeader {
+    padding: 16px 18px;
+    border-bottom: 1px solid var(--brand-border-light);
+    background: var(--brand-grey-lightest);
+    border-radius: 24px 24px 0 0;
+}
+
+.dropdownHeader h4 {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--brand-text-dark);
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Improved field inner hover state */
+.fieldInner:hover {
+    background: rgba(47, 164, 169, 0.02);
+}
+
+/* Active field indicator */
+.searchFieldModern.fieldActive::before {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 20%;
+    right: 20%;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--brand-teal), transparent);
+    border-radius: 3px;
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+
+    0%,
+    100% {
+        opacity: 0.5;
+    }
+
+    50% {
+        opacity: 1;
+    }
+}
+
+/* Duration badge for selected duration */
+.durationBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    background: var(--brand-teal-lighter);
+    color: var(--brand-teal-dark);
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-left: 8px;
+}
+
+/* Improved scrollbar for all dropdowns */
+.dropdownModern *::-webkit-scrollbar {
+    width: 6px;
+}
+
+.dropdownModern *::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.dropdownModern *::-webkit-scrollbar-thumb {
+    background: var(--brand-border);
+    border-radius: 3px;
+}
+
+.dropdownModern *::-webkit-scrollbar-thumb:hover {
+    background: var(--brand-teal);
+}
+
+/* ============================================================================
+   DATES DROPDOWN - SIDE BY SIDE CALENDARS (AIRBNB STYLE)
+   ============================================================================ */
+
+.datesDropdownModern {
+    min-width: 500px;
+    max-width: 500px;
+    padding: 16px;
+    left: 50%;
+    margin-left: -250px;
+    overflow: visible;
+    background: #ffffff;
+    z-index: 10001;
+    top: calc(100% + 16px);
+    box-shadow:
+        0 24px 72px rgba(31, 58, 95, 0.3),
+        0 12px 32px rgba(31, 58, 95, 0.2),
+        0 0 0 1px rgba(31, 58, 95, 0.1);
+    will-change: opacity;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+}
+
+/* Instructions at top */
+.datesInstructions {
+    text-align: center;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(31, 58, 95, 0.08);
+}
+
+.datesInstructions p {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--brand-navy);
+}
+
+/* Calendar Headers (Check-in / Check-out) - Improved */
+.calendarHeaders {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    background: linear-gradient(135deg, rgba(47, 164, 169, 0.08) 0%, rgba(31, 58, 95, 0.05) 100%);
+    border-radius: 12px;
+    padding: 12px 8px;
+}
+
+.calendarHeader {
+    flex: 1;
+    text-align: center;
+    padding: 4px 0;
+}
+
+.calendarHeader span {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--brand-navy);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+}
+
+.datesPickerWrapper {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    background: transparent;
+}
+
+/* Calendar Footer with Clear Button */
+.calendarFooter {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(31, 58, 95, 0.08);
+}
+
+.clearDatesBtn {
+    padding: 8px 16px;
+    background: transparent;
+    border: none;
+    color: var(--brand-navy);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    text-decoration: underline;
+}
+
+.clearDatesBtn:hover {
+    background: rgba(31, 58, 95, 0.05);
+    text-decoration: none;
+}
+
+/* Side by side calendar styling */
+.sideBySideCalendar {
+    border: none !important;
+    font-family: inherit !important;
+}
+
+/* Calendar container for dual month view */
+.datesPickerWrapper :global(.react-datepicker) {
+    border: none;
+    display: flex;
+    gap: 12px;
+    background: #ffffff;
+}
+
+.datesPickerWrapper :global(.react-datepicker__month-container) {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 12px;
+    border: 1px solid rgba(31, 58, 95, 0.08);
+    flex: 1;
+    position: relative;
+}
+
+/* Subtle divider between calendars */
+.datesPickerWrapper :global(.react-datepicker__month-container:first-child::after) {
+    content: '';
+    position: absolute;
+    right: -7px;
+    top: 10%;
+    bottom: 10%;
+    width: 1px;
+    background: linear-gradient(180deg,
+            transparent 0%,
+            rgba(31, 58, 95, 0.1) 50%,
+            transparent 100%);
+}
+
+/* Calendar header styling */
+.datesPickerWrapper :global(.react-datepicker__header) {
+    background: transparent;
+    border: none;
+    padding: 0 0 12px 0;
+}
+
+.datesPickerWrapper :global(.react-datepicker__current-month) {
+    color: var(--brand-navy);
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+
+.datesPickerWrapper :global(.react-datepicker__day-names) {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 8px;
+}
+
+.datesPickerWrapper :global(.react-datepicker__day-name) {
+    color: var(--brand-text-dark);
+    font-size: 13px;
+    font-weight: 600;
+    width: 38px;
+    line-height: 38px;
+    margin: 0;
+}
+
+/* Calendar days */
+.datesPickerWrapper :global(.react-datepicker__month) {
+    margin: 0;
+}
+
+.datesPickerWrapper :global(.react-datepicker__week) {
+    display: flex;
+    justify-content: space-around;
+}
+
+.datesPickerWrapper :global(.react-datepicker__day) {
+    width: 36px;
+    height: 36px;
+    line-height: 36px;
+    margin: 2px;
+    border-radius: 50%;
+    color: var(--brand-navy);
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    position: relative;
+}
+
+.datesPickerWrapper :global(.react-datepicker__day:hover) {
+    background: var(--brand-teal-lighter);
+    border-radius: 50%;
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(47, 164, 169, 0.2);
+}
+
+.datesPickerWrapper :global(.react-datepicker__day--selected),
+.datesPickerWrapper :global(.react-datepicker__day--in-selecting-range),
+.datesPickerWrapper :global(.react-datepicker__day--in-range) {
+    background: rgba(47, 164, 169, 0.12);
+    color: var(--brand-teal-dark);
+    border-radius: 0;
+    font-weight: 500;
+}
+
+.datesPickerWrapper :global(.react-datepicker__day--range-start),
+.datesPickerWrapper :global(.react-datepicker__day--range-end),
+.datesPickerWrapper :global(.react-datepicker__day--selecting-range-start),
+.datesPickerWrapper :global(.react-datepicker__day--selecting-range-end) {
+    background: var(--brand-teal);
+    color: white;
+    border-radius: 50%;
+    font-weight: 700;
+    box-shadow: 0 2px 12px rgba(47, 164, 169, 0.3);
+    transform: scale(1.05);
+}
+
+/* Range start gets left rounded edge */
+.datesPickerWrapper :global(.react-datepicker__day--range-start) {
+    border-radius: 50% 0 0 50%;
+}
+
+/* Range end gets right rounded edge */
+.datesPickerWrapper :global(.react-datepicker__day--range-end) {
+    border-radius: 0 50% 50% 0;
+}
+
+/* If start and end are the same, keep it circular */
+.datesPickerWrapper :global(.react-datepicker__day--range-start.react-datepicker__day--range-end) {
+    border-radius: 50%;
+}
+
+.datesPickerWrapper :global(.react-datepicker__day--keyboard-selected) {
+    background: var(--brand-teal-lighter);
+    color: var(--brand-navy);
+}
+
+.datesPickerWrapper :global(.react-datepicker__day--disabled) {
+    color: var(--brand-text-light);
+    cursor: not-allowed;
+}
+
+.datesPickerWrapper :global(.react-datepicker__day--disabled:hover) {
+    background: transparent;
+}
+
+.datesPickerWrapper :global(.react-datepicker__day--outside-month) {
+    color: var(--brand-text-light);
+}
+
+/* Navigation arrows */
+.datesPickerWrapper :global(.react-datepicker__navigation) {
+    top: 20px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.datesPickerWrapper :global(.react-datepicker__navigation:hover) {
+    background: var(--brand-teal-lighter);
+}
+
+.datesPickerWrapper :global(.react-datepicker__navigation-icon::before) {
+    border-color: var(--brand-teal);
+    border-width: 2px 2px 0 0;
+    height: 8px;
+    width: 8px;
+    top: 10px;
+}
+
+/* Today indicator */
+.datesPickerWrapper :global(.react-datepicker__day--today) {
+    font-weight: 600;
+    border: 2px solid var(--brand-teal);
+}
+
+/* ============================================================================
+   RESPONSIVE DESIGN FOR DATES DROPDOWN
+   ============================================================================ */
+
+/* Tablet (768px - 1024px) */
+@media (max-width: 1024px) {
+    .datesDropdownModern {
+        min-width: 520px;
+        max-width: 520px;
+        padding: 20px;
+    }
+
+    .datesPickerWrapper :global(.react-datepicker) {
+        gap: 10px;
+    }
+
+    .datesPickerWrapper :global(.react-datepicker__day) {
+        width: 34px;
+        height: 34px;
+        line-height: 34px;
+        font-size: 12px;
+    }
+}
+
+/* Mobile (below 768px) - Stack calendars vertically */
+@media (max-width: 768px) {
+    .datesDropdownModern {
+        min-width: 320px;
+        max-width: 90vw;
+        padding: 16px;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+
+    .calendarHeaders {
+        flex-direction: column;
+        gap: 8px;
+        margin-bottom: 8px;
+    }
+
+    .calendarHeader {
+        padding: 6px 0;
+        border-bottom: 1px solid rgba(31, 58, 95, 0.08);
+    }
+
+    .datesPickerWrapper :global(.react-datepicker) {
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .datesPickerWrapper :global(.react-datepicker__month-container) {
+        width: 100%;
+    }
+
+    .datesPickerWrapper :global(.react-datepicker__month-container:first-child::after) {
+        display: none;
+    }
+
+    .datesPickerWrapper :global(.react-datepicker__day) {
+        width: 32px;
+        height: 32px;
+        line-height: 32px;
+        font-size: 12px;
+    }
+
+    .datesInstructions p {
+        font-size: 13px;
+    }
+}

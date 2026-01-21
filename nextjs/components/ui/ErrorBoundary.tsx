@@ -1,7 +1,7 @@
 "use client";
 
 import React, { Component, ErrorInfo, ReactNode } from "react";
-import "./ErrorBoundary.css";
+import styles from "./ErrorBoundary.module.css";
 
 interface Props {
   children: ReactNode;
@@ -69,9 +69,9 @@ class ErrorBoundary extends Component<Props, State> {
 
       // Default error UI
       return (
-        <div className="error-boundary">
-          <div className="error-boundary__container">
-            <div className="error-boundary__icon">
+        <div className={styles.errorBoundary}>
+          <div className={styles.errorBoundaryContainer}>
+            <div className={styles.errorBoundaryIcon}>
               <svg
                 width="64"
                 height="64"
@@ -88,47 +88,47 @@ class ErrorBoundary extends Component<Props, State> {
               </svg>
             </div>
 
-            <h1 className="error-boundary__title">
+            <h1 className={styles.errorBoundaryTitle}>
               Oops! Something went wrong
             </h1>
 
-            <p className="error-boundary__message">
+            <p className={styles.errorBoundaryMessage}>
               We&apos;re sorry for the inconvenience. The application
               encountered an unexpected error.
             </p>
 
-            <div className="error-boundary__actions">
+            <div className={styles.errorBoundaryActions}>
               <button
                 onClick={this.handleReset}
-                className="error-boundary__button error-boundary__button--primary"
+                className={`${styles.errorBoundaryButton} ${styles.errorBoundaryButtonPrimary}`}
               >
                 Try Again
               </button>
               <button
                 onClick={this.handleReload}
-                className="error-boundary__button error-boundary__button--secondary"
+                className={`${styles.errorBoundaryButton} ${styles.errorBoundaryButtonSecondary}`}
               >
                 Reload Page
               </button>
               <button
                 onClick={() => (window.location.href = "/")}
-                className="error-boundary__button error-boundary__button--ghost"
+                className={`${styles.errorBoundaryButton} ${styles.errorBoundaryButtonGhost}`}
               >
                 Go to Homepage
               </button>
             </div>
 
             {process.env.NODE_ENV === "development" && this.state.error && (
-              <details className="error-boundary__details">
-                <summary className="error-boundary__details-summary">
+              <details className={styles.errorBoundaryDetails}>
+                <summary className={styles.errorBoundaryDetailsSummary}>
                   Error Details (Development Only)
                 </summary>
-                <div className="error-boundary__details-content">
+                <div className={styles.errorBoundaryDetailsContent}>
                   <p>
                     <strong>Error:</strong> {this.state.error.toString()}
                   </p>
                   {this.state.errorInfo && (
-                    <pre className="error-boundary__stack">
+                    <pre className={styles.errorBoundaryStack}>
                       {this.state.errorInfo.componentStack}
                     </pre>
                   )}

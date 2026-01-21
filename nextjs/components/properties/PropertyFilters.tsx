@@ -11,15 +11,19 @@ import {
   FiMapPin,
   FiUsers,
   FiCalendar,
+  FiDollarSign,
+  FiMinus,
+  FiPlus,
 } from "react-icons/fi";
 import { IoBed } from "react-icons/io5";
-import "./PropertyFilters.css";
+import styles from "./PropertyFilters.module.css";
 
 export interface PropertyFiltersState {
   city: string;
   minPrice: string;
   maxPrice: string;
   guests: string;
+  children: string;
   bedrooms: string;
   checkin: string;
   checkout: string;
@@ -41,468 +45,532 @@ export default function PropertyFilters({
   onClearFilters,
   resultsCount,
 }: PropertyFiltersProps) {
-  // Local state for city search - initialized from filters
-  const [citySearchInput, setCitySearchInput] = useState(() => {
-    if (filters.city) {
-      const selectedCity = cities.find((c) => c.name === filters.city);
-      return selectedCity ? `${selectedCity.name}, ${selectedCity.state}` : "";
-    }
-    return "";
-  });
-  const [showCityDropdown, setShowCityDropdown] = useState(false);
-  const [selectedCityIndex, setSelectedCityIndex] = useState(-1);
-  const cityDropdownRef = useRef<HTMLDivElement>(null);
-
-  // Date picker states - initialized from filters
-  const [checkinDate, setCheckinDate] = useState<Date | null>(() =>
-    filters.checkin ? new Date(filters.checkin) : null
-  );
-  const [checkoutDate, setCheckoutDate] = useState<Date | null>(() =>
-    filters.checkout ? new Date(filters.checkout) : null
-  );
-
-  // Guests dropdown state - initialized from filters
-  const [showGuestsDropdown, setShowGuestsDropdown] = useState(false);
-  const [guestsCount, setGuestsCount] = useState<number>(() =>
-    filters.guests ? parseInt(filters.guests) : 0
-  );
-  const guestsDropdownRef = useRef<HTMLDivElement>(null);
-
-  // Bedrooms dropdown state - initialized from filters
-  const [showBedroomsDropdown, setShowBedroomsDropdown] = useState(false);
-  const [bedroomsCount, setBedroomsCount] = useState<number>(() =>
-    filters.bedrooms ? parseInt(filters.bedrooms) : 0
-  );
-  const bedroomsDropdownRef = useRef<HTMLDivElement>(null);
-
-  // Filtered cities for search
-  const filteredCities = useMemo(() => {
-    const citiesArray = Array.isArray(cities) ? cities : [];
-    if (!citySearchInput.trim()) {
-      return citiesArray;
-    }
-    return citiesArray.filter(
-      (city) =>
-        city.name.toLowerCase().includes(citySearchInput.toLowerCase()) ||
-        city.state.toLowerCase().includes(citySearchInput.toLowerCase())
-    );
-  }, [citySearchInput, cities]);
-
-  // Sync city search input when filters.city changes externally (e.g., clear filters)
-  useEffect(() => {
-    if (!filters.city) {
-      // Filter was cleared, clear the input
-      setCitySearchInput("");
-    } else {
-      // Check if current input doesn't match the filter
-      const selectedCity = cities.find((c) => c.name === filters.city);
-      if (selectedCity) {
-        const expectedInput = `${selectedCity.name}, ${selectedCity.state}`;
-        // Only update if input doesn't match (avoid unnecessary updates)
-        if (
-          citySearchInput !== expectedInput &&
-          !citySearchInput.includes(selectedCity.name)
-        ) {
-          setCitySearchInput(expectedInput);
-        }
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters.city, cities]);
-
-  // Click outside handler for dropdowns
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        cityDropdownRef.current &&
-        !cityDropdownRef.current.contains(event.target as Node)
-      ) {
-        setShowCityDropdown(false);
-      }
-      if (
-        guestsDropdownRef.current &&
-        !guestsDropdownRef.current.contains(event.target as Node)
-      ) {
-        setShowGuestsDropdown(false);
-      }
-      if (
-        bedroomsDropdownRef.current &&
-        !bedroomsDropdownRef.current.contains(event.target as Node)
-      ) {
-        setShowBedroomsDropdown(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  // Calculate active filters count (exclude sortBy, checkin, checkout)
-  const activeFiltersCount = Object.entries(filters).filter(
-    ([key, value]) =>
-      key !== "sortBy" &&
-      key !== "checkin" &&
-      key !== "checkout" &&
-      value !== ""
-  ).length;
+  // Count active filters (exclude sortBy, checkin, checkout from count)
+  const activeFiltersCount = [
+    filters.city !== "",
+    filters.guests !== "" && parseInt(filters.guests) > 0,
+    filters.children !== "" && parseInt(filters.children) > 0,
+    filters.minPrice !== "" || filters.maxPrice !== "",
+    filters.bedrooms !== "",
+  ].filter(Boolean).length;
 
   // Auto-expand filters if any are active on initial load
   const [showFilters, setShowFilters] = useState(() => activeFiltersCount > 0);
 
+  // Dropdown states
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+
+  // City search
+  const [citySearchInput, setCitySearchInput] = useState("");
+
+  // Date picker states
+  const [checkinDate, setCheckinDate] = useState<Date | null>(() =>
+    filters.checkin ? new Date(filters.checkin) : null,
+  );
+  const [checkoutDate, setCheckoutDate] = useState<Date | null>(() =>
+    filters.checkout ? new Date(filters.checkout) : null,
+  );
+
+  // Refs for click outside
+  const cityRef = useRef<HTMLDivElement>(null);
+  const datesRef = useRef<HTMLDivElement>(null);
+  const capacityRef = useRef<HTMLDivElement>(null);
+  const priceRef = useRef<HTMLDivElement>(null);
+  const bedroomsRef = useRef<HTMLDivElement>(null);
+  const sortRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const refs = [
+        cityRef,
+        datesRef,
+        capacityRef,
+        priceRef,
+        bedroomsRef,
+        sortRef,
+      ];
+      if (
+        refs.every(
+          (ref) => ref.current && !ref.current.contains(event.target as Node),
+        )
+      ) {
+        setOpenDropdown(null);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Filter cities based on search
+  const filteredCities = useMemo(() => {
+    if (citySearchInput.trim() === "") {
+      return cities;
+    }
+    const searchLower = citySearchInput.toLowerCase();
+    return cities.filter(
+      (city) =>
+        city.name.toLowerCase().includes(searchLower) ||
+        city.state.toLowerCase().includes(searchLower),
+    );
+  }, [citySearchInput, cities]);
+
+  const toggleDropdown = (dropdown: string) => {
+    setOpenDropdown(openDropdown === dropdown ? null : dropdown);
+  };
+
+  const handleCitySelect = (cityName: string) => {
+    onFilterChange("city", cityName);
+    setCitySearchInput("");
+    setOpenDropdown(null);
+  };
+
+  const handleCapacityChange = (
+    type: "guests" | "children",
+    increment: boolean,
+  ) => {
+    const currentValue = parseInt(filters[type] || "0");
+    const newValue = increment
+      ? currentValue + 1
+      : Math.max(type === "guests" ? 1 : 0, currentValue - 1);
+    onFilterChange(type, newValue.toString());
+  };
+
+  const handlePriceQuickFilter = (min: string, max: string) => {
+    onFilterChange("minPrice", min);
+    onFilterChange("maxPrice", max);
+  };
+
+  const handleBedroomSelect = (bedrooms: string) => {
+    onFilterChange("bedrooms", bedrooms);
+    setOpenDropdown(null);
+  };
+
+  const handleSortSelect = (sortBy: string) => {
+    onFilterChange("sortBy", sortBy);
+    setOpenDropdown(null);
+  };
+
+  const handleDateChange = (dates: [Date | null, Date | null]) => {
+    const [start, end] = dates;
+    setCheckinDate(start);
+    setCheckoutDate(end);
+    if (start) onFilterChange("checkin", start.toISOString());
+    if (end) onFilterChange("checkout", end.toISOString());
+  };
+
+  // Get display text helpers
+  const getCityText = () => {
+    if (!filters.city) return "All Cities";
+    const selectedCity = cities.find((c) => c.name === filters.city);
+    return selectedCity
+      ? `${selectedCity.name}, ${selectedCity.state}`
+      : filters.city;
+  };
+
+  const getCapacityText = () => {
+    const guests = parseInt(filters.guests || "0");
+    const children = parseInt(filters.children || "0");
+    const parts = [];
+    if (guests > 0) parts.push(`${guests} Adults`);
+    if (children > 0) parts.push(`${children} Children`);
+    return parts.length > 0 ? parts.join(", ") : "Any Capacity";
+  };
+
+  const getPriceText = () => {
+    if (filters.minPrice && filters.maxPrice) {
+      return `₹${parseInt(filters.minPrice).toLocaleString()} - ₹${parseInt(filters.maxPrice).toLocaleString()}`;
+    }
+    if (filters.minPrice)
+      return `₹${parseInt(filters.minPrice).toLocaleString()}+`;
+    if (filters.maxPrice)
+      return `Up to ₹${parseInt(filters.maxPrice).toLocaleString()}`;
+    return "Any Price";
+  };
+
+  const getBedroomsText = () => {
+    if (!filters.bedrooms) return "Any Bedrooms";
+    return `${filters.bedrooms}+ Bedrooms`;
+  };
+
+  const getDatesText = () => {
+    if (checkinDate && checkoutDate) {
+      return `${checkinDate.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      })} - ${checkoutDate.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      })}`;
+    }
+    return "Select Dates";
+  };
+
+  const getSortText = () => {
+    const sortOptions: { [key: string]: string } = {
+      recommended: "Recommended",
+      "price-low": "Price: Low to High",
+      "price-high": "Price: High to Low",
+      rating: "Rating: High to Low",
+    };
+    return sortOptions[filters.sortBy] || "Recommended";
+  };
+
   return (
-    <div className="filters-bar">
-      <div className="filters-container">
-        <div className="filters-top">
-          <div className="filters-actions">
+    <div className={styles.container}>
+      {/* Filters Top Bar */}
+      <div className={styles.filtersTop}>
+        <div className={styles.filtersActions}>
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className={styles.filterToggleBtn}
+          >
+            <FiFilter />
+            <span>Filters</span>
+            {activeFiltersCount > 0 && (
+              <span className={styles.filterBadge}>{activeFiltersCount}</span>
+            )}
+            <FiChevronDown
+              className={`${styles.chevronIcon} ${
+                showFilters ? styles.rotated : ""
+              }`}
+            />
+          </button>
+
+          {activeFiltersCount > 0 && (
+            <button onClick={onClearFilters} className={styles.clearFiltersBtn}>
+              <FiX />
+              <span>Clear all</span>
+            </button>
+          )}
+        </div>
+
+        <div className={styles.resultsActions}>
+          <div className={styles.resultsCount}>
+            <strong>{resultsCount}</strong> properties found
+          </div>
+
+          {/* Sort Dropdown */}
+          <div className={styles.filterItem} ref={sortRef}>
             <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="filter-toggle-btn"
+              className={styles.filterButton}
+              onClick={() => toggleDropdown("sort")}
             >
-              <FiFilter />
-              <span>Filters</span>
-              {activeFiltersCount > 0 && (
-                <span className="filter-badge">{activeFiltersCount}</span>
-              )}
-              <FiChevronDown
-                className={`chevron-icon ${showFilters ? "rotated" : ""}`}
-              />
+              <span className={styles.label}>{getSortText()}</span>
+              <FiChevronDown className={styles.chevron} />
             </button>
 
-            {activeFiltersCount > 0 && (
-              <button onClick={onClearFilters} className="clear-filters-btn">
-                <FiX />
-                <span>Clear all</span>
-              </button>
+            {openDropdown === "sort" && (
+              <div className={styles.dropdown}>
+                <button
+                  className={`${styles.dropdownItem} ${filters.sortBy === "recommended" ? styles.selected : ""}`}
+                  onClick={() => handleSortSelect("recommended")}
+                >
+                  Recommended
+                </button>
+                <button
+                  className={`${styles.dropdownItem} ${filters.sortBy === "price-low" ? styles.selected : ""}`}
+                  onClick={() => handleSortSelect("price-low")}
+                >
+                  Price: Low to High
+                </button>
+                <button
+                  className={`${styles.dropdownItem} ${filters.sortBy === "price-high" ? styles.selected : ""}`}
+                  onClick={() => handleSortSelect("price-high")}
+                >
+                  Price: High to Low
+                </button>
+                <button
+                  className={`${styles.dropdownItem} ${filters.sortBy === "rating" ? styles.selected : ""}`}
+                  onClick={() => handleSortSelect("rating")}
+                >
+                  Rating: High to Low
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Filter Grid - Collapsible */}
+      {showFilters && (
+        <div className={styles.filterGrid}>
+          {/* City Filter */}
+          <div className={styles.filterItem} ref={cityRef}>
+            <button
+              className={`${styles.filterButton} ${filters.city ? styles.active : ""}`}
+              onClick={() => toggleDropdown("city")}
+            >
+              <FiMapPin className={styles.icon} />
+              <span className={styles.label}>{getCityText()}</span>
+              <FiChevronDown className={styles.chevron} />
+            </button>
+
+            {openDropdown === "city" && (
+              <div className={styles.dropdown}>
+                <div className={styles.searchBox}>
+                  <input
+                    type="text"
+                    placeholder="Search cities..."
+                    value={citySearchInput}
+                    onChange={(e) => setCitySearchInput(e.target.value)}
+                    className={styles.searchInput}
+                  />
+                </div>
+                <div className={styles.dropdownScroll}>
+                  <button
+                    className={`${styles.dropdownItem} ${!filters.city ? styles.selected : ""}`}
+                    onClick={() => handleCitySelect("")}
+                  >
+                    All Cities
+                  </button>
+                  {filteredCities.map((city) => (
+                    <button
+                      key={city.id}
+                      className={`${styles.dropdownItem} ${filters.city === city.name ? styles.selected : ""}`}
+                      onClick={() => handleCitySelect(city.name)}
+                    >
+                      {city.name}, {city.state}
+                    </button>
+                  ))}
+                </div>
+              </div>
             )}
           </div>
 
-          <div className="results-actions">
-            <div className="results-count">
-              <strong>{resultsCount}</strong> properties found
-            </div>
+          {/* Dates Filter */}
+          <div className={styles.filterItem} ref={datesRef}>
+            <button
+              className={`${styles.filterButton} ${checkinDate && checkoutDate ? styles.active : ""}`}
+              onClick={() => toggleDropdown("dates")}
+            >
+              <FiCalendar className={styles.icon} />
+              <span className={styles.label}>{getDatesText()}</span>
+              <FiChevronDown className={styles.chevron} />
+            </button>
 
-            <div className="sort-dropdown">
-              <select
-                value={filters.sortBy}
-                onChange={(e) => onFilterChange("sortBy", e.target.value)}
-                className="sort-select"
+            {openDropdown === "dates" && (
+              <div
+                className={styles.dropdown}
+                style={{ width: "auto", minWidth: "320px" }}
               >
-                <option value="recommended">Recommended</option>
-                <option value="price-low">Price: Low to High</option>
-                <option value="price-high">Price: High to Low</option>
-                <option value="rating">Highest Rated</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        {/* Expandable Filters */}
-        {showFilters && (
-          <div className="filter-panel">
-            <div className="filter-grid">
-              {/* City - Searchable Dropdown */}
-              <div className="filter-group" ref={cityDropdownRef}>
-                <label>
-                  <FiMapPin />
-                  Location
-                </label>
-                <div className="searchable-dropdown">
-                  <input
-                    type="text"
-                    value={citySearchInput}
-                    onChange={(e) => {
-                      setCitySearchInput(e.target.value);
-                      setShowCityDropdown(true);
-                      if (!e.target.value) {
-                        onFilterChange("city", "");
-                      }
-                    }}
-                    onFocus={() => setShowCityDropdown(true)}
-                    onKeyDown={(e) => {
-                      if (e.key === "ArrowDown") {
-                        e.preventDefault();
-                        setSelectedCityIndex((prev) =>
-                          Math.min(prev + 1, filteredCities.length - 1)
-                        );
-                      } else if (e.key === "ArrowUp") {
-                        e.preventDefault();
-                        setSelectedCityIndex((prev) => Math.max(prev - 1, 0));
-                      } else if (e.key === "Enter" && selectedCityIndex >= 0) {
-                        e.preventDefault();
-                        const city = filteredCities[selectedCityIndex];
-                        setCitySearchInput(`${city.name}, ${city.state}`);
-                        onFilterChange("city", city.name);
-                        setShowCityDropdown(false);
-                      }
-                    }}
-                    placeholder="Search city..."
-                    className="filter-input"
-                  />
-                  {citySearchInput && (
-                    <button
-                      className="clear-city-btn"
-                      onClick={() => {
-                        setCitySearchInput("");
-                        onFilterChange("city", "");
-                      }}
-                      type="button"
-                    >
-                      <FiX />
-                    </button>
-                  )}
-                  {showCityDropdown && filteredCities.length > 0 && (
-                    <div className="city-dropdown-menu">
-                      {filteredCities.map((city, index) => (
-                        <div
-                          key={city.id}
-                          className={`city-option ${
-                            index === selectedCityIndex ? "highlighted" : ""
-                          } ${filters.city === city.name ? "selected" : ""}`}
-                          onClick={() => {
-                            setCitySearchInput(`${city.name}, ${city.state}`);
-                            onFilterChange("city", city.name);
-                            setShowCityDropdown(false);
-                            setSelectedCityIndex(-1);
-                          }}
-                        >
-                          <FiMapPin className="city-icon" />
-                          <div className="city-details">
-                            <div className="city-name">{city.name}</div>
-                            <div className="city-state">{city.state}</div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Check-in Date - DatePicker */}
-              <div className="filter-group">
-                <label>
-                  <FiCalendar />
-                  Check-in
-                </label>
                 <DatePicker
                   selected={checkinDate}
-                  onChange={(date: Date | null) => {
-                    setCheckinDate(date);
-                    if (date) {
-                      const year = date.getFullYear();
-                      const month = String(date.getMonth() + 1).padStart(
-                        2,
-                        "0"
-                      );
-                      const day = String(date.getDate()).padStart(2, "0");
-                      onFilterChange("checkin", `${year}-${month}-${day}`);
-                    } else {
-                      onFilterChange("checkin", "");
-                    }
-                  }}
-                  selectsStart
+                  onChange={handleDateChange}
                   startDate={checkinDate}
                   endDate={checkoutDate}
+                  selectsRange
                   minDate={new Date()}
-                  placeholderText="Select check-in"
-                  className="filter-input date-picker-input"
+                  inline
+                  monthsShown={2}
                   dateFormat="MMM d, yyyy"
                 />
+                {(checkinDate || checkoutDate) && (
+                  <div className={styles.dateFooter}>
+                    <button
+                      onClick={() => {
+                        setCheckinDate(null);
+                        setCheckoutDate(null);
+                        onFilterChange("checkin", "");
+                        onFilterChange("checkout", "");
+                      }}
+                      className={styles.clearDatesBtn}
+                    >
+                      Clear dates
+                    </button>
+                  </div>
+                )}
               </div>
-
-              {/* Check-out Date - DatePicker */}
-              <div className="filter-group">
-                <label>
-                  <FiCalendar />
-                  Check-out
-                </label>
-                <DatePicker
-                  selected={checkoutDate}
-                  onChange={(date: Date | null) => {
-                    setCheckoutDate(date);
-                    if (date) {
-                      const year = date.getFullYear();
-                      const month = String(date.getMonth() + 1).padStart(
-                        2,
-                        "0"
-                      );
-                      const day = String(date.getDate()).padStart(2, "0");
-                      onFilterChange("checkout", `${year}-${month}-${day}`);
-                    } else {
-                      onFilterChange("checkout", "");
-                    }
-                  }}
-                  selectsEnd
-                  startDate={checkinDate}
-                  endDate={checkoutDate}
-                  minDate={checkinDate || new Date()}
-                  placeholderText="Select check-out"
-                  className="filter-input date-picker-input"
-                  dateFormat="MMM d, yyyy"
-                />
-              </div>
-
-              {/* Guests - Incrementer Dropdown */}
-              <div className="filter-group" ref={guestsDropdownRef}>
-                <label>
-                  <FiUsers />
-                  Guests
-                </label>
-                <div className="guests-selector">
-                  <button
-                    type="button"
-                    className="filter-input guests-display-btn"
-                    onClick={() => setShowGuestsDropdown(!showGuestsDropdown)}
-                  >
-                    <span>
-                      {guestsCount > 0
-                        ? `${guestsCount} ${
-                            guestsCount === 1 ? "Guest" : "Guests"
-                          }`
-                        : "Any"}
-                    </span>
-                    <FiChevronDown
-                      className={`chevron ${
-                        showGuestsDropdown ? "rotated" : ""
-                      }`}
-                    />
-                  </button>
-                  {showGuestsDropdown && (
-                    <div className="guests-dropdown-menu">
-                      <div className="guests-control">
-                        <div className="guests-counter">
-                          <button
-                            type="button"
-                            className="counter-btn"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              const newCount = Math.max(0, guestsCount - 1);
-                              setGuestsCount(newCount);
-                              onFilterChange(
-                                "guests",
-                                newCount > 0 ? newCount.toString() : ""
-                              );
-                            }}
-                            disabled={guestsCount <= 0}
-                          >
-                            −
-                          </button>
-                          <span className="counter-value">{guestsCount}</span>
-                          <button
-                            type="button"
-                            className="counter-btn"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              const newCount = Math.min(20, guestsCount + 1);
-                              setGuestsCount(newCount);
-                              onFilterChange("guests", newCount.toString());
-                            }}
-                            disabled={guestsCount >= 20}
-                          >
-                            +
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Bedrooms - Incrementer Dropdown */}
-              <div className="filter-group" ref={bedroomsDropdownRef}>
-                <label>
-                  <IoBed />
-                  Bedrooms
-                </label>
-                <div className="guests-selector">
-                  <button
-                    type="button"
-                    className="filter-input guests-display-btn"
-                    onClick={() =>
-                      setShowBedroomsDropdown(!showBedroomsDropdown)
-                    }
-                  >
-                    <span>
-                      {bedroomsCount > 0
-                        ? `${bedroomsCount} ${
-                            bedroomsCount === 1 ? "Bedroom" : "Bedrooms"
-                          }`
-                        : "Any"}
-                    </span>
-                    <FiChevronDown
-                      className={`chevron ${
-                        showBedroomsDropdown ? "rotated" : ""
-                      }`}
-                    />
-                  </button>
-                  {showBedroomsDropdown && (
-                    <div className="guests-dropdown-menu">
-                      <div className="guests-control">
-                        <div className="guests-counter">
-                          <button
-                            type="button"
-                            className="counter-btn"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              const newCount = Math.max(0, bedroomsCount - 1);
-                              setBedroomsCount(newCount);
-                              onFilterChange(
-                                "bedrooms",
-                                newCount > 0 ? newCount.toString() : ""
-                              );
-                            }}
-                            disabled={bedroomsCount <= 0}
-                          >
-                            −
-                          </button>
-                          <span className="counter-value">{bedroomsCount}</span>
-                          <button
-                            type="button"
-                            className="counter-btn"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              const newCount = Math.min(10, bedroomsCount + 1);
-                              setBedroomsCount(newCount);
-                              onFilterChange("bedrooms", newCount.toString());
-                            }}
-                            disabled={bedroomsCount >= 10}
-                          >
-                            +
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Min Price */}
-              <div className="filter-group">
-                <label>Min Price</label>
-                <input
-                  type="number"
-                  value={filters.minPrice}
-                  onChange={(e) => onFilterChange("minPrice", e.target.value)}
-                  placeholder="₹0"
-                  className="filter-input"
-                  min="0"
-                />
-              </div>
-
-              {/* Max Price */}
-              <div className="filter-group">
-                <label>Max Price</label>
-                <input
-                  type="number"
-                  value={filters.maxPrice}
-                  onChange={(e) => onFilterChange("maxPrice", e.target.value)}
-                  placeholder="₹50,000"
-                  className="filter-input"
-                  min="0"
-                />
-              </div>
-            </div>
+            )}
           </div>
-        )}
-      </div>
+
+          {/* Capacity Filter (Combined Guests + Children) */}
+          <div className={styles.filterItem} ref={capacityRef}>
+            <button
+              className={`${styles.filterButton} ${parseInt(filters.guests || "0") > 0 || parseInt(filters.children || "0") > 0 ? styles.active : ""}`}
+              onClick={() => toggleDropdown("capacity")}
+            >
+              <FiUsers className={styles.icon} />
+              <span className={styles.label}>{getCapacityText()}</span>
+              <FiChevronDown className={styles.chevron} />
+            </button>
+
+            {openDropdown === "capacity" && (
+              <div className={styles.dropdown}>
+                <div className={styles.capacitySection}>
+                  <div className={styles.capacityRow}>
+                    <label>Adults</label>
+                    <div className={styles.counter}>
+                      <button
+                        onClick={() => handleCapacityChange("guests", false)}
+                        disabled={parseInt(filters.guests || "0") <= 1}
+                        className={styles.counterBtn}
+                      >
+                        <FiMinus size={14} />
+                      </button>
+                      <span className={styles.counterValue}>
+                        {filters.guests || "1"}
+                      </span>
+                      <button
+                        onClick={() => handleCapacityChange("guests", true)}
+                        className={styles.counterBtn}
+                      >
+                        <FiPlus size={14} />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className={styles.divider} />
+
+                  <div className={styles.capacityRow}>
+                    <label>Children</label>
+                    <div className={styles.counter}>
+                      <button
+                        onClick={() => handleCapacityChange("children", false)}
+                        disabled={parseInt(filters.children || "0") <= 0}
+                        className={styles.counterBtn}
+                      >
+                        <FiMinus size={14} />
+                      </button>
+                      <span className={styles.counterValue}>
+                        {filters.children || "0"}
+                      </span>
+                      <button
+                        onClick={() => handleCapacityChange("children", true)}
+                        className={styles.counterBtn}
+                      >
+                        <FiPlus size={14} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Price Range Filter */}
+          <div className={styles.filterItem} ref={priceRef}>
+            <button
+              className={`${styles.filterButton} ${filters.minPrice || filters.maxPrice ? styles.active : ""}`}
+              onClick={() => toggleDropdown("price")}
+            >
+              <FiDollarSign className={styles.icon} />
+              <span className={styles.label}>{getPriceText()}</span>
+              <FiChevronDown className={styles.chevron} />
+            </button>
+
+            {openDropdown === "price" && (
+              <div className={styles.dropdown}>
+                <div className={styles.priceSection}>
+                  <label>Price Range (per night)</label>
+                  <div className={styles.priceInputs}>
+                    <input
+                      type="number"
+                      placeholder="Min"
+                      value={filters.minPrice}
+                      onChange={(e) =>
+                        onFilterChange("minPrice", e.target.value)
+                      }
+                      className={styles.priceInput}
+                    />
+                    <span className={styles.priceSeparator}>—</span>
+                    <input
+                      type="number"
+                      placeholder="Max"
+                      value={filters.maxPrice}
+                      onChange={(e) =>
+                        onFilterChange("maxPrice", e.target.value)
+                      }
+                      className={styles.priceInput}
+                    />
+                  </div>
+
+                  <div className={styles.priceQuickFilters}>
+                    <button
+                      onClick={() => handlePriceQuickFilter("", "5000")}
+                      className={styles.quickFilterBtn}
+                    >
+                      Under ₹5,000
+                    </button>
+                    <button
+                      onClick={() => handlePriceQuickFilter("5000", "10000")}
+                      className={styles.quickFilterBtn}
+                    >
+                      ₹5,000 - ₹10,000
+                    </button>
+                    <button
+                      onClick={() => handlePriceQuickFilter("10000", "20000")}
+                      className={styles.quickFilterBtn}
+                    >
+                      ₹10,000 - ₹20,000
+                    </button>
+                    <button
+                      onClick={() => handlePriceQuickFilter("20000", "")}
+                      className={styles.quickFilterBtn}
+                    >
+                      Over ₹20,000
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Bedrooms Filter */}
+          <div className={styles.filterItem} ref={bedroomsRef}>
+            <button
+              className={`${styles.filterButton} ${filters.bedrooms ? styles.active : ""}`}
+              onClick={() => toggleDropdown("bedrooms")}
+            >
+              <IoBed className={styles.icon} />
+              <span className={styles.label}>{getBedroomsText()}</span>
+              <FiChevronDown className={styles.chevron} />
+            </button>
+
+            {openDropdown === "bedrooms" && (
+              <div className={styles.dropdown}>
+                <button
+                  className={`${styles.dropdownItem} ${!filters.bedrooms ? styles.selected : ""}`}
+                  onClick={() => handleBedroomSelect("")}
+                >
+                  Any Bedrooms
+                </button>
+                <button
+                  className={`${styles.dropdownItem} ${filters.bedrooms === "1" ? styles.selected : ""}`}
+                  onClick={() => handleBedroomSelect("1")}
+                >
+                  1+ Bedroom
+                </button>
+                <button
+                  className={`${styles.dropdownItem} ${filters.bedrooms === "2" ? styles.selected : ""}`}
+                  onClick={() => handleBedroomSelect("2")}
+                >
+                  2+ Bedrooms
+                </button>
+                <button
+                  className={`${styles.dropdownItem} ${filters.bedrooms === "3" ? styles.selected : ""}`}
+                  onClick={() => handleBedroomSelect("3")}
+                >
+                  3+ Bedrooms
+                </button>
+                <button
+                  className={`${styles.dropdownItem} ${filters.bedrooms === "4" ? styles.selected : ""}`}
+                  onClick={() => handleBedroomSelect("4")}
+                >
+                  4+ Bedrooms
+                </button>
+                <button
+                  className={`${styles.dropdownItem} ${filters.bedrooms === "5" ? styles.selected : ""}`}
+                  onClick={() => handleBedroomSelect("5")}
+                >
+                  5+ Bedrooms
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

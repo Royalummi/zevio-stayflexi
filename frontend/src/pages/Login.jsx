@@ -67,7 +67,7 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 p-4">
       {/* Back to Home Link */}
       <a
-        href="http://localhost:4322/"
+        href="http://localhost:8000/"
         className="absolute top-4 left-4 flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:text-primary transition-colors"
       >
         <svg

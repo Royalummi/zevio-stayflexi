@@ -1,23 +1,23 @@
 "use client";
 
 import React from "react";
-import "./terms.css";
+import styles from "./terms.module.css";
 
 export default function TermsPage() {
   return (
-    <div className="terms-page">
+    <div className={styles.termsPage}>
       {/* Hero Section */}
-      <section className="terms-hero">
-        <div className="hero-content">
-          <h1 className="hero-title">Terms of Service</h1>
-          <p className="hero-subtitle">Last updated: January 4, 2026</p>
+      <section className={styles.termsHero}>
+        <div className={styles.heroContent}>
+          <h1 className={styles.heroTitle}>Terms of Service</h1>
+          <p className={styles.heroSubtitle}>Last updated: January 4, 2026</p>
         </div>
       </section>
 
       {/* Terms Content */}
-      <section className="terms-content">
-        <div className="terms-container">
-          <div className="terms-intro">
+      <section className={styles.termsContent}>
+        <div className={styles.termsContainer}>
+          <div className={styles.termsIntro}>
             <p>
               Welcome to Zevio. These Terms of Service (&quot;Terms&quot;)
               govern your use of our website and services. By accessing or using
@@ -26,8 +26,8 @@ export default function TermsPage() {
             </p>
           </div>
 
-          <div className="terms-section">
-            <h2 className="section-title">1. Acceptance of Terms</h2>
+          <div className={styles.termsSection}>
+            <h2 className={styles.sectionTitle}>1. Acceptance of Terms</h2>
             <p>
               By accessing and using the Zevio platform, you accept and agree to
               be bound by these Terms and our Privacy Policy. If you do not
@@ -35,8 +35,8 @@ export default function TermsPage() {
             </p>
           </div>
 
-          <div className="terms-section">
-            <h2 className="section-title">2. Eligibility</h2>
+          <div className={styles.termsSection}>
+            <h2 className={styles.sectionTitle}>2. Eligibility</h2>
             <p>
               You must be at least 18 years old to use Zevio services. By
               agreeing to these Terms, you represent and warrant that:
@@ -51,8 +51,8 @@ export default function TermsPage() {
             </ul>
           </div>
 
-          <div className="terms-section">
-            <h2 className="section-title">3. Account Registration</h2>
+          <div className={styles.termsSection}>
+            <h2 className={styles.sectionTitle}>3. Account Registration</h2>
             <p>To book properties, you must create an account. You agree to:</p>
             <ul>
               <li>Provide accurate, current, and complete information</li>
@@ -65,15 +65,17 @@ export default function TermsPage() {
             </ul>
           </div>
 
-          <div className="terms-section">
-            <h2 className="section-title">4. Bookings and Reservations</h2>
-            <h3 className="subsection-title">4.1 Booking Process</h3>
+          <div className={styles.termsSection}>
+            <h2 className={styles.sectionTitle}>
+              4. Bookings and Reservations
+            </h2>
+            <h3 className={styles.subsectionTitle}>4.1 Booking Process</h3>
             <p>
               When you make a booking through Zevio, you enter into a direct
               contractual relationship with the property owner. Zevio acts as a
               facilitator and is not a party to the rental agreement.
             </p>
-            <h3 className="subsection-title">4.2 Payment</h3>
+            <h3 className={styles.subsectionTitle}>4.2 Payment</h3>
             <p>
               All payments must be made through Zevio&apos;s secure payment
               gateway. By making a booking, you authorize us to charge your
@@ -85,7 +87,7 @@ export default function TermsPage() {
               <li>Applicable taxes (GST)</li>
               <li>Any additional services requested</li>
             </ul>
-            <h3 className="subsection-title">4.3 Booking Confirmation</h3>
+            <h3 className={styles.subsectionTitle}>4.3 Booking Confirmation</h3>
             <p>
               Your booking is confirmed once payment is successfully processed.
               You will receive a confirmation email with booking details,
@@ -93,8 +95,8 @@ export default function TermsPage() {
             </p>
           </div>
 
-          <div className="terms-section">
-            <h2 className="section-title">5. Cancellation and Refunds</h2>
+          <div className={styles.termsSection}>
+            <h2 className={styles.sectionTitle}>5. Cancellation and Refunds</h2>
             <p>
               Cancellation policies vary by property. Common policies include:
             </p>
@@ -119,8 +121,8 @@ export default function TermsPage() {
             </p>
           </div>
 
-          <div className="terms-section">
-            <h2 className="section-title">6. Guest Responsibilities</h2>
+          <div className={styles.termsSection}>
+            <h2 className={styles.sectionTitle}>6. Guest Responsibilities</h2>
             <p>As a guest, you agree to:</p>
             <ul>
               <li>Treat the property with respect and care</li>
@@ -135,8 +137,8 @@ export default function TermsPage() {
             </ul>
           </div>
 
-          <div className="terms-section">
-            <h2 className="section-title">
+          <div className={styles.termsSection}>
+            <h2 className={styles.sectionTitle}>
               7. Property Owner Responsibilities
             </h2>
             <p>Property owners listing on Zevio agree to:</p>
@@ -150,8 +152,8 @@ export default function TermsPage() {
             </ul>
           </div>
 
-          <div className="terms-section">
-            <h2 className="section-title">8. Prohibited Activities</h2>
+          <div className={styles.termsSection}>
+            <h2 className={styles.sectionTitle}>8. Prohibited Activities</h2>
             <p>You may not use Zevio to:</p>
             <ul>
               <li>Violate any laws or regulations</li>
@@ -165,8 +167,8 @@ export default function TermsPage() {
             </ul>
           </div>
 
-          <div className="terms-section">
-            <h2 className="section-title">9. Intellectual Property</h2>
+          <div className={styles.termsSection}>
+            <h2 className={styles.sectionTitle}>9. Intellectual Property</h2>
             <p>
               All content on Zevio, including text, graphics, logos, images, and
               software, is owned by or licensed to Zevio and protected by
@@ -182,22 +184,30 @@ export default function TermsPage() {
             </ul>
           </div>
 
-          <div className="terms-section">
-            <h2 className="section-title">10. Liability and Disclaimers</h2>
-            <h3 className="subsection-title">10.1 Service &quot;As Is&quot;</h3>
+          <div className={styles.termsSection}>
+            <h2 className={styles.sectionTitle}>
+              10. Liability and Disclaimers
+            </h2>
+            <h3 className={styles.subsectionTitle}>
+              10.1 Service &quot;As Is&quot;
+            </h3>
             <p>
               Zevio provides services &quot;as is&quot; and &quot;as
               available&quot; without warranties of any kind, express or
               implied. We do not guarantee uninterrupted or error-free service.
             </p>
-            <h3 className="subsection-title">10.2 Limitation of Liability</h3>
+            <h3 className={styles.subsectionTitle}>
+              10.2 Limitation of Liability
+            </h3>
             <p>
               Zevio shall not be liable for any indirect, incidental, special,
               consequential, or punitive damages arising from your use of our
               services. Our total liability shall not exceed the amount you paid
               for the booking.
             </p>
-            <h3 className="subsection-title">10.3 Third-Party Services</h3>
+            <h3 className={styles.subsectionTitle}>
+              10.3 Third-Party Services
+            </h3>
             <p>
               We are not responsible for third-party services, including payment
               processors, property owners, or external links. Your interactions
@@ -205,8 +215,8 @@ export default function TermsPage() {
             </p>
           </div>
 
-          <div className="terms-section">
-            <h2 className="section-title">11. Dispute Resolution</h2>
+          <div className={styles.termsSection}>
+            <h2 className={styles.sectionTitle}>11. Dispute Resolution</h2>
             <p>
               In the event of a dispute between guests and property owners,
               Zevio will attempt to facilitate resolution. However, we are not
@@ -220,8 +230,8 @@ export default function TermsPage() {
             </p>
           </div>
 
-          <div className="terms-section">
-            <h2 className="section-title">12. Modifications to Terms</h2>
+          <div className={styles.termsSection}>
+            <h2 className={styles.sectionTitle}>12. Modifications to Terms</h2>
             <p>
               We reserve the right to modify these Terms at any time. Changes
               will be effective immediately upon posting. Continued use of Zevio
@@ -230,8 +240,8 @@ export default function TermsPage() {
             </p>
           </div>
 
-          <div className="terms-section">
-            <h2 className="section-title">13. Termination</h2>
+          <div className={styles.termsSection}>
+            <h2 className={styles.sectionTitle}>13. Termination</h2>
             <p>
               We may suspend or terminate your account at our discretion if you
               violate these Terms or engage in prohibited activities. Upon
@@ -247,10 +257,10 @@ export default function TermsPage() {
             </ul>
           </div>
 
-          <div className="terms-section">
-            <h2 className="section-title">14. Contact Information</h2>
+          <div className={styles.termsSection}>
+            <h2 className={styles.sectionTitle}>14. Contact Information</h2>
             <p>If you have questions about these Terms, please contact us:</p>
-            <div className="contact-info">
+            <div className={styles.contactInfo}>
               <p>
                 <strong>Zevio</strong>
               </p>
@@ -260,7 +270,7 @@ export default function TermsPage() {
             </div>
           </div>
 
-          <div className="terms-footer">
+          <div className={styles.termsFooter}>
             <p>
               By using Zevio, you acknowledge that you have read, understood,
               and agree to be bound by these Terms of Service.

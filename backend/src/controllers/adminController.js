@@ -5,6 +5,30 @@ import {
   sendCancellationEmail,
   sendRefundEmail,
 } from "../services/emailService.js";
+import { sanitizeRichText } from "../utils/sanitize.js";
+import Razorpay from "razorpay";
+
+// Initialize Razorpay for refunds
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET,
+});
+
+// ===================================================================
+// IN-MEMORY CACHE FOR DROPDOWN DATA (SESSION 17 - PERFORMANCE OPTIMIZATION)
+// ===================================================================
+const cache = {
+  cities: { data: null, timestamp: null },
+  vendors: { data: null, timestamp: null },
+  employees: { data: null, timestamp: null },
+};
+
+const CACHE_TTL = 60 * 60 * 1000; // 1 hour in milliseconds
+
+const isCacheValid = (cacheEntry) => {
+  if (!cacheEntry.data || !cacheEntry.timestamp) return false;
+  return Date.now() - cacheEntry.timestamp < CACHE_TTL;
+};
 
 // Get all bookings (with filters)
 export const getAllBookings = asyncHandler(async (req, res) => {
@@ -178,11 +202,56 @@ export const processRefund = asyncHandler(async (req, res) => {
     booking_id,
   ]);
 
-  // TODO: Initiate actual refund with Razorpay
-  // For now, we'll mark it as completed
-  await db.query('UPDATE refunds SET status = "completed" WHERE id = ?', [
-    refundId,
-  ]);
+  // Initiate actual refund with Razorpay
+  try {
+    // Get Razorpay payment ID from gateway_payment_id
+    const razorpayPaymentId = payment.gateway_payment_id;
+
+    if (!razorpayPaymentId) {
+      throw new Error("Razorpay payment ID not found");
+    }
+
+    // Create refund in Razorpay
+    const razorpayRefund = await razorpay.payments.refund(razorpayPaymentId, {
+      amount: Math.round(refundAmount * 100), // Amount in paise
+      speed: "normal", // 'normal' or 'optimum'
+      notes: {
+        booking_id: booking_id,
+        refund_id: refundId,
+        refund_percentage: refund_percentage,
+      },
+      receipt: `refund_${refundId.substring(0, 8)}`,
+    });
+
+    // Update refund record with Razorpay refund ID and mark as completed
+    await db.query(
+      'UPDATE refunds SET status = "completed", gateway_refund_id = ? WHERE id = ?',
+      [razorpayRefund.id, refundId]
+    );
+
+    console.log(`✅ Refund processed successfully: ${razorpayRefund.id}`);
+  } catch (error) {
+    console.error("❌ Razorpay refund failed:", error);
+
+    // Mark refund as failed but don't stop the process
+    // Admin can manually process refund later
+    await db.query('UPDATE refunds SET status = "failed" WHERE id = ?', [
+      refundId,
+    ]);
+
+    // Log the error for admin review
+    await db.query(
+      "INSERT INTO activity_logs (id, actor_id, actor_role, action, entity, entity_id) VALUES (?, ?, ?, ?, ?, ?)",
+      [
+        generateUUID(),
+        req.user.id,
+        "admin",
+        `Refund failed: ${error.message}`,
+        "refund",
+        refundId,
+      ]
+    );
+  }
 
   // Create credit note
   await db.query(
@@ -1578,4 +1647,471 @@ export const getEmployeePerformance = asyncHandler(async (req, res) => {
     "Employee performance report fetched successfully",
     200
   );
+});
+
+// ===================================================================
+// PROPERTY MANAGEMENT - SESSION 15 (Admin & Vendor Property Forms)
+// SESSION 17 - ADDED CACHING FOR PERFORMANCE
+// ===================================================================
+
+// Get all cities (for dropdown) - WITH CACHING
+export const getAllCities = asyncHandler(async (req, res) => {
+  // Check cache first
+  if (isCacheValid(cache.cities)) {
+    return sendSuccess(
+      res,
+      cache.cities.data,
+      "Cities fetched successfully (cached)",
+      200
+    );
+  }
+
+  // Cache miss - fetch from database
+  const [cities] = await db.query(`
+    SELECT id, name, state, status
+    FROM cities
+    WHERE status = 'active'
+    ORDER BY name ASC
+  `);
+
+  // Update cache
+  cache.cities = {
+    data: cities,
+    timestamp: Date.now(),
+  };
+
+  sendSuccess(res, cities, "Cities fetched successfully", 200);
+});
+
+// Get all vendors (for dropdown) - WITH CACHING
+export const getAllVendors = asyncHandler(async (req, res) => {
+  // Check cache first
+  if (isCacheValid(cache.vendors)) {
+    return sendSuccess(
+      res,
+      cache.vendors.data,
+      "Vendors fetched successfully (cached)",
+      200
+    );
+  }
+
+  // Cache miss - fetch from database
+  const [vendors] = await db.query(`
+    SELECT id, name, email, phone, status
+    FROM vendors
+    WHERE deleted_at IS NULL AND status = 'active'
+    ORDER BY name ASC
+  `);
+
+  // Update cache
+  cache.vendors = {
+    data: vendors,
+    timestamp: Date.now(),
+  };
+
+  sendSuccess(res, vendors, "Vendors fetched successfully", 200);
+});
+
+// Get all employees (for dropdown) - WITH CACHING
+export const getAllEmployees = asyncHandler(async (req, res) => {
+  // Check cache first
+  if (isCacheValid(cache.employees)) {
+    return sendSuccess(
+      res,
+      cache.employees.data,
+      "Employees fetched successfully (cached)",
+      200
+    );
+  }
+
+  // Cache miss - fetch from database
+  const [employees] = await db.query(`
+    SELECT id, name, email, phone, incentive_percentage, status
+    FROM employees
+    WHERE deleted_at IS NULL AND status = 'active'
+    ORDER BY name ASC
+  `);
+
+  // Update cache
+  cache.employees = {
+    data: employees,
+    timestamp: Date.now(),
+  };
+
+  sendSuccess(res, employees, "Employees fetched successfully", 200);
+});
+
+// Create new property
+export const createProperty = asyncHandler(async (req, res) => {
+  const {
+    vendor_id,
+    employee_id,
+    city_id,
+    title,
+    property_type,
+    description,
+    address,
+    city,
+    state,
+    pincode,
+    bedrooms,
+    bathrooms,
+    max_guests,
+    min_guests,
+    extra_guest_charge,
+    min_children,
+    max_children,
+    extra_child_charge,
+    primary_incharge_name,
+    primary_incharge_phone,
+    primary_incharge_email,
+    primary_incharge_whatsapp,
+    primary_incharge_alt_contact,
+    secondary_incharge_name,
+    secondary_incharge_phone,
+    secondary_incharge_email,
+    secondary_incharge_whatsapp,
+    secondary_incharge_alt_contact,
+    check_in_guidelines,
+    house_rules_text,
+    amenities_guide,
+    safety_information,
+    local_area_info,
+    emergency_contacts,
+    same_day_booking_allowed,
+    max_booking_days,
+    check_in_time,
+    check_out_time,
+    amenities,
+    house_rules,
+    cancellation_policy,
+    photos,
+    price_per_night,
+    gst_percentage,
+    status,
+  } = req.body;
+
+  // Validation
+  if (!title || !vendor_id || !city_id || !price_per_night) {
+    return sendError(res, "Title, vendor, city, and price are required", 400);
+  }
+
+  // ============================================
+  // CRITICAL FIX: XSS PROTECTION
+  // Sanitize all rich text fields to prevent script injection
+  // ============================================
+  const safeCheckInGuidelines = check_in_guidelines
+    ? sanitizeRichText(check_in_guidelines)
+    : null;
+  const safeHouseRulesText = house_rules_text
+    ? sanitizeRichText(house_rules_text)
+    : null;
+  const safeAmenitiesGuide = amenities_guide
+    ? sanitizeRichText(amenities_guide)
+    : null;
+  const safeSafetyInfo = safety_information
+    ? sanitizeRichText(safety_information)
+    : null;
+  const safeLocalAreaInfo = local_area_info
+    ? sanitizeRichText(local_area_info)
+    : null;
+  const safeEmergencyContacts = emergency_contacts
+    ? sanitizeRichText(emergency_contacts)
+    : null;
+
+  const propertyId = generateUUID();
+
+  const query = `
+    INSERT INTO properties (
+      id, vendor_id, employee_id, city_id, title, property_type, description,
+      address, city, state, pincode, bedrooms, bathrooms, max_guests,
+      min_guests, extra_guest_charge, min_children, max_children, extra_child_charge,
+      primary_incharge_name, primary_incharge_phone, primary_incharge_email,
+      primary_incharge_whatsapp, primary_incharge_alt_contact,
+      secondary_incharge_name, secondary_incharge_phone, secondary_incharge_email,
+      secondary_incharge_whatsapp, secondary_incharge_alt_contact,
+      check_in_guidelines, house_rules_text, amenities_guide,
+      safety_information, local_area_info, emergency_contacts,
+      same_day_booking_allowed, max_booking_days,
+      check_in_time, check_out_time, amenities, house_rules,
+      cancellation_policy, photos, price_per_night, gst_percentage, status
+    ) VALUES (
+      ?, ?, ?, ?, ?, ?, ?,
+      ?, ?, ?, ?, ?, ?, ?,
+      ?, ?, ?, ?, ?,
+      ?, ?, ?,
+      ?, ?,
+      ?, ?, ?,
+      ?, ?,
+      ?, ?, ?,
+      ?, ?, ?,
+      ?, ?,
+      ?, ?, ?, ?,
+      ?, ?, ?, ?, ?
+    )
+  `;
+
+  const values = [
+    propertyId,
+    vendor_id,
+    employee_id || null,
+    city_id,
+    title,
+    property_type || "Villa",
+    description || null,
+    address || null,
+    city || null,
+    state || null,
+    pincode || null,
+    bedrooms || 0,
+    bathrooms || 0,
+    max_guests || 2,
+    min_guests || 1,
+    extra_guest_charge || 0,
+    min_children || 0,
+    max_children || 5,
+    extra_child_charge || 0,
+    primary_incharge_name || null,
+    primary_incharge_phone || null,
+    primary_incharge_email || null,
+    primary_incharge_whatsapp || null,
+    primary_incharge_alt_contact || null,
+    secondary_incharge_name || null,
+    secondary_incharge_phone || null,
+    secondary_incharge_email || null,
+    secondary_incharge_whatsapp || null,
+    secondary_incharge_alt_contact || null,
+    safeCheckInGuidelines,
+    safeHouseRulesText,
+    safeAmenitiesGuide,
+    safeSafetyInfo,
+    safeLocalAreaInfo,
+    safeEmergencyContacts,
+    same_day_booking_allowed || false,
+    max_booking_days || null,
+    check_in_time || "2:00 PM",
+    check_out_time || "11:00 AM",
+    amenities || "[]",
+    house_rules || "{}",
+    cancellation_policy || "{}",
+    photos || "[]",
+    price_per_night,
+    gst_percentage || 18,
+    status || "draft",
+  ];
+
+  await db.query(query, values);
+
+  sendSuccess(res, { id: propertyId }, "Property created successfully", 201);
+});
+
+// Update existing property
+export const updateProperty = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const {
+    vendor_id,
+    employee_id,
+    city_id,
+    title,
+    property_type,
+    description,
+    address,
+    city,
+    state,
+    pincode,
+    bedrooms,
+    bathrooms,
+    max_guests,
+    min_guests,
+    extra_guest_charge,
+    min_children,
+    max_children,
+    extra_child_charge,
+    primary_incharge_name,
+    primary_incharge_phone,
+    primary_incharge_email,
+    primary_incharge_whatsapp,
+    primary_incharge_alt_contact,
+    secondary_incharge_name,
+    secondary_incharge_phone,
+    secondary_incharge_email,
+    secondary_incharge_whatsapp,
+    secondary_incharge_alt_contact,
+    check_in_guidelines,
+    house_rules_text,
+    amenities_guide,
+    safety_information,
+    local_area_info,
+    emergency_contacts,
+    same_day_booking_allowed,
+    max_booking_days,
+    check_in_time,
+    check_out_time,
+    amenities,
+    house_rules,
+    cancellation_policy,
+    photos,
+    price_per_night,
+    gst_percentage,
+    status,
+  } = req.body;
+
+  // Check if property exists
+  const [existing] = await db.query(
+    "SELECT id FROM properties WHERE id = ? AND deleted_at IS NULL",
+    [id]
+  );
+
+  if (!existing || existing.length === 0) {
+    return sendError(res, "Property not found", 404);
+  }
+
+  // ============================================
+  // CRITICAL FIX: XSS PROTECTION
+  // Sanitize all rich text fields to prevent script injection
+  // ============================================
+  const safeCheckInGuidelines = check_in_guidelines
+    ? sanitizeRichText(check_in_guidelines)
+    : null;
+  const safeHouseRulesText = house_rules_text
+    ? sanitizeRichText(house_rules_text)
+    : null;
+  const safeAmenitiesGuide = amenities_guide
+    ? sanitizeRichText(amenities_guide)
+    : null;
+  const safeSafetyInfo = safety_information
+    ? sanitizeRichText(safety_information)
+    : null;
+  const safeLocalAreaInfo = local_area_info
+    ? sanitizeRichText(local_area_info)
+    : null;
+  const safeEmergencyContacts = emergency_contacts
+    ? sanitizeRichText(emergency_contacts)
+    : null;
+
+  const query = `
+    UPDATE properties SET
+      vendor_id = ?,
+      employee_id = ?,
+      city_id = ?,
+      title = ?,
+      property_type = ?,
+      description = ?,
+      address = ?,
+      city = ?,
+      state = ?,
+      pincode = ?,
+      bedrooms = ?,
+      bathrooms = ?,
+      max_guests = ?,
+      min_guests = ?,
+      extra_guest_charge = ?,
+      min_children = ?,
+      max_children = ?,
+      extra_child_charge = ?,
+      primary_incharge_name = ?,
+      primary_incharge_phone = ?,
+      primary_incharge_email = ?,
+      primary_incharge_whatsapp = ?,
+      primary_incharge_alt_contact = ?,
+      secondary_incharge_name = ?,
+      secondary_incharge_phone = ?,
+      secondary_incharge_email = ?,
+      secondary_incharge_whatsapp = ?,
+      secondary_incharge_alt_contact = ?,
+      check_in_guidelines = ?,
+      house_rules_text = ?,
+      amenities_guide = ?,
+      safety_information = ?,
+      local_area_info = ?,
+      emergency_contacts = ?,
+      same_day_booking_allowed = ?,
+      max_booking_days = ?,
+      check_in_time = ?,
+      check_out_time = ?,
+      amenities = ?,
+      house_rules = ?,
+      cancellation_policy = ?,
+      photos = ?,
+      price_per_night = ?,
+      gst_percentage = ?,
+      status = ?
+    WHERE id = ? AND deleted_at IS NULL
+  `;
+
+  const values = [
+    vendor_id,
+    employee_id || null,
+    city_id,
+    title,
+    property_type,
+    description,
+    address,
+    city,
+    state,
+    pincode,
+    bedrooms,
+    bathrooms,
+    max_guests,
+    min_guests,
+    extra_guest_charge,
+    min_children,
+    max_children,
+    extra_child_charge,
+    primary_incharge_name,
+    primary_incharge_phone,
+    primary_incharge_email,
+    primary_incharge_whatsapp,
+    primary_incharge_alt_contact,
+    secondary_incharge_name,
+    secondary_incharge_phone,
+    secondary_incharge_email,
+    secondary_incharge_whatsapp,
+    secondary_incharge_alt_contact,
+    safeCheckInGuidelines,
+    safeHouseRulesText,
+    safeAmenitiesGuide,
+    safeSafetyInfo,
+    safeLocalAreaInfo,
+    safeEmergencyContacts,
+    same_day_booking_allowed,
+    max_booking_days,
+    check_in_time,
+    check_out_time,
+    amenities,
+    house_rules,
+    cancellation_policy,
+    photos,
+    price_per_night,
+    gst_percentage,
+    status,
+    id,
+  ];
+
+  await db.query(query, values);
+
+  sendSuccess(res, { id }, "Property updated successfully", 200);
+});
+
+// Delete property (soft delete)
+export const deleteProperty = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  // Check if property has active bookings
+  const [activeBookings] = await db.query(
+    `SELECT COUNT(*) as count 
+     FROM bookings 
+     WHERE property_id = ? 
+     AND status IN ('pending_payment', 'confirmed') 
+     AND deleted_at IS NULL`,
+    [id]
+  );
+
+  if (activeBookings[0].count > 0) {
+    return sendError(res, "Cannot delete property with active bookings", 400);
+  }
+
+  await db.query("UPDATE properties SET deleted_at = NOW() WHERE id = ?", [id]);
+
+  sendSuccess(res, null, "Property deleted successfully", 200);
 });

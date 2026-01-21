@@ -74,10 +74,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         password,
       });
 
-      const { accessToken, user: userData } = response.data.data;
+      const { accessToken, refreshToken, user: userData } = response.data.data;
 
-      // Store token and user
+      // Store token, refresh token, and user
       localStorage.setItem("token", accessToken);
+      if (refreshToken) {
+        localStorage.setItem("refreshToken", refreshToken);
+      }
       localStorage.setItem("user", JSON.stringify(userData));
 
       setToken(accessToken);
@@ -97,10 +100,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const response = await api.post("/auth/register", data);
 
-      const { accessToken, user: userData } = response.data.data;
+      const { accessToken, refreshToken, user: userData } = response.data.data;
 
-      // Store token and user
+      // Store token, refresh token, and user
       localStorage.setItem("token", accessToken);
+      if (refreshToken) {
+        localStorage.setItem("refreshToken", refreshToken);
+      }
       localStorage.setItem("user", JSON.stringify(userData));
 
       setToken(accessToken);

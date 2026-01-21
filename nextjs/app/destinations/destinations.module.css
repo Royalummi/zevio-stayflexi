@@ -1,0 +1,409 @@
+/* ========================================
+   DESTINATIONS PAGE - BRAND COLORS
+   ======================================== */
+
+.destinationsPage {
+    min-height: 100vh;
+    background: var(--brand-white);
+}
+
+/* ========================================
+   HERO SECTION
+   ======================================== */
+
+.destinationsHero {
+    background: linear-gradient(135deg, var(--brand-navy) 0%, var(--brand-navy-dark) 100%);
+    padding: 6rem 1rem 4rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.destinationsHero::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+    opacity: 0.5;
+}
+
+.heroContent {
+    max-width: 800px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+}
+
+.heroTitle {
+    font-size: 3.5rem;
+    font-weight: 800;
+    color: var(--brand-white);
+    margin-bottom: 1.5rem;
+    letter-spacing: -0.02em;
+}
+
+.heroDescription {
+    font-size: 1.25rem;
+    color: rgba(255, 255, 255, 0.9);
+    line-height: 1.8;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* ========================================
+   DESTINATIONS SECTION
+   ======================================== */
+
+.destinationsSection {
+    padding: 5rem 1rem;
+    background: var(--brand-grey-lightest);
+}
+
+.destinationsContainer {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.sectionHeader {
+    text-align: center;
+    margin-bottom: 4rem;
+}
+
+.sectionTitle {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--brand-navy);
+    margin-bottom: 1rem;
+}
+
+.sectionSubtitle {
+    font-size: 1.125rem;
+    color: var(--brand-text-dark);
+}
+
+/* ========================================
+   DESTINATIONS GRID
+   ======================================== */
+
+.destinationsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 2rem;
+}
+
+.destinationCard {
+    background: var(--brand-white);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(31, 58, 95, 0.08);
+    transition: all 0.3s ease;
+    cursor: pointer;
+    border: 1px solid var(--brand-border-light);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.destinationCard:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 32px rgba(31, 58, 95, 0.15);
+    border-color: var(--brand-teal-light);
+}
+
+/* ========================================
+   DESTINATION IMAGE
+   ======================================== */
+
+.destinationImageWrapper {
+    position: relative;
+    height: 240px;
+    overflow: hidden;
+    flex-shrink: 0;
+    background: var(--brand-grey-light);
+}
+
+.destinationImage {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.destinationCard:hover .destinationImage {
+    transform: scale(1.1);
+}
+
+.destinationOverlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(180deg, rgba(31, 58, 95, 0) 0%, rgba(31, 58, 95, 0.7) 100%);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 1.5rem;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.destinationCard:hover .destinationOverlay {
+    opacity: 1;
+}
+
+.exploreBtn {
+    background: var(--brand-teal);
+    color: var(--brand-white);
+    padding: 0.875rem 2rem;
+    border-radius: 50px;
+    border: none;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 16px rgba(47, 164, 169, 0.3);
+}
+
+.exploreBtn:hover {
+    background: var(--brand-teal-dark);
+    transform: translateX(4px);
+}
+
+/* ========================================
+   DESTINATION CONTENT
+   ======================================== */
+
+.destinationContent {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.destinationHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.destinationLocation {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+}
+
+.locationIcon {
+    color: var(--brand-teal);
+    font-size: 1.25rem;
+    flex-shrink: 0;
+    margin-top: 0.125rem;
+}
+
+.destinationCity {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--brand-navy);
+    margin: 0 0 0.25rem 0;
+}
+
+.destinationState {
+    font-size: 0.875rem;
+    color: var(--brand-text-dark);
+    margin: 0;
+}
+
+.destinationRating {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    background: var(--brand-grey-lightest);
+    padding: 0.5rem 0.875rem;
+    border-radius: 50px;
+    font-weight: 600;
+    color: var(--brand-navy);
+    font-size: 0.9375rem;
+}
+
+.starIcon {
+    color: var(--brand-teal);
+    font-size: 1rem;
+}
+
+.destinationDescription {
+    color: var(--brand-text-dark);
+    line-height: 1.6;
+    margin-bottom: 1.25rem;
+    font-size: 0.9375rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-height: 2.8em;
+}
+
+/* ========================================
+   HIGHLIGHTS
+   ======================================== */
+
+.destinationHighlights {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+    min-height: 70px;
+    align-content: flex-start;
+}
+
+.highlightTag {
+    background: var(--brand-grey-lightest);
+    color: var(--brand-navy);
+    padding: 0.375rem 0.875rem;
+    border-radius: 50px;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    border: 1px solid var(--brand-border-light);
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+.destinationCard:hover .highlightTag {
+    background: rgba(47, 164, 169, 0.1);
+    border-color: var(--brand-teal-light);
+    color: var(--brand-teal);
+}
+
+.destinationFooter {
+    padding-top: 1rem;
+    border-top: 1px solid var(--brand-border-light);
+    margin-top: auto;
+}
+
+.propertiesCount {
+    color: var(--brand-text-dark);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+/* ========================================
+   CTA SECTION
+   ======================================== */
+
+.destinationsCta {
+    background: linear-gradient(135deg, var(--brand-teal) 0%, var(--brand-teal-dark) 100%);
+    padding: 5rem 1rem;
+    text-align: center;
+}
+
+.ctaContent {
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.ctaTitle {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--brand-white);
+    margin-bottom: 1rem;
+}
+
+.ctaDescription {
+    font-size: 1.125rem;
+    color: rgba(255, 255, 255, 0.95);
+    margin-bottom: 2rem;
+    line-height: 1.7;
+}
+
+.ctaButton {
+    background: var(--brand-white);
+    color: var(--brand-teal);
+    padding: 1rem 2.5rem;
+    border-radius: 50px;
+    border: none;
+    font-size: 1.125rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.ctaButton:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+/* ========================================
+   RESPONSIVE DESIGN
+   ======================================== */
+
+@media (max-width: 768px) {
+    .heroTitle {
+        font-size: 2.5rem;
+    }
+
+    .heroDescription {
+        font-size: 1.125rem;
+    }
+
+    .sectionTitle {
+        font-size: 2rem;
+    }
+
+    .destinationsGrid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+
+    .ctaTitle {
+        font-size: 2rem;
+    }
+
+    .ctaDescription {
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .destinationsHero {
+        padding: 4rem 1rem 3rem;
+    }
+
+    .heroTitle {
+        font-size: 2rem;
+    }
+
+    .heroDescription {
+        font-size: 1rem;
+    }
+
+    .destinationsSection {
+        padding: 3rem 1rem;
+    }
+
+    .sectionTitle {
+        font-size: 1.75rem;
+    }
+
+    .destinationCity {
+        font-size: 1.25rem;
+    }
+
+    .ctaTitle {
+        font-size: 1.75rem;
+    }
+
+    .destinationsCta {
+        padding: 3rem 1rem;
+    }
+}

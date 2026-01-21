@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { FiChevronDown, FiChevronUp, FiMail, FiPhone } from "react-icons/fi";
-import "./support.css";
+import styles from "./support.module.css";
 
 const faqs = [
   {
@@ -128,12 +128,12 @@ export default function SupportPage() {
   };
 
   return (
-    <div className="support-page">
+    <div className={styles.supportPage}>
       {/* Hero Section */}
-      <section className="support-hero">
-        <div className="hero-content">
-          <h1 className="hero-title">How Can We Help You?</h1>
-          <p className="hero-description">
+      <section className={styles.supportHero}>
+        <div className={styles.heroContent}>
+          <h1 className={styles.heroTitle}>How Can We Help You?</h1>
+          <p className={styles.heroDescription}>
             Find answers to common questions or contact our support team for
             personalized assistance.
           </p>
@@ -141,20 +141,20 @@ export default function SupportPage() {
       </section>
 
       {/* FAQ Section */}
-      <section className="faq-section">
-        <div className="faq-container">
-          <div className="section-header">
-            <h2 className="section-title">Frequently Asked Questions</h2>
-            <p className="section-subtitle">
+      <section className={styles.faqSection}>
+        <div className={styles.faqContainer}>
+          <div className={styles.sectionHeader}>
+            <h2 className={styles.sectionTitle}>Frequently Asked Questions</h2>
+            <p className={styles.sectionSubtitle}>
               Browse common questions organized by topic
             </p>
           </div>
 
-          <div className="faq-categories">
+          <div className={styles.faqCategories}>
             {faqs.map((category, categoryIndex) => (
-              <div key={categoryIndex} className="faq-category">
-                <h3 className="category-title">{category.category}</h3>
-                <div className="faq-list">
+              <div key={categoryIndex} className={styles.faqCategory}>
+                <h3 className={styles.categoryTitle}>{category.category}</h3>
+                <div className={styles.faqList}>
                   {category.questions.map((faq, questionIndex) => {
                     const key = `${categoryIndex}-${questionIndex}`;
                     const isOpen = openIndex === key;
@@ -162,10 +162,12 @@ export default function SupportPage() {
                     return (
                       <div
                         key={questionIndex}
-                        className={`faq-item ${isOpen ? "open" : ""}`}
+                        className={`${styles.faqItem} ${
+                          isOpen ? styles.open : ""
+                        }`}
                       >
                         <button
-                          className="faq-question"
+                          className={styles.faqQuestion}
                           onClick={() =>
                             toggleFAQ(categoryIndex, questionIndex)
                           }
@@ -174,7 +176,7 @@ export default function SupportPage() {
                           {isOpen ? <FiChevronUp /> : <FiChevronDown />}
                         </button>
                         {isOpen && (
-                          <div className="faq-answer">{faq.answer}</div>
+                          <div className={styles.faqAnswer}>{faq.answer}</div>
                         )}
                       </div>
                     );
@@ -187,35 +189,35 @@ export default function SupportPage() {
       </section>
 
       {/* Quick Contact Section */}
-      <section className="quick-contact-section">
-        <div className="section-header">
-          <h2 className="section-title">Still Have Questions?</h2>
-          <p className="section-subtitle">
+      <section className={styles.quickContactSection}>
+        <div className={styles.sectionHeader}>
+          <h2 className={styles.sectionTitle}>Still Have Questions?</h2>
+          <p className={styles.sectionSubtitle}>
             Our support team is here to help. Reach out and we&apos;ll get back
             to you within 24 hours.
           </p>
         </div>
-        <div className="quick-contact-container">
-          <div className="contact-card">
-            <div className="contact-icon">
+        <div className={styles.quickContactContainer}>
+          <div className={styles.contactCard}>
+            <div className={styles.contactIcon}>
               <FiMail />
             </div>
-            <h3 className="contact-title">Email Support</h3>
-            <p className="contact-description">support@zevio.com</p>
+            <h3 className={styles.contactTitle}>Email Support</h3>
+            <p className={styles.contactDescription}>support@zevio.com</p>
             <button
-              className="contact-button"
+              className={styles.contactButton}
               onClick={() => router.push("/contact")}
             >
               Send Email
             </button>
           </div>
-          <div className="contact-card">
-            <div className="contact-icon">
+          <div className={styles.contactCard}>
+            <div className={styles.contactIcon}>
               <FiPhone />
             </div>
-            <h3 className="contact-title">Phone Support</h3>
-            <p className="contact-description">Available 24/7</p>
-            <a href="tel:+919876543210" className="contact-button">
+            <h3 className={styles.contactTitle}>Phone Support</h3>
+            <p className={styles.contactDescription}>Available 24/7</p>
+            <a href="tel:+919876543210" className={styles.contactButton}>
               Call Now
             </a>
           </div>

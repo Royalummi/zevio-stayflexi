@@ -10,7 +10,7 @@ import {
   FiTrendingUp,
   FiMapPin,
 } from "react-icons/fi";
-import "./about.css";
+import styles from "./about.module.css";
 
 const values = [
   {
@@ -88,23 +88,23 @@ export default function AboutPage() {
   const router = useRouter();
 
   return (
-    <div className="about-page">
+    <div className={styles.aboutPage}>
       {/* Hero Section */}
-      <section className="about-hero">
-        <div className="hero-content">
-          <h1 className="hero-title">About Zevio</h1>
-          <p className="hero-subtitle">
+      <section className={styles.aboutHero}>
+        <div className={styles.heroContent}>
+          <h1 className={styles.heroTitle}>About Zevio</h1>
+          <p className={styles.heroSubtitle}>
             Redefining Luxury Villa Experiences Across India
           </p>
         </div>
       </section>
 
       {/* Story Section */}
-      <section className="story-section">
-        <div className="story-container">
-          <div className="story-content">
-            <h2 className="section-title">Our Story</h2>
-            <div className="story-text">
+      <section className={styles.storySection}>
+        <div className={styles.storyContainer}>
+          <div className={styles.storyContent}>
+            <h2 className={styles.sectionTitle}>Our Story</h2>
+            <div className={styles.storyText}>
               <p>
                 Zevio was born from a simple observation: travelers deserved
                 better. Better properties, better service, and better
@@ -139,21 +139,21 @@ export default function AboutPage() {
       </section>
 
       {/* Values Section */}
-      <section className="values-section">
-        <div className="values-container">
-          <div className="section-header">
-            <h2 className="section-title">Our Values</h2>
-            <p className="section-subtitle">
+      <section className={styles.valuesSection}>
+        <div className={styles.valuesContainer}>
+          <div className={styles.sectionHeader}>
+            <h2 className={styles.sectionTitle}>Our Values</h2>
+            <p className={styles.sectionSubtitle}>
               The principles that guide everything we do
             </p>
           </div>
 
-          <div className="values-grid">
+          <div className={styles.valuesGrid}>
             {values.map((value, index) => (
-              <div key={index} className="value-card">
-                <div className="value-icon">{value.icon}</div>
-                <h3 className="value-title">{value.title}</h3>
-                <p className="value-description">{value.description}</p>
+              <div key={index} className={styles.valueCard}>
+                <div className={styles.valueIcon}>{value.icon}</div>
+                <h3 className={styles.valueTitle}>{value.title}</h3>
+                <p className={styles.valueDescription}>{value.description}</p>
               </div>
             ))}
           </div>
@@ -161,22 +161,22 @@ export default function AboutPage() {
       </section>
 
       {/* Milestones Section */}
-      <section className="milestones-section">
-        <div className="milestones-container">
-          <div className="section-header">
-            <h2 className="section-title">Our Journey</h2>
-            <p className="section-subtitle">
+      <section className={styles.milestonesSection}>
+        <div className={styles.milestonesContainer}>
+          <div className={styles.sectionHeader}>
+            <h2 className={styles.sectionTitle}>Our Journey</h2>
+            <p className={styles.sectionSubtitle}>
               Key milestones in our growth story
             </p>
           </div>
 
-          <div className="timeline">
+          <div className={styles.timeline}>
             {milestones.map((milestone, index) => (
-              <div key={index} className="milestone-item">
-                <div className="milestone-year">{milestone.year}</div>
-                <div className="milestone-content">
-                  <h3 className="milestone-title">{milestone.title}</h3>
-                  <p className="milestone-description">
+              <div key={index} className={styles.milestoneItem}>
+                <div className={styles.milestoneYear}>{milestone.year}</div>
+                <div className={styles.milestoneContent}>
+                  <h3 className={styles.milestoneTitle}>{milestone.title}</h3>
+                  <p className={styles.milestoneDescription}>
                     {milestone.description}
                   </p>
                 </div>
@@ -187,23 +187,23 @@ export default function AboutPage() {
       </section>
 
       {/* Team Section */}
-      <section className="team-section">
-        <div className="team-container">
-          <div className="section-header">
-            <h2 className="section-title">Our Team</h2>
-            <p className="section-subtitle">
+      <section className={styles.teamSection}>
+        <div className={styles.teamContainer}>
+          <div className={styles.sectionHeader}>
+            <h2 className={styles.sectionTitle}>Our Team</h2>
+            <p className={styles.sectionSubtitle}>
               The people behind your perfect vacation
             </p>
           </div>
 
-          <div className="team-grid">
+          <div className={styles.teamGrid}>
             {team.map((dept, index) => (
-              <div key={index} className="team-card">
-                <div className="team-icon">
+              <div key={index} className={styles.teamCard}>
+                <div className={styles.teamIcon}>
                   <FiUsers />
                 </div>
-                <h3 className="team-name">{dept.name}</h3>
-                <p className="team-description">{dept.description}</p>
+                <h3 className={styles.teamName}>{dept.name}</h3>
+                <p className={styles.teamDescription}>{dept.description}</p>
               </div>
             ))}
           </div>
@@ -211,57 +211,57 @@ export default function AboutPage() {
       </section>
 
       {/* Stats Section */}
-      <section className="stats-banner">
-        <div className="stats-banner-container">
-          <div className="stat-item">
-            <FiMapPin className="stat-icon" />
-            <div className="stat-content">
-              <div className="stat-number">20+</div>
-              <div className="stat-label">Destinations</div>
+      <section className={styles.statsBanner}>
+        <div className={styles.statsBannerContainer}>
+          <div className={styles.statItem}>
+            <FiMapPin className={styles.statIcon} />
+            <div className={styles.statContent}>
+              <div className={styles.statNumber}>20+</div>
+              <div className={styles.statLabel}>Destinations</div>
             </div>
           </div>
-          <div className="stat-item">
-            <FiShield className="stat-icon" />
-            <div className="stat-content">
-              <div className="stat-number">150+</div>
-              <div className="stat-label">Verified Properties</div>
+          <div className={styles.statItem}>
+            <FiShield className={styles.statIcon} />
+            <div className={styles.statContent}>
+              <div className={styles.statNumber}>150+</div>
+              <div className={styles.statLabel}>Verified Properties</div>
             </div>
           </div>
-          <div className="stat-item">
-            <FiUsers className="stat-icon" />
-            <div className="stat-content">
-              <div className="stat-number">1000+</div>
-              <div className="stat-label">Happy Customers</div>
+          <div className={styles.statItem}>
+            <FiUsers className={styles.statIcon} />
+            <div className={styles.statContent}>
+              <div className={styles.statNumber}>1000+</div>
+              <div className={styles.statLabel}>Happy Customers</div>
             </div>
           </div>
-          <div className="stat-item">
-            <FiTrendingUp className="stat-icon" />
-            <div className="stat-content">
-              <div className="stat-number">4.8</div>
-              <div className="stat-label">Average Rating</div>
+          <div className={styles.statItem}>
+            <FiTrendingUp className={styles.statIcon} />
+            <div className={styles.statContent}>
+              <div className={styles.statNumber}>4.8</div>
+              <div className={styles.statLabel}>Average Rating</div>
             </div>
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="about-cta">
-        <div className="cta-content">
-          <h2 className="cta-title">Join the Zevio Community</h2>
-          <p className="cta-description">
+      <section className={styles.aboutCta}>
+        <div className={styles.ctaContent}>
+          <h2 className={styles.ctaTitle}>Join the Zevio Community</h2>
+          <p className={styles.ctaDescription}>
             Experience the difference of luxury villa stays curated with care.
             Start planning your perfect getaway today.
           </p>
-          <div className="cta-buttons">
+          <div className={styles.ctaButtons}>
             <button
               onClick={() => router.push("/properties")}
-              className="cta-button primary"
+              className={`${styles.ctaButton} ${styles.primary}`}
             >
               Explore Villas
             </button>
             <button
               onClick={() => router.push("/contact")}
-              className="cta-button secondary"
+              className={`${styles.ctaButton} ${styles.secondary}`}
             >
               Contact Us
             </button>

@@ -18,6 +18,14 @@ import adminRoutes from "./src/routes/adminRoutes.js";
 import employeeRoutes from "./src/routes/employeeRoutes.js";
 import vendorRoutes from "./src/routes/vendorRoutes.js";
 import notificationsRoutes from "./src/routes/notificationsRoutes.js";
+import wishlistRoutes from "./src/routes/wishlistRoutes.js";
+import reviewsRoutes from "./src/routes/reviewsRoutes.js";
+import couponsRoutes from "./src/routes/couponsRoutes.js";
+import changeRequestsRoutes from "./src/routes/changeRequestsRoutes.js";
+import activityLogsRoutes from "./src/routes/activityLogsRoutes.js";
+import propertyImagesRoutes from "./src/routes/propertyImagesRoutes.js";
+import serviceApartmentsRoutes from "./src/routes/serviceApartmentsRoutes.js";
+import corporateRoutes from "./src/routes/corporateRoutes.js";
 
 // Load environment variables
 dotenv.config();
@@ -29,7 +37,37 @@ const PORT = process.env.PORT || 5000;
 // Rate limiting
 const limiter = rateLimit({
   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100,
+  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 1000, // Increased from 100 to 1000 for development
+});
+
+// More lenient rate limiting for public read-only endpoints
+const publicLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute window
+  max: 30, // 30 requests per minute per IP (allows multiple page loads)
+  message: {
+    success: false,
+    message: "Too many requests. Please try again in a moment.",
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  // Skip rate limiting for certain conditions
+  skip: (req) => {
+    // Skip for health checks
+    if (req.path === "/api/health") return true;
+    return false;
+  },
+});
+
+// Stricter rate limiting for authentication endpoints
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // 5 attempts per 15 minutes
+  message: {
+    success: false,
+    message: "Too many login attempts. Please try again after 15 minutes.",
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 
 // Middleware
@@ -62,14 +100,22 @@ app.get("/health", (req, res) => {
 });
 
 // API Routes
-app.use("/api/auth", authRoutes);
-app.use("/api/public", publicRoutes);
+app.use("/api/auth", authLimiter, authRoutes); // Apply strict rate limiting to auth routes
+app.use("/api/public", publicLimiter, publicRoutes); // Apply lenient rate limiting to public routes
+app.use("/api/service-apartments", publicLimiter, serviceApartmentsRoutes); // Apply lenient rate limiting
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/notifications", notificationsRoutes);
+app.use("/api/wishlist", wishlistRoutes);
+app.use("/api/reviews", reviewsRoutes);
+app.use("/api/admin/coupons", couponsRoutes);
+app.use("/api", changeRequestsRoutes);
+app.use("/api/admin/activity-logs", activityLogsRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/employee", employeeRoutes);
 app.use("/api/vendor", vendorRoutes);
+app.use("/api/vendor/properties", propertyImagesRoutes);
+app.use("/api/corporate", corporateRoutes);
 
 // 404 handler
 app.use(notFound);
@@ -112,9 +158,10 @@ const startServer = async () => {
 
 // Handle unhandled promise rejections
 process.on("unhandledRejection", (err) => {
-  console.error("🔴 Unhandled Promise Rejection:", err);
-  // Close server & exit process
-  process.exit(1);
+  console.error("🔴 Unhandled Promise Rejection:");
+  console.error("Error:", err);
+  console.error("Stack:", err.stack);
+  // Keep server running in development for debugging
 });
 
 // Start the server

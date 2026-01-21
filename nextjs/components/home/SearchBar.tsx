@@ -2,19 +2,36 @@
 
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { FiSearch, FiX, FiMapPin, FiCalendar, FiUsers } from "react-icons/fi";
+import {
+  FiSearch,
+  FiX,
+  FiMapPin,
+  FiCalendar,
+  FiUsers,
+  FiHome,
+} from "react-icons/fi";
+import { BsBuilding } from "react-icons/bs";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { City } from "@/types";
 import { formatDateForAPI } from "@/lib/utils";
-import "./SearchBar-modern.css";
+import styles from "./SearchBar-modern.module.css";
 
 interface SearchBarProps {
   cities: City[];
 }
 
+type PropertyType = "villas" | "apartments";
+
 export default function SearchBar({ cities }: SearchBarProps) {
   const router = useRouter();
+
+  // Property type toggle
+  const [propertyType, setPropertyType] = useState<PropertyType>("villas");
+
+  // Service apartment locations (fetched from API)
+  const [apartmentLocations, setApartmentLocations] = useState<City[]>([]);
+
   const [selectedCity, setSelectedCity] = useState<City | null>(null);
   const [searchInput, setSearchInput] = useState("");
   const [showCityDropdown, setShowCityDropdown] = useState(false);
@@ -22,31 +39,153 @@ export default function SearchBar({ cities }: SearchBarProps) {
 
   const [checkin, setCheckin] = useState<Date | null>(null);
   const [checkout, setCheckout] = useState<Date | null>(null);
-  const [guests, setGuests] = useState(2);
+  const [moveInDate, setMoveInDate] = useState<Date | null>(null);
+  const [moveOutDate, setMoveOutDate] = useState<Date | null>(null);
+  const [adults, setAdults] = useState(2);
+  const [children, setChildren] = useState(0);
+  const [infants, setInfants] = useState(0);
   const [showGuestsDropdown, setShowGuestsDropdown] = useState(false);
-  const [isCheckinOpen, setIsCheckinOpen] = useState(false);
-  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [showDatesDropdown, setShowDatesDropdown] = useState(false);
 
   const [activeField, setActiveField] = useState<string | null>(null);
 
+  // Modal state for search experience
+  const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
+
   const cityDropdownRef = useRef<HTMLDivElement>(null);
   const guestsDropdownRef = useRef<HTMLDivElement>(null);
+  const datesDropdownRef = useRef<HTMLDivElement>(null);
   const destinationInputRef = useRef<HTMLInputElement>(null);
+  const searchBarRef = useRef<HTMLDivElement>(null);
+  const originalPositionRef = useRef<number>(0);
+  const hasInteractedRef = useRef<boolean>(false);
 
+  // Handle smooth slide animation - Airbnb style with transform
+  useEffect(() => {
+    if (!searchBarRef.current || !hasInteractedRef.current) return;
+
+    const searchBar = searchBarRef.current;
+
+    if (isSearchModalOpen) {
+      // Get current position and store it
+      const rect = searchBar.getBoundingClientRect();
+      originalPositionRef.current = rect.top;
+
+      const startY = rect.top;
+      const endY = 100; // Final position (100px from top - keeps tabs visible)
+      const translateDistance = -(startY - endY); // Negative because we're moving up
+
+      // Set initial fixed position at current location
+      searchBar.style.position = "fixed";
+      searchBar.style.top = `${startY}px`;
+      searchBar.style.left = "50%";
+      searchBar.style.width = "90%";
+      searchBar.style.maxWidth = "1200px";
+      searchBar.style.zIndex = "10001";
+      searchBar.style.transform = "translateX(-50%)";
+
+      // Trigger smooth slide to top using transform
+      requestAnimationFrame(() => {
+        searchBar.style.transition =
+          "transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)";
+        searchBar.style.transform = `translate(-50%, ${translateDistance}px)`;
+      });
+    } else {
+      // Smoothly slide back down to original position
+      searchBar.style.transition =
+        "transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)";
+      searchBar.style.transform = "translateX(-50%)";
+
+      // After animation completes, reset to relative positioning
+      const timeout = setTimeout(() => {
+        searchBar.style.position = "";
+        searchBar.style.top = "";
+        searchBar.style.left = "";
+        searchBar.style.transform = "";
+        searchBar.style.width = "";
+        searchBar.style.maxWidth = "";
+        searchBar.style.zIndex = "";
+        searchBar.style.transition = "";
+      }, 500);
+
+      return () => clearTimeout(timeout);
+    }
+  }, [isSearchModalOpen]);
+
+  // Modal handlers
+  const openModal = () => {
+    hasInteractedRef.current = true;
+    setIsSearchModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsSearchModalOpen(false);
+    setShowCityDropdown(false);
+    setShowDatesDropdown(false);
+    setShowGuestsDropdown(false);
+    setActiveField(null);
+  };
+
+  // ESC key listener
+  useEffect(() => {
+    const handleEscKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isSearchModalOpen) {
+        closeModal();
+      }
+    };
+
+    window.addEventListener("keydown", handleEscKey);
+    return () => window.removeEventListener("keydown", handleEscKey);
+  }, [isSearchModalOpen]);
+
+  // Fetch service apartment locations on mount
+  useEffect(() => {
+    const fetchApartmentLocations = async () => {
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/service-apartments/locations`,
+        );
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.data) {
+            setApartmentLocations(data.data);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch apartment locations:", error);
+      }
+    };
+    fetchApartmentLocations();
+  }, []);
+
+  // Filter cities based on property type
   const filteredCities = useMemo(() => {
-    // Ensure cities is always an array
-    const citiesArray = Array.isArray(cities) ? cities : [];
+    // Use different location data based on property type
+    const locationsData =
+      propertyType === "apartments" ? apartmentLocations : cities;
+    const locationsArray = Array.isArray(locationsData) ? locationsData : [];
 
     if (!searchInput.trim()) {
-      return citiesArray;
+      return locationsArray;
     }
 
-    return citiesArray.filter(
-      (city) =>
-        city.name.toLowerCase().includes(searchInput.toLowerCase()) ||
-        city.state.toLowerCase().includes(searchInput.toLowerCase())
-    );
-  }, [searchInput, cities]);
+    return locationsArray.filter((location) => {
+      const searchLower = searchInput.toLowerCase();
+      // For apartments, search in area, city, and state
+      if (propertyType === "apartments" && location.area) {
+        return (
+          location.area.toLowerCase().includes(searchLower) ||
+          location.name.toLowerCase().includes(searchLower) ||
+          location.state.toLowerCase().includes(searchLower)
+        );
+      }
+      // For villas, search in city and state only
+      return (
+        location.name.toLowerCase().includes(searchLower) ||
+        location.state.toLowerCase().includes(searchLower)
+      );
+    });
+  }, [searchInput, cities, apartmentLocations, propertyType]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -62,6 +201,13 @@ export default function SearchBar({ cities }: SearchBarProps) {
         !guestsDropdownRef.current.contains(event.target as Node)
       ) {
         setShowGuestsDropdown(false);
+        setActiveField(null);
+      }
+      if (
+        datesDropdownRef.current &&
+        !datesDropdownRef.current.contains(event.target as Node)
+      ) {
+        setShowDatesDropdown(false);
         setActiveField(null);
       }
     };
@@ -90,7 +236,12 @@ export default function SearchBar({ cities }: SearchBarProps) {
 
   const selectCity = (city: City) => {
     setSelectedCity(city);
-    setSearchInput(`${city.name}, ${city.state}`);
+    // Format display based on property type
+    if (propertyType === "apartments" && city.area) {
+      setSearchInput(`${city.area}, ${city.name}, ${city.state}`);
+    } else {
+      setSearchInput(`${city.name}, ${city.state}`);
+    }
     setShowCityDropdown(false);
     setSelectedIndex(-1);
     setActiveField(null);
@@ -103,273 +254,611 @@ export default function SearchBar({ cities }: SearchBarProps) {
   };
 
   const handleSearch = () => {
+    // ============================================
+    // CRITICAL FIX: Date & Guest Validation
+    // Prevents user errors before search
+    // ============================================
+
+    if (propertyType === "villas") {
+      // Villa validation logic
+      // 1. Validate check-in date is not in the past
+      if (checkin) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const checkinDate = new Date(checkin);
+        checkinDate.setHours(0, 0, 0, 0);
+
+        if (checkinDate < today) {
+          alert(
+            "Check-in date cannot be in the past. Please select a future date.",
+          );
+          return;
+        }
+      }
+
+      // 2. Validate check-out is after check-in
+      if (checkin && checkout) {
+        if (checkout <= checkin) {
+          alert("Check-out date must be after check-in date.");
+          return;
+        }
+
+        // 3. Validate maximum booking duration (30 days for villas)
+        const daysDiff = Math.ceil(
+          (checkout.getTime() - checkin.getTime()) / (1000 * 60 * 60 * 24),
+        );
+
+        if (daysDiff > 30) {
+          alert(
+            "Maximum booking duration is 30 days. Please select a shorter stay.",
+          );
+          return;
+        }
+
+        // 4. Minimum booking duration (1 night)
+        if (daysDiff < 1) {
+          alert("Minimum booking duration is 1 night.");
+          return;
+        }
+      }
+    } else {
+      // Apartment validation logic
+      if (!moveInDate) {
+        alert("Please select a move-in date.");
+        return;
+      }
+
+      if (!moveOutDate) {
+        alert("Please select a move-out date.");
+        return;
+      }
+
+      // Validate move-in date is not in the past
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const moveIn = new Date(moveInDate);
+      moveIn.setHours(0, 0, 0, 0);
+
+      if (moveIn < today) {
+        alert(
+          "Move-in date cannot be in the past. Please select a future date.",
+        );
+        return;
+      }
+
+      // Validate move-out is after move-in
+      if (moveOutDate <= moveInDate) {
+        alert("Move-out date must be after move-in date.");
+        return;
+      }
+
+      // Calculate days for apartments
+      const daysDiff = Math.ceil(
+        (moveOutDate.getTime() - moveInDate.getTime()) / (1000 * 60 * 60 * 24),
+      );
+
+      // Minimum 1 day
+      if (daysDiff < 1) {
+        alert("Minimum stay duration is 1 day.");
+        return;
+      }
+
+      // Maximum 365 days
+      if (daysDiff > 365) {
+        alert(
+          "Maximum stay duration is 365 days. For longer stays, please contact us.",
+        );
+        return;
+      }
+    }
+
+    // 5. Validate guest count (common for both)
+    const totalGuests = adults + children;
+    if (totalGuests === 0) {
+      alert("Please add at least 1 guest.");
+      return;
+    }
+
+    if (totalGuests > 20) {
+      alert(
+        "Maximum 20 guests allowed. For larger groups, please contact us directly.",
+      );
+      return;
+    }
+
+    // ============================================
+    // Build search parameters
+    // ============================================
     const params = new URLSearchParams();
 
     if (selectedCity) {
       params.append("city", selectedCity.name.toLowerCase());
+      // Add area parameter for service apartments
+      if (propertyType === "apartments" && selectedCity.area) {
+        params.append("area", selectedCity.area.toLowerCase());
+      }
     }
-    if (checkin) {
-      params.append("checkin", formatDateForAPI(checkin));
+
+    if (propertyType === "villas") {
+      if (checkin) {
+        params.append("checkin", formatDateForAPI(checkin));
+      }
+      if (checkout) {
+        params.append("checkout", formatDateForAPI(checkout));
+      }
+    } else {
+      // Apartments use moveInDate and moveOutDate
+      if (moveInDate) {
+        params.append("checkin", formatDateForAPI(moveInDate));
+      }
+      if (moveOutDate) {
+        params.append("checkout", formatDateForAPI(moveOutDate));
+      }
     }
-    if (checkout) {
-      params.append("checkout", formatDateForAPI(checkout));
+
+    // Pass adults, children, and infants separately
+    if (adults > 0) {
+      params.append("adults", adults.toString());
     }
-    if (guests > 0) {
-      params.append("guests", guests.toString());
+    if (children > 0) {
+      params.append("children", children.toString());
+    }
+    if (infants > 0) {
+      params.append("infants", infants.toString());
     }
 
     const query = params.toString();
+    console.log("SearchBar - Property Type:", propertyType);
     console.log("SearchBar - Navigating with params:", query);
-    console.log("SearchBar - Guests value:", guests);
+    console.log(
+      "SearchBar - Adults:",
+      adults,
+      "Children:",
+      children,
+      "Infants:",
+      infants,
+    );
 
-    if (query) {
-      router.push(`/properties?${query}`);
+    // Close modal before navigation
+    closeModal();
+
+    // Route to appropriate page based on property type
+    if (propertyType === "villas") {
+      if (query) {
+        router.push(`/properties?${query}`);
+      } else {
+        router.push("/properties");
+      }
     } else {
-      router.push("/properties");
+      if (query) {
+        router.push(`/service-apartments?${query}`);
+      } else {
+        router.push("/service-apartments");
+      }
     }
   };
 
   return (
-    <div className="search-bar-modern">
-      <div className="search-wrapper">
-        {/* Destination Field */}
+    <>
+      {/* Dark Overlay */}
+      {isSearchModalOpen && (
         <div
-          className={`search-field-modern ${
-            activeField === "where" ? "field-active" : ""
-          }`}
-          ref={cityDropdownRef}
-        >
-          <div
-            className="field-inner"
-            onClick={() => {
-              setShowCityDropdown(true);
-              setActiveField("where");
-              destinationInputRef.current?.focus();
-            }}
+          data-testid="search-modal-overlay"
+          className={`${styles.searchOverlay} ${styles.overlayActive}`}
+          onClick={closeModal}
+        />
+      )}
+
+      {/* SearchBar with Smooth Slide Animation */}
+      <div
+        ref={searchBarRef}
+        data-testid="search-bar-container"
+        className={styles.searchBarModern}
+      >
+        {/* Toggle Pills for Property Type */}
+        <div className={styles.toggleContainer}>
+          <button
+            className={`${styles.togglePill} ${
+              propertyType === "villas" ? styles.active : ""
+            }`}
+            onClick={() => setPropertyType("villas")}
+            type="button"
           >
-            <FiMapPin className="field-icon" />
-            <div className="field-text-wrapper">
-              <label className="field-label-modern">Destination</label>
-              <input
-                ref={destinationInputRef}
-                type="text"
-                className="field-input-modern"
-                placeholder="Where are you going?"
-                value={searchInput}
-                onChange={(e) => {
-                  setSearchInput(e.target.value);
-                  setShowCityDropdown(true);
-                  setActiveField("where");
-                }}
-                onKeyDown={handleKeyDown}
-              />
+            <FiHome className={styles.toggleIcon} />
+            <span>Villas</span>
+          </button>
+          <button
+            className={`${styles.togglePill} ${
+              propertyType === "apartments" ? styles.active : ""
+            }`}
+            onClick={() => setPropertyType("apartments")}
+            type="button"
+          >
+            <BsBuilding className={styles.toggleIcon} />
+            <span>Service Apartments</span>
+          </button>
+        </div>
+
+        <div className={styles.searchWrapper}>
+          {/* Destination Field */}
+          <div
+            className={`${styles.searchFieldModern} ${
+              activeField === "where" ? styles.fieldActive : ""
+            }`}
+            ref={cityDropdownRef}
+          >
+            <div
+              className={styles.fieldInner}
+              onClick={() => {
+                openModal();
+                setShowCityDropdown(true);
+                setActiveField("where");
+                destinationInputRef.current?.focus();
+              }}
+            >
+              <FiMapPin className={styles.fieldIcon} />
+              <div className={styles.fieldTextWrapper}>
+                <label className={styles.fieldLabelModern}>Location</label>
+                <input
+                  ref={destinationInputRef}
+                  type="text"
+                  className={styles.fieldInputModern}
+                  placeholder="City or area"
+                  value={searchInput}
+                  onChange={(e) => {
+                    setSearchInput(e.target.value);
+                    setShowCityDropdown(true);
+                    setActiveField("where");
+                  }}
+                  onKeyDown={handleKeyDown}
+                />
+              </div>
+              {searchInput && (
+                <button
+                  className={styles.clearBtnModern}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    clearCity();
+                  }}
+                >
+                  <FiX />
+                </button>
+              )}
             </div>
-            {searchInput && (
-              <button
-                className="clear-btn-modern"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  clearCity();
-                }}
-              >
-                <FiX />
-              </button>
+
+            {/* City Dropdown */}
+            {showCityDropdown && (
+              <div className={styles.dropdownModern}>
+                {filteredCities.length === 0 ? (
+                  <div className={styles.dropdownEmptyModern}>
+                    <FiMapPin className={styles.emptyIcon} />
+                    <div>No destinations found</div>
+                    <div className={styles.emptySubtitle}>
+                      Try searching for a different city
+                    </div>
+                  </div>
+                ) : (
+                  <div className={styles.dropdownListModern}>
+                    {filteredCities.map((city, index) => (
+                      <div
+                        key={city.area ? `${city.id}-${city.area}` : city.id}
+                        className={`${styles.dropdownItemModern} ${
+                          index === selectedIndex ? styles.itemHighlighted : ""
+                        } ${
+                          selectedCity?.id === city.id
+                            ? styles.itemSelected
+                            : ""
+                        }`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          selectCity(city);
+                        }}
+                      >
+                        <div className={styles.itemIconWrapper}>
+                          <FiMapPin className={styles.itemIconModern} />
+                        </div>
+                        <div className={styles.itemText}>
+                          <div className={styles.itemTitleModern}>
+                            {propertyType === "apartments" && city.area
+                              ? `${city.area}, ${city.name}`
+                              : city.name}
+                          </div>
+                          <div className={styles.itemSubtitleModern}>
+                            {city.state}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             )}
           </div>
 
-          {/* City Dropdown */}
-          {showCityDropdown && (
-            <div className="dropdown-modern">
-              {filteredCities.length === 0 ? (
-                <div className="dropdown-empty-modern">
-                  <FiMapPin className="empty-icon" />
-                  <div>No destinations found</div>
-                  <div className="empty-subtitle">
-                    Try searching for a different city
+          {/* Vertical Divider */}
+          <div className={styles.dividerModern} />
+
+          {/* Single Dates Field - Shows side-by-side calendars */}
+          <div
+            className={`${styles.searchFieldModern} ${
+              activeField === "dates" ? styles.fieldActive : ""
+            }`}
+            ref={datesDropdownRef}
+          >
+            <div
+              className={styles.fieldInner}
+              onClick={() => {
+                openModal();
+                setShowDatesDropdown(true);
+                setActiveField("dates");
+              }}
+            >
+              <FiCalendar className={styles.fieldIcon} />
+              <div className={styles.fieldTextWrapper}>
+                <label className={styles.fieldLabelModern}>
+                  {propertyType === "villas" ? "Dates" : "Duration"}
+                </label>
+                <div className={styles.fieldValueModern}>
+                  {propertyType === "villas"
+                    ? checkin && checkout
+                      ? `${checkin.toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                        })} - ${checkout.toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                        })}`
+                      : "Select dates"
+                    : moveInDate && moveOutDate
+                      ? `${moveInDate.toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                        })} - ${moveOutDate.toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                        })}`
+                      : "Select dates"}
+                </div>
+              </div>
+            </div>
+
+            {/* Dates Dropdown with Side-by-Side Calendars */}
+            {showDatesDropdown && (
+              <div
+                className={`${styles.dropdownModern} ${styles.datesDropdownModern}`}
+              >
+                {/* Calendar Headers */}
+                <div className={styles.calendarHeaders}>
+                  <div className={styles.calendarHeader}>
+                    <span>
+                      {propertyType === "villas" ? "Check-in" : "Move-in"}
+                    </span>
+                  </div>
+                  <div className={styles.calendarHeader}>
+                    <span>
+                      {propertyType === "villas" ? "Check-out" : "Move-out"}
+                    </span>
                   </div>
                 </div>
-              ) : (
-                <div className="dropdown-list-modern">
-                  {filteredCities.map((city, index) => (
-                    <div
-                      key={city.id}
-                      className={`dropdown-item-modern ${
-                        index === selectedIndex ? "item-highlighted" : ""
-                      } ${selectedCity?.id === city.id ? "item-selected" : ""}`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        selectCity(city);
+
+                {propertyType === "villas" ? (
+                  <div className={styles.datesPickerWrapper}>
+                    <DatePicker
+                      selected={checkin}
+                      onChange={(dates: [Date | null, Date | null]) => {
+                        const [start, end] = dates;
+                        setCheckin(start);
+                        setCheckout(end);
+                        if (start && end) {
+                          setShowDatesDropdown(false);
+                          setActiveField(null);
+                        }
+                      }}
+                      startDate={checkin}
+                      endDate={checkout}
+                      selectsRange
+                      minDate={new Date()}
+                      monthsShown={2}
+                      inline
+                      dateFormat="MMM d, yyyy"
+                      calendarClassName={styles.sideBySideCalendar}
+                    />
+                  </div>
+                ) : (
+                  <div className={styles.datesPickerWrapper}>
+                    <DatePicker
+                      selected={moveInDate}
+                      onChange={(dates: [Date | null, Date | null]) => {
+                        const [start, end] = dates;
+                        setMoveInDate(start);
+                        setMoveOutDate(end);
+                        if (start && end) {
+                          setShowDatesDropdown(false);
+                          setActiveField(null);
+                        }
+                      }}
+                      startDate={moveInDate}
+                      endDate={moveOutDate}
+                      selectsRange
+                      minDate={new Date()}
+                      monthsShown={2}
+                      inline
+                      dateFormat="MMM d, yyyy"
+                      calendarClassName={styles.sideBySideCalendar}
+                    />
+                  </div>
+                )}
+
+                {/* Clear Dates Button */}
+                {((propertyType === "villas" && (checkin || checkout)) ||
+                  (propertyType === "apartments" &&
+                    (moveInDate || moveOutDate))) && (
+                  <div className={styles.calendarFooter}>
+                    <button
+                      type="button"
+                      className={styles.clearDatesBtn}
+                      onClick={() => {
+                        if (propertyType === "villas") {
+                          setCheckin(null);
+                          setCheckout(null);
+                        } else {
+                          setMoveInDate(null);
+                          setMoveOutDate(null);
+                        }
                       }}
                     >
-                      <div className="item-icon-wrapper">
-                        <FiMapPin className="item-icon-modern" />
-                      </div>
-                      <div className="item-text">
-                        <div className="item-title-modern">{city.name}</div>
-                        <div className="item-subtitle-modern">{city.state}</div>
-                      </div>
-                    </div>
-                  ))}
+                      Clear dates
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Vertical Divider */}
+          <div className={styles.dividerModern} />
+
+          {/* Guests Field */}
+          <div
+            className={`${styles.searchFieldModern} ${styles.fieldWithButton} ${
+              activeField === "guests" ? styles.fieldActive : ""
+            }`}
+            ref={guestsDropdownRef}
+          >
+            <div
+              className={styles.fieldInner}
+              onClick={() => {
+                openModal();
+                setShowGuestsDropdown(!showGuestsDropdown);
+                setActiveField("guests");
+              }}
+            >
+              <FiUsers className={styles.fieldIcon} />
+              <div className={styles.fieldTextWrapper}>
+                <label className={styles.fieldLabelModern}>Guests</label>
+                <div className={styles.fieldValueModern}>
+                  {adults + children}{" "}
+                  {adults + children === 1 ? "Guest" : "Guests"}
+                  {infants > 0 &&
+                    `, ${infants} ${infants === 1 ? "Infant" : "Infants"}`}
                 </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Vertical Divider */}
-        <div className="divider-modern" />
-
-        {/* Check-in Field */}
-        <div
-          className={`search-field-modern ${
-            activeField === "checkin" ? "field-active" : ""
-          }`}
-        >
-          <div
-            className="field-inner"
-            onClick={() => {
-              setIsCheckinOpen(true);
-              setActiveField("checkin");
-            }}
-          >
-            <FiCalendar className="field-icon" />
-            <div className="field-text-wrapper">
-              <label className="field-label-modern">Check-in</label>
-              <DatePicker
-                selected={checkin}
-                onChange={(date: Date | null) => setCheckin(date)}
-                selectsStart
-                startDate={checkin}
-                endDate={checkout}
-                minDate={new Date()}
-                placeholderText="Select date"
-                className="field-input-modern date-picker-modern"
-                dateFormat="MMM d, yyyy"
-                open={isCheckinOpen}
-                onClickOutside={() => {
-                  setIsCheckinOpen(false);
-                  setActiveField(null);
-                }}
-                onSelect={() => setIsCheckinOpen(false)}
-                preventOpenOnFocus={true}
-                shouldCloseOnSelect={true}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Vertical Divider */}
-        <div className="divider-modern" />
-
-        {/* Check-out Field */}
-        <div
-          className={`search-field-modern ${
-            activeField === "checkout" ? "field-active" : ""
-          }`}
-        >
-          <div
-            className="field-inner"
-            onClick={() => {
-              setIsCheckoutOpen(true);
-              setActiveField("checkout");
-            }}
-          >
-            <FiCalendar className="field-icon" />
-            <div className="field-text-wrapper">
-              <label className="field-label-modern">Check-out</label>
-              <DatePicker
-                selected={checkout}
-                onChange={(date: Date | null) => setCheckout(date)}
-                selectsEnd
-                startDate={checkin}
-                endDate={checkout}
-                minDate={checkin || new Date()}
-                placeholderText="Select date"
-                className="field-input-modern date-picker-modern"
-                dateFormat="MMM d, yyyy"
-                open={isCheckoutOpen}
-                onClickOutside={() => {
-                  setIsCheckoutOpen(false);
-                  setActiveField(null);
-                }}
-                onSelect={() => setIsCheckoutOpen(false)}
-                preventOpenOnFocus={true}
-                shouldCloseOnSelect={true}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Vertical Divider */}
-        <div className="divider-modern" />
-
-        {/* Guests Field */}
-        <div
-          className={`search-field-modern field-with-button ${
-            activeField === "guests" ? "field-active" : ""
-          }`}
-          ref={guestsDropdownRef}
-        >
-          <div
-            className="field-inner"
-            onClick={() => {
-              setShowGuestsDropdown(!showGuestsDropdown);
-              setActiveField("guests");
-            }}
-          >
-            <FiUsers className="field-icon" />
-            <div className="field-text-wrapper">
-              <label className="field-label-modern">Guests</label>
-              <div className="field-value-modern">
-                {guests} {guests === 1 ? "Guest" : "Guests"}
               </div>
             </div>
-          </div>
 
-          {/* Search Button */}
-          <button className="search-btn-modern" onClick={handleSearch}>
-            <FiSearch className="search-icon" />
-            <span className="search-text">Search</span>
-          </button>
+            {/* Search Button */}
+            <button className={styles.searchBtnModern} onClick={handleSearch}>
+              <FiSearch className={styles.searchIcon} />
+              <span className={styles.searchText}>Search</span>
+            </button>
 
-          {/* Guests Dropdown */}
-          {showGuestsDropdown && (
-            <div className="dropdown-modern guests-dropdown-modern">
-              <div className="guests-control-modern">
-                <div className="guests-info-modern">
-                  <div className="guests-label-modern">Number of Guests</div>
-                  <div className="guests-sublabel-modern">
-                    How many people are traveling?
+            {/* Guests Dropdown */}
+            {showGuestsDropdown && (
+              <div
+                className={`${styles.dropdownModern} ${styles.guestsDropdownModern}`}
+              >
+                {/* Adults Counter */}
+                <div className={styles.guestsControlModern}>
+                  <div className={styles.guestsInfoModern}>
+                    <div className={styles.guestsLabelModern}>Adults</div>
+                    <div className={styles.guestsSublabelModern}>Age 13+</div>
+                  </div>
+                  <div className={styles.guestsCounter}>
+                    <button
+                      className={styles.counterBtn}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setAdults(Math.max(1, adults - 1));
+                      }}
+                      disabled={adults <= 1}
+                    >
+                      −
+                    </button>
+                    <span className={styles.counterValue}>{adults}</span>
+                    <button
+                      className={styles.counterBtn}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setAdults(Math.min(16, adults + 1));
+                      }}
+                      disabled={adults >= 16}
+                    >
+                      +
+                    </button>
                   </div>
                 </div>
-                <div className="guests-counter">
-                  <button
-                    className="counter-btn"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setGuests(Math.max(1, guests - 1));
-                    }}
-                    disabled={guests <= 1}
-                  >
-                    −
-                  </button>
-                  <span className="counter-value">{guests}</span>
-                  <button
-                    className="counter-btn"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setGuests(Math.min(20, guests + 1));
-                    }}
-                    disabled={guests >= 20}
-                  >
-                    +
-                  </button>
+
+                {/* Divider */}
+                <div className={styles.guestsDivider} />
+
+                {/* Children Counter */}
+                <div className={styles.guestsControlModern}>
+                  <div className={styles.guestsInfoModern}>
+                    <div className={styles.guestsLabelModern}>Children</div>
+                    <div className={styles.guestsSublabelModern}>Ages 2-12</div>
+                  </div>
+                  <div className={styles.guestsCounter}>
+                    <button
+                      className={styles.counterBtn}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setChildren(Math.max(0, children - 1));
+                      }}
+                      disabled={children <= 0}
+                    >
+                      −
+                    </button>
+                    <span className={styles.counterValue}>{children}</span>
+                    <button
+                      className={styles.counterBtn}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setChildren(Math.min(10, children + 1));
+                      }}
+                      disabled={children >= 10}
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+
+                {/* Divider */}
+                <div className={styles.guestsDivider} />
+
+                {/* Infants Counter */}
+                <div className={styles.guestsControlModern}>
+                  <div className={styles.guestsInfoModern}>
+                    <div className={styles.guestsLabelModern}>Infants</div>
+                    <div className={styles.guestsSublabelModern}>Under 2</div>
+                  </div>
+                  <div className={styles.guestsCounter}>
+                    <button
+                      className={styles.counterBtn}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setInfants(Math.max(0, infants - 1));
+                      }}
+                      disabled={infants <= 0}
+                    >
+                      −
+                    </button>
+                    <span className={styles.counterValue}>{infants}</span>
+                    <button
+                      className={styles.counterBtn}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setInfants(Math.min(5, infants + 1));
+                      }}
+                      disabled={infants >= 5}
+                    >
+                      +
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

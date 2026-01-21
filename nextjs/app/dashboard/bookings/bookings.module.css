@@ -1,0 +1,984 @@
+/* ===================================================================
+   BOOKINGS PAGE - ENHANCED REDESIGN (Session 21)
+   Design System: Booking.com + SaaS (matching Session 20)
+   Features: Filters, Search, Export, Modern Cards
+   =================================================================== */
+
+/* Container */
+.bookingsContainer {
+  min-height: 100vh;
+  background: #F9FAFB;
+  padding: 2rem 1.5rem;
+}
+
+.bookingsInner {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Loading State */
+.loadingPage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  gap: 1.5rem;
+}
+
+.loadingSpinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid #E5E7EB;
+  border-top-color: #2FA4A9;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Header */
+.bookingsHeader {
+  margin-bottom: 2rem;
+}
+
+.backButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  background: white;
+  border: 1px solid #E5E7EB;
+  border-radius: 10px;
+  color: #1F2937;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 1.5rem;
+}
+
+.backButton:hover {
+  background: #F9FAFB;
+  border-color: #2FA4A9;
+  color: #2FA4A9;
+  transform: translateX(-4px);
+}
+
+.headerContent {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.headerLeft h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1F2937;
+  margin-bottom: 0.5rem;
+}
+
+.headerLeft p {
+  color: #6B7280;
+  font-size: 0.9375rem;
+}
+
+.headerActions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.exportBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  background: white;
+  border: 2px solid #E5E7EB;
+  border-radius: 10px;
+  color: #374151;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.exportBtn:hover {
+  border-color: #2FA4A9;
+  color: #2FA4A9;
+  background: #F9FAFB;
+}
+
+.exportBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ===================================================================
+   FILTERS SECTION
+   =================================================================== */
+
+.filtersSection {
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #E5E7EB;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.filtersGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.filterGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.filterLabel {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.filterInput,
+.filterSelect {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 2px solid #E5E7EB;
+  border-radius: 10px;
+  font-size: 0.9375rem;
+  color: #1F2937;
+  transition: all 0.2s ease;
+  background: #F9FAFB;
+}
+
+.filterInput:focus,
+.filterSelect:focus {
+  outline: none;
+  border-color: #2FA4A9;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(47, 164, 169, 0.1);
+}
+
+.filterActions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+}
+
+.clearFiltersBtn {
+  padding: 0.75rem 1.5rem;
+  background: white;
+  border: 2px solid #E5E7EB;
+  border-radius: 10px;
+  color: #374151;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.clearFiltersBtn:hover {
+  border-color: #DC2626;
+  color: #DC2626;
+}
+
+.applyFiltersBtn {
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #2FA4A9, #238B8F);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(47, 164, 169, 0.2);
+}
+
+.applyFiltersBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(47, 164, 169, 0.3);
+}
+
+/* ===================================================================
+   STATUS TABS
+   =================================================================== */
+
+.statusTabs {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+}
+
+.statusTab {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.5rem;
+  background: white;
+  border: 2px solid #E5E7EB;
+  border-radius: 12px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #6B7280;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.statusTab:hover {
+  border-color: #2FA4A9;
+  color: #2FA4A9;
+  background: #F9FAFB;
+}
+
+.statusTab.active {
+  background: linear-gradient(135deg, #2FA4A9, #238B8F);
+  color: white;
+  border-color: #2FA4A9;
+  box-shadow: 0 4px 12px rgba(47, 164, 169, 0.25);
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 0.5rem;
+  background: rgba(107, 114, 128, 0.1);
+  border-radius: 12px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.statusTab.active .statusBadge {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+/* ===================================================================
+   BOOKINGS LIST
+   =================================================================== */
+
+/* SESSION 34: Bulk Actions Toolbar */
+.bulkActionsToolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  background: white;
+  border: 2px solid #2FA4A9;
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 12px rgba(47, 164, 169, 0.1);
+}
+
+.selectAllCheckbox {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  font-weight: 500;
+  color: #1F2937;
+  user-select: none;
+}
+
+.selectAllCheckbox input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: #2FA4A9;
+}
+
+.bulkCancelBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: #DC2626;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.bulkCancelBtn:hover {
+  background: #B91C1C;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+}
+
+.bookingsList {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.bookingCard {
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #E5E7EB;
+  padding: 1.75rem;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  position: relative;
+}
+
+/* SESSION 34: Bulk Selection Checkbox */
+.bookingCheckbox {
+  position: absolute;
+  top: 1.5rem;
+  left: 1.5rem;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.bookingCheckbox input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: #2FA4A9;
+}
+
+.bookingCard:has(.bookingCheckbox) {
+  padding-left: 4rem;
+}
+
+.bookingCard:hover {
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  border-color: #2FA4A9;
+  transform: translateY(-2px);
+}
+
+.bookingCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+  gap: 1rem;
+}
+
+.bookingPropertyInfo {
+  flex: 1;
+}
+
+.bookingPropertyName {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1F2937;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.bookingId {
+  font-size: 0.8125rem;
+  color: #6B7280;
+  font-family: monospace;
+  background: #F3F4F6;
+  padding: 0.25rem 0.625rem;
+  border-radius: 6px;
+}
+
+.bookingLocation {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #6B7280;
+  font-size: 0.9375rem;
+}
+
+/* SESSION 30: Badge group for status + expiry timer */
+.badgeGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: flex-end;
+}
+
+.bookingStatusBadge {
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-transform: capitalize;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+/* SESSION 30: Expiry countdown timer badge */
+.expiryBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+  border: 1px solid #FBBF24;
+  border-radius: 16px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #92400E;
+  white-space: nowrap;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.statusConfirmed {
+  background: #D1FAE5;
+  color: #065F46;
+}
+
+.statusPending {
+  background: #FEF3C7;
+  color: #92400E;
+}
+
+.statusPendingPayment {
+  background: #FED7AA;
+  color: #9A3412;
+}
+
+.statusCancelled {
+  background: #FEE2E2;
+  color: #991B1B;
+}
+
+.statusCompleted {
+  background: #DBEAFE;
+  color: #1E40AF;
+}
+
+.bookingDetailsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.detailItem {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.detailIcon {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #F9FAFB, #E5E7EB);
+  color: #2FA4A9;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.detailContent {
+  flex: 1;
+}
+
+.detailLabel {
+  font-size: 0.8125rem;
+  color: #6B7280;
+  margin-bottom: 0.25rem;
+}
+
+.detailValue {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #1F2937;
+}
+
+.detailValueLarge {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #2FA4A9;
+}
+
+.bookingActions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding-top: 1.5rem;
+  border-top: 1px solid #E5E7EB;
+}
+
+.actionBtn {
+  padding: 0.75rem 1.5rem;
+  border-radius: 10px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.actionBtnPrimary {
+  background: linear-gradient(135deg, #2FA4A9, #238B8F);
+  color: white;
+  border: none;
+  box-shadow: 0 4px 12px rgba(47, 164, 169, 0.2);
+}
+
+.actionBtnPrimary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(47, 164, 169, 0.3);
+}
+
+.actionBtnSecondary {
+  background: white;
+  color: #374151;
+  border: 2px solid #E5E7EB;
+}
+
+.actionBtnSecondary:hover {
+  border-color: #2FA4A9;
+  color: #2FA4A9;
+  background: #F9FAFB;
+}
+
+.actionBtnDanger {
+  background: white;
+  color: #DC2626;
+  border: 2px solid #FEE2E2;
+}
+
+.actionBtnDanger:hover {
+  border-color: #DC2626;
+  background: #FEF2F2;
+}
+
+/* ===================================================================
+   EMPTY STATE
+   =================================================================== */
+
+.emptyState {
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #E5E7EB;
+  padding: 4rem 2rem;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.emptyIcon {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 1.5rem;
+  background: linear-gradient(135deg, #F9FAFB, #E5E7EB);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9CA3AF;
+}
+
+.emptyTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1F2937;
+  margin-bottom: 0.75rem;
+}
+
+.emptyText {
+  font-size: 0.9375rem;
+  color: #6B7280;
+  margin-bottom: 2rem;
+  max-width: 500px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.emptyAction {
+  padding: 0.875rem 2rem;
+  background: linear-gradient(135deg, #2FA4A9, #238B8F);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(47, 164, 169, 0.2);
+}
+
+.emptyAction:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(47, 164, 169, 0.3);
+}
+
+/* ===================================================================
+   PAGINATION
+   =================================================================== */
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #E5E7EB;
+}
+
+.paginationBtn {
+  padding: 0.75rem 1.5rem;
+  background: white;
+  border: 2px solid #E5E7EB;
+  border-radius: 10px;
+  color: #374151;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.paginationBtn:hover:not(:disabled) {
+  border-color: #2FA4A9;
+  color: #2FA4A9;
+  background: #F9FAFB;
+}
+
+.paginationBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.paginationInfo {
+  font-size: 0.9375rem;
+  color: #6B7280;
+  font-weight: 500;
+}
+
+/* ===================================================================
+   TOAST NOTIFICATION
+   =================================================================== */
+
+.toast {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  background: white;
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  z-index: 9999;
+  animation: slideIn 0.3s ease;
+  border-left: 4px solid #2FA4A9;
+  max-width: 400px;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.toastSuccess {
+  border-left-color: #059669;
+}
+
+.toastError {
+  border-left-color: #DC2626;
+}
+
+.toastIcon {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.toastMessage {
+  font-size: 0.9375rem;
+  color: #1F2937;
+  font-weight: 500;
+}
+
+/* ===================================================================
+   RESPONSIVE DESIGN
+   =================================================================== */
+
+@media (max-width: 1024px) {
+  .bookingsContainer {
+    padding: 1.5rem 1rem;
+  }
+
+  .filtersGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .bookingDetailsGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .headerContent {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .headerActions {
+    width: 100%;
+  }
+
+  .exportBtn {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .filtersGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .statusTabs {
+    gap: 0.5rem;
+  }
+
+  .statusTab {
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+  }
+
+  .bookingCard {
+    padding: 1.25rem;
+  }
+
+  .bookingCardHeader {
+    flex-direction: column;
+  }
+
+  .bookingDetailsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .bookingActions {
+    flex-direction: column;
+  }
+
+  .actionBtn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .toast {
+    left: 1rem;
+    right: 1rem;
+    max-width: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .bookingsContainer {
+    padding: 1rem 0.75rem;
+  }
+
+  .headerLeft h1 {
+    font-size: 1.5rem;
+  }
+
+  .bookingPropertyName {
+    font-size: 1.125rem;
+  }
+
+  .filtersSection {
+    padding: 1rem;
+  }
+
+  .filterActions {
+    flex-direction: column;
+  }
+
+  .clearFiltersBtn,
+  .applyFiltersBtn {
+    width: 100%;
+  }
+}
+
+/* SESSION 34: Delete Confirmation Modal */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 1rem;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.modal {
+  background: white;
+  border-radius: 16px;
+  max-width: 480px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modalHeader {
+  padding: 2rem 2rem 1rem;
+  text-align: center;
+  border-bottom: 1px solid #F3F4F6;
+}
+
+.modalHeader svg {
+  margin-bottom: 1rem;
+}
+
+.modalTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+.modalBody {
+  padding: 1.5rem 2rem;
+}
+
+.modalText {
+  font-size: 1rem;
+  color: #4B5563;
+  line-height: 1.6;
+  margin: 0 0 1rem;
+}
+
+.modalText strong {
+  color: #111827;
+  font-weight: 600;
+}
+
+.modalWarning {
+  font-size: 0.875rem;
+  color: #EF4444;
+  background: #FEF2F2;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  border-left: 3px solid #EF4444;
+  margin: 0;
+}
+
+.modalActions {
+  padding: 1.5rem 2rem 2rem;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+.modalBtnSecondary,
+.modalBtnDanger {
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.modalBtnSecondary {
+  background: #F3F4F6;
+  color: #4B5563;
+}
+
+.modalBtnSecondary:hover {
+  background: #E5E7EB;
+}
+
+.modalBtnDanger {
+  background: #EF4444;
+  color: white;
+}
+
+.modalBtnDanger:hover {
+  background: #DC2626;
+}
+
+.modalBtnDanger:disabled,
+.modalBtnSecondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

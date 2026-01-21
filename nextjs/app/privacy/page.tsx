@@ -1,23 +1,23 @@
 "use client";
 
 import React from "react";
-import "./privacy.css";
+import styles from "./privacy.module.css";
 
 export default function PrivacyPage() {
   return (
-    <div className="privacy-page">
+    <div className={styles.privacyPage}>
       {/* Hero Section */}
-      <section className="privacy-hero">
-        <div className="hero-content">
-          <h1 className="hero-title">Privacy Policy</h1>
-          <p className="hero-subtitle">Last updated: January 4, 2026</p>
+      <section className={styles.privacyHero}>
+        <div className={styles.heroContent}>
+          <h1 className={styles.heroTitle}>Privacy Policy</h1>
+          <p className={styles.heroSubtitle}>Last updated: January 4, 2026</p>
         </div>
       </section>
 
       {/* Privacy Content */}
-      <section className="privacy-content">
-        <div className="privacy-container">
-          <div className="privacy-intro">
+      <section className={styles.privacyContent}>
+        <div className={styles.privacyContainer}>
+          <div className={styles.privacyIntro}>
             <p>
               At Zevio, we take your privacy seriously. This Privacy Policy
               explains how we collect, use, disclose, and safeguard your
@@ -26,9 +26,11 @@ export default function PrivacyPage() {
             </p>
           </div>
 
-          <div className="privacy-section">
-            <h2 className="section-title">1. Information We Collect</h2>
-            <h3 className="subsection-title">1.1 Information You Provide</h3>
+          <div className={styles.privacySection}>
+            <h2 className={styles.sectionTitle}>1. Information We Collect</h2>
+            <h3 className={styles.subsectionTitle}>
+              1.1 Information You Provide
+            </h3>
             <p>We collect information you voluntarily provide when you:</p>
             <ul>
               <li>Create an account (name, email, phone, password)</li>
@@ -38,7 +40,7 @@ export default function PrivacyPage() {
               <li>Participate in surveys or promotions</li>
             </ul>
 
-            <h3 className="subsection-title">
+            <h3 className={styles.subsectionTitle}>
               1.2 Automatically Collected Information
             </h3>
             <p>When you use Zevio, we automatically collect:</p>
@@ -51,7 +53,7 @@ export default function PrivacyPage() {
               <li>Cookies and tracking technologies</li>
             </ul>
 
-            <h3 className="subsection-title">
+            <h3 className={styles.subsectionTitle}>
               1.3 Information from Third Parties
             </h3>
             <p>We may receive information from:</p>
@@ -63,8 +65,10 @@ export default function PrivacyPage() {
             </ul>
           </div>
 
-          <div className="privacy-section">
-            <h2 className="section-title">2. How We Use Your Information</h2>
+          <div className={styles.privacySection}>
+            <h2 className={styles.sectionTitle}>
+              2. How We Use Your Information
+            </h2>
             <p>We use collected information to:</p>
             <ul>
               <li>
@@ -94,9 +98,11 @@ export default function PrivacyPage() {
             </ul>
           </div>
 
-          <div className="privacy-section">
-            <h2 className="section-title">3. Information Sharing</h2>
-            <h3 className="subsection-title">3.1 When We Share Information</h3>
+          <div className={styles.privacySection}>
+            <h2 className={styles.sectionTitle}>3. Information Sharing</h2>
+            <h3 className={styles.subsectionTitle}>
+              3.1 When We Share Information
+            </h3>
             <p>We may share your information with:</p>
             <ul>
               <li>
@@ -121,7 +127,9 @@ export default function PrivacyPage() {
               </li>
             </ul>
 
-            <h3 className="subsection-title">3.2 What We Don&apos;t Share</h3>
+            <h3 className={styles.subsectionTitle}>
+              3.2 What We Don&apos;t Share
+            </h3>
             <p>We will never:</p>
             <ul>
               <li>Sell your personal information to third parties</li>
@@ -131,8 +139,8 @@ export default function PrivacyPage() {
             </ul>
           </div>
 
-          <div className="privacy-section">
-            <h2 className="section-title">4. Data Security</h2>
+          <div className={styles.privacySection}>
+            <h2 className={styles.sectionTitle}>4. Data Security</h2>
             <p>
               We implement industry-standard security measures to protect your
               information:
@@ -166,8 +174,8 @@ export default function PrivacyPage() {
             </p>
           </div>
 
-          <div className="privacy-section">
-            <h2 className="section-title">5. Your Privacy Rights</h2>
+          <div className={styles.privacySection}>
+            <h2 className={styles.sectionTitle}>5. Your Privacy Rights</h2>
             <p>You have the right to:</p>
             <ul>
               <li>
@@ -203,9 +211,11 @@ export default function PrivacyPage() {
             </p>
           </div>
 
-          <div className="privacy-section">
-            <h2 className="section-title">6. Cookies and Tracking</h2>
-            <h3 className="subsection-title">6.1 Types of Cookies We Use</h3>
+          <div className={styles.privacySection}>
+            <h2 className={styles.sectionTitle}>6. Cookies and Tracking</h2>
+            <h3 className={styles.subsectionTitle}>
+              6.1 Types of Cookies We Use
+            </h3>
             <ul>
               <li>
                 <strong>Essential Cookies:</strong> Required for platform
@@ -225,7 +235,7 @@ export default function PrivacyPage() {
               </li>
             </ul>
 
-            <h3 className="subsection-title">6.2 Managing Cookies</h3>
+            <h3 className={styles.subsectionTitle}>6.2 Managing Cookies</h3>
             <p>
               You can control cookies through your browser settings. Note that
               disabling certain cookies may affect functionality. Most browsers
@@ -239,8 +249,8 @@ export default function PrivacyPage() {
             </ul>
           </div>
 
-          <div className="privacy-section">
-            <h2 className="section-title">7. Data Retention</h2>
+          <div className={styles.privacySection}>
+            <h2 className={styles.sectionTitle}>7. Data Retention</h2>
             <p>We retain your information for as long as necessary to:</p>
             <ul>
               <li>Provide services and support bookings</li>
@@ -260,8 +270,8 @@ export default function PrivacyPage() {
             </ul>
           </div>
 
-          <div className="privacy-section">
-            <h2 className="section-title">8. Third-Party Links</h2>
+          <div className={styles.privacySection}>
+            <h2 className={styles.sectionTitle}>8. Third-Party Links</h2>
             <p>
               Our platform may contain links to third-party websites, services,
               or applications. We are not responsible for their privacy
@@ -270,8 +280,8 @@ export default function PrivacyPage() {
             </p>
           </div>
 
-          <div className="privacy-section">
-            <h2 className="section-title">9. Children&apos;s Privacy</h2>
+          <div className={styles.privacySection}>
+            <h2 className={styles.sectionTitle}>9. Children&apos;s Privacy</h2>
             <p>
               Zevio is not intended for users under 18 years of age. We do not
               knowingly collect personal information from children. If we
@@ -281,8 +291,10 @@ export default function PrivacyPage() {
             </p>
           </div>
 
-          <div className="privacy-section">
-            <h2 className="section-title">10. International Data Transfers</h2>
+          <div className={styles.privacySection}>
+            <h2 className={styles.sectionTitle}>
+              10. International Data Transfers
+            </h2>
             <p>
               Your information may be transferred to and processed in countries
               other than your country of residence. These countries may have
@@ -297,8 +309,8 @@ export default function PrivacyPage() {
             </ul>
           </div>
 
-          <div className="privacy-section">
-            <h2 className="section-title">11. Changes to This Policy</h2>
+          <div className={styles.privacySection}>
+            <h2 className={styles.sectionTitle}>11. Changes to This Policy</h2>
             <p>
               We may update this Privacy Policy from time to time to reflect
               changes in our practices or legal requirements. We will notify you
@@ -316,13 +328,13 @@ export default function PrivacyPage() {
             </p>
           </div>
 
-          <div className="privacy-section">
-            <h2 className="section-title">12. Contact Us</h2>
+          <div className={styles.privacySection}>
+            <h2 className={styles.sectionTitle}>12. Contact Us</h2>
             <p>
               If you have questions, concerns, or requests regarding this
               Privacy Policy or our data practices, please contact us:
             </p>
-            <div className="contact-info">
+            <div className={styles.contactInfo}>
               <p>
                 <strong>Zevio - Privacy Team</strong>
               </p>
@@ -336,7 +348,7 @@ export default function PrivacyPage() {
             </p>
           </div>
 
-          <div className="privacy-footer">
+          <div className={styles.privacyFooter}>
             <p>
               By using Zevio, you acknowledge that you have read, understood,
               and agree to this Privacy Policy and our data practices.

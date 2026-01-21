@@ -1,0 +1,238 @@
+/* ========================================
+   PRIVACY POLICY PAGE - BRAND COLORS
+   (Shared styles with Terms page)
+   ======================================== */
+
+.privacyPage {
+    min-height: 100vh;
+    background: var(--brand-white);
+}
+
+/* ========================================
+   HERO SECTION
+   ======================================== */
+
+.privacyHero {
+    background: linear-gradient(135deg, var(--brand-navy) 0%, var(--brand-navy-dark) 100%);
+    padding: 6rem 1rem 4rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.privacyHero::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+    opacity: 0.5;
+}
+
+.heroContent {
+    max-width: 800px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+}
+
+.heroTitle {
+    font-size: 3.5rem;
+    font-weight: 800;
+    color: var(--brand-white);
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.02em;
+}
+
+.heroSubtitle {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.8);
+    font-weight: 500;
+}
+
+/* ========================================
+   PRIVACY CONTENT
+   ======================================== */
+
+.privacyContent {
+    padding: 4rem 1rem;
+    background: var(--brand-white);
+}
+
+.privacyContainer {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.privacyIntro {
+    background: var(--brand-grey-lightest);
+    padding: 2rem;
+    border-radius: 12px;
+    border-left: 4px solid var(--brand-teal);
+    margin-bottom: 3rem;
+}
+
+.privacyIntro p {
+    font-size: 1.0625rem;
+    line-height: 1.8;
+    color: var(--brand-text-dark);
+    margin: 0;
+}
+
+.privacySection {
+    margin-bottom: 3rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid var(--brand-border-light);
+}
+
+.privacySection:last-of-type {
+    border-bottom: none;
+}
+
+.sectionTitle {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--brand-navy);
+    margin-bottom: 1.25rem;
+}
+
+.subsectionTitle {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--brand-navy);
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.privacySection p {
+    font-size: 1rem;
+    line-height: 1.8;
+    color: var(--brand-text-dark);
+    margin-bottom: 1rem;
+}
+
+.privacySection ul {
+    margin: 1rem 0 1rem 1.5rem;
+    padding: 0;
+}
+
+.privacySection li {
+    font-size: 1rem;
+    line-height: 1.8;
+    color: var(--brand-text-dark);
+    margin-bottom: 0.75rem;
+    padding-left: 0.5rem;
+}
+
+.privacySection li strong {
+    color: var(--brand-navy);
+    font-weight: 600;
+}
+
+.contactInfo {
+    background: var(--brand-grey-lightest);
+    padding: 1.5rem;
+    border-radius: 12px;
+    margin-top: 1rem;
+}
+
+.contactInfo p {
+    margin: 0.5rem 0;
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+.contactInfo strong {
+    color: var(--brand-navy);
+}
+
+.privacyFooter {
+    background: var(--brand-grey-lightest);
+    padding: 2rem;
+    border-radius: 12px;
+    margin-top: 3rem;
+    text-align: center;
+}
+
+.privacyFooter p {
+    font-size: 1.0625rem;
+    font-weight: 600;
+    color: var(--brand-navy);
+    margin: 0;
+    line-height: 1.7;
+}
+
+/* ========================================
+   RESPONSIVE DESIGN
+   ======================================== */
+
+@media (max-width: 768px) {
+    .heroTitle {
+        font-size: 2.5rem;
+    }
+
+    .heroSubtitle {
+        font-size: 0.9375rem;
+    }
+
+    .privacyContent {
+        padding: 3rem 1rem;
+    }
+
+    .sectionTitle {
+        font-size: 1.5rem;
+    }
+
+    .subsectionTitle {
+        font-size: 1.125rem;
+    }
+
+    .privacyIntro,
+    .contactInfo,
+    .privacyFooter {
+        padding: 1.5rem;
+    }
+
+    .privacySection {
+        margin-bottom: 2rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .privacyHero {
+        padding: 4rem 1rem 3rem;
+    }
+
+    .heroTitle {
+        font-size: 2rem;
+    }
+
+    .heroSubtitle {
+        font-size: 0.875rem;
+    }
+
+    .privacyContent {
+        padding: 2rem 1rem;
+    }
+
+    .sectionTitle {
+        font-size: 1.375rem;
+    }
+
+    .subsectionTitle {
+        font-size: 1.0625rem;
+    }
+
+    .privacySection p,
+    .privacySection li {
+        font-size: 0.9375rem;
+    }
+
+    .privacyIntro,
+    .contactInfo,
+    .privacyFooter {
+        padding: 1.25rem;
+    }
+}

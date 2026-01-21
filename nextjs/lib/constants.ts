@@ -11,63 +11,79 @@ export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001";
 
 export const API_ENDPOINTS = {
+  // Public (no auth required)
+  PUBLIC: {
+    CITIES: "/public/cities",
+    PROPERTIES: "/public/properties",
+    PROPERTY_DETAILS: (id: string) => `/public/properties/${id}`,
+  },
+
   // Authentication
   AUTH: {
-    REGISTER: "/api/auth/register",
-    LOGIN: "/api/auth/login",
-    LOGOUT: "/api/auth/logout",
-    REFRESH_TOKEN: "/api/auth/refresh-token",
-    VERIFY_EMAIL: "/api/auth/verify-email",
-    FORGOT_PASSWORD: "/api/auth/forgot-password",
-    RESET_PASSWORD: "/api/auth/reset-password",
+    REGISTER: "/auth/register",
+    LOGIN: "/auth/login",
+    LOGOUT: "/auth/logout",
+    REFRESH_TOKEN: "/auth/refresh",
+    VERIFY_EMAIL: "/auth/verify-email",
+    FORGOT_PASSWORD: "/auth/forgot-password",
+    RESET_PASSWORD: "/auth/reset-password",
   },
 
   // Users
   USERS: {
-    PROFILE: "/api/users/profile",
-    UPDATE_PROFILE: "/api/users/profile",
-    CHANGE_PASSWORD: "/api/users/change-password",
-    UPLOAD_AVATAR: "/api/users/avatar",
+    PROFILE: "/users/profile",
+    UPDATE_PROFILE: "/users/profile",
+    CHANGE_PASSWORD: "/users/change-password",
+    UPLOAD_AVATAR: "/users/avatar",
   },
 
   // Cities
   CITIES: {
-    LIST: "/api/cities",
-    DETAILS: (id: number) => `/api/cities/${id}`,
+    LIST: "/cities",
+    DETAILS: (id: number) => `/cities/${id}`,
   },
 
   // Properties
   PROPERTIES: {
-    LIST: "/api/properties",
-    DETAILS: (id: number) => `/api/properties/${id}`,
-    SEARCH: "/api/properties/search",
-    AVAILABLE: "/api/properties/available",
-    BY_CITY: (cityId: number) => `/api/properties/city/${cityId}`,
+    LIST: "/properties",
+    DETAILS: (id: number) => `/properties/${id}`,
+    SEARCH: "/properties/search",
+    AVAILABLE: "/properties/available",
+    BY_CITY: (cityId: number) => `/properties/city/${cityId}`,
   },
 
   // Bookings
   BOOKINGS: {
-    LIST: "/api/bookings",
-    DETAILS: (id: number) => `/api/bookings/${id}`,
-    CREATE: "/api/bookings",
-    CANCEL: (id: number) => `/api/bookings/${id}/cancel`,
-    USER_BOOKINGS: "/api/bookings/user",
-    CHECK_AVAILABILITY: "/api/bookings/check-availability",
+    LIST: "/bookings",
+    DETAILS: (id: number) => `/bookings/${id}`,
+    CREATE: "/bookings",
+    CANCEL: (id: number) => `/bookings/${id}/cancel`,
+    MY_BOOKINGS: "/bookings/my",
+    USER_BOOKINGS: "/bookings/my",
+    CHECK_AVAILABILITY: "/bookings/check-availability",
+  },
+
+  // Wishlist
+  WISHLIST: {
+    ADD: "/wishlist",
+    REMOVE: (propertyId: string) => `/wishlist/${propertyId}`,
+    MY_WISHLIST: "/wishlist/my",
+    CHECK: (propertyId: string) => `/wishlist/check/${propertyId}`,
   },
 
   // Payments
   PAYMENTS: {
-    CREATE_ORDER: "/api/payments/create-order",
-    VERIFY: "/api/payments/verify",
-    DETAILS: (id: number) => `/api/payments/${id}`,
-    REFUND: (id: number) => `/api/payments/${id}/refund`,
+    CREATE_ORDER: "/payments/create-order",
+    VERIFY: "/payments/verify",
+    DETAILS: (id: number) => `/payments/${id}`,
+    REFUND: (id: number) => `/payments/${id}/refund`,
   },
 
   // Notifications
   NOTIFICATIONS: {
-    LIST: "/api/notifications",
-    MARK_READ: (id: number) => `/api/notifications/${id}/read`,
-    MARK_ALL_READ: "/api/notifications/read-all",
+    LIST: "/notifications",
+    MARK_READ: (id: number) => `/notifications/${id}/read`,
+    MARK_ALL_READ: "/notifications/read-all",
   },
 } as const;
 

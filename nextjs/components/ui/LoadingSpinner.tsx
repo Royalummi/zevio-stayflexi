@@ -1,5 +1,5 @@
 import React from "react";
-import "./LoadingSpinner.css";
+import styles from "./LoadingSpinner.module.css";
 
 export interface LoadingSpinnerProps {
   size?: "sm" | "md" | "lg" | "xl";
@@ -20,17 +20,23 @@ export default function LoadingSpinner({
 }: LoadingSpinnerProps) {
   const spinner = (
     <div
-      className={`loading-spinner loading-spinner--${size} loading-spinner--${color}`}
+      className={`${styles.loadingSpinner} ${
+        styles[`loadingSpinner${size.toUpperCase()}`]
+      } ${
+        styles[
+          `loadingSpinner${color.charAt(0).toUpperCase() + color.slice(1)}`
+        ]
+      }`}
     >
       <svg viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
         <circle cx="25" cy="25" r="20" />
       </svg>
-      {text && <p className="loading-spinner__text">{text}</p>}
+      {text && <p className={styles.loadingSpinnerText}>{text}</p>}
     </div>
   );
 
   if (fullScreen) {
-    return <div className="loading-spinner-overlay">{spinner}</div>;
+    return <div className={styles.loadingSpinnerOverlay}>{spinner}</div>;
   }
 
   return spinner;
@@ -62,7 +68,17 @@ export function LoadingSkeleton({
 
   return (
     <div
-      className={`loading-skeleton loading-skeleton--${variant} loading-skeleton--${animation} ${className}`}
+      className={`${styles.loadingSkeleton} ${
+        styles[
+          `loadingSkeleton${variant.charAt(0).toUpperCase() + variant.slice(1)}`
+        ]
+      } ${
+        styles[
+          `loadingSkeleton${
+            animation.charAt(0).toUpperCase() + animation.slice(1)
+          }`
+        ]
+      } ${className}`}
       style={style}
       aria-busy="true"
       aria-live="polite"

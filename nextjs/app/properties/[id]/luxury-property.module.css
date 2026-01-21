@@ -1,0 +1,1391 @@
+/* ============================================================================
+   LUXURY VILLA PROPERTY DETAIL PAGE - MODERN PREMIUM DESIGN
+   Industry Standard: Airbnb, VRBO, Luxury Escapes
+   ============================================================================ */
+
+/* ===== LAYOUT STRUCTURE ===== */
+.luxuryVillaLayout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    margin-bottom: 4rem;
+}
+
+@media (min-width: 1024px) {
+    .luxuryVillaLayout {
+        grid-template-columns: 1fr 480px;
+        gap: 3rem;
+        align-items: start;
+    }
+}
+
+/* ===== PHOTO GALLERY SECTION ===== */
+.gallerySection {
+    width: 100%;
+}
+
+.propertyDetailsLeft {
+    margin-top: 3rem;
+}
+
+.mainPhotoWrapper {
+    position: relative;
+    width: 100%;
+    height: 450px;
+    border-radius: 1.5rem;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    margin-bottom: 1.5rem;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (min-width: 768px) {
+    .mainPhotoWrapper {
+        height: 550px;
+    }
+}
+
+@media (min-width: 1024px) {
+    .mainPhotoWrapper {
+        height: 650px;
+    }
+}
+
+.mainPhotoWrapper:hover {
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+}
+
+.mainPhotoLuxury {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mainPhotoWrapper:hover .mainPhotoLuxury {
+    transform: scale(1.03);
+}
+
+/* Photo Counter Badge - Premium Design */
+.photoCounterBadge {
+    position: absolute;
+    bottom: 2rem;
+    right: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    background: linear-gradient(135deg, rgba(31, 58, 95, 0.9), rgba(31, 58, 95, 0.85));
+    backdrop-filter: blur(16px);
+    border-radius: 100px;
+    color: white;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    box-shadow: 0 4px 16px rgba(31, 58, 95, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.photoCounterBadge .separator {
+    opacity: 0.6;
+    margin: 0 0.125rem;
+}
+
+/* Thumbnails Grid - Luxury Style */
+.thumbnailsLuxuryGrid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+}
+
+@media (min-width: 640px) {
+    .thumbnailsLuxuryGrid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1.25rem;
+    }
+}
+
+@media (min-width: 768px) {
+    .thumbnailsLuxuryGrid {
+        grid-template-columns: repeat(5, 1fr);
+    }
+}
+
+@media (min-width: 1024px) {
+    .thumbnailsLuxuryGrid {
+        grid-template-columns: repeat(6, 1fr);
+    }
+}
+
+.luxuryThumbnail {
+    position: relative;
+    aspect-ratio: 4/3;
+    border-radius: 1rem;
+    overflow: hidden;
+    cursor: pointer;
+    border: 3px solid transparent;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.luxuryThumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.luxuryThumbnail:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+    border-color: var(--brand-teal);
+}
+
+.luxuryThumbnail:hover img {
+    transform: scale(1.08);
+}
+
+.luxuryThumbnail.active {
+    border-color: var(--brand-navy);
+    box-shadow: 0 8px 24px rgba(31, 58, 95, 0.3);
+}
+
+.luxuryThumbnail.active::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, transparent 60%, rgba(31, 58, 95, 0.15));
+    z-index: 1;
+}
+
+.activeIndicator {
+    position: absolute;
+    bottom: 0.5rem;
+    right: 0.5rem;
+    width: 2rem;
+    height: 2rem;
+    background: linear-gradient(135deg, var(--brand-navy), var(--brand-teal-dark));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    z-index: 2;
+}
+
+.activeIndicator::after {
+    content: '✓';
+    color: white;
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+/* ===== BOOKING SIDEBAR (STICKY) ===== */
+.bookingSidebar {
+    position: relative;
+}
+
+/* Property Header - Inside Right Sidebar */
+.propertyHeaderSidebar {
+    margin-bottom: 1.5rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #f8f6f3 0%, #ffffff 100%);
+    border-radius: 1rem;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.propertyNameSidebar {
+    font-size: 1.625rem;
+    font-weight: 700;
+    color: var(--brand-navy);
+    margin-bottom: 0.875rem;
+    letter-spacing: -0.02em;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.propertyMetaSidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.propertyMetaSidebar .metaLocation {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    color: #666;
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+
+.propertyMetaSidebar .metaLocation svg {
+    width: 1.125rem;
+    height: 1.125rem;
+    color: var(--brand-navy);
+}
+
+.propertyMetaSidebar .metaRating {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.propertyMetaSidebar .ratingBox {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.375rem 0.75rem;
+    background: var(--brand-teal-lighter);
+    border-radius: 0.5rem;
+}
+
+.propertyMetaSidebar .ratingBox svg {
+    width: 1rem;
+    height: 1rem;
+    color: var(--brand-teal);
+    fill: var(--brand-teal);
+}
+
+.propertyMetaSidebar .ratingBox span {
+    font-weight: 700;
+    color: #1a1a1a;
+}
+
+.propertyMetaSidebar .reviewsCount {
+    color: #666;
+    font-size: 0.875rem;
+}
+
+@media (min-width: 1024px) {
+    .bookingSidebar {
+        position: sticky;
+        top: 6rem;
+        align-self: start;
+        max-height: calc(100vh - 8rem);
+        /* 100vh - (top offset + footer space) */
+    }
+}
+
+.bookingCard {
+    background: white;
+    border-radius: 1.5rem;
+    padding: 0;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.bookingCard:hover {
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.12);
+}
+
+.bookingCardContent {
+    padding: 2rem;
+    flex: 1;
+    overflow-y: auto;
+    max-height: calc(100vh - 12rem);
+    /* Ensure scrolling within calculated height */
+}
+
+/* Custom Thin Scrollbar - Only shows when overflowing */
+.bookingCardContent::-webkit-scrollbar {
+    width: 4px;
+}
+
+.bookingCardContent::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.bookingCardContent::-webkit-scrollbar-thumb {
+    background: rgba(47, 164, 169, 0.3);
+    border-radius: 100px;
+    transition: background 0.2s ease;
+}
+
+.bookingCardContent::-webkit-scrollbar-thumb:hover {
+    background: rgba(47, 164, 169, 0.5);
+}
+
+/* Firefox Custom Scrollbar */
+.bookingCardContent {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(47, 164, 169, 0.3) transparent;
+}
+
+/* Booking Header - Price & Rating */
+.bookingHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 0 0 24px 0;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--brand-border-light);
+}
+
+.priceSection {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.priceDisplay {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.bookingPrice {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--brand-navy);
+}
+
+.bookingPeriod {
+    font-size: 16px;
+    font-weight: 400;
+    color: var(--brand-text-dark);
+}
+
+.guestInfo {
+    font-size: 14px;
+    font-weight: 500;
+    color: #666;
+    margin-left: 4px;
+}
+
+.basePriceNote {
+    font-size: 12px;
+    color: #999;
+    margin-top: 4px;
+    font-style: italic;
+}
+
+/* Booking Form */
+.bookingForm {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+/* Date Selection Grid - Row 1: Check-in and Check-out side by side */
+.dateSelectionGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+/* Guests Selection Grid - Row 2: Adults and Children side by side */
+.guestsSelectionGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+/* Mobile: Stack vertically */
+@media (max-width: 640px) {
+
+    .dateSelectionGrid,
+    .guestsSelectionGrid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+}
+
+.formGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+}
+
+.formGroup label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--brand-navy);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.formGroup label svg {
+    width: 16px;
+    height: 16px;
+    color: var(--brand-text-dark);
+}
+
+.formInput {
+    padding: 12px 16px;
+    border: 1px solid var(--brand-border);
+    border-radius: 8px;
+    font-size: 16px;
+    color: var(--brand-navy);
+    background: white;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    font-family: inherit;
+    width: 100%;
+}
+
+.formInput:hover {
+    border-color: var(--brand-teal);
+}
+
+.formInput:focus {
+    outline: none;
+    border-color: var(--brand-teal);
+    box-shadow: 0 0 0 2px var(--brand-teal-lighter);
+}
+
+/* Guests Incrementer - Fits within grid cell */
+.guestsIncrementer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--brand-border);
+    border-radius: 12px;
+    background: white;
+    transition: all 0.2s ease;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.guestsIncrementer:hover {
+    border-color: var(--brand-teal);
+    box-shadow: 0 4px 12px rgba(47, 164, 169, 0.15);
+}
+
+.guestsLabel {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--brand-navy);
+    margin: 0;
+    flex-shrink: 0;
+}
+
+.guestsLabel svg {
+    width: 1rem;
+    height: 1rem;
+    color: var(--brand-teal);
+}
+
+.guestsControls {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.guestBtn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1.5px solid var(--brand-border);
+    background: white;
+    color: var(--brand-navy);
+    font-size: 1.125rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.guestBtn:hover:not(:disabled) {
+    background: var(--brand-teal);
+    border-color: var(--brand-teal);
+    color: white;
+    transform: scale(1.08);
+    box-shadow: 0 4px 12px rgba(47, 164, 169, 0.3);
+}
+
+.guestBtn:active:not(:disabled) {
+    transform: scale(0.95);
+}
+
+.guestBtn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.guestsCount {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--brand-navy);
+    min-width: 55px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+/* Price Breakdown */
+.priceBreakdown {
+    padding-top: 24px;
+    border-top: 1px solid var(--brand-border-light);
+}
+
+.breakdownTitle {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--brand-navy);
+    margin: 0 0 16px 0;
+}
+
+.breakdownItems {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.breakdownItem {
+    display: flex;
+    justify-content: space-between;
+    font-size: 16px;
+    color: var(--brand-navy);
+}
+
+.breakdownItem span:first-child {
+    color: #717171;
+}
+
+.breakdownTotal {
+    display: flex;
+    justify-content: space-between;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--brand-navy);
+    padding-top: 16px;
+    margin-top: 8px;
+    border-top: 1px solid #ebebeb;
+}
+
+.bookingCardFooter {
+    padding: 1.5rem 2rem;
+    background: linear-gradient(to top, #ffffff, #f8f9fa);
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+}
+
+.reserveBtnLuxury {
+    width: 100%;
+    padding: 1.25rem 2rem;
+    background: linear-gradient(135deg, var(--brand-teal) 0%, var(--brand-teal-dark) 100%);
+    color: white;
+    border: none;
+    border-radius: 0.875rem;
+    font-weight: 600;
+    font-size: 1.125rem;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(0, 158, 158, 0.3);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    margin-top: 1.5rem;
+}
+
+.reserveBtnLuxury span {
+    position: relative;
+    z-index: 2;
+}
+
+.reserveBtnLuxury::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, var(--brand-navy) 0%, var(--brand-teal-dark) 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 1;
+}
+
+.reserveBtnLuxury:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 28px rgba(0, 158, 158, 0.4);
+}
+
+.reserveBtnLuxury:hover::before {
+    opacity: 1;
+}
+
+.reserveBtnLuxury:active {
+    transform: translateY(0);
+}
+
+/* ===== PROPERTY DETAILS BELOW GALLERY ===== */
+.propertyDetailsBelow {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+/* Section Titles - Luxury Typography */
+.sectionTitleLuxury {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--brand-navy);
+    margin-bottom: 2rem;
+    letter-spacing: -0.02em;
+    position: relative;
+    padding-bottom: 1rem;
+}
+
+.sectionTitleLuxury::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 4rem;
+    height: 0.25rem;
+    background: linear-gradient(90deg, var(--brand-teal), var(--brand-navy));
+    border-radius: 100px;
+}
+
+/* Property Overview Section */
+.overviewSectionLuxury {
+    margin-bottom: 4rem;
+    padding: 3rem;
+    background: linear-gradient(135deg, #f8f6f3 0%, #ffffff 100%);
+    border-radius: 1.5rem;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.statsGridLuxury {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+    .statsGridLuxury {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 2rem;
+    }
+}
+
+.statCardLuxury {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 2rem 1.5rem;
+    background: white;
+    border-radius: 1.25rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+    border: 1px solid rgba(0, 0, 0, 0.04);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.statCardLuxury::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--brand-navy), var(--brand-teal));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.statCardLuxury:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+}
+
+.statCardLuxury:hover::before {
+    opacity: 1;
+}
+
+.statIconLuxury {
+    width: 3.5rem;
+    height: 3.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--brand-bg-light), var(--brand-border-light));
+    border-radius: 1rem;
+    margin-bottom: 1rem;
+    color: var(--brand-navy);
+    font-size: 1.75rem;
+    transition: all 0.3s ease;
+}
+
+.statCardLuxury:hover .statIconLuxury {
+    background: linear-gradient(135deg, var(--brand-teal), var(--brand-teal-dark));
+    color: white;
+    transform: scale(1.1);
+}
+
+.statContentLuxury {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.statValueLuxury {
+    font-size: 2.25rem;
+    font-weight: 700;
+    color: var(--brand-navy);
+    line-height: 1;
+}
+
+.statLabelLuxury {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--brand-text-dark);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+/* About This Place Section */
+.aboutSectionLuxury {
+    margin-bottom: 4rem;
+    padding: 3rem;
+    background: white;
+    border-radius: 1.5rem;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.descriptionTextLuxury {
+    font-size: 1.125rem;
+    line-height: 1.8;
+    color: #444;
+    letter-spacing: 0.01em;
+}
+
+/* Amenities Section */
+.amenitiesSectionLuxury {
+    margin-bottom: 4rem;
+    padding: 3rem;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f6f3 100%);
+    border-radius: 1.5rem;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.amenitiesGridLuxury {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.25rem;
+}
+
+@media (min-width: 640px) {
+    .amenitiesGridLuxury {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+    }
+}
+
+@media (min-width: 1024px) {
+    .amenitiesGridLuxury {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+.amenityItemLuxury {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem;
+    background: white;
+    border-radius: 1rem;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.04);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+}
+
+.amenityItemLuxury:hover {
+    transform: translateX(6px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+    border-color: var(--brand-teal);
+}
+
+.amenityIconLuxury {
+    width: 2.5rem;
+    height: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--brand-bg-light), var(--brand-border-light));
+    border-radius: 0.75rem;
+    color: var(--brand-navy);
+    font-size: 1.25rem;
+    flex-shrink: 0;
+    transition: all 0.3s ease;
+}
+
+.amenityItemLuxury:hover .amenityIconLuxury {
+    background: linear-gradient(135deg, var(--brand-teal), var(--brand-teal-dark));
+    color: white;
+    transform: rotate(5deg) scale(1.1);
+}
+
+.amenityTextLuxury {
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: #333;
+}
+
+/* Mobile Floating Booking Button */
+.mobileBookingFloat {
+    display: block;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    padding: 1rem 1.5rem;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+@media (min-width: 1024px) {
+    .mobileBookingFloat {
+        display: none;
+    }
+}
+
+.mobileBookingContent {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.mobileBookingPrice {
+    display: flex;
+    flex-direction: column;
+}
+
+.mobilePriceAmount {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1a1a1a;
+}
+
+.mobilePriceLabel {
+    font-size: 0.875rem;
+    color: #666;
+}
+
+.mobileReserveBtn {
+    padding: 0.875rem 2rem;
+    background: linear-gradient(135deg, var(--brand-teal) 0%, var(--brand-teal-dark) 100%);
+    color: white;
+    border: none;
+    border-radius: 0.75rem;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    white-space: nowrap;
+    box-shadow: 0 4px 12px rgba(0, 158, 158, 0.3);
+    transition: all 0.3s ease;
+}
+
+.mobileReserveBtn:active {
+    transform: scale(0.98);
+}
+
+/* Hide desktop booking on mobile */
+@media (max-width: 1023px) {
+    .bookingSidebar {
+        display: none;
+    }
+}
+
+/* Mobile Responsive Adjustments */
+@media (max-width: 767px) {
+    .sectionTitleLuxury {
+        font-size: 1.5rem;
+    }
+
+    .overviewSectionLuxury,
+    .aboutSectionLuxury,
+    .amenitiesSectionLuxury {
+        padding: 2rem 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .statCardLuxury {
+        padding: 1.5rem 1rem;
+    }
+
+    .statIconLuxury {
+        width: 3rem;
+        height: 3rem;
+        font-size: 1.5rem;
+    }
+
+    .statValueLuxury {
+        font-size: 1.875rem;
+    }
+
+    .descriptionTextLuxury {
+        font-size: 1rem;
+    }
+
+    .photoCounterBadge {
+        bottom: 1rem;
+        right: 1rem;
+        padding: 0.625rem 1rem;
+        font-size: 0.875rem;
+    }
+
+    .propertyDetailsLeft {
+        padding-bottom: 6rem;
+    }
+}
+
+/* ============================================================================
+   INDUSTRY-STANDARD SECTIONS (Airbnb/VRBO Style)
+   ========================================================================= */
+
+/* House Rules Section */
+.houseRulesSection {
+    background: #ffffff;
+    border-radius: 1.5rem;
+    padding: 2.5rem;
+    margin-bottom: 2rem;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+}
+
+.rulesGrid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+    margin-top: 1.5rem;
+}
+
+@media (min-width: 768px) {
+    .rulesGrid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+    }
+}
+
+.ruleItem {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 0.75rem;
+    transition: all 0.2s;
+}
+
+.ruleItem:hover {
+    background: #f1f3f5;
+    transform: translateX(4px);
+}
+
+.ruleIcon {
+    width: 20px;
+    height: 20px;
+    color: var(--brand-navy);
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.ruleIconDanger {
+    color: #e74c3c;
+}
+
+.ruleIconSuccess {
+    color: #27ae60;
+}
+
+.ruleContent {
+    flex: 1;
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    color: #333;
+}
+
+.ruleContent strong {
+    font-weight: 600;
+    color: #1a1a1a;
+}
+
+/* Cancellation Policy Section */
+.cancellationSection {
+    background: #ffffff;
+    border-radius: 1.5rem;
+    padding: 2.5rem;
+    margin-bottom: 2rem;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+}
+
+.policyCard {
+    margin-top: 1.5rem;
+    background: linear-gradient(135deg, #f8f6f3 0%, #ffffff 100%);
+    border-radius: 1rem;
+    padding: 2rem;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.policyHeader {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.policyIcon {
+    width: 32px;
+    height: 32px;
+    color: #27ae60;
+}
+
+.policyTitle {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin: 0;
+}
+
+.policyContent {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.policyText {
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    color: #333;
+    margin: 0;
+}
+
+.policyText strong {
+    font-weight: 600;
+    color: #1a1a1a;
+}
+
+.policyNote {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: rgba(52, 152, 219, 0.08);
+    border-left: 3px solid #3498db;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    color: #2c3e50;
+    margin-top: 0.5rem;
+}
+
+.policyNote svg {
+    width: 16px;
+    height: 16px;
+    color: #3498db;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+/* Host Section */
+.hostSection {
+    background: #ffffff;
+    border-radius: 1.5rem;
+    padding: 2.5rem;
+    margin-bottom: 2rem;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+}
+
+.hostCard {
+    margin-top: 1.5rem;
+}
+
+.hostHeader {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.hostAvatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.75rem;
+    flex-shrink: 0;
+}
+
+.hostInfo {
+    flex: 1;
+}
+
+.hostName {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--brand-navy);
+    margin: 0 0 0.25rem 0;
+}
+
+.hostJoined {
+    font-size: 0.875rem;
+    color: #666;
+    margin: 0;
+}
+
+.superhostBadge {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+    border-radius: 2rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
+}
+
+.superhostBadge svg {
+    width: 14px;
+    height: 14px;
+    fill: #1a1a1a;
+}
+
+.hostStats {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+@media (min-width: 640px) {
+    .hostStats {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+.hostStat {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 0.75rem;
+}
+
+.statIconHost {
+    width: 20px;
+    height: 20px;
+    color: #2c3e50;
+    flex-shrink: 0;
+}
+
+.hostStat strong {
+    font-weight: 600;
+    color: #1a1a1a;
+    font-size: 0.9375rem;
+}
+
+.hostDescription {
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    color: #333;
+    margin-bottom: 1.5rem;
+}
+
+.contactHostBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 0.875rem 1.5rem;
+    background: var(--brand-teal);
+    color: white;
+    border: none;
+    border-radius: 0.75rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.contactHostBtn:hover {
+    background: var(--brand-teal-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 158, 158, 0.3);
+}
+
+.contactHostBtn svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* Save/Share Button Active States */
+.actionBtn.active {
+    background: rgba(255, 56, 92, 0.1);
+}
+
+.actionBtn.active svg {
+    color: #ff385c;
+    fill: #ff385c;
+}
+
+/* ===== SESSION 33: PENDING BOOKING BANNER ===== */
+.pendingBookingBanner {
+    background: linear-gradient(135deg, #FFF4E6 0%, #FFE4CC 100%);
+    border: 2px solid #FF9800;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 4px 16px rgba(255, 152, 0, 0.15);
+}
+
+.pendingBookingHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.pendingBookingTitle {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #E65100;
+}
+
+.pendingBookingTitle svg {
+    width: 20px;
+    height: 20px;
+    color: #FF9800;
+}
+
+.pendingBookingTimer {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: white;
+    border-radius: 2rem;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: #E65100;
+    box-shadow: 0 2px 8px rgba(230, 81, 0, 0.2);
+}
+
+.pendingBookingDetails {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+    padding: 1rem;
+    background: white;
+    border-radius: 0.75rem;
+}
+
+.pendingBookingRow {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.9375rem;
+    color: #333;
+}
+
+.pendingBookingRow svg {
+    width: 16px;
+    height: 16px;
+    color: #FF9800;
+    flex-shrink: 0;
+}
+
+.pendingBookingPrice {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #E65100;
+}
+
+.pendingBookingActions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+}
+
+@media (min-width: 640px) {
+    .pendingBookingActions {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.pendingBookingContinue,
+.pendingBookingCancel {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.875rem 1.5rem;
+    border: none;
+    border-radius: 0.75rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.pendingBookingContinue {
+    background: linear-gradient(135deg, #4CAF50 0%, #45A049 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+}
+
+.pendingBookingContinue:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(76, 175, 80, 0.4);
+}
+
+.pendingBookingCancel {
+    background: white;
+    color: #E65100;
+    border: 2px solid #FF9800;
+}
+
+.pendingBookingCancel:hover {
+    background: #FFF4E6;
+    border-color: #E65100;
+    transform: translateY(-2px);
+}
+
+.pendingBookingContinue svg,
+.pendingBookingCancel svg {
+    width: 18px;
+    height: 18px;
+}

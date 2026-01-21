@@ -1,0 +1,447 @@
+/* ========================================
+   WHY ZEVIO PAGE - BRAND COLORS
+   ======================================== */
+
+.whyZevioPage {
+    min-height: 100vh;
+    background: var(--brand-white);
+}
+
+/* ========================================
+   HERO SECTION
+   ======================================== */
+
+.whyHero {
+    background: linear-gradient(135deg, var(--brand-navy) 0%, var(--brand-navy-dark) 100%);
+    padding: 6rem 1rem 4rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.whyHero::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+    opacity: 0.5;
+}
+
+.heroContent {
+    max-width: 800px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+}
+
+.heroTitle {
+    font-size: 3.5rem;
+    font-weight: 800;
+    color: var(--brand-white);
+    margin-bottom: 1.5rem;
+    letter-spacing: -0.02em;
+}
+
+.heroDescription {
+    font-size: 1.25rem;
+    color: rgba(255, 255, 255, 0.9);
+    line-height: 1.8;
+    max-width: 650px;
+    margin: 0 auto;
+}
+
+/* ========================================
+   STATS SECTION
+   ======================================== */
+
+.statsSection {
+    background: var(--brand-white);
+    padding: 3rem 1rem;
+    border-bottom: 1px solid var(--brand-border-light);
+}
+
+.statsContainer {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2rem;
+}
+
+.statCard {
+    text-align: center;
+    padding: 2rem 1rem;
+}
+
+.statNumber {
+    font-size: 3rem;
+    font-weight: 800;
+    color: var(--brand-teal);
+    margin-bottom: 0.5rem;
+    line-height: 1;
+}
+
+.statLabel {
+    font-size: 1rem;
+    color: var(--brand-text-dark);
+    font-weight: 500;
+}
+
+/* ========================================
+   FEATURES SECTION
+   ======================================== */
+
+.featuresSection {
+    padding: 5rem 1rem;
+    background: var(--brand-grey-lightest);
+}
+
+.featuresContainer {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.sectionHeader {
+    text-align: center;
+    margin-bottom: 4rem;
+}
+
+.sectionTitle {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--brand-navy);
+    margin-bottom: 1rem;
+}
+
+.sectionSubtitle {
+    font-size: 1.125rem;
+    color: var(--brand-text-dark);
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.featuresGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+}
+
+.featureCard {
+    background: var(--brand-white);
+    padding: 2rem;
+    border-radius: 16px;
+    box-shadow: 0 2px 8px rgba(31, 58, 95, 0.08);
+    transition: all 0.3s ease;
+    border: 1px solid var(--brand-border-light);
+}
+
+.featureCard:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 32px rgba(31, 58, 95, 0.15);
+    border-color: var(--brand-teal-light);
+}
+
+.featureIcon {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, var(--brand-teal) 0%, var(--brand-teal-dark) 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.75rem;
+    color: var(--brand-white);
+    margin-bottom: 1.5rem;
+}
+
+.featureTitle {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--brand-navy);
+    margin-bottom: 0.75rem;
+}
+
+.featureDescription {
+    color: var(--brand-text-dark);
+    line-height: 1.7;
+    font-size: 0.9375rem;
+}
+
+/* ========================================
+   HOW IT WORKS SECTION
+   ======================================== */
+
+.howItWorksSection {
+    padding: 5rem 1rem;
+    background: var(--brand-white);
+}
+
+.howItWorksContainer {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.stepsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+    position: relative;
+}
+
+.stepCard {
+    text-align: center;
+    padding: 2rem 1.5rem;
+    position: relative;
+}
+
+.stepNumber {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, var(--brand-navy) 0%, var(--brand-navy-dark) 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--brand-white);
+    margin: 0 auto 1.5rem;
+    box-shadow: 0 8px 24px rgba(31, 58, 95, 0.2);
+}
+
+.stepTitle {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--brand-navy);
+    margin-bottom: 0.75rem;
+}
+
+.stepDescription {
+    color: var(--brand-text-dark);
+    line-height: 1.7;
+    font-size: 0.9375rem;
+}
+
+/* ========================================
+   TRUST SECTION
+   ======================================== */
+
+.trustSection {
+    background: var(--brand-grey-lightest);
+    padding: 5rem 1rem;
+}
+
+.trustContainer {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.trustContent {
+    text-align: center;
+}
+
+.trustTitle {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--brand-navy);
+    margin-bottom: 1.5rem;
+}
+
+.trustDescription {
+    font-size: 1.125rem;
+    color: var(--brand-text-dark);
+    line-height: 1.8;
+    margin-bottom: 3rem;
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.trustFeatures {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+}
+
+.trustFeature {
+    background: var(--brand-white);
+    padding: 1.5rem;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-weight: 600;
+    color: var(--brand-navy);
+    box-shadow: 0 2px 8px rgba(31, 58, 95, 0.08);
+    border: 1px solid var(--brand-border-light);
+}
+
+.trustIcon {
+    font-size: 1.5rem;
+    color: var(--brand-teal);
+    flex-shrink: 0;
+}
+
+/* ========================================
+   CTA SECTION
+   ======================================== */
+
+.ctaSection {
+    background: linear-gradient(135deg, var(--brand-teal) 0%, var(--brand-teal-dark) 100%);
+    padding: 5rem 1rem;
+    text-align: center;
+}
+
+.ctaContent {
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.ctaTitle {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--brand-white);
+    margin-bottom: 1rem;
+}
+
+.ctaDescription {
+    font-size: 1.125rem;
+    color: rgba(255, 255, 255, 0.95);
+    margin-bottom: 2rem;
+    line-height: 1.7;
+}
+
+.ctaButton {
+    background: var(--brand-white);
+    color: var(--brand-teal);
+    padding: 1rem 2.5rem;
+    border-radius: 50px;
+    border: none;
+    font-size: 1.125rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.ctaButton:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+/* ========================================
+   RESPONSIVE DESIGN
+   ======================================== */
+
+@media (max-width: 1024px) {
+    .statsContainer {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .heroTitle {
+        font-size: 2.5rem;
+    }
+
+    .heroDescription {
+        font-size: 1.125rem;
+    }
+
+    .statsContainer {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+    }
+
+    .statNumber {
+        font-size: 2.5rem;
+    }
+
+    .sectionTitle {
+        font-size: 2rem;
+    }
+
+    .featuresGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .stepsGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .trustTitle {
+        font-size: 2rem;
+    }
+
+    .trustFeatures {
+        grid-template-columns: 1fr;
+    }
+
+    .ctaTitle {
+        font-size: 2rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .whyHero {
+        padding: 4rem 1rem 3rem;
+    }
+
+    .heroTitle {
+        font-size: 2rem;
+    }
+
+    .heroDescription {
+        font-size: 1rem;
+    }
+
+    .statsSection {
+        padding: 2rem 1rem;
+    }
+
+    .statNumber {
+        font-size: 2rem;
+    }
+
+    .statLabel {
+        font-size: 0.875rem;
+    }
+
+    .featuresSection,
+    .howItWorksSection,
+    .trustSection,
+    .ctaSection {
+        padding: 3rem 1rem;
+    }
+
+    .sectionTitle {
+        font-size: 1.75rem;
+    }
+
+    .sectionSubtitle {
+        font-size: 1rem;
+    }
+
+    .featureIcon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.5rem;
+    }
+
+    .stepNumber {
+        width: 60px;
+        height: 60px;
+        font-size: 1.5rem;
+    }
+
+    .ctaTitle {
+        font-size: 1.75rem;
+    }
+
+    .ctaDescription {
+        font-size: 1rem;
+    }
+}

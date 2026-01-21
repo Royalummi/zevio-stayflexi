@@ -12,7 +12,7 @@ import {
   FiHeart,
   FiCheckCircle,
 } from "react-icons/fi";
-import "./why-zevio.css";
+import styles from "./why-zevio.module.css";
 
 const features = [
   {
@@ -115,12 +115,12 @@ export default function WhyZevioPage() {
   const router = useRouter();
 
   return (
-    <div className="why-zevio-page">
+    <div className={styles.whyZevioPage}>
       {/* Hero Section */}
-      <section className="why-hero">
-        <div className="hero-content">
-          <h1 className="hero-title">Why Choose Zevio?</h1>
-          <p className="hero-description">
+      <section className={styles.whyHero}>
+        <div className={styles.heroContent}>
+          <h1 className={styles.heroTitle}>Why Choose Zevio?</h1>
+          <p className={styles.heroDescription}>
             Experience luxury villa stays with unmatched quality, security, and
             service. Discover what makes Zevio India&apos;s most trusted villa
             booking platform.
@@ -129,34 +129,36 @@ export default function WhyZevioPage() {
       </section>
 
       {/* Stats Section */}
-      <section className="stats-section">
-        <div className="stats-container">
+      <section className={styles.statsSection}>
+        <div className={styles.statsContainer}>
           {benefits.map((benefit, index) => (
-            <div key={index} className="stat-card">
-              <div className="stat-number">{benefit.number}</div>
-              <div className="stat-label">{benefit.label}</div>
+            <div key={index} className={styles.statCard}>
+              <div className={styles.statNumber}>{benefit.number}</div>
+              <div className={styles.statLabel}>{benefit.label}</div>
             </div>
           ))}
         </div>
       </section>
 
       {/* Features Section */}
-      <section className="features-section">
-        <div className="features-container">
-          <div className="section-header">
-            <h2 className="section-title">What Makes Us Different</h2>
-            <p className="section-subtitle">
+      <section className={styles.featuresSection}>
+        <div className={styles.featuresContainer}>
+          <div className={styles.sectionHeader}>
+            <h2 className={styles.sectionTitle}>What Makes Us Different</h2>
+            <p className={styles.sectionSubtitle}>
               We&apos;re committed to providing exceptional villa experiences
               with these core principles
             </p>
           </div>
 
-          <div className="features-grid">
+          <div className={styles.featuresGrid}>
             {features.map((feature, index) => (
-              <div key={index} className="feature-card">
-                <div className="feature-icon">{feature.icon}</div>
-                <h3 className="feature-title">{feature.title}</h3>
-                <p className="feature-description">{feature.description}</p>
+              <div key={index} className={styles.featureCard}>
+                <div className={styles.featureIcon}>{feature.icon}</div>
+                <h3 className={styles.featureTitle}>{feature.title}</h3>
+                <p className={styles.featureDescription}>
+                  {feature.description}
+                </p>
               </div>
             ))}
           </div>
@@ -164,21 +166,21 @@ export default function WhyZevioPage() {
       </section>
 
       {/* How It Works Section */}
-      <section className="how-it-works-section">
-        <div className="how-it-works-container">
-          <div className="section-header">
-            <h2 className="section-title">How It Works</h2>
-            <p className="section-subtitle">
+      <section className={styles.howItWorksSection}>
+        <div className={styles.howItWorksContainer}>
+          <div className={styles.sectionHeader}>
+            <h2 className={styles.sectionTitle}>How It Works</h2>
+            <p className={styles.sectionSubtitle}>
               Booking your dream villa is simple and hassle-free
             </p>
           </div>
 
-          <div className="steps-grid">
+          <div className={styles.stepsGrid}>
             {howItWorks.map((item, index) => (
-              <div key={index} className="step-card">
-                <div className="step-number">{item.step}</div>
-                <h3 className="step-title">{item.title}</h3>
-                <p className="step-description">{item.description}</p>
+              <div key={index} className={styles.stepCard}>
+                <div className={styles.stepNumber}>{item.step}</div>
+                <h3 className={styles.stepTitle}>{item.title}</h3>
+                <p className={styles.stepDescription}>{item.description}</p>
               </div>
             ))}
           </div>
@@ -186,31 +188,31 @@ export default function WhyZevioPage() {
       </section>
 
       {/* Trust Section */}
-      <section className="trust-section">
-        <div className="trust-container">
-          <div className="trust-content">
-            <h2 className="trust-title">Your Trust is Our Priority</h2>
-            <p className="trust-description">
+      <section className={styles.trustSection}>
+        <div className={styles.trustContainer}>
+          <div className={styles.trustContent}>
+            <h2 className={styles.trustTitle}>Your Trust is Our Priority</h2>
+            <p className={styles.trustDescription}>
               Every property listed on Zevio undergoes rigorous quality checks.
               We verify ownership, inspect amenities, and ensure safety
               standards are met. Your perfect vacation starts with our
               commitment to quality.
             </p>
-            <div className="trust-features">
-              <div className="trust-feature">
-                <FiCheckCircle className="trust-icon" />
+            <div className={styles.trustFeatures}>
+              <div className={styles.trustFeature}>
+                <FiCheckCircle className={styles.trustIcon} />
                 <span>Property Verification</span>
               </div>
-              <div className="trust-feature">
-                <FiCheckCircle className="trust-icon" />
+              <div className={styles.trustFeature}>
+                <FiCheckCircle className={styles.trustIcon} />
                 <span>Secure Payments</span>
               </div>
-              <div className="trust-feature">
-                <FiCheckCircle className="trust-icon" />
+              <div className={styles.trustFeature}>
+                <FiCheckCircle className={styles.trustIcon} />
                 <span>24/7 Support</span>
               </div>
-              <div className="trust-feature">
-                <FiCheckCircle className="trust-icon" />
+              <div className={styles.trustFeature}>
+                <FiCheckCircle className={styles.trustIcon} />
                 <span>Money-Back Guarantee</span>
               </div>
             </div>
@@ -219,16 +221,16 @@ export default function WhyZevioPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="cta-section">
-        <div className="cta-content">
-          <h2 className="cta-title">Ready to Experience Luxury?</h2>
-          <p className="cta-description">
+      <section className={styles.ctaSection}>
+        <div className={styles.ctaContent}>
+          <h2 className={styles.ctaTitle}>Ready to Experience Luxury?</h2>
+          <p className={styles.ctaDescription}>
             Browse our collection of handpicked luxury villas and start planning
             your perfect getaway.
           </p>
           <button
             onClick={() => router.push("/properties")}
-            className="cta-button"
+            className={styles.ctaButton}
           >
             Explore Properties
           </button>

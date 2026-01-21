@@ -7,6 +7,7 @@ import {
   verifyPayment,
   handleWebhook,
   getPaymentHistory,
+  getInvoice,
 } from "../controllers/paymentController.js";
 
 const router = express.Router();
@@ -50,6 +51,14 @@ router.get(
   authenticate,
   authorize("admin", "super_admin"),
   getPaymentHistory
+);
+
+// Invoice route (user can access their own, admin can access all)
+router.get(
+  "/invoice/:bookingId",
+  authenticate,
+  authorize("user", "admin", "super_admin"),
+  getInvoice
 );
 
 export default router;
