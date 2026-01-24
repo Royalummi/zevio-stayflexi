@@ -50,23 +50,23 @@ export interface ServiceApartment {
 
 // Utility function to parse features array into boolean flags
 const parseFeatures = (
-  property: Partial<ServiceApartment> & { features?: string[] }
+  property: Partial<ServiceApartment> & { features?: string[] },
 ): ServiceApartment => {
   const features = property.features || [];
   return {
     ...property,
     has_workspace: features.some((f: string) =>
-      f.toLowerCase().includes("workspace")
+      f.toLowerCase().includes("workspace"),
     ),
     has_housekeeping: features.some((f: string) =>
-      f.toLowerCase().includes("housekeeping")
+      f.toLowerCase().includes("housekeeping"),
     ),
     has_elevator: features.some((f: string) =>
-      f.toLowerCase().includes("elevator")
+      f.toLowerCase().includes("elevator"),
     ),
     has_gym: features.some((f: string) => f.toLowerCase().includes("gym")),
     has_parking: features.some((f: string) =>
-      f.toLowerCase().includes("parking")
+      f.toLowerCase().includes("parking"),
     ),
   } as ServiceApartment;
 };
@@ -147,7 +147,7 @@ function ServiceApartmentsContent() {
     };
 
     fetchProperties();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -156,19 +156,19 @@ function ServiceApartmentsContent() {
     // Filter by city
     if (filters.city) {
       filtered = filtered.filter(
-        (p) => p.city.toLowerCase() === filters.city.toLowerCase()
+        (p) => p.city.toLowerCase() === filters.city.toLowerCase(),
       );
     }
 
     // Filter by price range
     if (filters.minPrice) {
       filtered = filtered.filter(
-        (p) => p.price_per_night >= parseFloat(filters.minPrice)
+        (p) => p.price_per_night >= parseFloat(filters.minPrice),
       );
     }
     if (filters.maxPrice) {
       filtered = filtered.filter(
-        (p) => p.price_per_night <= parseFloat(filters.maxPrice)
+        (p) => p.price_per_night <= parseFloat(filters.maxPrice),
       );
     }
 
@@ -176,14 +176,14 @@ function ServiceApartmentsContent() {
     if (filters.guests) {
       filtered = filtered.filter(
         (p) =>
-          (p.max_guests || p.max_occupancy || 0) >= parseInt(filters.guests)
+          (p.max_guests || p.max_occupancy || 0) >= parseInt(filters.guests),
       );
     }
 
     // Filter by bedrooms
     if (filters.bedrooms) {
       filtered = filtered.filter(
-        (p) => p.bedrooms >= parseInt(filters.bedrooms)
+        (p) => p.bedrooms >= parseInt(filters.bedrooms),
       );
     }
 
@@ -221,7 +221,7 @@ function ServiceApartmentsContent() {
 
   const handleFilterChange = (
     key: keyof ServiceApartmentFiltersState,
-    value: string | boolean
+    value: string | boolean,
   ) => {
     setFilters((prev: ServiceApartmentFiltersState) => ({
       ...prev,
@@ -251,7 +251,7 @@ function ServiceApartmentsContent() {
 
   const handleWishlistToggle = async (
     propertyId: string,
-    isWishlisted: boolean
+    isWishlisted: boolean,
   ) => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -327,14 +327,16 @@ function ServiceApartmentsContent() {
 
 export default function ServiceApartmentsPage() {
   return (
-    <Suspense fallback={
-      <div className={styles.pageContainer}>
-        <div className={styles.loadingContainer}>
-          <div className={styles.spinner}></div>
-          <p>Loading service apartments...</p>
+    <Suspense
+      fallback={
+        <div className={styles.pageContainer}>
+          <div className={styles.loadingContainer}>
+            <div className={styles.spinner}></div>
+            <p>Loading service apartments...</p>
+          </div>
         </div>
-      </div>
-    }>
+      }
+    >
       <ServiceApartmentsContent />
     </Suspense>
   );

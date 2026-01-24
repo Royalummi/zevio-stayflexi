@@ -17,6 +17,7 @@
 import db from "../config/database.js";
 import {
   getPricingSelectClause,
+  getPricingSelectClauseGrouped,
   getPricingJoinClause,
 } from "../services/pricingService.js";
 import {
@@ -149,7 +150,7 @@ export const listServiceApartments = async (req, res) => {
         p.photos,
         p.rating,
         p.reviews_count,
-        ${getPricingSelectClause("pr")},
+        ${getPricingSelectClauseGrouped("pr")},
         p.min_stay_days,
         p.max_stay_days,
         p.housekeeping_frequency,

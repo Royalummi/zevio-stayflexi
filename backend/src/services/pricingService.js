@@ -33,6 +33,32 @@ export const getPricingSelectClause = (alias = "pr") => {
 };
 
 /**
+ * Get pricing SELECT clause with ANY_VALUE for GROUP BY compatibility
+ * @param {string} alias - Table alias for property_pricing (default: 'pr')
+ * @returns {string} SQL SELECT clause for pricing fields with ANY_VALUE
+ */
+export const getPricingSelectClauseGrouped = (alias = "pr") => {
+  return `
+    ANY_VALUE(${alias}.price_per_night) as price_per_night,
+    ANY_VALUE(${alias}.gst_percentage) as gst_percentage,
+    ANY_VALUE(${alias}.min_guests) as min_guests,
+    ANY_VALUE(${alias}.extra_guest_charge) as extra_guest_charge,
+    ANY_VALUE(${alias}.min_children) as min_children,
+    ANY_VALUE(${alias}.max_children) as max_children,
+    ANY_VALUE(${alias}.extra_child_charge) as extra_child_charge,
+    ANY_VALUE(${alias}.weekly_discount_percent) as weekly_discount_percent,
+    ANY_VALUE(${alias}.monthly_discount_percent) as monthly_discount_percent,
+    ANY_VALUE(${alias}.quarterly_discount_percent) as quarterly_discount_percent,
+    ANY_VALUE(${alias}.long_term_discount_percent) as long_term_discount_percent,
+    ANY_VALUE(${alias}.allow_corporate_booking) as allow_corporate_booking,
+    ANY_VALUE(${alias}.corporate_discount_percent) as corporate_discount_percent,
+    ANY_VALUE(${alias}.deposit_amount) as deposit_amount,
+    ANY_VALUE(${alias}.maintenance_charges) as maintenance_charges,
+    ANY_VALUE(${alias}.notice_period_days) as notice_period_days
+  `;
+};
+
+/**
  * Get pricing JOIN clause
  * @param {string} propertyAlias - Property table alias (default: 'p')
  * @param {string} pricingAlias - Pricing table alias (default: 'pr')
@@ -40,7 +66,7 @@ export const getPricingSelectClause = (alias = "pr") => {
  */
 export const getPricingJoinClause = (
   propertyAlias = "p",
-  pricingAlias = "pr"
+  pricingAlias = "pr",
 ) => {
   return `LEFT JOIN property_pricing ${pricingAlias} ON ${propertyAlias}.id = ${pricingAlias}.property_id`;
 };
@@ -71,7 +97,7 @@ export const getPropertyPricing = async (propertyId) => {
       notice_period_days
     FROM property_pricing 
     WHERE property_id = ?`,
-    [propertyId]
+    [propertyId],
   );
 
   return rows[0] || null;
@@ -121,7 +147,7 @@ export const updatePropertyPricing = async (propertyId, pricingData) => {
 
   const [result] = await db.query(
     `UPDATE property_pricing SET ${updates.join(", ")} WHERE property_id = ?`,
-    values
+    values,
   );
 
   return result.affectedRows > 0;
@@ -185,7 +211,7 @@ export const createPropertyPricing = async (propertyId, pricingData) => {
       data.deposit_amount,
       data.maintenance_charges,
       data.notice_period_days,
-    ]
+    ],
   );
 
   return id;
@@ -199,7 +225,7 @@ export const createPropertyPricing = async (propertyId, pricingData) => {
 export const deletePropertyPricing = async (propertyId) => {
   const [result] = await db.query(
     `DELETE FROM property_pricing WHERE property_id = ?`,
-    [propertyId]
+    [propertyId],
   );
 
   return result.affectedRows > 0;
@@ -207,6 +233,7 @@ export const deletePropertyPricing = async (propertyId) => {
 
 export default {
   getPricingSelectClause,
+  getPricingSelectClauseGrouped,
   getPricingJoinClause,
   getPropertyPricing,
   updatePropertyPricing,
