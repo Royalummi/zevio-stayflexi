@@ -71,7 +71,7 @@ const parseFeatures = (
   } as ServiceApartment;
 };
 
-export default function ServiceApartmentsPage() {
+function ServiceApartmentsContent() {
   const searchParams = useSearchParams();
   const toast = useToast();
   const [properties, setProperties] = useState<ServiceApartment[]>([]);
