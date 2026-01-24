@@ -16,8 +16,6 @@ import { test, expect } from "@playwright/test";
  */
 
 test.describe("Service Apartment Booking - Complete Flow", () => {
-  // let propertyUrl: string;
-
   test.beforeEach(async ({ page }) => {
     // Clear localStorage to ensure clean state
     await page.goto("http://localhost:8000");
@@ -55,7 +53,6 @@ test.describe("Service Apartment Booking - Complete Flow", () => {
     await firstProperty.click();
 
     await page.waitForLoadState("networkidle");
-    propertyUrl = page.url();
 
     // Verify key elements exist
     await expect(page.locator('[class*="propertyHeader"]')).toBeVisible({

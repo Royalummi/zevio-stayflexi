@@ -15,7 +15,6 @@ import publicRoutes from "./src/routes/publicRoutes.js";
 import bookingRoutes from "./src/routes/bookingRoutes.js";
 import paymentRoutes from "./src/routes/paymentRoutes.js";
 import adminRoutes from "./src/routes/adminRoutes.js";
-import employeeRoutes from "./src/routes/employeeRoutes.js";
 import vendorRoutes from "./src/routes/vendorRoutes.js";
 import notificationsRoutes from "./src/routes/notificationsRoutes.js";
 import wishlistRoutes from "./src/routes/wishlistRoutes.js";
@@ -80,7 +79,7 @@ app.use(
       process.env.NEXTJS_URL || "http://localhost:8000",
     ],
     credentials: true,
-  })
+  }),
 );
 app.use(morgan("dev")); // Logging
 app.use(express.json()); // Parse JSON bodies
@@ -112,7 +111,6 @@ app.use("/api/admin/coupons", couponsRoutes);
 app.use("/api", changeRequestsRoutes);
 app.use("/api/admin/activity-logs", activityLogsRoutes);
 app.use("/api/admin", adminRoutes);
-app.use("/api/employee", employeeRoutes);
 app.use("/api/vendor", vendorRoutes);
 app.use("/api/vendor/properties", propertyImagesRoutes);
 app.use("/api/corporate", corporateRoutes);

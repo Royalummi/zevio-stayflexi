@@ -129,7 +129,7 @@ const AdminProperties = () => {
     // Status filter
     if (statusFilter !== "all") {
       filtered = filtered.filter(
-        (property) => property.status === statusFilter
+        (property) => property.status === statusFilter,
       );
     }
 
@@ -140,7 +140,7 @@ const AdminProperties = () => {
         (property) =>
           property.title?.toLowerCase().includes(query) ||
           property.vendor_name?.toLowerCase().includes(query) ||
-          property.city_name?.toLowerCase().includes(query)
+          property.city_name?.toLowerCase().includes(query),
       );
     }
 
@@ -177,7 +177,7 @@ const AdminProperties = () => {
     } catch (error) {
       console.error("Error approving property:", error);
       toast.error(
-        error.response?.data?.message || "Failed to approve property"
+        error.response?.data?.message || "Failed to approve property",
       );
     } finally {
       setActionLoading(false);
@@ -440,7 +440,6 @@ const AdminProperties = () => {
                       <TableHead>Property</TableHead>
                       <TableHead>Location</TableHead>
                       <TableHead>Vendor</TableHead>
-                      <TableHead>Employee</TableHead>
                       <TableHead>Price/Night</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Created</TableHead>
@@ -487,11 +486,6 @@ const AdminProperties = () => {
                             <div className="text-gray-500 dark:text-gray-400">
                               {property.vendor_email}
                             </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-sm text-gray-900 dark:text-white">
-                            {property.employee_name || "Not assigned"}
                           </div>
                         </TableCell>
                         <TableCell>
@@ -704,7 +698,7 @@ const AdminProperties = () => {
                 </div>
 
                 <div>
-                  <h3 className="font-semibold mb-2">Vendor & Employee</h3>
+                  <h3 className="font-semibold mb-2">Vendor Details</h3>
                   <dl className="space-y-2 text-sm">
                     <div>
                       <dt className="text-gray-500 dark:text-gray-400">
@@ -728,14 +722,6 @@ const AdminProperties = () => {
                       </dt>
                       <dd className="font-medium text-gray-900 dark:text-white">
                         {selectedProperty.vendor_phone || "Not provided"}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt className="text-gray-500 dark:text-gray-400">
-                        Employee (Onboarded by)
-                      </dt>
-                      <dd className="font-medium text-gray-900 dark:text-white">
-                        {selectedProperty.employee_name || "Not assigned"}
                       </dd>
                     </div>
                   </dl>
@@ -785,7 +771,7 @@ const AdminProperties = () => {
                       </div>
                       <div className="text-lg font-semibold text-purple-600">
                         {formatCurrency(
-                          selectedProperty.booking_stats.total_revenue || 0
+                          selectedProperty.booking_stats.total_revenue || 0,
                         )}
                       </div>
                     </div>

@@ -146,11 +146,11 @@
 /* Responsive adjustments */
 @media (max-width: 768px) {
     .navContent {
-        gap: 1rem;
+        gap: 0.75rem;
     }
 
     .propertyNameNav {
-        font-size: 1.125rem;
+        font-size: 1rem;
     }
 
     .propertyLocationNav {
@@ -165,11 +165,43 @@
     .actionBtn,
     .backBtn {
         padding: 0.5rem;
-        border-radius: 50%;
+        width: 36px;
+        height: 36px;
+        justify-content: center;
     }
 
     .navActions {
-        gap: 0.25rem;
+        gap: 0.375rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .navContainer {
+        padding: 0.75rem 1rem;
+    }
+
+    .navContent {
+        gap: 0.5rem;
+    }
+
+    .propertyNameNav {
+        font-size: 0.9375rem;
+    }
+
+    .propertyLocationNav {
+        font-size: 0.6875rem;
+    }
+
+    .actionBtn,
+    .backBtn {
+        width: 32px;
+        height: 32px;
+    }
+
+    .actionBtn svg,
+    .backBtn svg {
+        width: 1rem;
+        height: 1rem;
     }
 }
 
@@ -177,23 +209,53 @@
 .detailContainer {
     max-width: 1400px;
     margin: 0 auto;
-    padding: 2rem 1.5rem;
+    padding: 1.5rem 1rem;
+}
+
+@media (min-width: 768px) {
+    .detailContainer {
+        padding: 2rem 1.5rem;
+    }
+}
+
+@media (min-width: 1024px) {
+    .detailContainer {
+        padding: 2.5rem 2rem;
+    }
 }
 
 /* Property Header */
 .propertyHeader {
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
+}
+
+@media (min-width: 768px) {
+    .propertyHeader {
+        margin-bottom: 2rem;
+    }
 }
 
 .propertyName {
-    font-size: 2rem;
+    font-size: 1.5rem;
     font-weight: var(--font-bold, 700);
     color: var(--text-primary, #111827);
     margin-bottom: 0.75rem;
     line-height: 1.2;
 }
 
+@media (min-width: 640px) {
+    .propertyName {
+        font-size: 1.875rem;
+    }
+}
+
 @media (min-width: 768px) {
+    .propertyName {
+        font-size: 2.25rem;
+    }
+}
+
+@media (min-width: 1024px) {
     .propertyName {
         font-size: 2.5rem;
     }
@@ -336,25 +398,33 @@
 .thumbnailsGrid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 0.75rem;
+    gap: 0.5rem;
+}
+
+@media (min-width: 480px) {
+    .thumbnailsGrid {
+        gap: 0.625rem;
+    }
 }
 
 @media (min-width: 640px) {
     .thumbnailsGrid {
         grid-template-columns: repeat(4, 1fr);
+        gap: 0.75rem;
     }
 }
 
 @media (min-width: 768px) {
     .thumbnailsGrid {
         grid-template-columns: repeat(5, 1fr);
-        gap: 1rem;
+        gap: 0.875rem;
     }
 }
 
 @media (min-width: 1024px) {
     .thumbnailsGrid {
         grid-template-columns: repeat(6, 1fr);
+        gap: 1rem;
     }
 }
 
@@ -543,11 +613,17 @@
 /* Booking Card */
 .bookingCard {
     background: white;
-    border-radius: 16px;
+    border-radius: 12px;
     box-shadow: 0 6px 16px rgba(31, 58, 95, 0.12);
     border: 1px solid var(--brand-border);
     overflow: hidden;
     transition: box-shadow 0.3s ease;
+}
+
+@media (min-width: 768px) {
+    .bookingCard {
+        border-radius: 16px;
+    }
 }
 
 .bookingCard:hover {
@@ -555,7 +631,19 @@
 }
 
 .bookingCardContent {
-    padding: 24px;
+    padding: 1.25rem;
+}
+
+@media (min-width: 640px) {
+    .bookingCardContent {
+        padding: 1.5rem;
+    }
+}
+
+@media (min-width: 1024px) {
+    .bookingCardContent {
+        padding: 1.5rem;
+    }
 }
 
 /* Booking Header - Price & Rating */

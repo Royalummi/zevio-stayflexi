@@ -80,7 +80,6 @@ const AdminReports = () => {
   const [userActivity, setUserActivity] = useState(null);
   const [propertyPerformance, setPropertyPerformance] = useState(null);
   const [vendorPerformance, setVendorPerformance] = useState(null);
-  const [employeePerformance, setEmployeePerformance] = useState(null);
 
   // Chart colors
   const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"];
@@ -165,22 +164,6 @@ const AdminReports = () => {
     }
   };
 
-  // Fetch Employee Performance
-  const fetchEmployeePerformance = async () => {
-    try {
-      setLoading(true);
-      const response = await api.get("/admin/reports/employee-performance", {
-        params: dateRange,
-      });
-      setEmployeePerformance(response.data.data);
-    } catch (error) {
-      console.error("Error fetching employee performance:", error);
-      toast.error("Failed to load employee performance");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   // Fetch data based on active tab
   useEffect(() => {
     if (activeTab === "revenue" && !revenueData) {
@@ -193,8 +176,6 @@ const AdminReports = () => {
       fetchPropertyPerformance();
     } else if (activeTab === "vendors" && !vendorPerformance) {
       fetchVendorPerformance();
-    } else if (activeTab === "employees" && !employeePerformance) {
-      fetchEmployeePerformance();
     }
   }, [activeTab]);
 
@@ -216,9 +197,6 @@ const AdminReports = () => {
       case "vendors":
         fetchVendorPerformance();
         break;
-      case "employees":
-        fetchEmployeePerformance();
-        break;
     }
   };
 
@@ -229,7 +207,6 @@ const AdminReports = () => {
     setUserActivity(null);
     setPropertyPerformance(null);
     setVendorPerformance(null);
-    setEmployeePerformance(null);
     handleRefresh();
   };
 
@@ -317,13 +294,12 @@ const AdminReports = () => {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="revenue">Revenue</TabsTrigger>
           <TabsTrigger value="bookings">Bookings</TabsTrigger>
           <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="properties">Properties</TabsTrigger>
           <TabsTrigger value="vendors">Vendors</TabsTrigger>
-          <TabsTrigger value="employees">Employees</TabsTrigger>
         </TabsList>
 
         {/* Revenue Analytics Tab */}
@@ -556,7 +532,7 @@ const AdminReports = () => {
                                 key={`cell-${index}`}
                                 fill={COLORS[index % COLORS.length]}
                               />
-                            )
+                            ),
                           )}
                         </Pie>
                         <Tooltip />
@@ -582,7 +558,7 @@ const AdminReports = () => {
                         </span>
                         <span className="text-2xl font-bold">
                           {Math.round(
-                            bookingTrends.lead_time.avg_lead_time_days
+                            bookingTrends.lead_time.avg_lead_time_days,
                           )}{" "}
                           days
                         </span>
@@ -1060,91 +1036,6 @@ const AdminReports = () => {
             <div className="flex items-center justify-center py-12">
               <p className="text-muted-foreground">
                 Click "Apply Filter" to load vendor performance
-              </p>
-            </div>
-          )}
-        </TabsContent>
-
-        {/* Employee Performance Tab */}
-        <TabsContent value="employees" className="space-y-6">
-          {loading && !employeePerformance ? (
-            <div className="space-y-4">
-              <Card>
-                <CardContent className="pt-6">
-                  <Skeleton className="h-64 w-full" />
-                </CardContent>
-              </Card>
-            </div>
-          ) : employeePerformance ? (
-            <Card>
-              <CardHeader>
-                <CardTitle>Employee Performance</CardTitle>
-                <CardDescription>
-                  Employee points and contributions
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Employee</TableHead>
-                        <TableHead>Contact</TableHead>
-                        <TableHead>Incentive %</TableHead>
-                        <TableHead>Properties</TableHead>
-                        <TableHead>Bookings</TableHead>
-                        <TableHead className="text-right">
-                          Booking Value
-                        </TableHead>
-                        <TableHead className="text-right">
-                          Earned Points
-                        </TableHead>
-                        <TableHead className="text-right">Claimed</TableHead>
-                        <TableHead className="text-right">Pending</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {employeePerformance.employee_stats.map((employee) => (
-                        <TableRow key={employee.id}>
-                          <TableCell className="font-medium">
-                            {employee.name}
-                          </TableCell>
-                          <TableCell>
-                            <div className="text-sm">
-                              <div>{employee.email}</div>
-                              <div className="text-muted-foreground">
-                                {employee.phone}
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            {employee.incentive_percentage}%
-                          </TableCell>
-                          <TableCell>{employee.managed_properties}</TableCell>
-                          <TableCell>{employee.total_bookings}</TableCell>
-                          <TableCell className="text-right">
-                            {formatCurrency(employee.total_booking_value)}
-                          </TableCell>
-                          <TableCell className="text-right font-medium text-blue-600">
-                            {formatCurrency(employee.earned_points)}
-                          </TableCell>
-                          <TableCell className="text-right text-green-600">
-                            {formatCurrency(employee.claimed_points)}
-                          </TableCell>
-                          <TableCell className="text-right text-orange-600">
-                            {formatCurrency(employee.pending_points)}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="flex items-center justify-center py-12">
-              <p className="text-muted-foreground">
-                Click "Apply Filter" to load employee performance
               </p>
             </div>
           )}

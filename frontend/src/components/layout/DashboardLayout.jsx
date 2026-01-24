@@ -89,13 +89,6 @@ const DashboardLayout = () => {
         { name: "Profile", icon: UserCircle, path: "/dashboard/profile" },
         { name: "Payments", icon: CreditCard, path: "/dashboard/payments" },
       ],
-      employee: [
-        { name: "Dashboard", icon: Home, path: "/employee/dashboard" },
-        { name: "My Points", icon: Award, path: "/employee/points" },
-        { name: "Claims", icon: Wallet, path: "/employee/claims" },
-        { name: "Properties", icon: Building2, path: "/employee/properties" },
-        { name: "Profile", icon: UserCircle, path: "/employee/profile" },
-      ],
       vendor: [
         { name: "Dashboard", icon: Home, path: "/vendor/dashboard" },
         { name: "My Properties", icon: Building2, path: "/vendor/properties" },
@@ -120,7 +113,6 @@ const DashboardLayout = () => {
     if (
       path === "/dashboard" ||
       path === "/admin" ||
-      path === "/employee/dashboard" ||
       path === "/vendor/dashboard"
     ) {
       return location.pathname === path;
@@ -136,7 +128,7 @@ const DashboardLayout = () => {
         className={cn(
           "fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 shadow-xl transition-transform duration-300 ease-in-out",
           "lg:translate-x-0", // Always visible on desktop
-          sidebarOpen ? "translate-x-0" : "-translate-x-full" // Toggle on mobile
+          sidebarOpen ? "translate-x-0" : "-translate-x-full", // Toggle on mobile
         )}
       >
         {/* Logo */}
@@ -197,7 +189,7 @@ const DashboardLayout = () => {
                   "w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
                   active
                     ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400"
-                    : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700",
                 )}
               >
                 <Icon className="h-5 w-5" />

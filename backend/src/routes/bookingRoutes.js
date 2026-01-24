@@ -59,20 +59,20 @@ router.post(
   bookingRateLimiter,
   authorize("user"),
   createBookingValidation,
-  createBooking
+  createBooking,
 );
 router.get("/my", authorize("user"), getMyBookings);
 router.get(
   "/:id",
-  authorize("user", "admin", "super_admin", "employee"),
-  getBookingDetails
+  authorize("user", "admin", "super_admin"),
+  getBookingDetails,
 );
 router.post("/:id/cancel-request", authorize("user"), requestCancellation);
 router.post(
   "/validate-coupon",
   authorize("user"),
   validateCouponValidation,
-  validateCoupon
+  validateCoupon,
 );
 
 // ==========================================
@@ -82,7 +82,7 @@ router.post(
 router.get(
   "/pending-check/:propertyId",
   authorize("user"),
-  checkPendingBooking
+  checkPendingBooking,
 );
 
 // Modify pending booking (dates/guests)

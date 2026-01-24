@@ -280,16 +280,6 @@ export default function AdminDashboard() {
                   <span>Vendor Settlements</span>
                 </div>
               </Button>
-              <Button
-                className="h-auto py-4"
-                variant="outline"
-                onClick={() => navigate("/admin/claims")}
-              >
-                <div className="flex flex-col items-center">
-                  <Users className="h-8 w-8 mb-2" />
-                  <span>Employee Claims</span>
-                </div>
-              </Button>
             </div>
           </CardContent>
         </Card>
@@ -324,7 +314,7 @@ export default function AdminDashboard() {
                   toast.success(
                     editingPropertyId
                       ? "Property updated successfully!"
-                      : "Property created successfully!"
+                      : "Property created successfully!",
                   );
                 }}
                 onCancel={() => {

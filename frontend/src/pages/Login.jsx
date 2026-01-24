@@ -48,15 +48,13 @@ export default function Login() {
         navigate("/admin");
       } else if (user.role === "user") {
         navigate("/dashboard");
-      } else if (user.role === "employee") {
-        navigate("/employee/dashboard");
       } else if (user.role === "vendor") {
         navigate("/vendor/dashboard");
       }
     } catch (error) {
       toast.error(
         error.response?.data?.message ||
-          "Login failed. Please check your credentials."
+          "Login failed. Please check your credentials.",
       );
     } finally {
       setLoading(false);

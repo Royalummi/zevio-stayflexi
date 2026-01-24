@@ -314,13 +314,6 @@ const AdminDashboardNew = () => {
                   time: "1 hour ago",
                   amount: "-",
                 },
-                {
-                  action: "Employee claim paid",
-                  user: "Rahul Employee",
-                  property: "Commission for 3 bookings",
-                  time: "2 hours ago",
-                  amount: "₹5,250",
-                },
               ].map((activity, index) => (
                 <div
                   key={index}

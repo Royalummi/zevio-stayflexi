@@ -24,13 +24,9 @@ import AdminDashboardNew from "./pages/admin/AdminDashboardNew";
 import AdminBookings from "./pages/admin/ManageBookings";
 import ProcessRefunds from "./pages/admin/ProcessRefunds";
 import VendorSettlements from "./pages/admin/VendorSettlements";
-import EmployeeClaims from "./pages/admin/EmployeeClaims";
 import AdminProperties from "./pages/admin/AdminProperties";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminReports from "./pages/admin/AdminReports";
-
-// Employee Pages
-import EmployeeDashboard from "./pages/employee/EmployeeDashboard";
 
 // Vendor Pages
 import VendorDashboard from "./pages/vendor/VendorDashboard";
@@ -89,29 +85,9 @@ function App() {
           <Route path="bookings" element={<AdminBookings />} />
           <Route path="refunds" element={<ProcessRefunds />} />
           <Route path="settlements" element={<VendorSettlements />} />
-          <Route path="claims" element={<EmployeeClaims />} />
           <Route path="properties" element={<AdminProperties />} />
           <Route path="users" element={<AdminUsers />} />
           <Route path="reports" element={<AdminReports />} />
-        </Route>
-
-        {/* Employee Dashboard with Layout */}
-        <Route
-          path="/employee"
-          element={
-            <ProtectedRoute allowedRoles={["employee"]}>
-              <DashboardLayout />
-            </ProtectedRoute>
-          }
-        >
-          <Route path="dashboard" element={<EmployeeDashboard />} />
-          <Route path="points" element={<div>Employee Points Page</div>} />
-          <Route path="claims" element={<div>Employee Claims Page</div>} />
-          <Route
-            path="properties"
-            element={<div>Employee Properties Page</div>}
-          />
-          <Route path="profile" element={<div>Employee Profile Page</div>} />
         </Route>
 
         {/* Vendor Dashboard with Layout */}

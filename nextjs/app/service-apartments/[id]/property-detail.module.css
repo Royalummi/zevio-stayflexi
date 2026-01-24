@@ -22,15 +22,34 @@
 .headerWrapper {
     max-width: 1400px;
     margin: 0 auto;
-    padding: 0 2rem;
+    padding: 0 1rem;
+}
+
+@media (min-width: 768px) {
+    .headerWrapper {
+        padding: 0 1.5rem;
+    }
+}
+
+@media (min-width: 1024px) {
+    .headerWrapper {
+        padding: 0 2rem;
+    }
 }
 
 .headerContent {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1rem 0;
-    gap: 2rem;
+    padding: 0.875rem 0;
+    gap: 1rem;
+}
+
+@media (min-width: 768px) {
+    .headerContent {
+        padding: 1rem 0;
+        gap: 2rem;
+    }
 }
 
 .propertyTitleSection {
@@ -39,7 +58,7 @@
 }
 
 .propertyNameHeader {
-    font-size: 1.25rem;
+    font-size: 1rem;
     font-weight: 600;
     color: #1F3A5F;
     margin: 0 0 0.5rem 0;
@@ -48,13 +67,32 @@
     text-overflow: ellipsis;
 }
 
+@media (min-width: 640px) {
+    .propertyNameHeader {
+        font-size: 1.125rem;
+    }
+}
+
+@media (min-width: 768px) {
+    .propertyNameHeader {
+        font-size: 1.25rem;
+    }
+}
+
 .propertyLocationHeader {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.375rem;
     color: #5F6B7A;
-    font-size: 0.9375rem;
+    font-size: 0.8125rem;
     margin: 0;
+}
+
+@media (min-width: 768px) {
+    .propertyLocationHeader {
+        gap: 0.5rem;
+        font-size: 0.9375rem;
+    }
 }
 
 .propertyLocationHeader svg {
@@ -66,23 +104,55 @@
 .headerActions {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 0.5rem;
+}
+
+@media (min-width: 768px) {
+    .headerActions {
+        gap: 0.75rem;
+    }
 }
 
 .actionButton,
 .backButton {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.625rem 1.25rem;
+    gap: 0.375rem;
+    padding: 0.5rem 0.875rem;
     background: #FFFFFF;
     border: 1px solid #D1D7DF;
     border-radius: 8px;
-    font-size: 0.9375rem;
+    font-size: 0.8125rem;
     font-weight: 500;
     color: #1F3A5F;
     cursor: pointer;
     transition: all 0.2s ease;
+}
+
+@media (min-width: 768px) {
+
+    .actionButton,
+    .backButton {
+        gap: 0.5rem;
+        padding: 0.625rem 1.25rem;
+        font-size: 0.9375rem;
+    }
+}
+
+@media (max-width: 640px) {
+
+    .actionButton span,
+    .backButton span {
+        display: none;
+    }
+
+    .actionButton,
+    .backButton {
+        padding: 0.5rem;
+        width: 36px;
+        height: 36px;
+        justify-content: center;
+    }
 }
 
 .actionButton:hover,
@@ -176,49 +246,121 @@
 /* Main Content */
 .mainContent {
     max-width: 1400px;
-    margin: 2rem auto 4rem;
-    padding: 0 2rem;
+    margin: 1.5rem auto 3rem;
+    padding: 0 1rem;
     display: grid;
-    grid-template-columns: 1fr 420px;
-    gap: 3rem;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
     align-items: start;
+}
+
+@media (min-width: 768px) {
+    .mainContent {
+        margin: 2rem auto 4rem;
+        padding: 0 1.5rem;
+        gap: 2rem;
+    }
+}
+
+@media (min-width: 1024px) {
+    .mainContent {
+        padding: 0 2rem;
+        grid-template-columns: 1fr 420px;
+        gap: 2.5rem;
+    }
+}
+
+@media (min-width: 1280px) {
+    .mainContent {
+        gap: 3rem;
+    }
 }
 
 /* Property Info */
 .propertyInfo {
     background: white;
-    border-radius: 16px;
+    border-radius: 12px;
     padding: 0;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
     border: 1px solid #E6E9EE;
     overflow: hidden;
 }
 
+@media (min-width: 768px) {
+    .propertyInfo {
+        border-radius: 16px;
+    }
+}
+
 /* Overview Header - Clean Stats Design */
 .overviewHeader {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1.5rem 2rem;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1.25rem 1rem;
     background: #f8fafc;
     border-bottom: 1px solid #E6E9EE;
 }
 
+@media (min-width: 640px) {
+    .overviewHeader {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.5rem 1.5rem;
+    }
+}
+
+@media (min-width: 1024px) {
+    .overviewHeader {
+        padding: 1.5rem 2rem;
+    }
+}
+
 .propertyStats {
-    display: flex;
-    gap: 2rem;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
     flex: 1;
+}
+
+@media (min-width: 480px) {
+    .propertyStats {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+}
+
+@media (min-width: 768px) {
+    .propertyStats {
+        display: flex;
+        gap: 1.5rem;
+    }
+}
+
+@media (min-width: 1024px) {
+    .propertyStats {
+        gap: 2rem;
+    }
 }
 
 .statItem {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    padding: 0.75rem 1.25rem;
+    gap: 0.625rem;
+    padding: 0.625rem 1rem;
     background: white;
-    border-radius: 10px;
+    border-radius: 8px;
     border: 1px solid #E6E9EE;
     transition: all 0.2s ease;
+}
+
+@media (min-width: 768px) {
+    .statItem {
+        gap: 0.75rem;
+        padding: 0.75rem 1.25rem;
+        border-radius: 10px;
+    }
 }
 
 .statItem:hover {
@@ -230,13 +372,22 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
     background: #2FA4A9;
-    border-radius: 8px;
+    border-radius: 6px;
     color: white;
-    font-size: 1rem;
+    font-size: 0.875rem;
     flex-shrink: 0;
+}
+
+@media (min-width: 768px) {
+    .statIcon {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        font-size: 1rem;
+    }
 }
 
 .statContent {
@@ -246,54 +397,104 @@
 }
 
 .statValue {
-    font-size: 1.125rem;
+    font-size: 1rem;
     font-weight: 700;
     color: #1F3A5F;
     line-height: 1.2;
 }
 
+@media (min-width: 768px) {
+    .statValue {
+        font-size: 1.125rem;
+    }
+}
+
 .statLabel {
-    font-size: 0.8125rem;
+    font-size: 0.75rem;
     color: #5F6B7A;
     font-weight: 500;
+}
+
+@media (min-width: 768px) {
+    .statLabel {
+        font-size: 0.8125rem;
+    }
 }
 
 .corporateBadge {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 0.5rem;
-    padding: 0.625rem 1.25rem;
+    padding: 0.625rem 1rem;
     background: #1F3A5F;
     color: white;
     border-radius: 8px;
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
     font-weight: 600;
     white-space: nowrap;
+    width: 100%;
+}
+
+@media (min-width: 640px) {
+    .corporateBadge {
+        width: auto;
+        padding: 0.625rem 1.25rem;
+        font-size: 0.875rem;
+    }
 }
 
 /* Special Offer Banner - Clean Design */
 .specialOffer {
     display: flex;
-    align-items: center;
-    gap: 1rem;
-    padding: 1.25rem 1.5rem;
-    margin: 1.5rem;
+    flex-direction: column;
+    gap: 0.875rem;
+    padding: 1rem 1rem;
+    margin: 1rem;
     background: #2FA4A9;
-    border-radius: 12px;
+    border-radius: 10px;
     border: 2px solid #248d92;
+}
+
+@media (min-width: 640px) {
+    .specialOffer {
+        flex-direction: row;
+        align-items: center;
+        gap: 1rem;
+        padding: 1.25rem 1.25rem;
+    }
+}
+
+@media (min-width: 1024px) {
+    .specialOffer {
+        padding: 1.25rem 1.5rem;
+        margin: 1.5rem;
+        border-radius: 12px;
+    }
 }
 
 .offerIcon {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
     background: #1F3A5F;
-    border-radius: 8px;
+    border-radius: 6px;
     color: white;
-    font-size: 1.25rem;
+    font-size: 1.125rem;
     flex-shrink: 0;
+    align-self: center;
+}
+
+@media (min-width: 640px) {
+    .offerIcon {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        font-size: 1.25rem;
+        align-self: auto;
+    }
 }
 
 .offerContent {

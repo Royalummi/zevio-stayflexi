@@ -65,7 +65,6 @@ const AdminUsers = () => {
     total: 0,
     customers: 0,
     vendors: 0,
-    employees: 0,
     active: 0,
     blocked: 0,
   });
@@ -106,7 +105,6 @@ const AdminUsers = () => {
         total: response.data.data.total_users || 0,
         customers: response.data.data.customers || 0,
         vendors: response.data.data.vendors || 0,
-        employees: response.data.data.employees || 0,
         active: response.data.data.active_users || 0,
         blocked: response.data.data.blocked_users || 0,
       });
@@ -142,7 +140,7 @@ const AdminUsers = () => {
         (user) =>
           user.name?.toLowerCase().includes(query) ||
           user.email?.toLowerCase().includes(query) ||
-          user.phone?.toLowerCase().includes(query)
+          user.phone?.toLowerCase().includes(query),
       );
     }
 
@@ -230,11 +228,6 @@ const AdminUsers = () => {
         text: "text-purple-800",
         dark: "dark:bg-purple-900 dark:text-purple-300",
       },
-      employee: {
-        bg: "bg-green-100",
-        text: "text-green-800",
-        dark: "dark:bg-green-900 dark:text-green-300",
-      },
       admin: {
         bg: "bg-red-100",
         text: "text-red-800",
@@ -253,7 +246,6 @@ const AdminUsers = () => {
     const labels = {
       customer: "Customer",
       vendor: "Vendor",
-      employee: "Employee",
       admin: "Admin",
       super_admin: "Super Admin",
     };
@@ -367,16 +359,6 @@ const AdminUsers = () => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Employees</CardTitle>
-            <Users className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.employees}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Active</CardTitle>
             <UserCheck className="h-4 w-4 text-green-600" />
           </CardHeader>
@@ -426,7 +408,6 @@ const AdminUsers = () => {
                   <SelectItem value="all">All Roles</SelectItem>
                   <SelectItem value="customer">Customers</SelectItem>
                   <SelectItem value="vendor">Vendors</SelectItem>
-                  <SelectItem value="employee">Employees</SelectItem>
                 </SelectContent>
               </Select>
 

@@ -9,8 +9,6 @@ import {
   processRefund,
   getVendorSettlements,
   markSettlementPaid,
-  getEmployeeClaims,
-  processEmployeeClaim,
   getDashboardStats,
   getAllProperties,
   getPropertyDetails,
@@ -25,10 +23,8 @@ import {
   getUserActivityReport,
   getPropertyPerformance,
   getVendorPerformance,
-  getEmployeePerformance,
   getAllCities,
   getAllVendors,
-  getAllEmployees,
   createProperty,
   updateProperty,
   deleteProperty,
@@ -57,7 +53,7 @@ router.post(
       .withMessage("Valid refund percentage is required"),
     validate,
   ],
-  processRefund
+  processRefund,
 );
 
 // Vendor settlements (with pagination)
@@ -69,28 +65,12 @@ router.post(
     body("payment_proof").optional().isString(),
     validate,
   ],
-  markSettlementPaid
-);
-
-// Employee claims (with pagination)
-router.get("/claims/employee", validatePagination, getEmployeeClaims);
-router.post(
-  "/claims/employee/process",
-  [
-    body("claim_id").notEmpty().withMessage("Claim ID is required"),
-    body("action")
-      .isIn(["approve", "reject", "pay"])
-      .withMessage("Valid action is required"),
-    body("payment_proof").optional().isString(),
-    validate,
-  ],
-  processEmployeeClaim
+  markSettlementPaid,
 );
 
 // Dropdown data (small datasets - no pagination needed)
 router.get("/cities", getAllCities);
 router.get("/vendors", getAllVendors);
-router.get("/employees", getAllEmployees);
 
 // Properties management (with pagination)
 router.get("/properties", validatePagination, getAllProperties);
@@ -107,7 +87,7 @@ router.post(
       .withMessage("Valid price is required"),
     validate,
   ],
-  createProperty
+  createProperty,
 );
 router.put("/properties/:id", updateProperty);
 router.delete("/properties/:id", deleteProperty);
@@ -120,7 +100,7 @@ router.put(
     body("rejection_reason").optional().isString(),
     validate,
   ],
-  updatePropertyStatus
+  updatePropertyStatus,
 );
 
 // User management (with pagination)
@@ -136,7 +116,7 @@ router.put(
     body("reason").optional().isString(),
     validate,
   ],
-  updateUserStatus
+  updateUserStatus,
 );
 
 // Reports & Analytics (stats - no pagination needed)
@@ -145,6 +125,5 @@ router.get("/reports/booking-trends", getBookingTrends);
 router.get("/reports/user-activity", getUserActivityReport);
 router.get("/reports/property-performance", getPropertyPerformance);
 router.get("/reports/vendor-performance", getVendorPerformance);
-router.get("/reports/employee-performance", getEmployeePerformance);
 
 export default router;

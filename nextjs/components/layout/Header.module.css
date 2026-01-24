@@ -15,12 +15,38 @@
     padding: 0 var(--space-4);
 }
 
+@media (min-width: 768px) {
+    .container {
+        padding: 0 var(--space-6);
+    }
+}
+
+@media (min-width: 1024px) {
+    .container {
+        padding: 0 var(--space-8);
+    }
+}
+
 .headerInner {
     display: flex;
     align-items: center;
     justify-content: space-between;
     height: 72px;
     gap: var(--space-4);
+}
+
+@media (min-width: 768px) {
+    .headerInner {
+        gap: var(--space-2);
+        /* Reduced gap at tablet to prevent overflow */
+    }
+}
+
+@media (min-width: 1024px) {
+    .headerInner {
+        gap: var(--space-4);
+        /* Normal gap at desktop */
+    }
 }
 
 /* Logo */
@@ -46,6 +72,15 @@
 @media (min-width: 768px) {
     .nav {
         display: flex;
+        gap: var(--space-3);
+        /* Reduced gap at tablet to prevent overflow */
+    }
+}
+
+@media (min-width: 1024px) {
+    .nav {
+        gap: var(--space-6);
+        /* Normal gap at desktop */
     }
 }
 
@@ -57,6 +92,22 @@
     transition: var(--transition-base);
     padding: var(--space-2) 0;
     border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    /* Prevent line breaks */
+}
+
+@media (min-width: 768px) {
+    .navLink {
+        font-size: 13px;
+        /* Smaller at tablet to fit more items */
+    }
+}
+
+@media (min-width: 1024px) {
+    .navLink {
+        font-size: var(--text-sm);
+        /* Normal size at desktop */
+    }
 }
 
 .navLink:hover {
@@ -193,6 +244,24 @@
     padding: var(--space-2) var(--space-3);
     border-radius: var(--radius-md);
     transition: var(--transition-base);
+    min-height: 44px;
+    /* Minimum touch target */
+}
+
+@media (min-width: 768px) {
+    .signInButton {
+        font-size: 13px;
+        padding: var(--space-2);
+        /* Smaller at tablet */
+    }
+}
+
+@media (min-width: 1024px) {
+    .signInButton {
+        font-size: var(--text-sm);
+        padding: var(--space-2) var(--space-3);
+        /* Normal size at desktop */
+    }
 }
 
 .signInButton:hover {
@@ -210,12 +279,24 @@
     font-weight: 500;
     cursor: pointer;
     transition: var(--transition-base);
+    min-height: 44px;
+    /* Minimum touch target */
 }
 
-.signUpButton:hover {
-    background: var(--brand-teal-dark);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(47, 164, 169, 0.3);
+@media (min-width: 768px) {
+    .signUpButton {
+        font-size: 13px;
+        padding: var(--space-2) var(--space-3);
+        /* Smaller at tablet */
+    }
+}
+
+@media (min-width: 1024px) {
+    .signUpButton {
+        font-size: var(--text-sm);
+        padding: var(--space-2) var(--space-4);
+        /* Normal size at desktop */
+    }
 }
 
 /* Mobile Menu Button */
@@ -228,6 +309,13 @@
     border: none;
     color: var(--brand-navy);
     cursor: pointer;
+    min-width: 44px;
+    /* Minimum touch target */
+    min-height: 44px;
+    /* Minimum touch target */
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .mobileMenuButton:hover {

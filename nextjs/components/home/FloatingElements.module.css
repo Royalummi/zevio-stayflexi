@@ -1,0 +1,459 @@
+/* Floating Elements Container */
+.floatingContainer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Base Floating Element Styles */
+.floatingElement {
+    position: absolute;
+    color: rgba(255, 255, 255, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    filter: blur(0.3px);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.floatingElement:hover {
+    color: rgba(255, 255, 255, 0.4);
+    filter: blur(0px);
+    transform: scale(1.2);
+}
+
+/* Size Variants */
+.large {
+    opacity: 0.3;
+    filter: blur(0.2px);
+}
+
+.medium {
+    opacity: 0.22;
+    filter: blur(0.3px);
+}
+
+.small {
+    opacity: 0.18;
+    filter: blur(0.4px);
+}
+
+.micro {
+    opacity: 0.14;
+    filter: blur(0.5px);
+}
+
+/* Individual Element Positions & Animations */
+
+/* Large Icons - Main Features (Villas, Apartments, Beach, Keys) */
+.float1 {
+    top: 12%;
+    left: 10%;
+    animation: floatDrift 22s ease-in-out infinite;
+}
+
+.float2 {
+    top: 18%;
+    right: 12%;
+    animation: floatBob 17s ease-in-out infinite;
+}
+
+.float3 {
+    top: 58%;
+    left: 8%;
+    animation: floatRotate 24s linear infinite;
+}
+
+.float4 {
+    top: 65%;
+    right: 10%;
+    animation: floatDrift 20s ease-in-out infinite reverse;
+}
+
+/* Medium Icons - Amenities (Pool, Bed, Calendar, WiFi, Deck, Coffee) */
+.float5 {
+    top: 35%;
+    left: 20%;
+    animation: floatBob 19s ease-in-out infinite reverse;
+}
+
+.float6 {
+    top: 42%;
+    right: 18%;
+    animation: floatDrift 21s ease-in-out infinite;
+}
+
+.float7 {
+    top: 75%;
+    left: 22%;
+    animation: floatRotate 18s linear infinite reverse;
+}
+
+.float8 {
+    top: 25%;
+    left: 38%;
+    animation: floatBob 16s ease-in-out infinite;
+}
+
+.float9 {
+    top: 48%;
+    right: 35%;
+    animation: floatDrift 23s ease-in-out infinite reverse;
+}
+
+.float10 {
+    top: 82%;
+    right: 25%;
+    animation: floatBob 20s ease-in-out infinite reverse;
+}
+
+/* Small Icons - Travel & Experience (Plane, MapPin, Compass, Luggage, Camera, Mountain) */
+.float11 {
+    top: 15%;
+    left: 55%;
+    animation: floatTwinkle 9s ease-in-out infinite;
+}
+
+.float12 {
+    top: 38%;
+    left: 48%;
+    animation: floatDrift 15s ease-in-out infinite;
+}
+
+.float13 {
+    top: 68%;
+    right: 42%;
+    animation: floatTwinkle 11s ease-in-out infinite reverse;
+}
+
+.float14 {
+    top: 30%;
+    right: 50%;
+    animation: floatBob 14s ease-in-out infinite;
+}
+
+.float15 {
+    top: 55%;
+    left: 35%;
+    animation: floatDrift 17s ease-in-out infinite reverse;
+}
+
+.float16 {
+    top: 78%;
+    left: 50%;
+    animation: floatTwinkle 10s ease-in-out infinite;
+}
+
+/* Micro Icons - Accents (Star, Heart, Diamond, Sun, Umbrella, Gift) */
+.float17 {
+    top: 22%;
+    left: 28%;
+    animation: sparkleShine 3s ease-in-out infinite;
+    animation-delay: 0s;
+}
+
+.float18 {
+    top: 45%;
+    right: 8%;
+    animation: sparkleShine 3s ease-in-out infinite;
+    animation-delay: 1s;
+}
+
+.float19 {
+    top: 70%;
+    left: 42%;
+    animation: sparkleShine 3s ease-in-out infinite;
+    animation-delay: 2s;
+}
+
+.float20 {
+    top: 10%;
+    right: 30%;
+    animation: sparkleShine 3s ease-in-out infinite;
+    animation-delay: 0.5s;
+}
+
+.float21 {
+    top: 50%;
+    left: 62%;
+    animation: sparkleShine 3s ease-in-out infinite;
+    animation-delay: 1.5s;
+}
+
+.float22 {
+    top: 85%;
+    right: 48%;
+    animation: sparkleShine 3s ease-in-out infinite;
+    animation-delay: 2.5s;
+}
+
+/* Gradient Orbs - Create Depth & Premium Atmosphere */
+.orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(60px);
+    opacity: 0.15;
+    pointer-events: none;
+}
+
+.orb1 {
+    top: 18%;
+    left: 25%;
+    width: 350px;
+    height: 350px;
+    background: radial-gradient(circle, rgba(47, 164, 169, 0.6) 0%, rgba(47, 164, 169, 0) 70%);
+    animation: orbFloat 22s ease-in-out infinite;
+}
+
+.orb2 {
+    top: 50%;
+    right: 15%;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0) 70%);
+    animation: orbFloat 28s ease-in-out infinite reverse;
+}
+
+.orb3 {
+    bottom: 15%;
+    left: 45%;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(31, 58, 95, 0.55) 0%, rgba(31, 58, 95, 0) 70%);
+    animation: orbFloat 20s ease-in-out infinite;
+}
+
+/* Sparkles - Luxury Accent */
+.sparkle {
+    position: absolute;
+    color: rgba(255, 255, 255, 0.45);
+    font-size: 26px;
+    animation: sparkleShine 3s ease-in-out infinite;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+}
+
+.sparkle1 {
+    top: 28%;
+    left: 32%;
+    animation-delay: 0s;
+    font-size: 24px;
+}
+
+.sparkle2 {
+    top: 52%;
+    right: 28%;
+    animation-delay: 1s;
+    font-size: 30px;
+}
+
+.sparkle3 {
+    top: 72%;
+    left: 48%;
+    animation-delay: 2s;
+    font-size: 22px;
+}
+
+.sparkle4 {
+    top: 16%;
+    right: 40%;
+    animation-delay: 1.5s;
+    font-size: 28px;
+}
+
+.sparkle5 {
+    top: 40%;
+    left: 15%;
+    animation-delay: 0.8s;
+    font-size: 24px;
+}
+
+.sparkle6 {
+    top: 88%;
+    right: 35%;
+    animation-delay: 2.3s;
+    font-size: 26px;
+}
+
+/* Animation Keyframes */
+@keyframes floatDrift {
+
+    0%,
+    100% {
+        transform: translate(0, 0) rotate(0deg);
+    }
+
+    25% {
+        transform: translate(30px, -30px) rotate(10deg);
+    }
+
+    50% {
+        transform: translate(0, -60px) rotate(0deg);
+    }
+
+    75% {
+        transform: translate(-30px, -30px) rotate(-10deg);
+    }
+}
+
+@keyframes floatBob {
+
+    0%,
+    100% {
+        transform: translateY(0) scale(1);
+    }
+
+    50% {
+        transform: translateY(-45px) scale(1.05);
+    }
+}
+
+@keyframes floatRotate {
+    0% {
+        transform: rotate(0deg) translateX(30px) rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg) translateX(30px) rotate(-360deg);
+    }
+}
+
+@keyframes floatTwinkle {
+
+    100% {
+        opacity: 0.12;
+        transform: scale(0.95);
+    }
+
+    50% {
+        opacity: 0.35;
+        transform: scale(1.25);
+    }
+}
+
+@keyframes orbFloat {
+
+    100% {
+        transform: translate(0, 0) scale(1);
+        opacity: 0.15;
+    }
+
+    33% {
+        transform: translate(40px, -40px) scale(1.2);
+        opacity: 0.2;
+    }
+
+    66% {
+        transform: translate(-40px, 30px) scale(0.9);
+        opacity: 0.1;
+    }
+}
+
+@keyframes sparkleShine {
+
+    0%,
+    100% {
+        opacity: 0.2;
+        transform: scale(0.8) rotate(0deg);
+    }
+
+    50% {
+        opacity: 0.8;
+        transform: scale(1.4) rotate(180deg);
+    }
+}
+
+/* Responsive Adjustments */
+@media (max-width: 1024px) {
+    .large {
+        opacity: 0.2;
+    }
+
+    .medium {
+        opacity: 0.14;
+    }
+
+    .small {
+        opacity: 0.11;
+    }
+
+    .micro {
+        opacity: 0.08;
+    }
+
+    .orb {
+        opacity: 0.1;
+        filter: blur(40px);
+    }
+}
+
+@media (max-width: 768px) {
+    .floatingElement {
+        opacity: 0.75;
+    }
+
+    .large {
+        opacity: 0.16;
+    }
+
+    .medium {
+        opacity: 0.11;
+    }
+
+    .small {
+        opacity: 0.08;
+    }
+
+    .micro {
+        opacity: 0.06;
+    }
+
+    .orb {
+        opacity: 0.08;
+        filter: blur(30px);
+    }
+
+    .orb1,
+    .orb2,
+    .orb3 {
+        width: 200px;
+        height: 200px;
+    }
+}
+
+@media (max-width: 480px) {
+    @media (max-width: 480px) {
+
+        /* Hide some elements on very small screens for performance */
+        .float11,
+        .float12,
+        .float13,
+        .float14,
+        .float15,
+        .float16,
+        .float17,
+        .float18,
+        .float19,
+        .float20,
+        .float21,
+        .float22,
+        .orb3,
+        .sparkle4,
+        .sparkle5,
+        .sparkle6 {
+            display: none;
+        }
+
+        .large {
+            opacity: 0.12;
+        }
+
+        .medium {
+            opacity: 0.08;
+        }
+    }
+}

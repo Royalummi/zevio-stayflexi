@@ -23,7 +23,7 @@ export const expiredBookingsCleaner = cron.schedule(
          WHERE status IN ('pending', 'pending_payment')
          AND expires_at IS NOT NULL
          AND expires_at < NOW()
-         AND deleted_at IS NULL`
+         AND deleted_at IS NULL`,
       );
 
       if (result.affectedRows > 0) {
@@ -36,7 +36,7 @@ export const expiredBookingsCleaner = cron.schedule(
   {
     scheduled: false, // Will be started manually
     timezone: "Asia/Kolkata",
-  }
+  },
 );
 
 // Daily job: Runs at 2 AM IST every day
@@ -60,19 +60,10 @@ export const dailyBookingProcessor = cron.schedule(
        WHERE status = 'confirmed' 
        AND check_out <= ? 
        AND deleted_at IS NULL`,
-        [yesterdayDate]
+        [yesterdayDate],
       );
 
-      // 2. Confirm employee points for completed bookings
-      await db.query(
-        `UPDATE employee_points ep
-       INNER JOIN bookings b ON ep.booking_id = b.id
-       SET ep.status = 'confirmed'
-       WHERE b.status = 'completed'
-       AND ep.status = 'pending'`
-      );
-
-      // 3. Create vendor settlements for completed bookings
+      // 2. Create vendor settlements for completed bookings
       const [completedBookings] = await db.query(
         `SELECT 
         b.id as booking_id,
@@ -88,7 +79,7 @@ export const dailyBookingProcessor = cron.schedule(
          SELECT 1 FROM vendor_settlements vs 
          WHERE vs.booking_id = b.id
        )`,
-        [yesterdayDate]
+        [yesterdayDate],
       );
 
       for (const booking of completedBookings) {
@@ -100,7 +91,7 @@ export const dailyBookingProcessor = cron.schedule(
             booking.vendor_id,
             booking.booking_id,
             booking.settlement_amount,
-          ]
+          ],
         );
 
         // Create notification for vendor
@@ -112,7 +103,7 @@ export const dailyBookingProcessor = cron.schedule(
             "vendor",
             "New Settlement",
             `A new settlement of ₹${booking.settlement_amount} is ready for booking ${booking.booking_id}`,
-          ]
+          ],
         );
       }
 
@@ -125,11 +116,11 @@ export const dailyBookingProcessor = cron.schedule(
           today,
           "success",
           `Processed ${completedBookings.length} settlements`,
-        ]
+        ],
       );
 
       console.log(
-        `✅ Daily booking processor completed. Created ${completedBookings.length} settlements.`
+        `✅ Daily booking processor completed. Created ${completedBookings.length} settlements.`,
       );
     } catch (error) {
       console.error("❌ Daily booking processor failed:", error);
@@ -137,14 +128,14 @@ export const dailyBookingProcessor = cron.schedule(
       // Log failed execution
       await db.query(
         "INSERT INTO cron_jobs_log (id, job_name, run_date, status, remarks) VALUES (?, ?, ?, ?, ?)",
-        [jobId, "daily_booking_processor", today, "failed", error.message]
+        [jobId, "daily_booking_processor", today, "failed", error.message],
       );
     }
   },
   {
     scheduled: false,
     timezone: "Asia/Kolkata",
-  }
+  },
 );
 
 // Cleanup job: Runs at 3 AM IST every day
@@ -163,7 +154,7 @@ export const dailyCleanupJob = cron.schedule(
        SET status = 'cancelled' 
        WHERE status = 'pending_payment' 
        AND created_at < DATE_SUB(NOW(), INTERVAL 24 HOUR)
-       AND deleted_at IS NULL`
+       AND deleted_at IS NULL`,
       );
 
       // Log successful execution
@@ -175,11 +166,11 @@ export const dailyCleanupJob = cron.schedule(
           today,
           "success",
           `Cancelled ${result.affectedRows} expired bookings`,
-        ]
+        ],
       );
 
       console.log(
-        `✅ Daily cleanup completed. Cancelled ${result.affectedRows} expired bookings.`
+        `✅ Daily cleanup completed. Cancelled ${result.affectedRows} expired bookings.`,
       );
     } catch (error) {
       console.error("❌ Daily cleanup failed:", error);
@@ -187,14 +178,14 @@ export const dailyCleanupJob = cron.schedule(
       // Log failed execution
       await db.query(
         "INSERT INTO cron_jobs_log (id, job_name, run_date, status, remarks) VALUES (?, ?, ?, ?, ?)",
-        [jobId, "daily_cleanup", today, "failed", error.message]
+        [jobId, "daily_cleanup", today, "failed", error.message],
       );
     }
   },
   {
     scheduled: false,
     timezone: "Asia/Kolkata",
-  }
+  },
 );
 
 // 24-hour check-in reminder: Runs at midnight (00:00) every day
@@ -218,7 +209,7 @@ export const checkInReminderJob24h = cron.schedule(
          WHERE status = 'confirmed'
          AND check_in = ?
          AND deleted_at IS NULL`,
-        [tomorrowDate]
+        [tomorrowDate],
       );
 
       let successCount = 0;
@@ -231,7 +222,7 @@ export const checkInReminderJob24h = cron.schedule(
         } catch (error) {
           console.error(
             `Failed to send 24h reminder for booking ${booking.id}:`,
-            error.message
+            error.message,
           );
           failCount++;
         }
@@ -246,24 +237,24 @@ export const checkInReminderJob24h = cron.schedule(
           today,
           "success",
           `Sent ${successCount} reminders, ${failCount} failed`,
-        ]
+        ],
       );
 
       console.log(
-        `✅ 24h check-in reminders sent: ${successCount} success, ${failCount} failed`
+        `✅ 24h check-in reminders sent: ${successCount} success, ${failCount} failed`,
       );
     } catch (error) {
       console.error("❌ 24h check-in reminder job failed:", error);
       await db.query(
         "INSERT INTO cron_jobs_log (id, job_name, run_date, status, remarks) VALUES (?, ?, ?, ?, ?)",
-        [jobId, "check_in_reminder_24h", today, "failed", error.message]
+        [jobId, "check_in_reminder_24h", today, "failed", error.message],
       );
     }
   },
   {
     scheduled: false,
     timezone: "Asia/Kolkata",
-  }
+  },
 );
 
 // 6-hour check-in reminder: Runs every hour
@@ -294,7 +285,7 @@ export const checkInReminderJob6h = cron.schedule(
            WHERE job_name = 'check_in_reminder_6h_sent' 
            AND remarks LIKE CONCAT('%', bookings.id, '%')
          )`,
-        [fiveHoursLater.toISOString(), sixHoursLater.toISOString()]
+        [fiveHoursLater.toISOString(), sixHoursLater.toISOString()],
       );
 
       let successCount = 0;
@@ -313,21 +304,21 @@ export const checkInReminderJob6h = cron.schedule(
               today,
               "success",
               `Booking: ${booking.id}`,
-            ]
+            ],
           );
 
           successCount++;
         } catch (error) {
           console.error(
             `Failed to send 6h reminder for booking ${booking.id}:`,
-            error.message
+            error.message,
           );
           failCount++;
         }
       }
 
       console.log(
-        `✅ 6h check-in reminders sent: ${successCount} success, ${failCount} failed`
+        `✅ 6h check-in reminders sent: ${successCount} success, ${failCount} failed`,
       );
     } catch (error) {
       console.error("❌ 6h check-in reminder job failed:", error);
@@ -336,7 +327,7 @@ export const checkInReminderJob6h = cron.schedule(
   {
     scheduled: false,
     timezone: "Asia/Kolkata",
-  }
+  },
 );
 
 // 12-hour check-out reminder: Runs at noon (12:00) every day
@@ -360,7 +351,7 @@ export const checkOutReminderJob = cron.schedule(
          WHERE status = 'confirmed'
          AND check_out = ?
          AND deleted_at IS NULL`,
-        [tomorrowDate]
+        [tomorrowDate],
       );
 
       let successCount = 0;
@@ -373,7 +364,7 @@ export const checkOutReminderJob = cron.schedule(
         } catch (error) {
           console.error(
             `Failed to send checkout reminder for booking ${booking.id}:`,
-            error.message
+            error.message,
           );
           failCount++;
         }
@@ -388,24 +379,24 @@ export const checkOutReminderJob = cron.schedule(
           today,
           "success",
           `Sent ${successCount} reminders, ${failCount} failed`,
-        ]
+        ],
       );
 
       console.log(
-        `✅ Check-out reminders sent: ${successCount} success, ${failCount} failed`
+        `✅ Check-out reminders sent: ${successCount} success, ${failCount} failed`,
       );
     } catch (error) {
       console.error("❌ Check-out reminder job failed:", error);
       await db.query(
         "INSERT INTO cron_jobs_log (id, job_name, run_date, status, remarks) VALUES (?, ?, ?, ?, ?)",
-        [jobId, "check_out_reminder", today, "failed", error.message]
+        [jobId, "check_out_reminder", today, "failed", error.message],
       );
     }
   },
   {
     scheduled: false,
     timezone: "Asia/Kolkata",
-  }
+  },
 );
 
 // Post-checkout review request: Runs at 10 AM every day
@@ -429,7 +420,7 @@ export const reviewRequestJob = cron.schedule(
          WHERE status = 'completed'
          AND check_out = ?
          AND deleted_at IS NULL`,
-        [yesterdayDate]
+        [yesterdayDate],
       );
 
       let successCount = 0;
@@ -442,7 +433,7 @@ export const reviewRequestJob = cron.schedule(
         } catch (error) {
           console.error(
             `Failed to send review request for booking ${booking.id}:`,
-            error.message
+            error.message,
           );
           failCount++;
         }
@@ -457,24 +448,24 @@ export const reviewRequestJob = cron.schedule(
           today,
           "success",
           `Sent ${successCount} review requests, ${failCount} failed`,
-        ]
+        ],
       );
 
       console.log(
-        `✅ Review requests sent: ${successCount} success, ${failCount} failed`
+        `✅ Review requests sent: ${successCount} success, ${failCount} failed`,
       );
     } catch (error) {
       console.error("❌ Review request job failed:", error);
       await db.query(
         "INSERT INTO cron_jobs_log (id, job_name, run_date, status, remarks) VALUES (?, ?, ?, ?, ?)",
-        [jobId, "review_request", today, "failed", error.message]
+        [jobId, "review_request", today, "failed", error.message],
       );
     }
   },
   {
     scheduled: false,
     timezone: "Asia/Kolkata",
-  }
+  },
 );
 
 // Start all cron jobs
@@ -488,7 +479,7 @@ export const startCronJobs = () => {
     checkOutReminderJob.start();
     reviewRequestJob.start();
     console.log(
-      "✅ All cron jobs started (expired bookings, booking processor, cleanup, email reminders)"
+      "✅ All cron jobs started (expired bookings, booking processor, cleanup, email reminders)",
     );
   } else {
     console.log("ℹ️  Cron jobs disabled");

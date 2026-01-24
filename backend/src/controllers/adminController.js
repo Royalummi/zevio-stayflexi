@@ -20,7 +20,6 @@ const razorpay = new Razorpay({
 const cache = {
   cities: { data: null, timestamp: null },
   vendors: { data: null, timestamp: null },
-  employees: { data: null, timestamp: null },
 };
 
 const CACHE_TTL = 60 * 60 * 1000; // 1 hour in milliseconds
@@ -89,7 +88,7 @@ export const getAllBookings = asyncHandler(async (req, res) => {
   // Count total
   const countQuery = query.replace(
     /SELECT[\s\S]*?FROM/,
-    "SELECT COUNT(*) as total FROM"
+    "SELECT COUNT(*) as total FROM",
   );
   const [countResult] = await db.query(countQuery, params);
   const total = countResult && countResult[0] ? countResult[0].total : 0;
@@ -113,7 +112,7 @@ export const getAllBookings = asyncHandler(async (req, res) => {
       },
     },
     "Bookings fetched successfully",
-    200
+    200,
   );
 });
 
@@ -150,7 +149,7 @@ export const processRefund = asyncHandler(async (req, res) => {
   // Get booking details
   const [bookings] = await db.query(
     "SELECT * FROM bookings WHERE id = ? AND deleted_at IS NULL",
-    [booking_id]
+    [booking_id],
   );
 
   if (bookings.length === 0) {
@@ -164,14 +163,14 @@ export const processRefund = asyncHandler(async (req, res) => {
     return sendError(
       res,
       "Only cancel-requested or confirmed bookings can be refunded",
-      400
+      400,
     );
   }
 
   // Get payment details
   const [payments] = await db.query(
     'SELECT * FROM payments WHERE booking_id = ? AND status = "success" ORDER BY created_at DESC LIMIT 1',
-    [booking_id]
+    [booking_id],
   );
 
   if (payments.length === 0) {
@@ -194,7 +193,7 @@ export const processRefund = asyncHandler(async (req, res) => {
       refund_percentage,
       refundAmount,
       "initiated",
-    ]
+    ],
   );
 
   // Update booking status
@@ -226,7 +225,7 @@ export const processRefund = asyncHandler(async (req, res) => {
     // Update refund record with Razorpay refund ID and mark as completed
     await db.query(
       'UPDATE refunds SET status = "completed", gateway_refund_id = ? WHERE id = ?',
-      [razorpayRefund.id, refundId]
+      [razorpayRefund.id, refundId],
     );
 
     console.log(`✅ Refund processed successfully: ${razorpayRefund.id}`);
@@ -249,7 +248,7 @@ export const processRefund = asyncHandler(async (req, res) => {
         `Refund failed: ${error.message}`,
         "refund",
         refundId,
-      ]
+      ],
     );
   }
 
@@ -264,7 +263,7 @@ export const processRefund = asyncHandler(async (req, res) => {
       -booking.gst_amount,
       -refundAmount,
       "credit_note",
-    ]
+    ],
   );
 
   // Send emails
@@ -284,7 +283,7 @@ export const processRefund = asyncHandler(async (req, res) => {
       "user",
       "Refund Processed",
       `Your refund of ₹${refundAmount.toFixed(2)} has been initiated`,
-    ]
+    ],
   );
 
   // Log activity
@@ -297,14 +296,14 @@ export const processRefund = asyncHandler(async (req, res) => {
       "Processed refund",
       "booking",
       booking_id,
-    ]
+    ],
   );
 
   sendSuccess(
     res,
     { refund_id: refundId, refund_amount: refundAmount },
     "Refund processed successfully",
-    200
+    200,
   );
 });
 
@@ -349,7 +348,7 @@ export const getVendorSettlements = asyncHandler(async (req, res) => {
   // Count total
   const countQuery = query.replace(
     /SELECT[\s\S]*?FROM/,
-    "SELECT COUNT(*) as total FROM"
+    "SELECT COUNT(*) as total FROM",
   );
   const [countResult] = await db.query(countQuery, params);
   const total = countResult && countResult[0] ? countResult[0].total : 0;
@@ -373,7 +372,7 @@ export const getVendorSettlements = asyncHandler(async (req, res) => {
       },
     },
     "Vendor settlements fetched successfully",
-    200
+    200,
   );
 });
 
@@ -389,7 +388,7 @@ export const markSettlementPaid = asyncHandler(async (req, res) => {
   // Get settlement
   const [settlements] = await db.query(
     "SELECT * FROM vendor_settlements WHERE id = ?",
-    [settlement_id]
+    [settlement_id],
   );
 
   if (settlements.length === 0) {
@@ -405,7 +404,7 @@ export const markSettlementPaid = asyncHandler(async (req, res) => {
   // Update settlement
   await db.query(
     'UPDATE vendor_settlements SET status = "paid", payment_proof = ? WHERE id = ?',
-    [payment_proof || null, settlement_id]
+    [payment_proof || null, settlement_id],
   );
 
   // Create notification for vendor
@@ -417,7 +416,7 @@ export const markSettlementPaid = asyncHandler(async (req, res) => {
       "vendor",
       "Settlement Paid",
       `Your settlement of ₹${settlement.amount} has been paid`,
-    ]
+    ],
   );
 
   // Log activity
@@ -430,177 +429,10 @@ export const markSettlementPaid = asyncHandler(async (req, res) => {
       "Marked settlement as paid",
       "vendor_settlement",
       settlement_id,
-    ]
+    ],
   );
 
   sendSuccess(res, null, "Settlement marked as paid successfully", 200);
-});
-
-// Get employee claims
-export const getEmployeeClaims = asyncHandler(async (req, res) => {
-  const { employee_id, status, page = 1, limit = 20 } = req.query;
-
-  let query = `
-    SELECT 
-      ec.*,
-      e.name as employee_name,
-      e.email as employee_email,
-      e.phone as employee_phone
-    FROM employee_claims ec
-    INNER JOIN employees e ON ec.employee_id = e.id
-    WHERE 1=1
-  `;
-
-  const params = [];
-
-  if (employee_id) {
-    query += ` AND ec.employee_id = ?`;
-    params.push(employee_id);
-  }
-
-  if (status) {
-    query += ` AND ec.status = ?`;
-    params.push(status);
-  }
-
-  // Search filter
-  if (req.query.search) {
-    query += ` AND (e.name LIKE ? OR e.email LIKE ?)`;
-    params.push(`%${req.query.search}%`, `%${req.query.search}%`);
-  }
-
-  // Count total
-  const countQuery = query.replace(
-    /SELECT[\s\S]*?FROM/,
-    "SELECT COUNT(*) as total FROM"
-  );
-  const [countResult] = await db.query(countQuery, params);
-  const total = countResult && countResult[0] ? countResult[0].total : 0;
-
-  // Add pagination
-  const offset = (parseInt(page) - 1) * parseInt(limit);
-  query += ` ORDER BY ec.created_at DESC LIMIT ? OFFSET ?`;
-  params.push(parseInt(limit), offset);
-
-  const [claims] = await db.query(query, params);
-
-  sendSuccess(
-    res,
-    {
-      claims,
-      pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
-        total,
-        totalPages: Math.ceil(total / parseInt(limit)),
-      },
-    },
-    "Employee claims fetched successfully",
-    200
-  );
-});
-
-// Process employee claim
-export const processEmployeeClaim = asyncHandler(async (req, res) => {
-  const { claim_id, action, payment_proof, remarks } = req.body;
-  const adminId = req.user.id;
-
-  if (!claim_id || !action) {
-    return sendError(res, "Claim ID and action are required", 400);
-  }
-
-  if (!["approve", "reject", "pay"].includes(action)) {
-    return sendError(res, "Action must be approve, reject, or pay", 400);
-  }
-
-  // Get claim
-  const [claims] = await db.query(
-    "SELECT * FROM employee_claims WHERE id = ?",
-    [claim_id]
-  );
-
-  if (claims.length === 0) {
-    return sendError(res, "Claim not found", 404);
-  }
-
-  const claim = claims[0];
-
-  let newStatus;
-  let message;
-
-  switch (action) {
-    case "approve":
-      if (claim.status !== "pending") {
-        return sendError(res, "Only pending claims can be approved", 400);
-      }
-      newStatus = "approved";
-      message = "Claim approved successfully";
-      break;
-
-    case "reject":
-      if (claim.status !== "pending") {
-        return sendError(res, "Only pending claims can be rejected", 400);
-      }
-      newStatus = "rejected";
-      message = "Claim rejected";
-      break;
-
-    case "pay":
-      if (claim.status !== "approved") {
-        return sendError(
-          res,
-          "Only approved claims can be marked as paid",
-          400
-        );
-      }
-      if (!payment_proof) {
-        return sendError(res, "Payment proof is required", 400);
-      }
-      newStatus = "paid";
-      message = "Claim marked as paid successfully";
-      break;
-  }
-
-  // Update claim
-  await db.query(
-    "UPDATE employee_claims SET status = ?, payment_proof = ?, processed_at = CURRENT_TIMESTAMP WHERE id = ?",
-    [newStatus, payment_proof || claim.payment_proof, claim_id]
-  );
-
-  // If paid, mark points as redeemed
-  if (action === "pay") {
-    await db.query(
-      'UPDATE employee_points SET status = "redeemed" WHERE employee_id = ? AND status = "confirmed" AND points <= ?',
-      [claim.employee_id, claim.points_claimed]
-    );
-  }
-
-  // Create notification for employee
-  await db.query(
-    "INSERT INTO notifications (id, recipient_id, recipient_role, title, message) VALUES (?, ?, ?, ?, ?)",
-    [
-      generateUUID(),
-      claim.employee_id,
-      "employee",
-      `Claim ${newStatus}`,
-      `Your claim for ₹${claim.points_claimed} has been ${newStatus}`,
-    ]
-  );
-
-  // Log activity
-  await db.query(
-    "INSERT INTO activity_logs (id, actor_id, actor_role, action, entity, entity_id) VALUES (?, ?, ?, ?, ?, ?)",
-    [
-      generateUUID(),
-      adminId,
-      "admin",
-      `${action} employee claim`,
-      "employee_claim",
-      claim_id,
-    ]
-  );
-
-  sendSuccess(res, null, message, 200);
 });
 
 // Get dashboard statistics
@@ -650,15 +482,6 @@ export const getDashboardStats = asyncHandler(async (req, res) => {
     WHERE status = 'pending'
   `);
 
-  // Pending claims
-  const [claimStats] = await db.query(`
-    SELECT 
-      COUNT(*) as pending_claims,
-      COALESCE(SUM(points_claimed), 0) as pending_amount
-    FROM employee_claims
-    WHERE status = 'pending'
-  `);
-
   sendSuccess(
     res,
     {
@@ -667,11 +490,9 @@ export const getDashboardStats = asyncHandler(async (req, res) => {
       ...propertyCounts[0],
       ...userCount[0],
       ...settlementStats[0],
-      pending_employee_claims: claimStats[0].pending_claims,
-      pending_employee_amount: claimStats[0].pending_amount,
     },
     "Dashboard statistics fetched successfully",
-    200
+    200,
   );
 });
 
@@ -702,14 +523,11 @@ export const getAllProperties = asyncHandler(async (req, res) => {
       v.name as vendor_name,
       v.email as vendor_email,
       v.phone as vendor_phone,
-      e.name as employee_name,
-      e.email as employee_email,
       (SELECT image_url FROM property_images WHERE property_id = p.id ORDER BY sort_order LIMIT 1) as thumbnail,
       (SELECT COUNT(*) FROM property_images WHERE property_id = p.id) as image_count
     FROM properties p
     LEFT JOIN cities c ON p.city_id = c.id
     LEFT JOIN vendors v ON p.vendor_id = v.id
-    LEFT JOIN employees e ON p.employee_id = e.id
     WHERE p.deleted_at IS NULL
   `;
 
@@ -738,7 +556,7 @@ export const getAllProperties = asyncHandler(async (req, res) => {
   // Count total
   const countQuery = query.replace(
     /SELECT.*FROM/,
-    "SELECT COUNT(*) as total FROM"
+    "SELECT COUNT(*) as total FROM",
   );
   const [countResult] = await db.query(countQuery, params);
   const total = countResult[0].total;
@@ -762,7 +580,7 @@ export const getAllProperties = asyncHandler(async (req, res) => {
       },
     },
     "Properties fetched successfully",
-    200
+    200,
   );
 });
 
@@ -779,17 +597,13 @@ export const getPropertyDetails = asyncHandler(async (req, res) => {
       v.name as vendor_name,
       v.email as vendor_email,
       v.phone as vendor_phone,
-      v.gst_number as vendor_gst,
-      e.name as employee_name,
-      e.email as employee_email,
-      e.phone as employee_phone
+      v.gst_number as vendor_gst
     FROM properties p
     LEFT JOIN cities c ON p.city_id = c.id
     LEFT JOIN vendors v ON p.vendor_id = v.id
-    LEFT JOIN employees e ON p.employee_id = e.id
     WHERE p.id = ? AND p.deleted_at IS NULL
   `,
-    [id]
+    [id],
   );
 
   if (properties.length === 0) {
@@ -799,7 +613,7 @@ export const getPropertyDetails = asyncHandler(async (req, res) => {
   // Get images
   const [images] = await db.query(
     `SELECT id, image_url, sort_order FROM property_images WHERE property_id = ? ORDER BY sort_order`,
-    [id]
+    [id],
   );
 
   // Get blackout dates
@@ -808,7 +622,7 @@ export const getPropertyDetails = asyncHandler(async (req, res) => {
      FROM property_blackout_dates 
      WHERE property_id = ? 
      ORDER BY start_date DESC`,
-    [id]
+    [id],
   );
 
   // Get bookings count
@@ -820,7 +634,7 @@ export const getPropertyDetails = asyncHandler(async (req, res) => {
       COALESCE(SUM(CASE WHEN status = 'completed' THEN total_amount ELSE 0 END), 0) as total_revenue
     FROM bookings 
     WHERE property_id = ?`,
-    [id]
+    [id],
   );
 
   const property = {
@@ -847,7 +661,7 @@ export const updatePropertyStatus = asyncHandler(async (req, res) => {
   // Check if property exists
   const [property] = await db.query(
     `SELECT id, status, vendor_id FROM properties WHERE id = ? AND deleted_at IS NULL`,
-    [id]
+    [id],
   );
 
   if (property.length === 0) {
@@ -861,7 +675,7 @@ export const updatePropertyStatus = asyncHandler(async (req, res) => {
   await db.query(
     `INSERT INTO activity_logs (id, actor_id, actor_role, action, entity, entity_id, created_at)
      VALUES (UUID(), ?, 'admin', ?, 'property', ?, NOW())`,
-    [req.user.id, `Property status changed to ${status}`, id]
+    [req.user.id, `Property status changed to ${status}`, id],
   );
 
   // If rejected and reason provided, could store in change_requests or notifications
@@ -873,7 +687,7 @@ export const updatePropertyStatus = asyncHandler(async (req, res) => {
         property[0].vendor_id,
         "Property Status Updated",
         `Your property has been marked as inactive. Reason: ${rejection_reason}`,
-      ]
+      ],
     );
   }
 
@@ -886,7 +700,7 @@ export const updatePropertyStatus = asyncHandler(async (req, res) => {
         property[0].vendor_id,
         "Property Approved",
         "Your property has been approved and is now live on the platform!",
-      ]
+      ],
     );
   }
 
@@ -946,7 +760,7 @@ export const getAllUsers = asyncHandler(async (req, res) => {
   // Get total count
   const [countResult] = await db.query(
     `SELECT COUNT(*) as total FROM users u WHERE ${whereClause}`,
-    params
+    params,
   );
 
   // Get users with additional info
@@ -965,7 +779,7 @@ export const getAllUsers = asyncHandler(async (req, res) => {
     WHERE ${whereClause}
     ORDER BY u.created_at DESC
     LIMIT ? OFFSET ?`,
-    [...params, parseInt(limit), parseInt(offset)]
+    [...params, parseInt(limit), parseInt(offset)],
   );
 
   const response = {
@@ -996,7 +810,7 @@ export const getUserDetails = asyncHandler(async (req, res) => {
       u.created_at
     FROM users u
     WHERE u.id = ? AND u.deleted_at IS NULL`,
-    [id]
+    [id],
   );
 
   if (users.length === 0) {
@@ -1023,7 +837,7 @@ export const getUserDetails = asyncHandler(async (req, res) => {
     WHERE b.user_id = ?
     ORDER BY b.created_at DESC
     LIMIT 10`,
-    [id]
+    [id],
   );
 
   // Get activity statistics
@@ -1036,7 +850,7 @@ export const getUserDetails = asyncHandler(async (req, res) => {
       COALESCE(SUM(CASE WHEN status = 'completed' THEN total_amount ELSE 0 END), 0) as total_spent
     FROM bookings
     WHERE user_id = ?`,
-    [id]
+    [id],
   );
 
   sendSuccess(
@@ -1047,7 +861,7 @@ export const getUserDetails = asyncHandler(async (req, res) => {
       stats: stats[0],
     },
     "User details fetched successfully",
-    200
+    200,
   );
 });
 
@@ -1064,7 +878,7 @@ export const updateUserStatus = asyncHandler(async (req, res) => {
   // Check if user exists
   const [user] = await db.query(
     "SELECT id, name, email, status FROM users WHERE id = ? AND deleted_at IS NULL",
-    [id]
+    [id],
   );
 
   if (user.length === 0) {
@@ -1079,7 +893,7 @@ export const updateUserStatus = asyncHandler(async (req, res) => {
   // Update user status
   await db.query(
     "UPDATE users SET status = ?, updated_at = NOW() WHERE id = ?",
-    [status, id]
+    [status, id],
   );
 
   // Create activity log
@@ -1093,7 +907,7 @@ export const updateUserStatus = asyncHandler(async (req, res) => {
   await db.query(
     `INSERT INTO activity_logs (id, actor_id, actor_role, action, entity_type, entity_id, created_at)
      VALUES (UUID(), ?, ?, ?, 'user', ?, NOW())`,
-    [req.user.id, req.user.role, action, id]
+    [req.user.id, req.user.role, action, id],
   );
 
   // Send notification to user
@@ -1107,7 +921,7 @@ export const updateUserStatus = asyncHandler(async (req, res) => {
         reason
           ? `Your account has been blocked. Reason: ${reason}`
           : "Your account has been blocked. Please contact support for more information.",
-      ]
+      ],
     );
   } else if (status === "active") {
     await db.query(
@@ -1117,7 +931,7 @@ export const updateUserStatus = asyncHandler(async (req, res) => {
         id,
         "Account Activated",
         "Your account has been reactivated. You can now access the platform.",
-      ]
+      ],
     );
   }
 
@@ -1141,18 +955,11 @@ export const getUserStats = asyncHandler(async (req, res) => {
     WHERE deleted_at IS NULL
   `);
 
-  const [employeeStats] = await db.query(`
-    SELECT COUNT(*) as total_employees
-    FROM employees
-    WHERE deleted_at IS NULL
-  `);
-
   const stats = {
     total_users: userStats[0].total_users,
     active_users: userStats[0].active_users,
     blocked_users: userStats[0].blocked_users,
     vendors: vendorStats[0].total_vendors,
-    employees: employeeStats[0].total_employees,
   };
 
   sendSuccess(res, stats, "User statistics fetched successfully", 200);
@@ -1186,7 +993,7 @@ export const getRevenueAnalytics = asyncHandler(async (req, res) => {
     LEFT JOIN refunds r ON b.id = r.booking_id
     WHERE DATE(b.created_at) BETWEEN ? AND ?
   `,
-    [startDate, endDate]
+    [startDate, endDate],
   );
 
   // Get revenue by period (daily/weekly/monthly)
@@ -1211,7 +1018,7 @@ export const getRevenueAnalytics = asyncHandler(async (req, res) => {
     GROUP BY period
     ORDER BY period ASC
   `,
-    [dateFormat, startDate, endDate]
+    [dateFormat, startDate, endDate],
   );
 
   // Get revenue by city
@@ -1229,7 +1036,7 @@ export const getRevenueAnalytics = asyncHandler(async (req, res) => {
     ORDER BY revenue DESC
     LIMIT 10
   `,
-    [startDate, endDate]
+    [startDate, endDate],
   );
 
   // Get top performing properties
@@ -1249,7 +1056,7 @@ export const getRevenueAnalytics = asyncHandler(async (req, res) => {
     ORDER BY revenue DESC
     LIMIT 10
   `,
-    [startDate, endDate]
+    [startDate, endDate],
   );
 
   sendSuccess(
@@ -1262,7 +1069,7 @@ export const getRevenueAnalytics = asyncHandler(async (req, res) => {
       filters: { start_date: startDate, end_date: endDate, period },
     },
     "Revenue analytics fetched successfully",
-    200
+    200,
   );
 });
 
@@ -1287,7 +1094,7 @@ export const getBookingTrends = asyncHandler(async (req, res) => {
     GROUP BY status
     ORDER BY count DESC
   `,
-    [startDate, endDate]
+    [startDate, endDate],
   );
 
   // Get booking trends by day of week
@@ -1303,7 +1110,7 @@ export const getBookingTrends = asyncHandler(async (req, res) => {
     GROUP BY day_of_week, day_number
     ORDER BY day_number
   `,
-    [startDate, endDate]
+    [startDate, endDate],
   );
 
   // Get average lead time (days between booking and check-in)
@@ -1317,7 +1124,7 @@ export const getBookingTrends = asyncHandler(async (req, res) => {
     WHERE DATE(created_at) BETWEEN ? AND ?
     AND status != 'cancelled'
   `,
-    [startDate, endDate]
+    [startDate, endDate],
   );
 
   // Get booking duration patterns
@@ -1333,7 +1140,7 @@ export const getBookingTrends = asyncHandler(async (req, res) => {
     GROUP BY nights
     ORDER BY nights
   `,
-    [startDate, endDate]
+    [startDate, endDate],
   );
 
   sendSuccess(
@@ -1346,7 +1153,7 @@ export const getBookingTrends = asyncHandler(async (req, res) => {
       filters: { start_date: startDate, end_date: endDate },
     },
     "Booking trends fetched successfully",
-    200
+    200,
   );
 });
 
@@ -1371,7 +1178,7 @@ export const getUserActivityReport = asyncHandler(async (req, res) => {
     GROUP BY DATE(created_at)
     ORDER BY date ASC
   `,
-    [startDate, endDate]
+    [startDate, endDate],
   );
 
   // Get active users (users who made bookings)
@@ -1384,7 +1191,7 @@ export const getUserActivityReport = asyncHandler(async (req, res) => {
     FROM bookings
     WHERE DATE(created_at) BETWEEN ? AND ?
   `,
-    [startDate, endDate]
+    [startDate, endDate],
   );
 
   // Get top customers by bookings
@@ -1405,7 +1212,7 @@ export const getUserActivityReport = asyncHandler(async (req, res) => {
     ORDER BY total_spent DESC
     LIMIT 10
   `,
-    [startDate, endDate]
+    [startDate, endDate],
   );
 
   // Get user type distribution (from separate tables)
@@ -1425,14 +1232,6 @@ export const getUserActivityReport = asyncHandler(async (req, res) => {
     WHERE deleted_at IS NULL
   `);
 
-  const [employeesCount] = await db.query(`
-    SELECT COUNT(*) as count, 'employee' as user_type,
-    SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active,
-    SUM(CASE WHEN status = 'inactive' THEN 1 ELSE 0 END) as inactive
-    FROM employees
-    WHERE deleted_at IS NULL
-  `);
-
   const roleDistribution = [
     {
       role: "user",
@@ -1446,12 +1245,6 @@ export const getUserActivityReport = asyncHandler(async (req, res) => {
       active: vendorsCount[0].active,
       inactive: vendorsCount[0].inactive,
     },
-    {
-      role: "employee",
-      count: employeesCount[0].count,
-      active: employeesCount[0].active,
-      inactive: employeesCount[0].inactive,
-    },
   ];
 
   sendSuccess(
@@ -1464,7 +1257,7 @@ export const getUserActivityReport = asyncHandler(async (req, res) => {
       filters: { start_date: startDate, end_date: endDate },
     },
     "User activity report fetched successfully",
-    200
+    200,
   );
 });
 
@@ -1491,7 +1284,7 @@ export const getPropertyPerformance = asyncHandler(async (req, res) => {
       AND DATE(b.created_at) BETWEEN ? AND ?
     WHERE p.deleted_at IS NULL
   `,
-    [startDate, endDate]
+    [startDate, endDate],
   );
 
   // Get property performance by occupancy
@@ -1516,7 +1309,7 @@ export const getPropertyPerformance = asyncHandler(async (req, res) => {
     GROUP BY p.id, p.title, c.name, v.name
     ORDER BY revenue DESC
   `,
-    [startDate, endDate]
+    [startDate, endDate],
   );
 
   // Get new property additions
@@ -1531,7 +1324,7 @@ export const getPropertyPerformance = asyncHandler(async (req, res) => {
     GROUP BY DATE(created_at)
     ORDER BY date ASC
   `,
-    [startDate, endDate]
+    [startDate, endDate],
   );
 
   // Get property status distribution
@@ -1554,7 +1347,7 @@ export const getPropertyPerformance = asyncHandler(async (req, res) => {
       filters: { start_date: startDate, end_date: endDate },
     },
     "Property performance metrics fetched successfully",
-    200
+    200,
   );
 });
 
@@ -1588,7 +1381,7 @@ export const getVendorPerformance = asyncHandler(async (req, res) => {
     GROUP BY v.id, v.name, v.email, v.phone
     ORDER BY total_revenue DESC
   `,
-    [startDate, endDate]
+    [startDate, endDate],
   );
 
   sendSuccess(
@@ -1598,54 +1391,7 @@ export const getVendorPerformance = asyncHandler(async (req, res) => {
       filters: { start_date: startDate, end_date: endDate },
     },
     "Vendor performance report fetched successfully",
-    200
-  );
-});
-
-// Get employee performance report
-export const getEmployeePerformance = asyncHandler(async (req, res) => {
-  const { start_date, end_date } = req.query;
-
-  const endDate = end_date || new Date().toISOString().split("T")[0];
-  const startDate =
-    start_date ||
-    new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
-
-  const [employeeStats] = await db.query(
-    `
-    SELECT 
-      e.id,
-      e.name,
-      e.email,
-      e.phone,
-      e.incentive_percentage,
-      COUNT(DISTINCT p.id) as managed_properties,
-      COUNT(b.id) as total_bookings,
-      COALESCE(SUM(CASE WHEN b.status = 'completed' THEN b.total_amount END), 0) as total_booking_value,
-      COALESCE(SUM(CASE WHEN ep.status = 'confirmed' THEN ep.points END), 0) as earned_points,
-      COALESCE(SUM(CASE WHEN ec.status IN ('approved', 'paid') THEN ec.points_claimed END), 0) as claimed_points,
-      COALESCE(SUM(CASE WHEN ep.status = 'confirmed' THEN ep.points END), 0) - 
-      COALESCE(SUM(CASE WHEN ec.status IN ('approved', 'paid') THEN ec.points_claimed END), 0) as pending_points
-    FROM employees e
-    LEFT JOIN properties p ON e.id = p.employee_id AND p.deleted_at IS NULL
-    LEFT JOIN bookings b ON p.id = b.property_id AND DATE(b.created_at) BETWEEN ? AND ?
-    LEFT JOIN employee_points ep ON e.id = ep.employee_id
-    LEFT JOIN employee_claims ec ON e.id = ec.employee_id
-    WHERE e.deleted_at IS NULL
-    GROUP BY e.id, e.name, e.email, e.phone, e.incentive_percentage
-    ORDER BY earned_points DESC
-  `,
-    [startDate, endDate]
-  );
-
-  sendSuccess(
-    res,
-    {
-      employee_stats: employeeStats,
-      filters: { start_date: startDate, end_date: endDate },
-    },
-    "Employee performance report fetched successfully",
-    200
+    200,
   );
 });
 
@@ -1662,7 +1408,7 @@ export const getAllCities = asyncHandler(async (req, res) => {
       res,
       cache.cities.data,
       "Cities fetched successfully (cached)",
-      200
+      200,
     );
   }
 
@@ -1691,7 +1437,7 @@ export const getAllVendors = asyncHandler(async (req, res) => {
       res,
       cache.vendors.data,
       "Vendors fetched successfully (cached)",
-      200
+      200,
     );
   }
 
@@ -1710,35 +1456,6 @@ export const getAllVendors = asyncHandler(async (req, res) => {
   };
 
   sendSuccess(res, vendors, "Vendors fetched successfully", 200);
-});
-
-// Get all employees (for dropdown) - WITH CACHING
-export const getAllEmployees = asyncHandler(async (req, res) => {
-  // Check cache first
-  if (isCacheValid(cache.employees)) {
-    return sendSuccess(
-      res,
-      cache.employees.data,
-      "Employees fetched successfully (cached)",
-      200
-    );
-  }
-
-  // Cache miss - fetch from database
-  const [employees] = await db.query(`
-    SELECT id, name, email, phone, incentive_percentage, status
-    FROM employees
-    WHERE deleted_at IS NULL AND status = 'active'
-    ORDER BY name ASC
-  `);
-
-  // Update cache
-  cache.employees = {
-    data: employees,
-    timestamp: Date.now(),
-  };
-
-  sendSuccess(res, employees, "Employees fetched successfully", 200);
 });
 
 // Create new property
@@ -1959,7 +1676,7 @@ export const updateProperty = asyncHandler(async (req, res) => {
   // Check if property exists
   const [existing] = await db.query(
     "SELECT id FROM properties WHERE id = ? AND deleted_at IS NULL",
-    [id]
+    [id],
   );
 
   if (!existing || existing.length === 0) {
@@ -2104,7 +1821,7 @@ export const deleteProperty = asyncHandler(async (req, res) => {
      WHERE property_id = ? 
      AND status IN ('pending_payment', 'confirmed') 
      AND deleted_at IS NULL`,
-    [id]
+    [id],
   );
 
   if (activeBookings[0].count > 0) {

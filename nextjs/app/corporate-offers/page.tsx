@@ -107,8 +107,12 @@ export default function CorporateOffersPage() {
         );
         allProperties.push(
           ...corporateVillas.map((property: CorporateProperty) => {
-            const discount = property.corporate_discount_percentage || 0;
-            const basePrice = property.price_per_night || 0;
+            const discount = Number(
+              property.corporate_discount_percentage ||
+                property.corporate_discount_percent ||
+                0,
+            );
+            const basePrice = Number(property.price_per_night || 0);
             const discountedPrice = basePrice * (1 - discount / 100);
 
             return {
@@ -142,8 +146,12 @@ export default function CorporateOffersPage() {
         );
         allProperties.push(
           ...corporateApartments.map((property: CorporateProperty) => {
-            const discount = property.corporate_discount_percentage || 0;
-            const basePrice = property.price_per_night || 0;
+            const discount = Number(
+              property.corporate_discount_percentage ||
+                property.corporate_discount_percent ||
+                0,
+            );
+            const basePrice = Number(property.price_per_night || 0);
             const discountedPrice = basePrice * (1 - discount / 100);
 
             return {
@@ -162,16 +170,18 @@ export default function CorporateOffersPage() {
 
       // Extract unique cities from properties
       const uniqueCities = Array.from(
-        new Set(allProperties.map((p) => `${p.city}|${p.state}`)),
-      ).map((cityState, index) => {
-        const [name, state] = cityState.split("|");
-        return {
-          id: String(index + 1),
-          name,
-          state,
-          status: "active" as const,
-        };
-      });
+        new Set(allProperties.map((p) => `${p.city || ""}|${p.state || ""}`)),
+      )
+        .filter((cityState) => cityState !== "|") // Filter out empty entries
+        .map((cityState, index) => {
+          const [name, state] = cityState.split("|");
+          return {
+            id: String(index + 1),
+            name,
+            state,
+            status: "active" as const,
+          };
+        });
       setCities(uniqueCities);
 
       setRetryCount(0); // Reset retry count on success
@@ -222,14 +232,14 @@ export default function CorporateOffersPage() {
     // Filter by city
     if (filters.city) {
       filtered = filtered.filter(
-        (p) => p.city.toLowerCase() === filters.city.toLowerCase(),
+        (p) => p.city?.toLowerCase() === filters.city.toLowerCase(),
       );
     }
 
     // Filter by capacity (adults + children)
-    const totalGuests = filters.adults + filters.children;
+    const totalGuests = (filters.adults || 0) + (filters.children || 0);
     if (totalGuests > 1) {
-      filtered = filtered.filter((p) => p.max_guests >= totalGuests);
+      filtered = filtered.filter((p) => (p.max_guests || 0) >= totalGuests);
     }
 
     // Filter by price range (using discounted price)
@@ -247,7 +257,7 @@ export default function CorporateOffersPage() {
     // Filter by bedrooms
     if (filters.bedrooms) {
       filtered = filtered.filter(
-        (p) => p.bedrooms >= parseInt(filters.bedrooms),
+        (p) => (p.bedrooms || 0) >= parseInt(filters.bedrooms),
       );
     }
 
@@ -324,11 +334,12 @@ export default function CorporateOffersPage() {
         },
       );
 
-      if (response.data.success) {
+      if (response.data?.success) {
         alert("Verification email sent! Please check your inbox.");
       }
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } } };
+      console.error("Verification error:", error);
       alert(
         err.response?.data?.message || "Failed to resend verification email",
       );

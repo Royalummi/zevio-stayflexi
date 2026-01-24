@@ -22,6 +22,7 @@ export interface CorporateProperty {
   max_guests: number;
   price_per_night: number;
   corporate_discount_percentage: number;
+  corporate_discount_percent?: number; // Backward compatibility with API
   discounted_price: number;
   min_stay_days: number;
   rating: number | null;

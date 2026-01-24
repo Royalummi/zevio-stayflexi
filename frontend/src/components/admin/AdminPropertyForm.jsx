@@ -8,12 +8,10 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
   const [loading, setLoading] = useState(false);
   const [cities, setCities] = useState([]);
   const [vendors, setVendors] = useState([]);
-  const [employees, setEmployees] = useState([]);
 
   // Basic Information
   const [formData, setFormData] = useState({
     vendor_id: "",
-    employee_id: "",
     city_id: "",
     title: "",
     property_type: "Villa",
@@ -424,22 +422,6 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
               {errors.vendor_id && (
                 <span className="error">{errors.vendor_id}</span>
               )}
-            </div>
-
-            <div className="form-group">
-              <label>Employee</label>
-              <select
-                name="employee_id"
-                value={formData.employee_id}
-                onChange={handleInputChange}
-              >
-                <option value="">Select Employee</option>
-                {employees.map((emp) => (
-                  <option key={emp.id} value={emp.id}>
-                    {emp.name}
-                  </option>
-                ))}
-              </select>
             </div>
           </div>
 
