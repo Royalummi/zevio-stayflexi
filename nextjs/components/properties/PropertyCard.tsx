@@ -49,13 +49,9 @@ export default function PropertyCard({
 
   // Check if property has corporate discount
   const hasCorporateDiscount =
-    (property.corporate_discount_percentage ||
-      property.corporate_discount_percent ||
-      0) > 0;
+    (property.corporate_discount_percentage || 0) > 0;
   const corporateDiscountPercent =
-    property.corporate_discount_percentage ||
-    property.corporate_discount_percent ||
-    0;
+    property.corporate_discount_percentage || 0;
 
   // Calculate corporate pricing
   const corporatePricing =
