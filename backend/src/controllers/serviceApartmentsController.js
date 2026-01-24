@@ -172,7 +172,7 @@ export const listServiceApartments = async (req, res) => {
         sortColumn.includes("price") ||
         sortColumn.includes("discount") ||
         sortColumn.includes("corporate")
-          ? "pr." + sortColumn
+          ? sortColumn
           : "p." + sortColumn
       } ${sortDirection}
       LIMIT ? OFFSET ?
