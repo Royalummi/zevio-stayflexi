@@ -147,7 +147,8 @@ function ServiceApartmentsContent() {
     };
 
     fetchProperties();
-  }, [toast]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     let filtered = [...properties];
