@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { api } from "@/lib/axios";
 import type { City, Property } from "@/types";
@@ -13,7 +13,7 @@ import { useToast } from "@/hooks/useToast";
 import ToastContainer from "@/components/ui/ToastContainer";
 import styles from "./properties.module.css";
 
-export default function PropertiesPage() {
+function PropertiesContent() {
   const searchParams = useSearchParams();
   const toast = useToast();
   const [properties, setProperties] = useState<Property[]>([]);
@@ -235,5 +235,20 @@ export default function PropertiesPage() {
       </div>
       <ToastContainer toasts={toast.toasts} removeToast={toast.removeToast} />
     </div>
+  );
+}
+
+export default function PropertiesPage() {
+  return (
+    <Suspense fallback={
+      <div className={styles.pageContainer}>
+        <div className={styles.loadingContainer}>
+          <div className={styles.spinner}></div>
+          <p>Loading properties...</p>
+        </div>
+      </div>
+    }>
+      <PropertiesContent />
+    </Suspense>
   );
 }

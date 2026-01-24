@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBooking } from "@/contexts/BookingContext";
@@ -29,7 +29,7 @@ const loadRazorpayScript = () => {
   });
 };
 
-export default function BookingReviewPage() {
+function BookingReviewContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
@@ -700,5 +700,20 @@ export default function BookingReviewPage() {
       </div>
       <ToastContainer toasts={toast.toasts} removeToast={toast.removeToast} />
     </>
+  );
+}
+
+export default function BookingReviewPage() {
+  return (
+    <Suspense fallback={
+      <div className={styles.pageContainer}>
+        <div className={styles.loadingContainer}>
+          <div className={styles.loadingSpinner}></div>
+          <p className={styles.loadingText}>Loading...</p>
+        </div>
+      </div>
+    }>
+      <BookingReviewContent />
+    </Suspense>
   );
 }

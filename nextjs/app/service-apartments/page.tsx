@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { api } from "@/lib/axios";
 import type { City } from "@/types";
@@ -321,5 +321,20 @@ export default function ServiceApartmentsPage() {
       </div>
       <ToastContainer toasts={toast.toasts} removeToast={toast.removeToast} />
     </div>
+  );
+}
+
+export default function ServiceApartmentsPage() {
+  return (
+    <Suspense fallback={
+      <div className={styles.pageContainer}>
+        <div className={styles.loadingContainer}>
+          <div className={styles.spinner}></div>
+          <p>Loading service apartments...</p>
+        </div>
+      </div>
+    }>
+      <ServiceApartmentsContent />
+    </Suspense>
   );
 }

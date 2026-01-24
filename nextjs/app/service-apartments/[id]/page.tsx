@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -115,7 +115,7 @@ const parseFeatures = (
   } as Property;
 };
 
-export default function ServiceApartmentDetailPage() {
+function ServiceApartmentDetailContent() {
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -1020,5 +1020,20 @@ export default function ServiceApartmentDetailPage() {
       </div>
       <ToastContainer toasts={toast.toasts} removeToast={toast.removeToast} />
     </div>
+  );
+}
+
+export default function ServiceApartmentDetailPage() {
+  return (
+    <Suspense fallback={
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div className="spinner"></div>
+          <p>Loading service apartment...</p>
+        </div>
+      </div>
+    }>
+      <ServiceApartmentDetailContent />
+    </Suspense>
   );
 }

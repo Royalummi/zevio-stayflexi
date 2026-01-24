@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -48,7 +48,7 @@ const getAmenityIcon = (amenity: string) => {
   return <FiCheck />;
 };
 
-export default function PropertyDetailPage() {
+function PropertyDetailContent() {
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -1105,5 +1105,20 @@ export default function PropertyDetailPage() {
 
       <ToastContainer toasts={toast.toasts} removeToast={toast.removeToast} />
     </div>
+  );
+}
+
+export default function PropertyDetailPage() {
+  return (
+    <Suspense fallback={
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div className="spinner"></div>
+          <p>Loading property...</p>
+        </div>
+      </div>
+    }>
+      <PropertyDetailContent />
+    </Suspense>
   );
 }
