@@ -20,6 +20,8 @@ export interface ServiceApartment {
   city: string;
   state: string;
   address: string;
+  area?: string;
+  maps_location?: string;
   bedrooms: number;
   bathrooms?: number;
   max_guests?: number;

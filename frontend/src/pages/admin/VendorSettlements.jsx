@@ -22,7 +22,6 @@ import {
   CardContent,
 } from "../../components/ui/card";
 import { Input } from "../../components/ui/input";
-import { Select } from "../../components/ui/select";
 import { Badge } from "../../components/ui/badge";
 import {
   Dialog,
@@ -67,7 +66,7 @@ export default function VendorSettlements() {
         setSettlements(response.data.data.settlements);
         setPagination((prev) => ({
           ...prev,
-          total: response.data.data.total,
+          total: response.data.data.pagination.total,
         }));
       }
     } catch (error) {
@@ -115,17 +114,17 @@ export default function VendorSettlements() {
 
   const getStatusBadge = (status) => {
     const variants = {
-      pending: { variant: "warning", label: "Pending", icon: Clock },
-      paid: { variant: "success", label: "Paid", icon: CheckCircle },
+      pending: { className: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400", label: "Pending", icon: Clock },
+      paid: { className: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400", label: "Paid", icon: CheckCircle },
     };
     const config = variants[status] || {
-      variant: "default",
+      className: "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300",
       label: status,
       icon: Clock,
     };
     const Icon = config.icon;
     return (
-      <Badge variant={config.variant} className="flex items-center gap-1">
+      <Badge className={`flex items-center gap-1 ${config.className}`}>
         <Icon className="h-3 w-3" />
         {config.label}
       </Badge>
@@ -168,14 +167,15 @@ export default function VendorSettlements() {
                 className="pl-10"
               />
             </div>
-            <Select
+            <select
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
               value={filters.status}
               onChange={(e) => handleFilterChange("status", e.target.value)}
             >
               <option value="">All Statuses</option>
               <option value="pending">Pending</option>
               <option value="paid">Paid</option>
-            </Select>
+            </select>
           </div>
         </CardContent>
       </Card>
@@ -296,10 +296,10 @@ export default function VendorSettlements() {
                           <User className="h-4 w-4 text-gray-400" />
                           <div>
                             <div className="font-medium">
-                              {settlement.vendor?.name || "N/A"}
+                              {settlement.vendor_name || "N/A"}
                             </div>
                             <div className="text-xs text-gray-500">
-                              {settlement.vendor?.email}
+                              {settlement.vendor_email}
                             </div>
                           </div>
                         </div>
@@ -309,10 +309,10 @@ export default function VendorSettlements() {
                           <Home className="h-4 w-4 text-gray-400" />
                           <div>
                             <div className="font-medium">
-                              {settlement.booking?.property?.title || "N/A"}
+                              {settlement.property_title || "N/A"}
                             </div>
                             <div className="text-xs text-gray-500">
-                              Booking: {settlement.booking?.id?.substring(0, 8)}
+                              Booking: {settlement.booking_id?.substring(0, 8)}
                             </div>
                           </div>
                         </div>
@@ -343,7 +343,7 @@ export default function VendorSettlements() {
                             Mark as Paid
                           </Button>
                         ) : (
-                          <Badge variant="success" className="cursor-default">
+                          <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 cursor-default">
                             ✓ Paid
                           </Badge>
                         )}
@@ -419,21 +419,19 @@ export default function VendorSettlements() {
                     <div className="flex justify-between">
                       <span className="text-gray-600">Vendor:</span>
                       <span className="font-medium">
-                        {selectedSettlement.vendor?.name}
+                        {selectedSettlement.vendor_name}
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Bank:</span>
                       <span>
-                        {selectedSettlement.vendor?.bank_details?.bank_name ||
-                          "N/A"}
+                        {selectedSettlement.bank_name || "N/A"}
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Account:</span>
                       <span className="font-mono">
-                        {selectedSettlement.vendor?.bank_details
-                          ?.account_number || "N/A"}
+                        {selectedSettlement.account_number || "N/A"}
                       </span>
                     </div>
                     <div className="flex justify-between border-t pt-2 mt-2">

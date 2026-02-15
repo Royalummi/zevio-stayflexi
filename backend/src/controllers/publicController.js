@@ -17,16 +17,49 @@ export const getCities = asyncHandler(async (req, res) => {
             (SELECT COUNT(*) FROM properties WHERE city_id = cities.id AND status = 'approved') as property_count
      FROM cities 
      WHERE status = 'active' 
-     ORDER BY name ASC`
+     ORDER BY name ASC`,
   );
 
   sendSuccess(res, { cities }, "Cities fetched successfully", 200);
+});
+
+// Get all areas/localities with cities (for area-wise search)
+export const getAreas = asyncHandler(async (req, res) => {
+  const { property_type } = req.query;
+
+  let propertyTypeCondition = "";
+  if (property_type === "villa") {
+    propertyTypeCondition = "AND p.property_type_id = 'pt-001'";
+  } else if (property_type === "service_apartment") {
+    propertyTypeCondition = "AND p.property_type_id = 'pt-002'";
+  }
+
+  const [areas] = await db.query(
+    `SELECT DISTINCT 
+       p.area, 
+       c.id as city_id,
+       c.name as city, 
+       c.state,
+       COUNT(p.id) as property_count
+     FROM properties p
+     INNER JOIN cities c ON p.city_id = c.id
+     WHERE p.status = 'approved' 
+       AND p.deleted_at IS NULL
+       AND p.area IS NOT NULL 
+       AND p.area != ''
+       ${propertyTypeCondition}
+     GROUP BY p.area, c.id, c.name, c.state
+     ORDER BY c.name ASC, p.area ASC`,
+  );
+
+  sendSuccess(res, { areas }, "Areas fetched successfully", 200);
 });
 
 // Get properties (with filters)
 export const getProperties = asyncHandler(async (req, res) => {
   const {
     city,
+    area,
     min_price,
     max_price,
     search,
@@ -40,6 +73,8 @@ export const getProperties = asyncHandler(async (req, res) => {
       p.title, 
       p.description,
       p.address,
+      p.area,
+      p.maps_location,
       c.name as city,
       c.state as state,
       p.pincode,
@@ -60,6 +95,7 @@ export const getProperties = asyncHandler(async (req, res) => {
     ${featuresService.getFeaturesJoinClause("p", "pf", "f")}
     WHERE p.status = 'approved' 
     AND p.deleted_at IS NULL
+    AND p.property_type_id = 'pt-001'
   `;
 
   const params = [];
@@ -67,6 +103,12 @@ export const getProperties = asyncHandler(async (req, res) => {
   if (city) {
     query += ` AND c.id = ?`;
     params.push(city);
+  }
+
+  // Area filter (for area-wise search)
+  if (area) {
+    query += ` AND p.area = ?`;
+    params.push(area);
   }
 
   // Validate and parse price filters
@@ -98,6 +140,7 @@ export const getProperties = asyncHandler(async (req, res) => {
     ${getPricingJoinClause("p", "pr")}
     WHERE p.status = 'approved' 
     AND p.deleted_at IS NULL
+    AND p.property_type_id = 'pt-001'
   `;
 
   if (city) {
@@ -131,9 +174,16 @@ export const getProperties = asyncHandler(async (req, res) => {
         ? property.amenities.split(", ")
         : [];
       property.photos = property.photos ? JSON.parse(property.photos) : [];
+      // Transform photos array into images format expected by frontend
+      property.images = property.photos.map((url, index) => ({
+        id: `${property.id}-${index}`,
+        image_url: url,
+        display_order: index,
+      }));
     } catch (error) {
       property.amenities = [];
       property.photos = [];
+      property.images = [];
     }
     return property;
   });
@@ -150,7 +200,7 @@ export const getProperties = asyncHandler(async (req, res) => {
       },
     },
     "Properties fetched successfully",
-    200
+    200,
   );
 });
 
@@ -166,11 +216,14 @@ export const getPropertyDetails = asyncHandler(async (req, res) => {
       pt.name as property_type,
       p.description,
       p.address,
+      p.area,
+      p.maps_location,
       c.name as city,
       c.state as state,
       p.pincode,
       p.bedrooms,
       p.bathrooms,
+      p.max_guests,
       p.check_in_time,
       p.check_out_time,
       ${getAmenitiesSelectClause("p", "pa", "a")},
@@ -197,7 +250,7 @@ export const getPropertyDetails = asyncHandler(async (req, res) => {
     AND p.status = 'approved' 
     AND p.deleted_at IS NULL
     GROUP BY p.id`,
-    [id]
+    [id],
   );
 
   if (properties.length === 0) {
@@ -238,10 +291,20 @@ export const getPropertyDetails = asyncHandler(async (req, res) => {
      FROM property_images 
      WHERE property_id = ? 
      ORDER BY sort_order ASC`,
-    [id]
+    [id],
   );
 
-  property.images = images;
+  // Use property_images table if available, otherwise transform photos array
+  if (images.length > 0) {
+    property.images = images;
+  } else {
+    // Transform photos array into images format expected by frontend
+    property.images = property.photos.map((url, index) => ({
+      id: `${property.id}-${index}`,
+      image_url: url,
+      sort_order: index,
+    }));
+  }
 
   sendSuccess(res, property, "Property details fetched successfully", 200);
 });
@@ -254,14 +317,14 @@ export const checkAvailability = asyncHandler(async (req, res) => {
     return sendError(
       res,
       "Property ID, check-in, and check-out dates are required",
-      400
+      400,
     );
   }
 
   // Check if property exists and is approved
   const [properties] = await db.query(
     'SELECT id FROM properties WHERE id = ? AND status = "approved" AND deleted_at IS NULL',
-    [property_id]
+    [property_id],
   );
 
   if (properties.length === 0) {
@@ -278,7 +341,15 @@ export const checkAvailability = asyncHandler(async (req, res) => {
        (start_date <= ? AND end_date >= ?) OR
        (start_date >= ? AND end_date <= ?)
      )`,
-    [property_id, check_in, check_in, check_out, check_out, check_in, check_out]
+    [
+      property_id,
+      check_in,
+      check_in,
+      check_out,
+      check_out,
+      check_in,
+      check_out,
+    ],
   );
 
   if (blackouts[0].count > 0) {
@@ -290,7 +361,7 @@ export const checkAvailability = asyncHandler(async (req, res) => {
           "Property is not available for selected dates (blackout period)",
       },
       "Availability checked",
-      200
+      200,
     );
   }
 
@@ -303,7 +374,7 @@ export const checkAvailability = asyncHandler(async (req, res) => {
      AND (
        (check_in < ? AND check_out > ?)
      )`,
-    [property_id, check_out, check_in]
+    [property_id, check_out, check_in],
   );
 
   if (bookings[0].count > 0) {
@@ -314,9 +385,99 @@ export const checkAvailability = asyncHandler(async (req, res) => {
         reason: "Property is already booked for selected dates",
       },
       "Availability checked",
-      200
+      200,
     );
   }
 
   sendSuccess(res, { available: true }, "Property is available", 200);
+});
+
+// Get recommended properties (property-type specific)
+export const getRecommendedProperties = asyncHandler(async (req, res) => {
+  const { type } = req.query; // 'villa' or 'service_apartment'
+
+  // Validate property type
+  const validTypes = {
+    villa: "pt-001",
+    service_apartment: "pt-002",
+  };
+
+  const propertyTypeId = validTypes[type];
+  if (!propertyTypeId) {
+    return sendError(
+      res,
+      "Invalid property type. Use 'villa' or 'service_apartment'",
+      400,
+    );
+  }
+
+  // Fetch recommended properties (up to 12, sorted by priority)
+  const [properties] = await db.query(
+    `SELECT 
+      p.id, 
+      p.title, 
+      p.description,
+      p.address,
+      p.area,
+      p.maps_location,
+      c.name as city,
+      c.state as state,
+      p.pincode,
+      p.bedrooms,
+      p.bathrooms,
+      p.max_guests,
+      ${getAmenitiesSelectClause("p", "pa", "a")},
+      ${featuresService.getFeaturesSelectClause("p", "pf", "f")},
+      p.photos,
+      p.rating,
+      p.reviews_count,
+      ${getPricingSelectClause("pr")},
+      p.is_recommended,
+      p.recommended_priority,
+      p.status
+    FROM properties p
+    INNER JOIN cities c ON p.city_id = c.id
+    ${getPricingJoinClause("p", "pr")}
+    ${getAmenitiesJoinClause("p", "pa", "a")}
+    ${featuresService.getFeaturesJoinClause("p", "pf", "f")}
+    WHERE p.status = 'approved' 
+    AND p.deleted_at IS NULL
+    AND p.property_type_id = ?
+    AND p.is_recommended = 1
+    GROUP BY p.id
+    ORDER BY p.recommended_priority DESC, p.rating DESC
+    LIMIT 12`,
+    [propertyTypeId],
+  );
+
+  // Parse JSON fields
+  const parsedProperties = properties.map((property) => {
+    try {
+      property.amenities = property.amenities
+        ? property.amenities.split(", ")
+        : [];
+      property.photos = property.photos ? JSON.parse(property.photos) : [];
+      property.images = property.photos.map((url, index) => ({
+        id: `${property.id}-${index}`,
+        image_url: url,
+        display_order: index,
+      }));
+    } catch (error) {
+      property.amenities = [];
+      property.photos = [];
+      property.images = [];
+    }
+    return property;
+  });
+
+  sendSuccess(
+    res,
+    {
+      properties: parsedProperties,
+      count: parsedProperties.length,
+      property_type: type,
+    },
+    "Recommended properties fetched successfully",
+    200,
+  );
 });

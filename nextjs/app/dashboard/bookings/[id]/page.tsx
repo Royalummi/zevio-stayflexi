@@ -16,6 +16,7 @@ import {
   FiLoader,
 } from "react-icons/fi";
 import { api } from "@/lib/axios";
+import ReviewForm from "@/components/reviews/ReviewForm";
 import styles from "./booking-detail.module.css";
 
 interface BookingDetails {
@@ -74,6 +75,9 @@ export default function BookingDetailsPage() {
   } | null>(null);
   // SESSION 31: Force re-render every minute for countdown timer updates
   const [, setTimerTick] = useState(0);
+  // SESSION 64: Review system state
+  const [hasReview, setHasReview] = useState(false);
+  const [checkingReview, setCheckingReview] = useState(false);
 
   // Auto-hide toast
   useEffect(() => {
@@ -120,6 +124,26 @@ export default function BookingDetailsPage() {
     fetchBookingDetails();
   }, [fetchBookingDetails]);
 
+  // SESSION 64: Check if user has already submitted a review for completed bookings
+  useEffect(() => {
+    const checkReviewStatus = async () => {
+      if (!booking || booking.status !== "completed") return;
+
+      try {
+        setCheckingReview(true);
+        const response = await api.get(`/bookings/${bookingId}/reviews/check`);
+        setHasReview(response.data.hasReview || false);
+      } catch (error: unknown) {
+        console.error("Error checking review status:", error);
+        // Silently fail - not critical to page rendering
+      } finally {
+        setCheckingReview(false);
+      }
+    };
+
+    checkReviewStatus();
+  }, [booking, bookingId]);
+
   // SESSION 31: Calculate countdown timer for pending bookings
   const calculateTimeLeft = (expiresAt: string) => {
     const now = new Date();
@@ -143,7 +167,7 @@ export default function BookingDetailsPage() {
   const handleCancelRequest = async () => {
     if (
       !confirm(
-        "Are you sure you want to request cancellation for this booking?"
+        "Are you sure you want to request cancellation for this booking?",
       )
     ) {
       return;
@@ -417,8 +441,8 @@ export default function BookingDetailsPage() {
                 booking.status === "confirmed" || booking.status === "completed"
                   ? styles.completed
                   : booking.status === "cancelled"
-                  ? styles.cancelled
-                  : styles.pending
+                    ? styles.cancelled
+                    : styles.pending
               }`}
             >
               {booking.status === "confirmed" ||
@@ -436,16 +460,16 @@ export default function BookingDetailsPage() {
                 booking.status === "completed"
                   ? "Confirmed"
                   : booking.status === "cancelled"
-                  ? "Cancelled"
-                  : "Confirming"}
+                    ? "Cancelled"
+                    : "Confirming"}
               </p>
               <p className={styles.timelineStepDate}>
                 {booking.status === "confirmed" ||
                 booking.status === "completed"
                   ? "Booking set"
                   : booking.status === "cancelled"
-                  ? "Booking void"
-                  : "Pending"}
+                    ? "Booking void"
+                    : "Pending"}
               </p>
             </div>
             {booking.status !== "cancelled" &&
@@ -784,7 +808,7 @@ export default function BookingDetailsPage() {
                       year: "numeric",
                       hour: "2-digit",
                       minute: "2-digit",
-                    }
+                    },
                   )}
                 </p>
                 <p className={styles.paymentMethod}>
@@ -818,7 +842,7 @@ export default function BookingDetailsPage() {
                             year: "numeric",
                             hour: "2-digit",
                             minute: "2-digit",
-                          }
+                          },
                         )}
                       </p>
                       <p className={styles.paymentMethod}>
@@ -833,6 +857,48 @@ export default function BookingDetailsPage() {
                     </div>
                   </div>
                 ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* SESSION 64: Review Section - Show for completed bookings only */}
+        {booking.status === "completed" && (
+          <div className={`${styles.card} ${styles.reviewCard}`}>
+            <h3 className={styles.cardTitle}>Share Your Experience</h3>
+
+            {checkingReview ? (
+              <div className={styles.reviewLoading}>
+                <FiLoader className={styles.spinner} />
+                <p>Checking review status...</p>
+              </div>
+            ) : hasReview ? (
+              <div className={styles.reviewThankYou}>
+                <FiCheckCircle className={styles.thankYouIcon} />
+                <h4>Thank You for Your Review!</h4>
+                <p>
+                  Your feedback helps other travelers make better decisions. We
+                  appreciate you taking the time to share your experience!
+                </p>
+              </div>
+            ) : (
+              <div className={styles.reviewFormContainer}>
+                <p className={styles.reviewPrompt}>
+                  How was your stay at {booking.property_title}? Your honest
+                  feedback helps us maintain quality and helps other travelers
+                  make informed decisions.
+                </p>
+                <ReviewForm
+                  bookingId={booking.id}
+                  propertyName={booking.property_title}
+                  onSuccess={() => {
+                    setHasReview(true);
+                    setToast({
+                      message: "Thank you for your review!",
+                      type: "success",
+                    });
+                  }}
+                />
               </div>
             )}
           </div>

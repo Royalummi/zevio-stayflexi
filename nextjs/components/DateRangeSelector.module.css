@@ -1,0 +1,229 @@
+/* DateRangeSelector - Consistent with page styling */
+
+.wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.container {
+    cursor: pointer;
+}
+
+.inputField {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border: 1px solid #D0E8EA;
+    border-radius: 8px;
+    background-color: white;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    width: 100%;
+}
+
+.inputField:hover {
+    border-color: #2FA4A9;
+    background-color: #F8FAFA;
+}
+
+.icon {
+    color: #2FA4A9;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.dates {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+}
+
+.dates span {
+    color: #333;
+    font-weight: 500;
+}
+
+.separator {
+    color: #999;
+    font-size: 12px;
+}
+
+.placeholder {
+    color: #999;
+    font-size: 14px;
+}
+
+/* Dropdown - CRITICAL: position absolute, top z-index */
+.dropdownContent {
+    position: absolute;
+    top: 0;
+    right: calc(100% + 12px);
+    background: white;
+    border: 1px solid #D0E8EA;
+    border-radius: 8px;
+    padding: 16px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    z-index: 1050;
+    min-width: 320px;
+    max-width: 360px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Mobile: Show dropdown below on small screens */
+@media (max-width: 1024px) {
+    .dropdownContent {
+        position: fixed;
+        top: auto;
+        right: auto;
+        left: 50%;
+        transform: translateX(-50%);
+        bottom: auto;
+        width: 90vw;
+        max-width: 400px;
+        margin-top: 8px;
+    }
+}
+
+/* Calendar */
+.calendar {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.calendarHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.monthYear {
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+    margin: 0;
+    flex: 1;
+    text-align: center;
+}
+
+.navBtn {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 1px solid #D0E8EA;
+    border-radius: 6px;
+    background: white;
+    color: #2FA4A9;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.navBtn:hover {
+    background-color: #D0E8EA;
+    color: #248d92;
+}
+
+/* Days of week */
+.daysOfWeek {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+}
+
+.dayHeader {
+    text-align: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: #666;
+    padding: 8px 0;
+}
+
+/* Days grid */
+.daysGrid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+}
+
+.emptyDay {
+    min-height: 36px;
+}
+
+.day {
+    min-height: 36px;
+    padding: 8px;
+    border: 1px solid #E6E9EE;
+    border-radius: 6px;
+    background: white;
+    color: #333;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.day:not(.disabled):hover {
+    border-color: #2FA4A9;
+    background-color: #D0E8EA;
+    color: #248d92;
+}
+
+.day.selected {
+    background-color: #2FA4A9;
+    color: white;
+    border-color: #2FA4A9;
+    font-weight: 600;
+}
+
+.day.inRange {
+    background-color: #D0E8EA;
+    color: #248d92;
+    border-color: #B0D8DE;
+}
+
+.day.disabled {
+    color: #CCC;
+    cursor: not-allowed;
+    background-color: #F5F5F5;
+    border-color: #E6E9EE;
+}
+
+/* Quick Select */
+.quickSelect {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding-top: 12px;
+    border-top: 1px solid #E6E9EE;
+}
+
+.quickBtn {
+    padding: 8px 12px;
+    border: 1px solid #D0E8EA;
+    border-radius: 6px;
+    background: white;
+    color: #2FA4A9;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.quickBtn:hover {
+    background-color: #D0E8EA;
+    color: #248d92;
+    border-color: #2FA4A9;
+}

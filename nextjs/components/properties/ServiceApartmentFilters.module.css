@@ -190,6 +190,21 @@
     animation: dropdownFadeIn 0.2s ease;
 }
 
+/* Override DateRangeSelector positioning inside filters */
+.dropdown :global(.DateRangeSelector-module__EnZQlG__wrapper) {
+    position: static;
+}
+
+.dropdown :global(.DateRangeSelector-module__EnZQlG__dropdownContent) {
+    position: static;
+    right: auto;
+    top: auto;
+    left: auto;
+    transform: none;
+    width: 100%;
+    max-width: 100%;
+}
+
 @keyframes dropdownFadeIn {
     from {
         opacity: 0;

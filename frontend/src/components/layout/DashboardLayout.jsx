@@ -23,6 +23,10 @@ import {
   ShoppingCart,
   Moon,
   Sun,
+  ThumbsUp,
+  GitPullRequest,
+  Ticket,
+  Star,
 } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
 import { useThemeStore } from "../../store/themeStore";
@@ -53,7 +57,7 @@ const DashboardLayout = () => {
   const handleLogout = () => {
     logout();
     // Redirect to Astro homepage after logout
-    window.location.href = "http://localhost:4322/";
+    window.location.href = "http://localhost:8000/";
   };
 
   // Navigation items based on user role
@@ -68,7 +72,19 @@ const DashboardLayout = () => {
         { name: "Settlements", icon: Wallet, path: "/admin/settlements" },
         // { name: "Employee Claims", icon: Award, path: "/admin/claims" },
         { name: "Properties", icon: Building2, path: "/admin/properties" },
+        {
+          name: "Change Requests",
+          icon: GitPullRequest,
+          path: "/admin/change-requests",
+        },
+        {
+          name: "Recommended Properties",
+          icon: ThumbsUp,
+          path: "/admin/recommended-properties",
+        },
         { name: "Users", icon: Users, path: "/admin/users" },
+        { name: "Coupons", icon: Ticket, path: "/admin/coupons" },
+        { name: "Reviews", icon: Star, path: "/admin/reviews" },
         { name: "Reports", icon: BarChart3, path: "/admin/reports" },
       ],
       super_admin: [
@@ -76,9 +92,20 @@ const DashboardLayout = () => {
         { name: "Bookings", icon: Calendar, path: "/admin/bookings" },
         { name: "Refunds", icon: CreditCard, path: "/admin/refunds" },
         { name: "Settlements", icon: Wallet, path: "/admin/settlements" },
-        // { name: "Employee Claims", icon: Award, path: "/admin/claims" },
         { name: "Properties", icon: Building2, path: "/admin/properties" },
+        {
+          name: "Change Requests",
+          icon: GitPullRequest,
+          path: "/admin/change-requests",
+        },
+        {
+          name: "Recommended Properties",
+          icon: ThumbsUp,
+          path: "/admin/recommended-properties",
+        },
         { name: "Users", icon: Users, path: "/admin/users" },
+        { name: "Coupons", icon: Ticket, path: "/admin/coupons" },
+        { name: "Reviews", icon: Star, path: "/admin/reviews" },
         { name: "Reports", icon: BarChart3, path: "/admin/reports" },
       ],
       user: [
@@ -134,7 +161,7 @@ const DashboardLayout = () => {
         {/* Logo */}
         <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200 dark:border-gray-700">
           <a
-            href="http://localhost:4322/"
+            href="http://localhost:3000/"
             className="flex items-center space-x-2 hover:opacity-80 transition-opacity"
           >
             <Building2 className="h-8 w-8 text-blue-600" />

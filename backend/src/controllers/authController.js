@@ -1,5 +1,9 @@
 import db from "../config/database.js";
-import { hashPassword, comparePassword } from "../utils/password.js";
+import {
+  hashPassword,
+  comparePassword,
+  validatePasswordStrength,
+} from "../utils/password.js";
 import { generateTokens, verifyRefreshToken } from "../config/jwt.js";
 import { generateUUID } from "../utils/helpers.js";
 import { asyncHandler, sendSuccess, sendError } from "../utils/response.js";
@@ -26,7 +30,7 @@ export const login = asyncHandler(async (req, res) => {
   for (const table of tables) {
     const [rows] = await db.query(
       `SELECT * FROM ${table.name} WHERE email = ? AND status = 'active' AND deleted_at IS NULL`,
-      [email]
+      [email],
     );
 
     if (rows.length > 0) {
@@ -35,7 +39,7 @@ export const login = asyncHandler(async (req, res) => {
       // Verify password
       const isPasswordValid = await comparePassword(
         password,
-        user.password_hash
+        user.password_hash,
       );
 
       if (!isPasswordValid) {
@@ -56,6 +60,34 @@ export const login = asyncHandler(async (req, res) => {
   // If no user found in any table
   if (!user) {
     return sendError(res, "Invalid email or password", 401);
+  }
+
+  // Check if password change is required (for temp passwords)
+  if (user.password_change_required === 1) {
+    // Generate temporary token valid for 15 minutes
+    const tempToken = generateTokens({
+      id: user.id,
+      email: user.email,
+      role: roleValue,
+      name: user.name || user.full_name,
+      isTemporary: true,
+    });
+
+    return sendSuccess(
+      res,
+      {
+        requirePasswordChange: true,
+        tempToken: tempToken.accessToken,
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name || user.full_name,
+          role: roleValue,
+        },
+      },
+      "Password change required. Please set a new password to continue.",
+      200,
+    );
   }
 
   // Generate tokens
@@ -79,7 +111,7 @@ export const login = asyncHandler(async (req, res) => {
       ...tokens,
     },
     "Login successful",
-    200
+    200,
   );
 });
 
@@ -94,7 +126,7 @@ export const register = asyncHandler(async (req, res) => {
   // Check if user already exists
   const [existingUsers] = await db.query(
     "SELECT id FROM users WHERE email = ?",
-    [email]
+    [email],
   );
 
   if (existingUsers.length > 0) {
@@ -108,13 +140,13 @@ export const register = asyncHandler(async (req, res) => {
   const userId = generateUUID();
   await db.query(
     "INSERT INTO users (id, full_name, email, phone, password_hash) VALUES (?, ?, ?, ?, ?)",
-    [userId, full_name, email, phone || null, password_hash]
+    [userId, full_name, email, phone || null, password_hash],
   );
 
   // Fetch created user
   const [rows] = await db.query(
     "SELECT id, full_name, email, phone, status, created_at FROM users WHERE id = ?",
-    [userId]
+    [userId],
   );
 
   const user = rows[0];
@@ -137,7 +169,7 @@ export const register = asyncHandler(async (req, res) => {
       ...tokens,
     },
     "Registration successful",
-    201
+    201,
   );
 });
 
@@ -200,7 +232,7 @@ export const getProfile = asyncHandler(async (req, res) => {
 
   const [rows] = await db.query(
     `SELECT * FROM ${tableName} WHERE id = ? AND deleted_at IS NULL`,
-    [id]
+    [id],
   );
 
   if (rows.length === 0) {
@@ -280,7 +312,7 @@ export const changePassword = asyncHandler(async (req, res) => {
     return sendError(
       res,
       "Current password and new password are required",
-      400
+      400,
     );
   }
 
@@ -310,7 +342,7 @@ export const changePassword = asyncHandler(async (req, res) => {
   // Fetch current user
   const [rows] = await db.query(
     `SELECT password_hash FROM ${tableName} WHERE id = ?`,
-    [id]
+    [id],
   );
 
   if (rows.length === 0) {
@@ -320,7 +352,7 @@ export const changePassword = asyncHandler(async (req, res) => {
   // Verify current password
   const isPasswordValid = await comparePassword(
     currentPassword,
-    rows[0].password_hash
+    rows[0].password_hash,
   );
 
   if (!isPasswordValid) {
@@ -331,12 +363,124 @@ export const changePassword = asyncHandler(async (req, res) => {
   const newPasswordHash = await hashPassword(newPassword);
 
   // Update password
-  await db.query(`UPDATE ${tableName} SET password_hash = ? WHERE id = ?`, [
-    newPasswordHash,
-    id,
-  ]);
+  await db.query(
+    `UPDATE ${tableName} SET password_hash = ?, last_password_change = NOW() WHERE id = ?`,
+    [newPasswordHash, id],
+  );
 
   sendSuccess(res, null, "Password changed successfully", 200);
+});
+
+// Force reset password (for first-time login with temporary password)
+export const forceResetPassword = asyncHandler(async (req, res) => {
+  const { email, currentPassword, newPassword } = req.body;
+
+  // Validate required fields
+  if (!email || !currentPassword || !newPassword) {
+    return sendError(
+      res,
+      "Email, current password, and new password are required",
+      400,
+    );
+  }
+
+  // Validate password strength
+  const passwordValidation = validatePasswordStrength(newPassword);
+  if (!passwordValidation.isValid) {
+    return sendError(res, passwordValidation.errors.join(", "), 400);
+  }
+
+  // Find user in users or vendors table
+  let user = null;
+  let tableName = null;
+  let role = null;
+
+  // Check users table
+  const [users] = await db.query(
+    "SELECT * FROM users WHERE email = ? AND deleted_at IS NULL",
+    [email],
+  );
+
+  if (users.length > 0) {
+    user = users[0];
+    tableName = "users";
+    role = "user";
+  }
+
+  // Check vendors table if not found in users
+  if (!user) {
+    const [vendors] = await db.query(
+      "SELECT * FROM vendors WHERE email = ? AND deleted_at IS NULL",
+      [email],
+    );
+
+    if (vendors.length > 0) {
+      user = vendors[0];
+      tableName = "vendors";
+      role = "vendor";
+    }
+  }
+
+  // User not found
+  if (!user) {
+    return sendError(res, "User not found", 404);
+  }
+
+  // Verify current (temporary) password
+  const isPasswordValid = await comparePassword(
+    currentPassword,
+    user.password_hash,
+  );
+
+  if (!isPasswordValid) {
+    return sendError(res, "Current password is incorrect", 400);
+  }
+
+  // Check if password change is actually required
+  if (user.password_change_required !== 1) {
+    return sendError(
+      res,
+      "Password change not required. Please use the normal login flow.",
+      400,
+    );
+  }
+
+  // Hash new password
+  const newPasswordHash = await hashPassword(newPassword);
+
+  // Update password and clear temp password flags
+  await db.query(
+    `UPDATE ${tableName} 
+     SET password_hash = ?, 
+         is_temporary_password = 0, 
+         password_change_required = 0,
+         last_password_change = NOW()
+     WHERE id = ?`,
+    [newPasswordHash, user.id],
+  );
+
+  // Generate regular tokens
+  const tokens = generateTokens({
+    id: user.id,
+    email: user.email,
+    role: role,
+    name: user.name || user.full_name,
+  });
+
+  sendSuccess(
+    res,
+    {
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name || user.full_name,
+        role: role,
+      },
+      ...tokens,
+    },
+    "Password changed successfully. You can now login.",
+    200,
+  );
 });
 
 // Upload Avatar
@@ -397,7 +541,7 @@ export const getSettings = asyncHandler(async (req, res) => {
 
   const [settings] = await db.query(
     "SELECT * FROM user_settings WHERE user_id = ?",
-    [id]
+    [id],
   );
 
   if (settings.length === 0) {
@@ -408,18 +552,18 @@ export const getSettings = asyncHandler(async (req, res) => {
        sms_notifications, sms_reminders, push_notifications, profile_visibility, show_wishlist, 
        share_activity, newsletter_subscription) 
        VALUES (?, ?, TRUE, TRUE, TRUE, FALSE, FALSE, TRUE, 'private', FALSE, FALSE, TRUE)`,
-      [settingsId, id]
+      [settingsId, id],
     );
 
     const [newSettings] = await db.query(
       "SELECT * FROM user_settings WHERE id = ?",
-      [settingsId]
+      [settingsId],
     );
     return sendSuccess(
       res,
       { settings: newSettings[0] },
       "Default settings created",
-      200
+      200,
     );
   }
 
@@ -427,7 +571,7 @@ export const getSettings = asyncHandler(async (req, res) => {
     res,
     { settings: settings[0] },
     "Settings retrieved successfully",
-    200
+    200,
   );
 });
 
@@ -450,7 +594,7 @@ export const updateSettings = asyncHandler(async (req, res) => {
   // Check if settings exist
   const [existing] = await db.query(
     "SELECT id FROM user_settings WHERE user_id = ?",
-    [id]
+    [id],
   );
 
   if (existing.length === 0) {
@@ -474,7 +618,7 @@ export const updateSettings = asyncHandler(async (req, res) => {
         show_wishlist ?? false,
         share_activity ?? false,
         newsletter_subscription ?? true,
-      ]
+      ],
     );
   } else {
     // Update existing settings
@@ -496,21 +640,21 @@ export const updateSettings = asyncHandler(async (req, res) => {
         share_activity,
         newsletter_subscription,
         id,
-      ]
+      ],
     );
   }
 
   // Fetch updated settings
   const [updated] = await db.query(
     "SELECT * FROM user_settings WHERE user_id = ?",
-    [id]
+    [id],
   );
 
   sendSuccess(
     res,
     { settings: updated[0] },
     "Settings updated successfully",
-    200
+    200,
   );
 });
 
@@ -526,12 +670,12 @@ export const getUserActivity = asyncHandler(async (req, res) => {
      WHERE actor_id = ? AND actor_role = 'user' 
      ORDER BY created_at DESC 
      LIMIT ? OFFSET ?`,
-    [id, parseInt(limit), parseInt(offset)]
+    [id, parseInt(limit), parseInt(offset)],
   );
 
   const [[{ total }]] = await db.query(
     "SELECT COUNT(*) as total FROM activity_logs WHERE actor_id = ? AND actor_role = 'user'",
-    [id]
+    [id],
   );
 
   sendSuccess(
@@ -546,7 +690,7 @@ export const getUserActivity = asyncHandler(async (req, res) => {
       },
     },
     "Activity log retrieved successfully",
-    200
+    200,
   );
 });
 
@@ -561,7 +705,7 @@ export const forgotPassword = asyncHandler(async (req, res) => {
   // Check if user exists
   const [users] = await db.query(
     "SELECT id, full_name, email FROM users WHERE email = ? AND status = 'active' AND deleted_at IS NULL",
-    [email]
+    [email],
   );
 
   if (users.length === 0) {
@@ -570,7 +714,7 @@ export const forgotPassword = asyncHandler(async (req, res) => {
       res,
       {},
       "If the email exists, a reset link has been sent",
-      200
+      200,
     );
   }
 
@@ -583,14 +727,14 @@ export const forgotPassword = asyncHandler(async (req, res) => {
   // Store token in database
   await db.query(
     "UPDATE users SET reset_token = ?, reset_token_expiry = ? WHERE id = ?",
-    [resetToken, resetTokenExpiry, user.id]
+    [resetToken, resetTokenExpiry, user.id],
   );
 
   // TODO: Send email with reset link
   // For now, just log it (in production, use emailService.js)
   console.log(`Reset token for ${user.email}: ${resetToken}`);
   console.log(
-    `Reset link: http://localhost:8000/reset-password?token=${resetToken}`
+    `Reset link: http://localhost:8000/reset-password?token=${resetToken}`,
   );
 
   // In production, uncomment and implement:
@@ -619,7 +763,7 @@ export const resetPassword = asyncHandler(async (req, res) => {
   // Find user with valid token
   const [users] = await db.query(
     "SELECT id, email FROM users WHERE reset_token = ? AND reset_token_expiry > NOW() AND deleted_at IS NULL",
-    [token]
+    [token],
   );
 
   if (users.length === 0) {
@@ -634,13 +778,13 @@ export const resetPassword = asyncHandler(async (req, res) => {
   // Update password and clear reset token
   await db.query(
     "UPDATE users SET password_hash = ?, reset_token = NULL, reset_token_expiry = NULL WHERE id = ?",
-    [hashedPassword, user.id]
+    [hashedPassword, user.id],
   );
 
   sendSuccess(
     res,
     {},
     "Password reset successful. You can now login with your new password.",
-    200
+    200,
   );
 });

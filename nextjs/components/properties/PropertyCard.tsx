@@ -22,6 +22,7 @@ import {
   useCorporateUser,
   calculateCorporateSavings,
 } from "@/hooks/useCorporateUser";
+import { getImageUrl } from "@/lib/imageUtils";
 
 interface PropertyCardProps {
   property: Property;
@@ -50,15 +51,14 @@ export default function PropertyCard({
   // Check if property has corporate discount
   const hasCorporateDiscount =
     (property.corporate_discount_percentage || 0) > 0;
-  const corporateDiscountPercent =
-    property.corporate_discount_percentage || 0;
+  const corporateDiscountPercent = property.corporate_discount_percentage || 0;
 
   // Calculate corporate pricing
   const corporatePricing =
     hasCorporateDiscount && showCorporateFeatures
       ? calculateCorporateSavings(
           property.price_per_night,
-          corporateDiscountPercent
+          corporateDiscountPercent,
         )
       : null;
 
@@ -73,10 +73,12 @@ export default function PropertyCard({
   const photosArray = Array.isArray(property.photos)
     ? property.photos
     : property.photos
-    ? [property.photos]
-    : [];
+      ? [property.photos]
+      : [];
 
-  const photos = photosArray.length > 0 ? photosArray : defaultPhotos;
+  const photos = (photosArray.length > 0 ? photosArray : defaultPhotos).map(
+    getImageUrl,
+  );
 
   // Check wishlist status on mount if user is logged in
   useEffect(() => {
@@ -89,7 +91,7 @@ export default function PropertyCard({
 
       try {
         const response = await api.get(
-          API_ENDPOINTS.WISHLIST.CHECK(property.id)
+          API_ENDPOINTS.WISHLIST.CHECK(property.id),
         );
         setIsWishlisted(response.data.data.isWishlisted);
       } catch (error) {
@@ -102,7 +104,7 @@ export default function PropertyCard({
         // Don't show error to user - not critical
         console.debug(
           "Wishlist check skipped:",
-          err.response?.status || "Network error"
+          err.response?.status || "Network error",
         );
       }
     };
@@ -191,6 +193,7 @@ export default function PropertyCard({
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
             className={styles.propertyImage}
             style={{ objectFit: "cover" }}
+            unoptimized
           />
         </div>
 
@@ -275,10 +278,24 @@ export default function PropertyCard({
       <div className={styles.propertyCardContent}>
         {/* Location & Rating Row */}
         <div className={styles.propertyCardHeader}>
-          <div className={styles.propertyLocation}>
+          <div
+            className={`${styles.propertyLocation} ${
+              property.maps_location ? styles.locationClickable : ""
+            }`}
+            onClick={(e) => {
+              if (property.maps_location) {
+                e.preventDefault();
+                e.stopPropagation();
+                window.open(property.maps_location, "_blank");
+              }
+            }}
+            title={property.maps_location ? "View on Google Maps" : undefined}
+          >
             <FiMapPin className={styles.locationIcon} />
             <span className={styles.locationText}>
-              {property.city}, {property.state}
+              {property.area
+                ? `${property.area}, ${property.city}`
+                : `${property.city}, ${property.state}`}
             </span>
           </div>
           {property.rating > 0 && (

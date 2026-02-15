@@ -1,0 +1,433 @@
+/* PriceBreakdown Component Styles */
+/* Session 64: Detailed price breakdown with tiered GST & service charges */
+
+.priceBreakdown {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 24px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .priceBreakdown {
+    background: #1f2937;
+    border-color: #374151;
+  }
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #f3f4f6;
+}
+
+@media (prefers-color-scheme: dark) {
+  .header {
+    border-bottom-color: #374151;
+  }
+}
+
+.title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+}
+
+@media (prefers-color-scheme: dark) {
+  .title {
+    color: #f9fafb;
+  }
+}
+
+.detailsBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  background: #dbeafe;
+  color: #1e40af;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+@media (prefers-color-scheme: dark) {
+  .detailsBadge {
+    background: #1e3a8a;
+    color: #93c5fd;
+  }
+}
+
+.detailsBadge .icon {
+  width: 14px;
+  height: 14px;
+}
+
+/* Price Lines Container */
+.priceLines {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Individual Price Line */
+.priceLine {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.lineLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.lineLabel {
+  font-size: 15px;
+  color: #374151;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .lineLabel {
+    color: #d1d5db;
+  }
+}
+
+.lineLabel .icon {
+  width: 16px;
+  height: 16px;
+  opacity: 0.7;
+}
+
+.lineNote {
+  font-size: 13px;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+@media (prefers-color-scheme: dark) {
+  .lineNote {
+    color: #9ca3af;
+  }
+}
+
+.lineValue {
+  font-size: 15px;
+  font-weight: 600;
+  color: #111827;
+  white-space: nowrap;
+}
+
+@media (prefers-color-scheme: dark) {
+  .lineValue {
+    color: #f9fafb;
+  }
+}
+
+/* Dividers */
+.divider {
+  height: 1px;
+  background: #e5e7eb;
+  margin: 8px 0;
+}
+
+@media (prefers-color-scheme: dark) {
+  .divider {
+    background: #374151;
+  }
+}
+
+.finalDivider {
+  height: 2px;
+  background: #d1d5db;
+  margin: 12px 0;
+}
+
+@media (prefers-color-scheme: dark) {
+  .finalDivider {
+    background: #4b5563;
+  }
+}
+
+/* Subtotal Line */
+.subtotal {
+  padding: 8px 0;
+}
+
+.subtotal .lineLabel {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+}
+
+@media (prefers-color-scheme: dark) {
+  .subtotal .lineLabel {
+    color: #f9fafb;
+  }
+}
+
+.subtotal .lineValue {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+/* Discount Line */
+.discount {
+  background: #f0fdf4;
+  padding: 12px;
+  border-radius: 8px;
+  margin: 4px 0;
+}
+
+@media (prefers-color-scheme: dark) {
+  .discount {
+    background: #064e3b;
+  }
+}
+
+.discount .lineLabel {
+  color: #16a34a;
+  font-weight: 600;
+}
+
+@media (prefers-color-scheme: dark) {
+  .discount .lineLabel {
+    color: #4ade80;
+  }
+}
+
+.couponCode {
+  display: inline-block;
+  padding: 2px 8px;
+  background: #dcfce7;
+  color: #15803d;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: "Courier New", monospace;
+  margin-top: 4px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .couponCode {
+    background: #14532d;
+    color: #86efac;
+  }
+}
+
+.discountValue {
+  color: #16a34a !important;
+  font-size: 16px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .discountValue {
+    color: #4ade80 !important;
+  }
+}
+
+/* Booking Amount Line */
+.bookingAmount {
+  padding: 8px 0;
+  background: #fef3c7;
+  padding: 12px;
+  border-radius: 8px;
+  margin: 4px 0;
+}
+
+@media (prefers-color-scheme: dark) {
+  .bookingAmount {
+    background: #78350f;
+  }
+}
+
+.bookingAmount .lineLabel {
+  font-size: 16px;
+  font-weight: 700;
+  color: #92400e;
+}
+
+@media (prefers-color-scheme: dark) {
+  .bookingAmount .lineLabel {
+    color: #fde68a;
+  }
+}
+
+.bookingAmount .lineValue {
+  font-size: 17px;
+  font-weight: 700;
+  color: #92400e;
+}
+
+@media (prefers-color-scheme: dark) {
+  .bookingAmount .lineValue {
+    color: #fde68a;
+  }
+}
+
+/* GST Tier Badges */
+.gstLowTier {
+  color: #059669 !important;
+  font-weight: 600;
+}
+
+@media (prefers-color-scheme: dark) {
+  .gstLowTier {
+    color: #34d399 !important;
+  }
+}
+
+.gstHighTier {
+  color: #dc2626 !important;
+  font-weight: 600;
+}
+
+@media (prefers-color-scheme: dark) {
+  .gstHighTier {
+    color: #f87171 !important;
+  }
+}
+
+/* Service Charge - No GST Note */
+.noGstNote {
+  color: #2563eb !important;
+  font-weight: 600;
+}
+
+@media (prefers-color-scheme: dark) {
+  .noGstNote {
+    color: #60a5fa !important;
+  }
+}
+
+/* Total Line */
+.totalLine {
+  padding: 16px 0 0;
+}
+
+.totalLabel {
+  font-size: 19px;
+  font-weight: 700;
+  color: #111827;
+}
+
+@media (prefers-color-scheme: dark) {
+  .totalLabel {
+    color: #f9fafb;
+  }
+}
+
+.totalValue {
+  font-size: 22px;
+  font-weight: 800;
+  color: #1f2937;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+@media (prefers-color-scheme: dark) {
+  .totalValue {
+    background: linear-gradient(135deg, #60a5fa, #3b82f6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}
+
+/* Info Footer */
+.infoFooter {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 20px;
+  padding: 12px;
+  background: #f9fafb;
+  border-radius: 8px;
+  border-left: 3px solid #3b82f6;
+}
+
+@media (prefers-color-scheme: dark) {
+  .infoFooter {
+    background: #111827;
+    border-left-color: #60a5fa;
+  }
+}
+
+.infoIcon {
+  width: 16px;
+  height: 16px;
+  color: #3b82f6;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .infoIcon {
+    color: #60a5fa;
+  }
+}
+
+.infoText {
+  font-size: 13px;
+  color: #6b7280;
+  line-height: 1.5;
+  margin: 0;
+}
+
+@media (prefers-color-scheme: dark) {
+  .infoText {
+    color: #9ca3af;
+  }
+}
+
+/* Responsive Adjustments */
+@media (max-width: 640px) {
+  .priceBreakdown {
+    padding: 16px;
+  }
+
+  .title {
+    font-size: 16px;
+  }
+
+  .lineLabel {
+    font-size: 14px;
+  }
+
+  .lineNote {
+    font-size: 12px;
+  }
+
+  .lineValue {
+    font-size: 14px;
+  }
+
+  .totalLabel {
+    font-size: 17px;
+  }
+
+  .totalValue {
+    font-size: 19px;
+  }
+
+  .detailsBadge {
+    font-size: 11px;
+    padding: 3px 10px;
+  }
+}

@@ -9,13 +9,72 @@
     grid-template-columns: 1fr;
     gap: 2rem;
     margin-bottom: 4rem;
+    /* Ensure no overflow constraints */
+    overflow: visible;
 }
 
 @media (min-width: 1024px) {
     .luxuryVillaLayout {
         grid-template-columns: 1fr 480px;
         gap: 3rem;
-        align-items: start;
+        align-items: flex-start;
+        /* Allow both columns to start at top */
+        /* Critical: Allow sticky to work in grid */
+        overflow: visible;
+    }
+}
+
+/* ===== SIDEBAR COLUMN (Grid Item Wrapper) - STICKY APPLIED HERE ===== */
+.sidebarColumn {
+    /* This div is the direct grid child - apply sticky here to match service apartments */
+    width: 100%;
+}
+
+@media (min-width: 1024px) {
+    .sidebarColumn {
+        /* STICKY POSITIONING - Applied to direct grid child */
+        position: -webkit-sticky;
+        /* Safari support */
+        position: sticky;
+        top: 110px;
+        /* Match service apartments navbar height */
+        align-self: flex-start;
+        /* Important: allows sticky to work properly */
+        /* Performance optimizations */
+        will-change: transform;
+        -webkit-transform: translateZ(0);
+        transform: translateZ(0);
+        z-index: 20;
+    }
+}
+
+/* ===== BOOKING SIDEBAR - NO STICKY ON THIS ELEMENT ===== */
+.bookingSidebar {
+    width: 100%;
+}
+
+/* ===== BOOKING CARD - NO STICKY, JUST STYLING ===== */
+.bookingCard {
+    background: white;
+    border-radius: 24px;
+    box-shadow: 0 8px 32px rgba(31, 58, 95, 0.12);
+    padding: 0;
+    overflow: visible;
+    /* CRITICAL: Allow dropdowns to escape */
+    transition: all 0.3s ease;
+}
+
+.bookingCard:hover {
+    box-shadow: 0 12px 48px rgba(31, 58, 95, 0.18);
+}
+
+.bookingCardContent {
+    padding: 2rem;
+}
+
+@media (min-width: 640px) {
+    .bookingCardContent {
+        padding: 2.5rem;
     }
 }
 
@@ -219,9 +278,7 @@
 }
 
 /* ===== BOOKING SIDEBAR (STICKY) ===== */
-.bookingSidebar {
-    position: relative;
-}
+/* Removed duplicate .bookingSidebar definition - it was overriding the sticky positioning */
 
 /* Property Header - Inside Right Sidebar */
 .propertyHeaderSidebar {
@@ -299,15 +356,7 @@
     font-size: 0.875rem;
 }
 
-@media (min-width: 1024px) {
-    .bookingSidebar {
-        position: sticky;
-        top: 6rem;
-        align-self: start;
-        max-height: calc(100vh - 8rem);
-        /* 100vh - (top offset + footer space) */
-    }
-}
+/* Removed duplicate @media .bookingSidebar - using the cleaner version at the top of the file */
 
 .bookingCard {
     background: white;
@@ -318,7 +367,7 @@
     transition: all 0.3s ease;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    /* Removed overflow: hidden - it breaks sticky positioning on parent */
 }
 
 .bookingCard:hover {
@@ -327,35 +376,8 @@
 
 .bookingCardContent {
     padding: 2rem;
-    flex: 1;
-    overflow-y: auto;
-    max-height: calc(100vh - 12rem);
-    /* Ensure scrolling within calculated height */
-}
-
-/* Custom Thin Scrollbar - Only shows when overflowing */
-.bookingCardContent::-webkit-scrollbar {
-    width: 4px;
-}
-
-.bookingCardContent::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.bookingCardContent::-webkit-scrollbar-thumb {
-    background: rgba(47, 164, 169, 0.3);
-    border-radius: 100px;
-    transition: background 0.2s ease;
-}
-
-.bookingCardContent::-webkit-scrollbar-thumb:hover {
-    background: rgba(47, 164, 169, 0.5);
-}
-
-/* Firefox Custom Scrollbar */
-.bookingCardContent {
-    scrollbar-width: thin;
-    scrollbar-color: rgba(47, 164, 169, 0.3) transparent;
+    /* Removed flex: 1, overflow-y, and max-height to allow sticky to work properly */
+    /* The parent .bookingSidebar handles the sticky behavior */
 }
 
 /* Booking Header - Price & Rating */
@@ -363,9 +385,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin: 0 0 24px 0;
     padding-bottom: 24px;
-    border-bottom: 1px solid var(--brand-border-light);
 }
 
 .priceSection {
@@ -410,9 +430,9 @@
 /* Booking Form */
 .bookingForm {
     display: flex;
-    flex-direction: column;
+    /* flex-direction: column; */
     gap: 16px;
-    margin-bottom: 24px;
+    /* margin-bottom: 24px; */
 }
 
 /* Date Selection Grid - Row 1: Check-in and Check-out side by side */
@@ -1425,4 +1445,388 @@
 .pendingBookingCancel svg {
     width: 18px;
     height: 18px;
+}
+
+/* ============================================================================
+   MODERN DROPDOWN STYLES FOR DATES & GUESTS
+   ============================================================================ */
+
+.modernFieldWrapper {
+    position: relative;
+    margin-bottom: 16px;
+    overflow: visible;
+    /* CRITICAL: Allow dropdowns to escape */
+    width: 100%;
+    z-index: 1;
+    /* Create stacking context for dropdowns */
+}
+
+.modernField {
+    background: white;
+    border: 1.5px solid rgba(31, 58, 95, 0.15);
+    border-radius: 16px;
+    padding: 16px 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(31, 58, 95, 0.06);
+}
+
+.modernField:hover {
+    border-color: var(--brand-teal, #2FA4A9);
+    box-shadow: 0 4px 16px rgba(31, 58, 95, 0.12);
+    transform: translateY(-1px);
+}
+
+.fieldInner {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.fieldIcon {
+    color: var(--brand-teal, #2FA4A9);
+    font-size: 22px;
+    flex-shrink: 0;
+}
+
+.fieldText {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.fieldLabel {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--brand-navy, #1F3A5F);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.fieldValue {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--brand-navy, #1F3A5F);
+}
+
+/* Dropdown Styles */
+.dropdownModern {
+    position: absolute;
+    top: calc(100% + 12px);
+    right: 0;
+    width: 100%;
+    background: #ffffff;
+    border-radius: 24px;
+    box-shadow:
+        0 20px 60px rgba(31, 58, 95, 0.25),
+        0 0 0 1px rgba(31, 58, 95, 0.08);
+    z-index: 30;
+    /* CRITICAL: Higher than sidebarColumn (z-index: 20) */
+    animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    max-height: 500px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    width: auto;
+}
+
+@media (min-width: 1024px) {
+    .dropdownModern {
+        right: 0;
+        left: auto;
+    }
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Calendar Styles */
+.calendarHeaders {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 12px;
+    background: linear-gradient(135deg, rgba(47, 164, 169, 0.08) 0%, rgba(31, 58, 95, 0.05) 100%);
+    border-radius: 12px;
+    padding: 10px 8px;
+}
+
+@media (min-width: 640px) {
+    .calendarHeaders {
+        flex-direction: row;
+        gap: 8px;
+        margin-bottom: 16px;
+        padding: 12px 8px;
+    }
+}
+
+.calendarHeader {
+    flex: 1;
+    text-align: center;
+    padding: 4px 0;
+}
+
+.calendarHeader span {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--brand-navy, #1F3A5F);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+}
+
+.datesPickerWrapper {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    background: transparent;
+    padding: 0 12px;
+    overflow: visible;
+}
+
+.sideBySideCalendar {
+    border: none !important;
+    font-family: inherit !important;
+}
+
+.datesPickerWrapper :global(.react-datepicker) {
+    border: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: #ffffff;
+}
+
+@media (min-width: 640px) {
+    .datesPickerWrapper :global(.react-datepicker) {
+        flex-direction: row;
+        gap: 12px;
+    }
+}
+
+.calendarFooter {
+    display: flex;
+    justify-content: flex-end;
+    margin: 16px 16px 8px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(31, 58, 95, 0.08);
+}
+
+.clearDatesBtn {
+    padding: 8px 16px;
+    background: transparent;
+    border: none;
+    color: var(--brand-navy, #1F3A5F);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    text-decoration: underline;
+}
+
+.clearDatesBtn:hover {
+    background: rgba(31, 58, 95, 0.05);
+    text-decoration: none;
+}
+
+/* Guests Dropdown Styles */
+.guestsControlModern {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    gap: 20px;
+}
+
+.guestsDivider {
+    height: 1px;
+    background: linear-gradient(90deg,
+            rgba(31, 58, 95, 0.05) 0%,
+            rgba(31, 58, 95, 0.1) 50%,
+            rgba(31, 58, 95, 0.05) 100%);
+    margin: 0 20px;
+}
+
+.guestsInfoModern {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.guestsLabelModern {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--brand-navy, #1F3A5F);
+    line-height: 1.2;
+}
+
+.guestsSublabelModern {
+    font-size: 12px;
+    color: var(--brand-text-dark, #64748B);
+    line-height: 1.3;
+}
+
+.guestsCounter {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.counterBtn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1.5px solid var(--brand-teal, #2FA4A9);
+    background: white;
+    color: var(--brand-teal, #2FA4A9);
+    font-size: 18px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.counterBtn:hover:not(:disabled) {
+    background: var(--brand-teal, #2FA4A9);
+    color: white;
+    transform: scale(1.08);
+    box-shadow: 0 4px 12px rgba(47, 164, 169, 0.3);
+}
+
+.counterBtn:active:not(:disabled) {
+    transform: scale(0.98);
+}
+
+.counterBtn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    border-color: #cbd5e1;
+    color: #94a3b8;
+}
+
+.counterValue {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--brand-navy, #1F3A5F);
+    min-width: 32px;
+    text-align: center;
+}
+
+/* ===== LOCATION SECTION ===== */
+.locationSectionLuxury {
+    margin: 2.5rem 0;
+    padding: 2rem 0;
+    border-top: 1px solid #e5e7eb;
+}
+
+.sectionTitleLuxury {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--brand-navy);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.sectionTitleLuxury svg {
+    width: 24px;
+    height: 24px;
+    color: var(--brand-teal);
+}
+
+.locationCard {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border: 1px solid #bae6fd;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.locationCard:hover {
+    box-shadow: 0 8px 24px rgba(14, 165, 233, 0.15);
+    transform: translateY(-2px);
+}
+
+.locationDetails {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.locationAddress {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.locationAddress strong {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #0369a1;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.locationAddress p {
+    font-size: 1.125rem;
+    color: var(--brand-navy);
+    margin: 0;
+    line-height: 1.6;
+}
+
+.viewMapButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 0.875rem 1.75rem;
+    background: linear-gradient(135deg, var(--brand-teal) 0%, #0891b2 100%);
+    color: white;
+    border: none;
+    border-radius: 0.75rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 16px rgba(0, 158, 158, 0.2);
+}
+
+.viewMapButton:hover {
+    background: linear-gradient(135deg, #0891b2 0%, var(--brand-teal) 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 158, 158, 0.3);
+}
+
+.viewMapButton:active {
+    transform: translateY(0);
+}
+
+.viewMapButton svg {
+    width: 18px;
+    height: 18px;
+}
+
+@media (min-width: 640px) {
+    .locationDetails {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .viewMapButton {
+        align-self: flex-start;
+    }
 }

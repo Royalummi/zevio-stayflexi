@@ -1,5 +1,9 @@
 import db from "../config/database.js";
 import { asyncHandler, sendSuccess, sendError } from "../utils/response.js";
+import {
+  getAmenitiesSelectClause,
+  getAmenitiesJoinClause,
+} from "../services/amenitiesService.js";
 import { generateUUID } from "../utils/helpers.js";
 
 // Add property to wishlist
@@ -14,7 +18,7 @@ export const addToWishlist = asyncHandler(async (req, res) => {
   // Check if property exists
   const [properties] = await db.query(
     "SELECT id FROM properties WHERE id = ? AND deleted_at IS NULL",
-    [property_id]
+    [property_id],
   );
 
   if (properties.length === 0) {
@@ -24,7 +28,7 @@ export const addToWishlist = asyncHandler(async (req, res) => {
   // Check if already in wishlist
   const [existing] = await db.query(
     "SELECT id FROM wishlists WHERE user_id = ? AND property_id = ?",
-    [userId, property_id]
+    [userId, property_id],
   );
 
   if (existing.length > 0) {
@@ -35,14 +39,14 @@ export const addToWishlist = asyncHandler(async (req, res) => {
   const wishlistId = generateUUID();
   await db.query(
     "INSERT INTO wishlists (id, user_id, property_id) VALUES (?, ?, ?)",
-    [wishlistId, userId, property_id]
+    [wishlistId, userId, property_id],
   );
 
   sendSuccess(
     res,
     { id: wishlistId, property_id },
     "Added to wishlist successfully",
-    201
+    201,
   );
 });
 
@@ -58,7 +62,7 @@ export const removeFromWishlist = asyncHandler(async (req, res) => {
   // Check if in wishlist
   const [existing] = await db.query(
     "SELECT id FROM wishlists WHERE user_id = ? AND property_id = ?",
-    [userId, propertyId]
+    [userId, propertyId],
   );
 
   if (existing.length === 0) {
@@ -68,7 +72,7 @@ export const removeFromWishlist = asyncHandler(async (req, res) => {
   // Remove from wishlist
   await db.query(
     "DELETE FROM wishlists WHERE user_id = ? AND property_id = ?",
-    [userId, propertyId]
+    [userId, propertyId],
   );
 
   sendSuccess(res, null, "Removed from wishlist successfully");
@@ -95,22 +99,25 @@ export const getMyWishlist = asyncHandler(async (req, res) => {
       p.bedrooms,
       p.bathrooms,
       p.max_guests,
-      p.price_per_night,
+      pp.price_per_night,
       p.rating,
       p.reviews_count,
       p.photos,
-      p.amenities,
+      ${getAmenitiesSelectClause("p", "pa", "a")},
       c.name as city_name
     FROM wishlists w
     INNER JOIN properties p ON w.property_id = p.id
     LEFT JOIN cities c ON p.city_id = c.id
     LEFT JOIN property_types pt ON p.property_type_id = pt.id
+    LEFT JOIN property_pricing pp ON p.id = pp.property_id
+    ${getAmenitiesJoinClause("p", "pa", "a")}
     WHERE w.user_id = ? 
     AND p.status = 'approved'
     AND p.deleted_at IS NULL
+    GROUP BY w.id, p.id, pp.id
     ORDER BY w.created_at DESC
     LIMIT ? OFFSET ?`,
-    [userId, parseInt(limit), offset]
+    [userId, parseInt(limit), offset],
   );
 
   // Get total count
@@ -121,7 +128,7 @@ export const getMyWishlist = asyncHandler(async (req, res) => {
      WHERE w.user_id = ? 
      AND p.status = 'approved'
      AND p.deleted_at IS NULL`,
-    [userId]
+    [userId],
   );
 
   const total = countResult[0].total;
@@ -161,7 +168,7 @@ export const checkWishlistStatus = asyncHandler(async (req, res) => {
 
     const [existing] = await db.query(
       "SELECT id FROM wishlists WHERE user_id = ? AND property_id = ?",
-      [userId, propertyId]
+      [userId, propertyId],
     );
 
     sendSuccess(res, {

@@ -74,7 +74,8 @@ export default function ProcessRefunds() {
       }
     } catch (error) {
       toast.error(
-        error.response?.data?.message || "Failed to fetch cancellation requests"
+        error.response?.data?.message ||
+          "Failed to fetch cancellation requests",
       );
     } finally {
       setLoading(false);
@@ -196,7 +197,10 @@ export default function ProcessRefunds() {
           <CardContent>
             <div className="text-2xl font-bold">
               {formatCurrency(
-                bookings.reduce((sum, booking) => sum + booking.total_amount, 0)
+                bookings.reduce(
+                  (sum, booking) => sum + booking.total_amount,
+                  0,
+                ),
               )}
             </div>
           </CardContent>
@@ -213,8 +217,8 @@ export default function ProcessRefunds() {
               {formatCurrency(
                 bookings.reduce(
                   (sum, booking) => sum + booking.total_amount * 0.8,
-                  0
-                ) / (bookings.length || 1)
+                  0,
+                ) / (bookings.length || 1),
               )}
             </div>
           </CardContent>
@@ -535,7 +539,7 @@ export default function ProcessRefunds() {
               <div className="flex gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                 <AlertCircle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
                 <p className="text-sm text-yellow-800">
-                  This action will process the refund through Razorpay and mark
+                  This action will process the refund through Cashfree and mark
                   the booking as cancelled. This action cannot be undone.
                 </p>
               </div>

@@ -1,8 +1,8 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import axios from "axios";
+import { api } from "@/lib/axios";
 import styles from "./corporate-offers.module.css";
 import { FiBriefcase } from "react-icons/fi";
 import { useCorporateUser } from "@/hooks/useCorporateUser";
@@ -66,20 +66,17 @@ export default function CorporateOffersPage() {
     try {
       // Fetch both villas and service apartments with corporate discounts
       // Use sequential requests with delay to avoid rate limiting
-      const villasResponse = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_URL}/public/properties?limit=100`,
-        {
-          headers: {
-            "Cache-Control": "no-cache",
-          },
+      const villasResponse = await api.get("/public/properties?limit=100", {
+        headers: {
+          "Cache-Control": "no-cache",
         },
-      );
+      });
 
-      // Wait 1 second before second request to avoid 429 error
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Wait 500ms before second request to avoid rate limiting
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
-      const apartmentsResponse = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_URL}/service-apartments?limit=100`,
+      const apartmentsResponse = await api.get(
+        "/service-apartments?limit=100",
         {
           headers: {
             "Cache-Control": "no-cache",
@@ -326,8 +323,8 @@ export default function CorporateOffersPage() {
         return;
       }
 
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/corporate/resend-verification`,
+      const response = await api.post(
+        `/corporate/resend-verification`,
         {},
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -410,7 +407,7 @@ export default function CorporateOffersPage() {
       {isMounted && isAuthenticated && !isCorporateUser && (
         <div className={styles.verificationBanner}>
           <div className={styles.bannerContent}>
-            <div className={styles.bannerIcon}>⚠️</div>
+            <div className={styles.bannerIcon}>??</div>
             <div className={styles.bannerText}>
               <h3>Corporate Verification Required</h3>
               <p>
@@ -444,7 +441,7 @@ export default function CorporateOffersPage() {
       <div className={styles.content}>
         {error ? (
           <div className={styles.errorCard}>
-            <div className={styles.errorIcon}>⚠️</div>
+            <div className={styles.errorIcon}>??</div>
             <h3 className={styles.errorTitle}>Unable to Load Properties</h3>
             <p className={styles.errorMessage}>{error}</p>
             <button

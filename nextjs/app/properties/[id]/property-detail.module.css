@@ -55,18 +55,47 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    transition: all 0.3s ease;
 }
 
 .propertyLocationNav svg {
     width: 1rem;
     height: 1rem;
     flex-shrink: 0;
+    transition: transform 0.2s ease;
 }
 
 .propertyLocationNav span {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+/* Clickable Location */
+.propertyLocationNav.locationClickable {
+    cursor: pointer;
+    padding: 0.35rem 0.75rem;
+    border-radius: 0.5rem;
+    margin-left: -0.75rem;
+}
+
+.propertyLocationNav.locationClickable:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 1);
+}
+
+.propertyLocationNav.locationClickable:hover svg {
+    transform: scale(1.15);
+}
+
+.mapLinkText {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.6);
+    transition: color 0.2s ease;
+}
+
+.propertyLocationNav.locationClickable:hover .mapLinkText {
+    color: rgba(255, 255, 255, 0.9);
 }
 
 /* Right: Action Buttons */

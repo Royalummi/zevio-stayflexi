@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const baseURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+const baseURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4500/api";
 
 export const api = axios.create({
   baseURL,
@@ -24,7 +24,7 @@ api.interceptors.request.use(
   },
   (error) => {
     return Promise.reject(error);
-  }
+  },
 );
 
 // Response interceptor to handle errors
@@ -87,7 +87,7 @@ api.interceptors.response.use(
             const response = await axios.post(
               `${baseURL}/auth/refresh`,
               { refreshToken },
-              { headers: { "Content-Type": "application/json" } }
+              { headers: { "Content-Type": "application/json" } },
             );
 
             const { accessToken } = response.data.data;
@@ -96,9 +96,8 @@ api.interceptors.response.use(
             localStorage.setItem("token", accessToken);
 
             // Update the authorization header
-            api.defaults.headers.common[
-              "Authorization"
-            ] = `Bearer ${accessToken}`;
+            api.defaults.headers.common["Authorization"] =
+              `Bearer ${accessToken}`;
 
             return accessToken;
           } finally {
@@ -137,5 +136,5 @@ api.interceptors.response.use(
     }
 
     return Promise.reject(error);
-  }
+  },
 );

@@ -4,7 +4,13 @@ import "react-quill/dist/quill.snow.css";
 import DOMPurify from "dompurify";
 import "./VendorPropertyForm.css";
 
-const VendorPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
+const VendorPropertyForm = ({
+  propertyId = null,
+  onSuccess,
+  onCancel,
+  propertyStatus = "draft", // draft, pending_approval, approved, inactive
+  hasPendingChangeRequest = false,
+}) => {
   const [loading, setLoading] = useState(false);
   const [cities, setCities] = useState([]);
 
@@ -132,11 +138,11 @@ const VendorPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
   const fetchCities = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch("/api/admin/cities", {
+      const response = await fetch("/api/public/cities", {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await response.json();
-      if (data.success) setCities(data.data);
+      if (data.success) setCities(data.data.cities || data.data);
     } catch (error) {
       console.error("Error fetching cities:", error);
     }
@@ -146,20 +152,44 @@ const VendorPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
-      const response = await fetch(`/api/admin/properties/${propertyId}`, {
+      // Use vendor endpoint
+      const response = await fetch(`/api/vendor/properties/${propertyId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await response.json();
 
       if (data.success) {
-        const property = data.data;
+        const property = data.data.property;
+        const pendingChangeRequest = data.data.pendingChangeRequest;
+
+        // Show warning if there's a pending change request
+        if (pendingChangeRequest) {
+          alert(
+            `Note: This property has a pending change request. Your changes will create a new request once the current one is processed.`,
+          );
+        }
+
         setFormData({
           ...formData,
           ...property,
-          amenities: JSON.parse(property.amenities || "[]"),
-          house_rules: JSON.parse(property.house_rules || "{}"),
-          cancellation_policy: JSON.parse(property.cancellation_policy || "{}"),
-          photos: JSON.parse(property.photos || "[]"),
+          city_id: property.city_id || "",
+          property_type_id: property.property_type_id || "",
+          amenities:
+            typeof property.amenities === "string"
+              ? JSON.parse(property.amenities || "[]")
+              : data.data.amenities?.map((a) => a.id) || [],
+          house_rules:
+            typeof property.house_rules === "string"
+              ? JSON.parse(property.house_rules || "{}")
+              : property.house_rules || {},
+          cancellation_policy:
+            typeof property.cancellation_policy === "string"
+              ? JSON.parse(property.cancellation_policy || "{}")
+              : property.cancellation_policy || {},
+          photos:
+            typeof property.photos === "string"
+              ? JSON.parse(property.photos || "[]")
+              : property.photos || [],
         });
 
         setGuidelines({
@@ -171,10 +201,15 @@ const VendorPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
           emergency_contacts: property.emergency_contacts || "",
         });
 
-        setPhotoUrls(JSON.parse(property.photos || "[]").join("\n"));
+        const photoArray =
+          typeof property.photos === "string"
+            ? JSON.parse(property.photos || "[]")
+            : property.photos || [];
+        setPhotoUrls(photoArray.join("\n"));
       }
     } catch (error) {
       console.error("Error fetching property:", error);
+      alert("Failed to load property data: " + error.message);
     } finally {
       setLoading(false);
     }
@@ -258,7 +293,7 @@ const VendorPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
       house_rules: {
         ...prev.house_rules,
         additional_rules: prev.house_rules.additional_rules.filter(
-          (_, i) => i !== index
+          (_, i) => i !== index,
         ),
       },
     }));
@@ -302,8 +337,8 @@ const VendorPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (e, submitForApproval = true) => {
+    e?.preventDefault();
 
     if (!validateForm()) {
       alert("Please fix validation errors");
@@ -312,15 +347,6 @@ const VendorPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
 
     try {
       setLoading(true);
-
-      // Get vendor ID from token
-      const vendorData = JSON.parse(localStorage.getItem("vendor"));
-      const vendor_id = vendorData?.id;
-
-      if (!vendor_id) {
-        alert("Vendor session expired. Please login again.");
-        return;
-      }
 
       // Process photo URLs
       const photosArray = photoUrls
@@ -332,44 +358,95 @@ const VendorPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
       const payload = {
         ...formData,
         ...guidelines,
-        vendor_id,
-        amenities: JSON.stringify(formData.amenities),
-        house_rules: JSON.stringify(formData.house_rules),
-        cancellation_policy: JSON.stringify(formData.cancellation_policy),
-        photos: JSON.stringify(photosArray),
-        status: "pending_approval", // Vendors submit for approval
+        // amenities should be array of IDs, not stringified
+        amenities: Array.isArray(formData.amenities) ? formData.amenities : [],
+        house_rules: formData.house_rules,
+        cancellation_policy: formData.cancellation_policy,
+        photos: photosArray,
       };
 
       const token = localStorage.getItem("token");
-      const url = propertyId
-        ? `/api/admin/properties/${propertyId}`
-        : "/api/admin/properties";
-      const method = propertyId ? "PUT" : "POST";
 
-      const response = await fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-      });
+      if (propertyId) {
+        // EDITING EXISTING PROPERTY
+        // Update property (will create change request if approved)
+        const response = await fetch(`/api/vendor/properties/${propertyId}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
+        });
 
-      const data = await response.json();
+        const data = await response.json();
 
-      if (data.success) {
-        alert(
-          propertyId
-            ? "Property updated and submitted for approval!"
-            : "Property created and submitted for approval!"
-        );
-        if (onSuccess) onSuccess();
+        if (data.success) {
+          if (data.data.changeRequestId) {
+            alert(
+              "Change request submitted for admin approval! Your property will remain live with current data until approved.",
+            );
+          } else {
+            // Draft or pending_approval property updated directly
+            alert("Property updated successfully!");
+          }
+          if (onSuccess) onSuccess();
+        } else {
+          alert("Error: " + data.message);
+        }
       } else {
-        alert("Error: " + data.message);
+        // CREATING NEW PROPERTY
+        // Step 1: Create as draft
+        const createResponse = await fetch("/api/vendor/properties", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
+        });
+
+        const createData = await createResponse.json();
+
+        if (createData.success) {
+          const newPropertyId = createData.data.id;
+
+          if (submitForApproval) {
+            // Step 2: Submit for approval
+            const submitResponse = await fetch(
+              `/api/vendor/properties/${newPropertyId}/submit`,
+              {
+                method: "PATCH",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({}),
+              },
+            );
+
+            const submitData = await submitResponse.json();
+
+            if (submitData.success) {
+              alert("Property created and submitted for approval!");
+              if (onSuccess) onSuccess();
+            } else {
+              alert(
+                "Property created but submission failed: " + submitData.message,
+              );
+              if (onSuccess) onSuccess(); // Still call success to refresh
+            }
+          } else {
+            alert("Property saved as draft!");
+            if (onSuccess) onSuccess();
+          }
+        } else {
+          alert("Error creating property: " + createData.message);
+        }
       }
     } catch (error) {
       console.error("Error submitting form:", error);
-      alert("Error submitting form");
+      alert("Error submitting form: " + error.message);
     } finally {
       setLoading(false);
     }
@@ -904,7 +981,7 @@ const VendorPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
                   handleNestedChange(
                     "house_rules",
                     "check_in_after",
-                    e.target.value
+                    e.target.value,
                   )
                 }
                 placeholder="2:00 PM"
@@ -920,7 +997,7 @@ const VendorPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
                   handleNestedChange(
                     "house_rules",
                     "check_out_before",
-                    e.target.value
+                    e.target.value,
                   )
                 }
                 placeholder="11:00 AM"
@@ -936,7 +1013,7 @@ const VendorPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
                   handleNestedChange(
                     "house_rules",
                     "quiet_hours",
-                    e.target.value
+                    e.target.value,
                   )
                 }
                 placeholder="10:00 PM - 8:00 AM"
@@ -953,7 +1030,7 @@ const VendorPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
                   handleNestedChange(
                     "house_rules",
                     "no_smoking",
-                    e.target.checked
+                    e.target.checked,
                   )
                 }
               />
@@ -968,7 +1045,7 @@ const VendorPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
                   handleNestedChange(
                     "house_rules",
                     "no_parties",
-                    e.target.checked
+                    e.target.checked,
                   )
                 }
               />
@@ -983,7 +1060,7 @@ const VendorPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
                   handleNestedChange(
                     "house_rules",
                     "no_events",
-                    e.target.checked
+                    e.target.checked,
                   )
                 }
               />
@@ -998,7 +1075,7 @@ const VendorPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
                   handleNestedChange(
                     "house_rules",
                     "pets_allowed",
-                    e.target.checked
+                    e.target.checked,
                   )
                 }
               />
@@ -1014,7 +1091,7 @@ const VendorPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
                     handleNestedChange(
                       "house_rules",
                       "pets_approval_required",
-                      e.target.checked
+                      e.target.checked,
                     )
                   }
                 />
@@ -1061,116 +1138,8 @@ const VendorPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
           </div>
         </section>
 
-        {/* Section 10: Cancellation Policy (JSON) */}
-        <section className="form-section">
-          <h3>Cancellation Policy</h3>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label>Policy Type</label>
-              <select
-                value={formData.cancellation_policy.policy_type}
-                onChange={(e) =>
-                  handleNestedChange(
-                    "cancellation_policy",
-                    "policy_type",
-                    e.target.value
-                  )
-                }
-              >
-                <option value="Flexible">Flexible</option>
-                <option value="Moderate">Moderate</option>
-                <option value="Strict">Strict</option>
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label>Free Cancellation Hours</label>
-              <input
-                type="number"
-                value={formData.cancellation_policy.free_cancellation_hours}
-                onChange={(e) =>
-                  handleNestedChange(
-                    "cancellation_policy",
-                    "free_cancellation_hours",
-                    parseInt(e.target.value)
-                  )
-                }
-                min="0"
-              />
-            </div>
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label>Partial Refund Days</label>
-              <input
-                type="number"
-                value={formData.cancellation_policy.partial_refund_days}
-                onChange={(e) =>
-                  handleNestedChange(
-                    "cancellation_policy",
-                    "partial_refund_days",
-                    parseInt(e.target.value)
-                  )
-                }
-                min="0"
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Partial Refund Percentage (%)</label>
-              <input
-                type="number"
-                value={formData.cancellation_policy.partial_refund_percentage}
-                onChange={(e) =>
-                  handleNestedChange(
-                    "cancellation_policy",
-                    "partial_refund_percentage",
-                    parseInt(e.target.value)
-                  )
-                }
-                min="0"
-                max="100"
-              />
-            </div>
-          </div>
-
-          <div className="form-row checkboxes">
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                checked={formData.cancellation_policy.cleaning_fee_refundable}
-                onChange={(e) =>
-                  handleNestedChange(
-                    "cancellation_policy",
-                    "cleaning_fee_refundable",
-                    e.target.checked
-                  )
-                }
-              />
-              <span>Cleaning Fee Refundable</span>
-            </label>
-          </div>
-
-          <div className="form-row">
-            <div className="form-group full-width">
-              <label>Notes</label>
-              <textarea
-                value={formData.cancellation_policy.notes}
-                onChange={(e) =>
-                  handleNestedChange(
-                    "cancellation_policy",
-                    "notes",
-                    e.target.value
-                  )
-                }
-                rows="2"
-                placeholder="Additional cancellation policy notes..."
-              />
-            </div>
-          </div>
-        </section>
+        {/* Section 10: Cancellation Policy (JSON) - ADMIN ONLY - Hidden from vendors */}
+        {/* Cancellation policy is managed by admins. Default policy applies automatically. */}
 
         {/* Section 11: Rich Text Guidelines */}
         <section className="form-section">
@@ -1277,20 +1246,59 @@ const VendorPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
           </p>
         </section>
 
-        {/* Submit Button */}
+        {/* Submit Button(s) */}
         <div className="form-actions">
-          <button type="submit" disabled={loading} className="btn-submit">
-            {loading
-              ? "Saving..."
-              : propertyId
-              ? "Update & Submit for Approval"
-              : "Create & Submit for Approval"}
-          </button>
+          {/* Show status-dependent buttons based on property state */}
+          {propertyStatus === "draft" || !propertyId ? (
+            // For DRAFT properties or NEW properties: Show TWO buttons
+            <>
+              <button
+                type="button"
+                onClick={(e) => handleSubmit(e, false)}
+                disabled={loading || hasPendingChangeRequest}
+                className="btn-secondary"
+              >
+                {loading ? "Saving..." : "Save as Draft"}
+              </button>
+              <button
+                type="button"
+                onClick={(e) => handleSubmit(e, true)}
+                disabled={loading || hasPendingChangeRequest}
+                className="btn-submit"
+              >
+                {loading ? "Submitting..." : "Submit for Approval"}
+              </button>
+            </>
+          ) : propertyStatus === "approved" ? (
+            // For APPROVED properties: Single button that creates change request
+            <button
+              type="button"
+              onClick={(e) => handleSubmit(e, true)}
+              disabled={loading || hasPendingChangeRequest}
+              className="btn-submit"
+            >
+              {loading ? "Submitting..." : "Submit Change Request"}
+            </button>
+          ) : (
+            // For PENDING_APPROVAL or INACTIVE: Show disabled button
+            <button type="button" disabled={true} className="btn-submit">
+              {propertyStatus === "pending_approval"
+                ? "Pending Admin Approval"
+                : "Property Inactive"}
+            </button>
+          )}
 
           {onCancel && (
             <button type="button" onClick={onCancel} className="btn-cancel">
               Cancel
             </button>
+          )}
+
+          {hasPendingChangeRequest && (
+            <p className="info-text" style={{ color: "#d97706" }}>
+              ⚠️ This property has a pending change request. Please wait for
+              admin review before making new changes.
+            </p>
           )}
         </div>
       </form>

@@ -53,8 +53,10 @@ import {
   Mail,
   Phone,
   MapPin,
+  UserPlus,
 } from "lucide-react";
 import { formatCurrency, formatDate } from "../../lib/utils";
+import CreateUserDialog from "../../components/admin/CreateUserDialog";
 
 const AdminUsers = () => {
   // State
@@ -79,6 +81,7 @@ const AdminUsers = () => {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showBlockModal, setShowBlockModal] = useState(false);
   const [showUnblockModal, setShowUnblockModal] = useState(false);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [blockReason, setBlockReason] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
 
@@ -156,7 +159,10 @@ const AdminUsers = () => {
       setShowDetailsModal(true);
     } catch (error) {
       console.error("Error fetching user details:", error);
-      toast.error("Failed to load user details");
+      // Use setTimeout to avoid React warnings when toast is triggered during state update
+      setTimeout(() => {
+        toast.error("Failed to load user details");
+      }, 0);
     }
   };
 
@@ -381,10 +387,18 @@ const AdminUsers = () => {
       {/* Users Table */}
       <Card>
         <CardHeader>
-          <CardTitle>User Management</CardTitle>
-          <CardDescription>
-            Manage user accounts, view details, and control access
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>User Management</CardTitle>
+              <CardDescription>
+                Manage user accounts, view details, and control access
+              </CardDescription>
+            </div>
+            <Button onClick={() => setShowCreateDialog(true)} className="gap-2">
+              <UserPlus className="w-4 h-4" />
+              Create User
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           {/* Filters */}
@@ -929,6 +943,16 @@ const AdminUsers = () => {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Create User Dialog */}
+      <CreateUserDialog
+        open={showCreateDialog}
+        onOpenChange={setShowCreateDialog}
+        onSuccess={() => {
+          fetchUsers();
+          fetchStats();
+        }}
+      />
     </div>
   );
 };

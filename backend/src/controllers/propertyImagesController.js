@@ -1,6 +1,7 @@
 import db from "../config/database.js";
 import { asyncHandler, sendSuccess, sendError } from "../utils/response.js";
 import { generateUUID } from "../utils/helpers.js";
+import sharp from "sharp";
 import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
@@ -20,7 +21,7 @@ export const uploadPropertyImages = asyncHandler(async (req, res) => {
   // Check if property belongs to vendor
   const [properties] = await db.query(
     `SELECT id FROM properties WHERE id = ? AND vendor_id = ? AND deleted_at IS NULL`,
-    [id, vendorId]
+    [id, vendorId],
   );
 
   if (properties.length === 0) {
@@ -36,14 +37,37 @@ export const uploadPropertyImages = asyncHandler(async (req, res) => {
   const [maxOrder] = await db.query(
     `SELECT COALESCE(MAX(sort_order), 0) as max_order 
      FROM property_images WHERE property_id = ?`,
-    [id]
+    [id],
   );
 
   let sortOrder = maxOrder[0].max_order;
   const uploadedImages = [];
 
-  // Insert images into database
+  // Process and compress each uploaded image using sharp
   for (const file of req.files) {
+    const filePath = file.path;
+
+    try {
+      // Compress image using sharp
+      // Format: JPEG with 85% quality, resize if width > 1920px
+      await sharp(filePath)
+        .resize(1920, null, {
+          withoutEnlargement: true, // Don't upscale smaller images
+          fit: "inside",
+        })
+        .jpeg({ quality: 85, progressive: true })
+        .toFile(filePath + ".tmp");
+
+      // Replace original with compressed version
+      fs.unlinkSync(filePath);
+      fs.renameSync(filePath + ".tmp", filePath);
+
+      console.log(`Image compressed: ${file.filename}`);
+    } catch (compressionError) {
+      console.error("Image compression error:", compressionError);
+      // Continue with original file if compression fails
+    }
+
     sortOrder++;
     const imageId = generateUUID();
     const imageUrl = `/uploads/properties/${file.filename}`;
@@ -51,7 +75,7 @@ export const uploadPropertyImages = asyncHandler(async (req, res) => {
     await db.query(
       `INSERT INTO property_images (id, property_id, image_url, sort_order) 
        VALUES (?, ?, ?, ?)`,
-      [imageId, id, imageUrl, sortOrder]
+      [imageId, id, imageUrl, sortOrder],
     );
 
     uploadedImages.push({
@@ -68,7 +92,7 @@ export const uploadPropertyImages = asyncHandler(async (req, res) => {
     res,
     "Images uploaded successfully",
     { images: uploadedImages },
-    201
+    201,
   );
 });
 
@@ -84,7 +108,7 @@ export const deletePropertyImage = asyncHandler(async (req, res) => {
   // Check if property belongs to vendor
   const [properties] = await db.query(
     `SELECT id FROM properties WHERE id = ? AND vendor_id = ? AND deleted_at IS NULL`,
-    [id, vendorId]
+    [id, vendorId],
   );
 
   if (properties.length === 0) {
@@ -95,7 +119,7 @@ export const deletePropertyImage = asyncHandler(async (req, res) => {
   const [images] = await db.query(
     `SELECT id, image_url FROM property_images 
      WHERE id = ? AND property_id = ?`,
-    [imageId, id]
+    [imageId, id],
   );
 
   if (images.length === 0) {
@@ -137,7 +161,7 @@ export const reorderPropertyImages = asyncHandler(async (req, res) => {
   // Check if property belongs to vendor
   const [properties] = await db.query(
     `SELECT id FROM properties WHERE id = ? AND vendor_id = ? AND deleted_at IS NULL`,
-    [id, vendorId]
+    [id, vendorId],
   );
 
   if (properties.length === 0) {
@@ -150,7 +174,7 @@ export const reorderPropertyImages = asyncHandler(async (req, res) => {
       `UPDATE property_images 
        SET sort_order = ? 
        WHERE id = ? AND property_id = ?`,
-      [item.sort_order, item.id, id]
+      [item.sort_order, item.id, id],
     );
   }
 
@@ -172,7 +196,7 @@ export const getPropertyImages = asyncHandler(async (req, res) => {
   // Check if property belongs to vendor
   const [properties] = await db.query(
     `SELECT id FROM properties WHERE id = ? AND vendor_id = ? AND deleted_at IS NULL`,
-    [id, vendorId]
+    [id, vendorId],
   );
 
   if (properties.length === 0) {
@@ -185,7 +209,7 @@ export const getPropertyImages = asyncHandler(async (req, res) => {
      FROM property_images 
      WHERE property_id = ? 
      ORDER BY sort_order ASC`,
-    [id]
+    [id],
   );
 
   sendSuccess(res, "Images retrieved successfully", { images });
@@ -199,7 +223,7 @@ async function reorderImages(propertyId) {
     `SELECT id FROM property_images 
      WHERE property_id = ? 
      ORDER BY sort_order ASC`,
-    [propertyId]
+    [propertyId],
   );
 
   let order = 1;
@@ -220,7 +244,7 @@ async function updatePropertyPhotosField(propertyId) {
     `SELECT image_url FROM property_images 
      WHERE property_id = ? 
      ORDER BY sort_order ASC`,
-    [propertyId]
+    [propertyId],
   );
 
   const photoUrls = images.map((img) => img.image_url);

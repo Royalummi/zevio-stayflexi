@@ -1,0 +1,441 @@
+/* CouponInput Component Styles */
+/* Session 64: Coupon validation and application UI */
+
+.couponContainer {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  .couponContainer {
+    background: #1f2937;
+    border-color: #374151;
+  }
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.headerIcon {
+  width: 20px;
+  height: 20px;
+  color: #3b82f6;
+}
+
+@media (prefers-color-scheme: dark) {
+  .headerIcon {
+    color: #60a5fa;
+  }
+}
+
+.title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+}
+
+@media (prefers-color-scheme: dark) {
+  .title {
+    color: #f9fafb;
+  }
+}
+
+/* Input Wrapper */
+.inputWrapper {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.inputGroup {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.input {
+  width: 100%;
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: 2px solid #d1d5db;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #111827;
+  transition: all 0.2s ease;
+  font-family: "Courier New", monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  .input {
+    background: #111827;
+    color: #f9fafb;
+    border-color: #4b5563;
+  }
+}
+
+.input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+@media (prefers-color-scheme: dark) {
+  .input:focus {
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
+  }
+}
+
+.input:disabled {
+  background: #f3f4f6;
+  color: #6b7280;
+  cursor: not-allowed;
+}
+
+@media (prefers-color-scheme: dark) {
+  .input:disabled {
+    background: #1f2937;
+    color: #9ca3af;
+  }
+}
+
+.input::placeholder {
+  color: #9ca3af;
+  font-size: 14px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .input::placeholder {
+    color: #6b7280;
+  }
+}
+
+/* Input States */
+.inputApplied {
+  border-color: #10b981 !important;
+}
+
+.inputApplied .input {
+  border-color: #10b981;
+  background: #f0fdf4;
+  padding-right: 48px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .inputApplied .input {
+    background: #064e3b;
+    border-color: #34d399;
+  }
+}
+
+.inputError .input {
+  border-color: #ef4444;
+}
+
+@media (prefers-color-scheme: dark) {
+  .inputError .input {
+    border-color: #f87171;
+  }
+}
+
+/* Applied Check Icon */
+.appliedIcon {
+  position: absolute;
+  right: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: #10b981;
+  color: #ffffff;
+  border-radius: 50%;
+  font-size: 14px;
+  animation: scaleIn 0.3s ease;
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0);
+  }
+
+  to {
+    transform: scale(1);
+  }
+}
+
+/* Action Buttons */
+.applyButton,
+.removeButton {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.applyButton {
+  background: #3b82f6;
+  color: #ffffff;
+}
+
+.applyButton:hover:not(:disabled) {
+  background: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(59, 130, 246, 0.2);
+}
+
+.applyButton:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.applyButton:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+@media (prefers-color-scheme: dark) {
+  .applyButton {
+    background: #2563eb;
+  }
+
+  .applyButton:hover:not(:disabled) {
+    background: #1d4ed8;
+  }
+
+  .applyButton:disabled {
+    background: #4b5563;
+  }
+}
+
+.buttonLoading {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.removeButton {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.removeButton:hover {
+  background: #fecaca;
+  transform: translateY(-1px);
+}
+
+@media (prefers-color-scheme: dark) {
+  .removeButton {
+    background: #7f1d1d;
+    color: #fca5a5;
+  }
+
+  .removeButton:hover {
+    background: #991b1b;
+  }
+}
+
+/* Error Message */
+.errorMessage {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: #fee2e2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  animation: slideDown 0.3s ease;
+}
+
+@media (prefers-color-scheme: dark) {
+  .errorMessage {
+    background: #7f1d1d;
+    border-color: #991b1b;
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.errorIcon {
+  width: 16px;
+  height: 16px;
+  color: #dc2626;
+  flex-shrink: 0;
+}
+
+@media (prefers-color-scheme: dark) {
+  .errorIcon {
+    color: #fca5a5;
+  }
+}
+
+.errorMessage span {
+  font-size: 13px;
+  color: #dc2626;
+  line-height: 1.4;
+}
+
+@media (prefers-color-scheme: dark) {
+  .errorMessage span {
+    color: #fca5a5;
+  }
+}
+
+/* Success Message */
+.successMessage {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: #d1fae5;
+  border: 1px solid #a7f3d0;
+  border-radius: 6px;
+  animation: slideDown 0.3s ease;
+}
+
+@media (prefers-color-scheme: dark) {
+  .successMessage {
+    background: #064e3b;
+    border-color: #065f46;
+  }
+}
+
+.successIcon {
+  width: 16px;
+  height: 16px;
+  color: #10b981;
+  flex-shrink: 0;
+}
+
+@media (prefers-color-scheme: dark) {
+  .successIcon {
+    color: #34d399;
+  }
+}
+
+.successMessage span {
+  font-size: 13px;
+  color: #065f46;
+  line-height: 1.4;
+}
+
+@media (prefers-color-scheme: dark) {
+  .successMessage span {
+    color: #6ee7b7;
+  }
+}
+
+.successMessage strong {
+  font-weight: 700;
+  color: #047857;
+}
+
+@media (prefers-color-scheme: dark) {
+  .successMessage strong {
+    color: #a7f3d0;
+  }
+}
+
+/* Info Text */
+.infoText {
+  font-size: 13px;
+  color: #6b7280;
+  line-height: 1.4;
+  margin: 0;
+  padding-left: 2px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .infoText {
+    color: #9ca3af;
+  }
+}
+
+/* Responsive Adjustments */
+@media (max-width: 640px) {
+  .couponContainer {
+    padding: 16px;
+  }
+
+  .inputWrapper {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .applyButton,
+  .removeButton {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .title {
+    font-size: 15px;
+  }
+
+  .input {
+    font-size: 13px;
+    padding: 10px 14px;
+  }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+
+  .appliedIcon,
+  .errorMessage,
+  .successMessage {
+    animation: none;
+  }
+
+  .spinner {
+    animation: none;
+  }
+
+  .applyButton:hover:not(:disabled),
+  .removeButton:hover {
+    transform: none;
+  }
+}

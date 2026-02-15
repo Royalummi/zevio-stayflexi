@@ -982,3 +982,140 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* ===================================================================
+   SESSION 47: PAYMENT PENDING UI ENHANCEMENTS
+   Enhanced UX: Prominent cancel button, payment timer, hidden check-in
+   =================================================================== */
+
+/* Payment Pending Notice */
+.paymentPendingNotice {
+  grid-column: 1 / -1;
+  margin: 1rem 0;
+}
+
+.paymentWarning {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem;
+  background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+  border: 2px solid #F59E0B;
+  border-radius: 12px;
+  color: #92400E;
+}
+
+.paymentWarning svg {
+  flex-shrink: 0;
+  color: #D97706;
+}
+
+.paymentWarning h4 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #78350F;
+}
+
+.paymentWarning p {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+/* Enhanced Pending Payment Actions */
+.pendingPaymentActions {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1rem;
+  width: 100%;
+}
+
+.actionBtnPrimaryLarge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1.25rem 1.5rem;
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.actionBtnPrimaryLarge:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+}
+
+.actionBtnPrimaryLarge:active {
+  transform: translateY(0);
+}
+
+.buttonContent {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+}
+
+.buttonContent strong {
+  font-size: 1rem;
+  line-height: 1.2;
+}
+
+.buttonContent small {
+  font-size: 0.75rem;
+  font-weight: 500;
+  opacity: 0.9;
+}
+
+.actionBtnCancelLarge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1.25rem 1.5rem;
+  background: white;
+  color: #EF4444;
+  border: 2px solid #EF4444;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.actionBtnCancelLarge:hover {
+  background: #FEE2E2;
+  border-color: #DC2626;
+  color: #DC2626;
+  transform: translateY(-1px);
+}
+
+.actionBtnCancelLarge:active {
+  transform: translateY(0);
+}
+
+/* Responsive adjustments for pending payment actions */
+@media (max-width: 768px) {
+  .pendingPaymentActions {
+    grid-template-columns: 1fr;
+  }
+
+  .actionBtnPrimaryLarge,
+  .actionBtnCancelLarge {
+    width: 100%;
+  }
+
+  .paymentWarning {
+    flex-direction: column;
+    text-align: center;
+  }
+}

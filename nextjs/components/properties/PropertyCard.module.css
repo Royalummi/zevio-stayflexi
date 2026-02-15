@@ -342,6 +342,7 @@
   gap: 6px;
   flex: 1;
   min-width: 0;
+  transition: all 0.2s ease;
 }
 
 .locationIcon {
@@ -349,6 +350,7 @@
   height: 14px;
   color: var(--brand-text-dark);
   flex-shrink: 0;
+  transition: transform 0.2s ease, color 0.2s ease;
 }
 
 .locationText {
@@ -358,6 +360,28 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  transition: color 0.2s ease;
+}
+
+/* Clickable location styles */
+.propertyLocation.locationClickable {
+  cursor: pointer;
+  border-radius: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  margin-left: -0.5rem;
+}
+
+.propertyLocation.locationClickable:hover {
+  background: rgba(0, 172, 193, 0.08);
+}
+
+.propertyLocation.locationClickable:hover .locationIcon {
+  color: var(--brand-teal);
+  transform: scale(1.15);
+}
+
+.propertyLocation.locationClickable:hover .locationText {
+  color: var(--brand-teal);
 }
 
 .propertyRating {

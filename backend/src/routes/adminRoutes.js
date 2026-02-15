@@ -3,6 +3,7 @@ import { body } from "express-validator";
 import { validate } from "../middlewares/validator.js";
 import { authenticate, authorize } from "../middlewares/auth.js";
 import { validatePagination } from "../middlewares/pagination.js";
+import { uploadPropertyImages as uploadPropertyImagesMiddleware } from "../middlewares/upload.js";
 import {
   getAllBookings,
   getBookingStats,
@@ -17,6 +18,7 @@ import {
   getAllUsers,
   getUserDetails,
   updateUserStatus,
+  createUser,
   getUserStats,
   getRevenueAnalytics,
   getBookingTrends,
@@ -24,10 +26,20 @@ import {
   getPropertyPerformance,
   getVendorPerformance,
   getAllCities,
+  createCity,
   getAllVendors,
+  getAllPropertyTypes,
+  getAllAmenities,
   createProperty,
   updateProperty,
   deleteProperty,
+  getRecommendedPropertiesAdmin,
+  toggleRecommendedStatus,
+  reorderRecommendedProperties,
+  getPropertyImages,
+  uploadPropertyImages,
+  deletePropertyImage,
+  clearCache,
 } from "../controllers/adminController.js";
 
 const router = express.Router();
@@ -70,7 +82,21 @@ router.post(
 
 // Dropdown data (small datasets - no pagination needed)
 router.get("/cities", getAllCities);
+router.post(
+  "/cities",
+  [
+    body("name").trim().notEmpty().withMessage("City name is required"),
+    body("state").trim().notEmpty().withMessage("State is required"),
+    validate,
+  ],
+  createCity,
+);
 router.get("/vendors", getAllVendors);
+router.get("/property-types", getAllPropertyTypes);
+router.get("/amenities", getAllAmenities);
+
+// Cache management
+router.post("/cache/clear", clearCache);
 
 // Properties management (with pagination)
 router.get("/properties", validatePagination, getAllProperties);
@@ -91,6 +117,16 @@ router.post(
 );
 router.put("/properties/:id", updateProperty);
 router.delete("/properties/:id", deleteProperty);
+
+// Property Images Management
+router.get("/properties/:id/images", getPropertyImages);
+router.post(
+  "/properties/:id/images",
+  uploadPropertyImagesMiddleware.array("images", 10), // Max 10 images per upload
+  uploadPropertyImages,
+);
+router.delete("/properties/:id/images/:imageId", deletePropertyImage);
+
 router.put(
   "/properties/:id/status",
   [
@@ -107,6 +143,35 @@ router.put(
 router.get("/users", validatePagination, getAllUsers);
 router.get("/users/stats", getUserStats);
 router.get("/users/:id", getUserDetails);
+router.post(
+  "/users",
+  [
+    body("full_name")
+      .trim()
+      .notEmpty()
+      .withMessage("Full name is required")
+      .isLength({ min: 2, max: 150 })
+      .withMessage("Full name must be between 2 and 150 characters"),
+    body("email")
+      .trim()
+      .notEmpty()
+      .withMessage("Email is required")
+      .isEmail()
+      .withMessage("Valid email is required")
+      .normalizeEmail(),
+    body("phone")
+      .optional()
+      .trim()
+      .matches(/^[0-9]{10}$/)
+      .withMessage("Phone must be 10 digits"),
+    body("role")
+      .optional()
+      .isIn(["customer", "vendor"])
+      .withMessage("Role must be 'customer' or 'vendor'"),
+    validate,
+  ],
+  createUser,
+);
 router.put(
   "/users/:id/status",
   [
@@ -125,5 +190,33 @@ router.get("/reports/booking-trends", getBookingTrends);
 router.get("/reports/user-activity", getUserActivityReport);
 router.get("/reports/property-performance", getPropertyPerformance);
 router.get("/reports/vendor-performance", getVendorPerformance);
+
+// Recommended Properties Management
+router.get("/recommended-properties", getRecommendedPropertiesAdmin);
+router.put(
+  "/properties/:id/recommended",
+  [
+    body("is_recommended")
+      .isBoolean()
+      .withMessage("is_recommended must be true or false"),
+    validate,
+  ],
+  toggleRecommendedStatus,
+);
+router.put(
+  "/recommended-properties/reorder",
+  [
+    body("property_type_id")
+      .notEmpty()
+      .withMessage("property_type_id is required"),
+    body("ordered_property_ids")
+      .isArray({ min: 1, max: 12 })
+      .withMessage(
+        "ordered_property_ids must be an array of 1-12 property IDs",
+      ),
+    validate,
+  ],
+  reorderRecommendedProperties,
+);
 
 export default router;

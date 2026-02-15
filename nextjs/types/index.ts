@@ -46,9 +46,11 @@ export interface Property {
   title?: string; // Backend sometimes sends 'title'
   description: string;
   address: string;
+  area?: string; // Specific area/locality within city
   city: string;
   state: string;
   pincode: string;
+  maps_location?: string; // Google Maps URL for property location
   price_per_night: number;
   max_guests: number;
   bedrooms: number;
@@ -84,7 +86,9 @@ export interface City {
   country?: string;
   status: "active" | "inactive";
   property_count?: number;
-  area?: string; // For service apartments: specific area/locality within city
+  area?: string; // For area-wise search: specific area/locality within city
+  city?: string; // City name when area is present (from areas API)
+  city_id?: string; // City ID when area is present (from areas API)
 }
 
 // ============================================================================

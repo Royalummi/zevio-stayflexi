@@ -16,7 +16,7 @@ const getDashboardStats = asyncHandler(async (req, res) => {
       SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) as active_properties
     FROM properties
     WHERE vendor_id = ? AND deleted_at IS NULL`,
-    [vendorId]
+    [vendorId],
   );
 
   // Get bookings count and revenue
@@ -27,7 +27,7 @@ const getDashboardStats = asyncHandler(async (req, res) => {
     FROM bookings b
     INNER JOIN properties p ON b.property_id = p.id
     WHERE p.vendor_id = ?`,
-    [vendorId]
+    [vendorId],
   );
 
   // Get pending settlements
@@ -35,7 +35,7 @@ const getDashboardStats = asyncHandler(async (req, res) => {
     `SELECT COALESCE(SUM(amount), 0) as pending_settlements
     FROM vendor_settlements
     WHERE vendor_id = ? AND status = 'pending'`,
-    [vendorId]
+    [vendorId],
   );
 
   const stats = {
@@ -65,17 +65,18 @@ const getProperties = asyncHandler(async (req, res) => {
       p.id,
       p.title,
       p.description,
-      p.price_per_night,
-      p.gst_percentage,
       p.status,
       p.created_at,
       c.name as city_name,
       e.name as employee_name,
+      pr.price_per_night,
+      pr.gst_percentage,
       (SELECT COUNT(*) FROM bookings WHERE property_id = p.id AND status IN ('confirmed', 'completed')) as total_bookings,
       (SELECT COALESCE(SUM(total_amount), 0) FROM bookings WHERE property_id = p.id AND status IN ('confirmed', 'completed')) as total_revenue
     FROM properties p
     LEFT JOIN cities c ON p.city_id = c.id
     LEFT JOIN employees e ON p.employee_id = e.id
+    LEFT JOIN property_pricing pr ON p.id = pr.property_id
     WHERE p.vendor_id = ? AND p.deleted_at IS NULL
   `;
 
@@ -273,7 +274,7 @@ const getAnalytics = asyncHandler(async (req, res) => {
       ...(start_date ? [start_date] : []),
       ...(end_date ? [end_date] : []),
       vendorId,
-    ]
+    ],
   );
 
   // Booking trends (monthly)
@@ -288,7 +289,7 @@ const getAnalytics = asyncHandler(async (req, res) => {
     GROUP BY DATE_FORMAT(b.created_at, '%Y-%m')
     ORDER BY month DESC
     LIMIT 12`,
-    [vendorId]
+    [vendorId],
   );
 
   sendSuccess(res, {

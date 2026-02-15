@@ -8,6 +8,7 @@ interface BookingData {
   propertyLocation: string;
   propertyImage: string;
   propertyType?: "villa" | "service-apartment"; // Added to track property type for back navigation
+  propertyTypeId?: string; // Added to track property_type_id for booking creation (pt-001 for villa, pt-002 for service apartment)
   checkIn: string;
   checkOut: string;
   adults: number;
@@ -26,6 +27,12 @@ interface BookingData {
   maxChildren: number;
   extraGuestCharge: number;
   extraChildCharge: number;
+  // SESSION 64: Coupon system fields (optional for backward compatibility)
+  couponCode?: string;
+  couponId?: string;
+  couponDiscount?: number;
+  serviceCharge?: number; // 5% service charge
+  gstRate?: number; // Tiered GST rate (5% or 18%)
 }
 
 interface BookingContextType {

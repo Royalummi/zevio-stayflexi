@@ -82,6 +82,7 @@ export default function PropertyGallery({
                   width={50}
                   height={30}
                   style={{ objectFit: "cover" }}
+                  unoptimized
                 />
                 {selectedPhoto === index && (
                   <div className={styles.activeIndicator}>
@@ -120,6 +121,7 @@ export default function PropertyGallery({
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 70vw, 60vw"
             style={{ objectFit: "cover" }}
             className={styles.mainImage}
+            unoptimized
           />
           <div className={styles.zoomOverlay}>
             <FiMaximize2 />

@@ -4,6 +4,7 @@ import { getCities } from "@/lib/api";
 import { FiShield, FiDollarSign, FiHeadphones } from "react-icons/fi";
 import SearchBar from "@/components/home/SearchBar";
 import FloatingElements from "@/components/home/FloatingElements";
+import RecommendedProperties from "@/components/home/RecommendedProperties";
 
 const destinations = [
   {
@@ -101,6 +102,22 @@ export default async function Home() {
           </div>
         </div>
       </section>
+
+      {/* Recommended Villas */}
+      <RecommendedProperties
+        className="bg-white"
+        propertyType="villa"
+        title="Recommended Villas for You"
+        description="Hand-picked luxury villas curated by our experts for exceptional experiences"
+      />
+
+      {/* Recommended Service Apartments */}
+      <RecommendedProperties
+        className="bg-gray"
+        propertyType="service_apartment"
+        title="Recommended Service Apartments"
+        description="Premium service apartments perfect for extended stays and corporate bookings"
+      />
 
       {/* Why Choose Zevio */}
       <section id="why-zevio" className="section">

@@ -4,15 +4,19 @@ import { generateUUID } from "../utils/helpers.js";
 import {
   sendCancellationEmail,
   sendRefundEmail,
+  sendWelcomeEmail,
 } from "../services/emailService.js";
 import { sanitizeRichText } from "../utils/sanitize.js";
-import Razorpay from "razorpay";
+import cashfreeService from "../services/cashfree.service.js";
+import {
+  uploadMultipleToR2,
+  deleteFromR2,
+  isR2Configured,
+} from "../utils/r2Storage.js";
+import { generateSecurePassword, hashPassword } from "../utils/password.js";
 
-// Initialize Razorpay for refunds
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET,
-});
+// SESSION 41: Replaced Razorpay with Cashfree for refunds
+// SESSION 56.7: Added Cloudflare R2 for image storage
 
 // ===================================================================
 // IN-MEMORY CACHE FOR DROPDOWN DATA (SESSION 17 - PERFORMANCE OPTIMIZATION)
@@ -20,6 +24,8 @@ const razorpay = new Razorpay({
 const cache = {
   cities: { data: null, timestamp: null },
   vendors: { data: null, timestamp: null },
+  propertyTypes: { data: null, timestamp: null },
+  amenities: { data: null, timestamp: null },
 };
 
 const CACHE_TTL = 60 * 60 * 1000; // 1 hour in milliseconds
@@ -29,14 +35,37 @@ const isCacheValid = (cacheEntry) => {
   return Date.now() - cacheEntry.timestamp < CACHE_TTL;
 };
 
+// Clear all cache or specific cache entries
+export const clearCache = asyncHandler(async (req, res) => {
+  const { type } = req.query; // type can be 'all', 'cities', 'vendors', 'propertyTypes'
+
+  if (!type || type === "all") {
+    // Clear all cache
+    cache.cities = { data: null, timestamp: null };
+    cache.vendors = { data: null, timestamp: null };
+    cache.propertyTypes = { data: null, timestamp: null };
+    return sendSuccess(res, null, "All cache cleared successfully", 200);
+  }
+
+  // Clear specific cache
+  if (cache[type]) {
+    cache[type] = { data: null, timestamp: null };
+    return sendSuccess(res, null, `${type} cache cleared successfully`, 200);
+  }
+
+  return sendError(res, "Invalid cache type", 400);
+});
+
 // Get all bookings (with filters)
 export const getAllBookings = asyncHandler(async (req, res) => {
   const {
     status,
+    payment_status,
     property_id,
     user_id,
     from_date,
     to_date,
+    search,
     page = 1,
     limit = 20,
   } = req.query;
@@ -65,6 +94,11 @@ export const getAllBookings = asyncHandler(async (req, res) => {
     params.push(status);
   }
 
+  if (payment_status) {
+    query += ` AND b.payment_status = ?`;
+    params.push(payment_status);
+  }
+
   if (property_id) {
     query += ` AND b.property_id = ?`;
     params.push(property_id);
@@ -83,6 +117,12 @@ export const getAllBookings = asyncHandler(async (req, res) => {
   if (to_date) {
     query += ` AND b.check_out <= ?`;
     params.push(to_date);
+  }
+
+  if (search) {
+    query += ` AND (b.id LIKE ? OR u.full_name LIKE ? OR u.email LIKE ? OR p.title LIKE ?)`;
+    const searchTerm = `%${search}%`;
+    params.push(searchTerm, searchTerm, searchTerm, searchTerm);
   }
 
   // Count total
@@ -201,36 +241,39 @@ export const processRefund = asyncHandler(async (req, res) => {
     booking_id,
   ]);
 
-  // Initiate actual refund with Razorpay
+  // Initiate actual refund with Cashfree
   try {
-    // Get Razorpay payment ID from gateway_payment_id
-    const razorpayPaymentId = payment.gateway_payment_id;
+    // Get Cashfree payment ID from gateway_payment_id
+    const cashfreePaymentId = payment.gateway_payment_id;
+    const cashfreeOrderId = payment.gateway_order_id || booking_id;
 
-    if (!razorpayPaymentId) {
-      throw new Error("Razorpay payment ID not found");
+    if (!cashfreePaymentId) {
+      throw new Error("Cashfree payment ID not found");
     }
 
-    // Create refund in Razorpay
-    const razorpayRefund = await razorpay.payments.refund(razorpayPaymentId, {
-      amount: Math.round(refundAmount * 100), // Amount in paise
-      speed: "normal", // 'normal' or 'optimum'
-      notes: {
-        booking_id: booking_id,
-        refund_id: refundId,
-        refund_percentage: refund_percentage,
-      },
-      receipt: `refund_${refundId.substring(0, 8)}`,
+    // Create refund in Cashfree
+    const cashfreeRefund = await cashfreeService.processRefund({
+      orderId: cashfreeOrderId,
+      refundId: refundId,
+      refundAmount: parseFloat(refundAmount).toFixed(2),
+      refundNote: `Refund ${refund_percentage}% for booking ${booking_id}`,
     });
 
-    // Update refund record with Razorpay refund ID and mark as completed
+    if (!cashfreeRefund.success) {
+      throw new Error("Cashfree refund API call failed");
+    }
+
+    // Update refund record with Cashfree refund ID and mark as completed
     await db.query(
       'UPDATE refunds SET status = "completed", gateway_refund_id = ? WHERE id = ?',
-      [razorpayRefund.id, refundId],
+      [cashfreeRefund.refund.cf_refund_id, refundId],
     );
 
-    console.log(`✅ Refund processed successfully: ${razorpayRefund.id}`);
+    console.log(
+      `✅ Refund processed successfully: ${cashfreeRefund.refund.cf_refund_id}`,
+    );
   } catch (error) {
-    console.error("❌ Razorpay refund failed:", error);
+    console.error("❌ Cashfree refund failed:", error);
 
     // Mark refund as failed but don't stop the process
     // Admin can manually process refund later
@@ -317,6 +360,7 @@ export const getVendorSettlements = asyncHandler(async (req, res) => {
       v.name as vendor_name,
       v.email as vendor_email,
       v.phone as vendor_phone,
+      v.bank_details,
       b.id as booking_id,
       b.total_amount as booking_total,
       p.title as property_title
@@ -360,10 +404,29 @@ export const getVendorSettlements = asyncHandler(async (req, res) => {
 
   const [settlements] = await db.query(query, params);
 
+  // Parse bank_details JSON and extract bank_name and account_number
+  const processedSettlements = settlements.map((settlement) => {
+    let bankDetails = null;
+    try {
+      bankDetails = settlement.bank_details
+        ? JSON.parse(settlement.bank_details)
+        : null;
+    } catch (e) {
+      console.error("Error parsing bank_details JSON:", e);
+    }
+
+    return {
+      ...settlement,
+      bank_name: bankDetails?.bank_name || null,
+      account_number: bankDetails?.account_number || null,
+      ifsc: bankDetails?.ifsc || null,
+    };
+  });
+
   sendSuccess(
     res,
     {
-      settlements,
+      settlements: processedSettlements,
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),
@@ -500,88 +563,250 @@ export const getDashboardStats = asyncHandler(async (req, res) => {
 
 // Get all properties with filters
 export const getAllProperties = asyncHandler(async (req, res) => {
-  const {
-    status,
-    city_id,
-    vendor_id,
-    search,
-    page = 1,
-    limit = 20,
-  } = req.query;
+  console.log("📥 getAllProperties called with query:", req.query);
 
-  let query = `
-    SELECT 
-      p.id,
-      p.title,
-      p.description,
-      p.price_per_night,
-      p.gst_percentage,
-      p.status,
-      p.created_at,
-      c.name as city_name,
-      c.state as city_state,
-      v.name as vendor_name,
-      v.email as vendor_email,
-      v.phone as vendor_phone,
-      (SELECT image_url FROM property_images WHERE property_id = p.id ORDER BY sort_order LIMIT 1) as thumbnail,
-      (SELECT COUNT(*) FROM property_images WHERE property_id = p.id) as image_count
-    FROM properties p
-    LEFT JOIN cities c ON p.city_id = c.id
-    LEFT JOIN vendors v ON p.vendor_id = v.id
-    WHERE p.deleted_at IS NULL
-  `;
+  try {
+    const {
+      status,
+      city_id,
+      vendor_id,
+      search,
+      page = 1,
+      limit = 20,
+    } = req.query;
 
-  const params = [];
+    console.log("🔍 Building query with filters:", {
+      status,
+      city_id,
+      vendor_id,
+      search,
+      page,
+      limit,
+    });
 
-  if (status) {
-    query += ` AND p.status = ?`;
-    params.push(status);
-  }
+    // Build WHERE conditions for both queries
+    let whereConditions = "WHERE p.deleted_at IS NULL";
+    const params = [];
+    const countParams = [];
 
-  if (city_id) {
-    query += ` AND p.city_id = ?`;
-    params.push(city_id);
-  }
+    if (status) {
+      whereConditions += ` AND p.status = ?`;
+      params.push(status);
+      countParams.push(status);
+    }
 
-  if (vendor_id) {
-    query += ` AND p.vendor_id = ?`;
-    params.push(vendor_id);
-  }
+    if (city_id) {
+      whereConditions += ` AND p.city_id = ?`;
+      params.push(city_id);
+      countParams.push(city_id);
+    }
 
-  if (search) {
-    query += ` AND (p.title LIKE ? OR p.description LIKE ? OR v.name LIKE ?)`;
-    params.push(`%${search}%`, `%${search}%`, `%${search}%`);
-  }
+    if (vendor_id) {
+      whereConditions += ` AND p.vendor_id = ?`;
+      params.push(vendor_id);
+      countParams.push(vendor_id);
+    }
 
-  // Count total
-  const countQuery = query.replace(
-    /SELECT.*FROM/,
-    "SELECT COUNT(*) as total FROM",
-  );
-  const [countResult] = await db.query(countQuery, params);
-  const total = countResult[0].total;
+    if (search) {
+      whereConditions += ` AND (p.title LIKE ? OR p.description LIKE ? OR v.name LIKE ?)`;
+      const searchTerm = `%${search}%`;
+      params.push(searchTerm, searchTerm, searchTerm);
+      countParams.push(searchTerm, searchTerm, searchTerm);
+    }
 
-  // Add pagination
-  const offset = (parseInt(page) - 1) * parseInt(limit);
-  query += ` ORDER BY p.created_at DESC LIMIT ? OFFSET ?`;
-  params.push(parseInt(limit), offset);
+    // Count query - simple and clean
+    const countQuery = `
+      SELECT COUNT(DISTINCT p.id) as total
+      FROM properties p
+      LEFT JOIN cities c ON p.city_id = c.id
+      LEFT JOIN vendors v ON p.vendor_id = v.id
+      ${whereConditions}
+    `;
 
-  const [properties] = await db.query(query, params);
+    console.log("🔢 Executing count query...");
+    const [countResult] = await db.query(countQuery, countParams);
+    const total = countResult && countResult[0] ? countResult[0].total : 0;
+    console.log("✅ Count query successful, total:", total);
 
-  sendSuccess(
-    res,
-    {
-      properties,
-      pagination: {
-        total,
-        page: parseInt(page),
-        limit: parseInt(limit),
-        total_pages: Math.ceil(total / parseInt(limit)),
+    // Main query with ALL fields - comprehensive property data fetch
+    const offset = (parseInt(page) - 1) * parseInt(limit);
+
+    const query = `
+      SELECT 
+        p.id,
+        p.title,
+        p.description,
+        p.address,
+        p.area,
+        p.state,
+        p.pincode,
+        p.bedrooms,
+        p.bathrooms,
+        p.max_guests,
+        p.status,
+        p.rating,
+        p.reviews_count,
+        p.created_at,
+        p.same_day_booking_allowed,
+        p.max_booking_days,
+        p.check_in_time,
+        p.check_out_time,
+        p.min_stay_days,
+        p.max_stay_days,
+        p.housekeeping_frequency,
+        p.laundry_frequency,
+        p.utilities_included,
+        p.parking_slots,
+        p.floor_number,
+        p.wifi_speed_mbps,
+        p.wifi_provider,
+        p.furnishing_type,
+        p.is_recommended,
+        p.recommended_priority,
+        p.recommended_at,
+        p.recommended_by,
+        p.maps_location,
+        p.photos,
+        CASE 
+          WHEN p.photos IS NOT NULL AND p.photos != '[]' AND p.photos != '' 
+          THEN JSON_UNQUOTE(JSON_EXTRACT(p.photos, '$[0]'))
+          ELSE NULL 
+        END as thumbnail,
+        CASE 
+          WHEN p.photos IS NOT NULL AND p.photos != '[]' AND p.photos != ''
+          THEN JSON_LENGTH(p.photos)
+          ELSE 0
+        END as image_count,
+        c.id as city_id,
+        c.name as city_name,
+        c.state as city_state,
+        v.id as vendor_id,
+        v.name as vendor_name,
+        v.email as vendor_email,
+        v.phone as vendor_phone,
+        pt.id as property_type_id,
+        pt.name as property_type_name,
+        pt.slug as property_type_slug,
+        pt.stay_type as property_stay_type,
+        pt.icon as property_type_icon,
+        pr.price_per_night,
+        pr.gst_percentage,
+        pr.min_guests,
+        pr.extra_guest_charge,
+        pr.min_children,
+        pr.max_children,
+        pr.extra_child_charge,
+        pr.weekly_discount_percent,
+        pr.monthly_discount_percent,
+        pr.quarterly_discount_percent,
+        pr.long_term_discount_percent,
+        pr.allow_corporate_booking,
+        pr.corporate_discount_percent,
+        pr.deposit_amount,
+        pr.maintenance_charges,
+        pr.notice_period_days
+      FROM properties p
+      LEFT JOIN cities c ON p.city_id = c.id
+      LEFT JOIN vendors v ON p.vendor_id = v.id
+      LEFT JOIN property_types pt ON p.property_type_id = pt.id
+      LEFT JOIN property_pricing pr ON p.id = pr.property_id
+      ${whereConditions}
+      ORDER BY p.created_at DESC
+      LIMIT ? OFFSET ?
+    `;
+
+    params.push(parseInt(limit), offset);
+
+    console.log("📊 Executing main query...");
+    const [properties] = await db.query(query, params);
+    console.log(
+      `✅ Main query successful, found ${properties?.length || 0} properties`,
+    );
+
+    // Parse photos JSON to images array for each property
+    if (properties && properties.length > 0) {
+      properties.forEach((property) => {
+        if (property.photos) {
+          try {
+            const photosArray = JSON.parse(property.photos);
+            property.images = photosArray.map((url, index) => ({
+              id: `img-${property.id}-${index}`,
+              image_url: url,
+              sort_order: index,
+            }));
+          } catch (error) {
+            console.error(
+              `Error parsing photos for property ${property.id}:`,
+              error,
+            );
+            property.images = [];
+          }
+        } else {
+          property.images = [];
+        }
+      });
+    }
+
+    // Fetch amenities for all properties in one query
+    if (properties && properties.length > 0) {
+      const propertyIds = properties.map((p) => p.id);
+      const placeholders = propertyIds.map(() => "?").join(",");
+
+      const [amenitiesData] = await db.query(
+        `SELECT 
+          pa.property_id,
+          a.id as amenity_id,
+          a.name as amenity_name,
+          a.icon as amenity_icon,
+          a.category as amenity_category
+        FROM property_amenities pa
+        JOIN amenities a ON pa.amenity_id = a.id
+        WHERE pa.property_id IN (${placeholders})
+        ORDER BY a.category, a.name`,
+        propertyIds,
+      );
+
+      // Group amenities by property_id
+      const amenitiesByProperty = {};
+      amenitiesData.forEach((amenity) => {
+        if (!amenitiesByProperty[amenity.property_id]) {
+          amenitiesByProperty[amenity.property_id] = [];
+        }
+        amenitiesByProperty[amenity.property_id].push({
+          id: amenity.amenity_id,
+          name: amenity.amenity_name,
+          icon: amenity.amenity_icon,
+          category: amenity.amenity_category,
+        });
+      });
+
+      // Attach amenities to each property
+      properties.forEach((property) => {
+        property.amenities = amenitiesByProperty[property.id] || [];
+      });
+    }
+
+    sendSuccess(
+      res,
+      {
+        properties: properties || [],
+        pagination: {
+          total,
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total_pages: Math.ceil(total / parseInt(limit)) || 0,
+        },
       },
-    },
-    "Properties fetched successfully",
-    200,
-  );
+      "Properties fetched successfully",
+      200,
+    );
+  } catch (error) {
+    console.error("❌ Error in getAllProperties:", error);
+    console.error("   Error message:", error.message);
+    console.error("   Error code:", error.code);
+    console.error("   Error SQL:", error.sql);
+    sendError(res, "Failed to fetch properties: " + error.message, 500);
+  }
 });
 
 // Get property details for admin
@@ -592,15 +817,24 @@ export const getPropertyDetails = asyncHandler(async (req, res) => {
     `
     SELECT 
       p.*,
+      c.id as city_id,
       c.name as city_name,
       c.state as city_state,
+      v.id as vendor_id,
       v.name as vendor_name,
       v.email as vendor_email,
       v.phone as vendor_phone,
-      v.gst_number as vendor_gst
+      v.gst_number as vendor_gst,
+      pt.id as property_type_id,
+      pt.name as property_type_name,
+      pt.slug as property_type_slug,
+      pt.stay_type as property_stay_type,
+      pt.icon as property_type_icon,
+      pt.description as property_type_description
     FROM properties p
     LEFT JOIN cities c ON p.city_id = c.id
     LEFT JOIN vendors v ON p.vendor_id = v.id
+    LEFT JOIN property_types pt ON p.property_type_id = pt.id
     WHERE p.id = ? AND p.deleted_at IS NULL
   `,
     [id],
@@ -610,9 +844,62 @@ export const getPropertyDetails = asyncHandler(async (req, res) => {
     return sendError(res, "Property not found", 404);
   }
 
-  // Get images
-  const [images] = await db.query(
-    `SELECT id, image_url, sort_order FROM property_images WHERE property_id = ? ORDER BY sort_order`,
+  const property = properties[0];
+
+  // Parse photos JSON to images array
+  if (property.photos) {
+    try {
+      const photosArray = JSON.parse(property.photos);
+      property.images = photosArray.map((url, index) => ({
+        id: `img-${property.id}-${index}`,
+        image_url: url,
+        sort_order: index,
+      }));
+    } catch (error) {
+      console.error(`Error parsing photos for property ${property.id}:`, error);
+      property.images = [];
+    }
+  } else {
+    property.images = [];
+  }
+
+  // Get pricing details
+  const [pricingData] = await db.query(
+    `SELECT * FROM property_pricing WHERE property_id = ?`,
+    [id],
+  );
+
+  // Get amenities
+  const [amenitiesData] = await db.query(
+    `SELECT 
+      a.id,
+      a.name,
+      a.icon,
+      a.category,
+      a.description
+    FROM property_amenities pa
+    JOIN amenities a ON pa.amenity_id = a.id
+    WHERE pa.property_id = ?
+    ORDER BY a.category, a.name`,
+    [id],
+  );
+
+  // Get property contacts
+  const [contactsData] = await db.query(
+    `SELECT 
+      pc.id,
+      pc.contact_type_id,
+      pc.name,
+      pc.phone,
+      pc.email,
+      pc.whatsapp,
+      pc.alt_contact,
+      pc.is_active,
+      ct.name as contact_type_name
+    FROM property_contacts pc
+    LEFT JOIN contact_types ct ON pc.contact_type_id = ct.id
+    WHERE pc.property_id = ? AND pc.is_active = 1
+    ORDER BY ct.display_order, pc.id`,
     [id],
   );
 
@@ -637,14 +924,21 @@ export const getPropertyDetails = asyncHandler(async (req, res) => {
     [id],
   );
 
-  const property = {
-    ...properties[0],
-    images,
+  const propertyDetails = {
+    ...property,
+    pricing: pricingData && pricingData.length > 0 ? pricingData[0] : null,
+    amenities: amenitiesData || [],
+    contacts: contactsData || [],
     blackout_dates: blackoutDates,
     booking_stats: bookingStats[0],
   };
 
-  sendSuccess(res, property, "Property details fetched successfully", 200);
+  sendSuccess(
+    res,
+    propertyDetails,
+    "Property details fetched successfully",
+    200,
+  );
 });
 
 // Update property status (approve/reject/inactive)
@@ -709,23 +1003,49 @@ export const updatePropertyStatus = asyncHandler(async (req, res) => {
 
 // Get property statistics
 export const getPropertyStats = asyncHandler(async (req, res) => {
-  const [stats] = await db.query(`
-    SELECT 
-      COUNT(*) as total_properties,
-      SUM(CASE WHEN status = 'pending_approval' THEN 1 ELSE 0 END) as pending_approval,
-      SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) as approved,
-      SUM(CASE WHEN status = 'inactive' THEN 1 ELSE 0 END) as inactive,
-      SUM(CASE WHEN status = 'draft' THEN 1 ELSE 0 END) as draft
-    FROM properties
-    WHERE deleted_at IS NULL
-  `);
+  try {
+    const [stats] = await db.query(`
+      SELECT 
+        COUNT(*) as total_properties,
+        SUM(CASE WHEN status = 'pending_approval' THEN 1 ELSE 0 END) as pending_approval,
+        SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) as approved,
+        SUM(CASE WHEN status = 'inactive' THEN 1 ELSE 0 END) as inactive,
+        SUM(CASE WHEN status = 'draft' THEN 1 ELSE 0 END) as draft
+      FROM properties
+      WHERE deleted_at IS NULL
+    `);
 
-  sendSuccess(res, stats[0], "Property statistics fetched successfully", 200);
+    // Ensure we have valid data
+    const statsData =
+      stats && stats[0]
+        ? stats[0]
+        : {
+            total_properties: 0,
+            pending_approval: 0,
+            approved: 0,
+            inactive: 0,
+            draft: 0,
+          };
+
+    sendSuccess(
+      res,
+      statsData,
+      "Property statistics fetched successfully",
+      200,
+    );
+  } catch (error) {
+    console.error("❌ Error in getPropertyStats:", error);
+    sendError(
+      res,
+      "Failed to fetch property statistics: " + error.message,
+      500,
+    );
+  }
 });
 
 // ================== USER MANAGEMENT ==================
 
-// Get all users with filters and pagination
+// Get all users (customers and vendors) with filters and pagination
 export const getAllUsers = asyncHandler(async (req, res) => {
   const {
     role = "",
@@ -736,51 +1056,127 @@ export const getAllUsers = asyncHandler(async (req, res) => {
   } = req.query;
 
   const offset = (page - 1) * limit;
-  let conditions = ["u.deleted_at IS NULL"];
+  let conditions = [];
   let params = [];
+
+  // Build WHERE conditions for both UNION queries
+  let whereConditions = [];
 
   // Status filter (active/blocked)
   if (status && status !== "all") {
     if (status === "active") {
-      conditions.push("u.status = 'active'");
+      whereConditions.push("status = 'active'");
     } else if (status === "blocked") {
-      conditions.push("u.status = 'blocked'");
+      whereConditions.push("status = 'blocked'");
     }
   }
 
-  // Search filter
-  if (search.trim()) {
-    conditions.push("(u.full_name LIKE ? OR u.email LIKE ? OR u.phone LIKE ?)");
-    const searchParam = `%${search}%`;
-    params.push(searchParam, searchParam, searchParam);
+  // Add deleted_at check
+  whereConditions.push("deleted_at IS NULL");
+
+  const baseWhere =
+    whereConditions.length > 0 ? `WHERE ${whereConditions.join(" AND ")}` : "";
+
+  // Build unified query with UNION
+  let unionQuery = `
+    (
+      SELECT 
+        u.id,
+        u.full_name as name,
+        u.email,
+        u.phone,
+        'customer' as role,
+        u.status,
+        u.created_at,
+        (SELECT COUNT(*) FROM bookings WHERE user_id = u.id) as total_bookings,
+        (SELECT COUNT(*) FROM bookings WHERE user_id = u.id AND status = 'completed') as completed_bookings,
+        (SELECT COALESCE(SUM(total_amount), 0) FROM bookings WHERE user_id = u.id AND status = 'completed') as total_spent
+      FROM users u
+      ${baseWhere}
+    )
+    UNION ALL
+    (
+      SELECT 
+        v.id,
+        v.name,
+        v.email,
+        v.phone,
+        'vendor' as role,
+        v.status,
+        v.created_at,
+        0 as total_bookings,
+        0 as completed_bookings,
+        0 as total_spent
+      FROM vendors v
+      ${baseWhere}
+    )
+  `;
+
+  // Role filter (customer/vendor)
+  if (role && role !== "all") {
+    if (role === "customer") {
+      // Only get from users table
+      unionQuery = `
+        SELECT 
+          u.id,
+          u.full_name as name,
+          u.email,
+          u.phone,
+          'customer' as role,
+          u.status,
+          u.created_at,
+          (SELECT COUNT(*) FROM bookings WHERE user_id = u.id) as total_bookings,
+          (SELECT COUNT(*) FROM bookings WHERE user_id = u.id AND status = 'completed') as completed_bookings,
+          (SELECT COALESCE(SUM(total_amount), 0) FROM bookings WHERE user_id = u.id AND status = 'completed') as total_spent
+        FROM users u
+        ${baseWhere}
+      `;
+    } else if (role === "vendor") {
+      // Only get from vendors table
+      unionQuery = `
+        SELECT 
+          v.id,
+          v.name,
+          v.email,
+          v.phone,
+          'vendor' as role,
+          v.status,
+          v.created_at,
+          0 as total_bookings,
+          0 as completed_bookings,
+          0 as total_spent
+        FROM vendors v
+        ${baseWhere}
+      `;
+    }
   }
 
-  const whereClause = conditions.join(" AND ");
+  // Wrap with search filter if needed
+  let finalQuery = unionQuery;
+  let searchParams = [];
+
+  if (search.trim()) {
+    finalQuery = `
+      SELECT * FROM (
+        ${unionQuery}
+      ) as combined
+      WHERE (name LIKE ? OR email LIKE ? OR phone LIKE ?)
+    `;
+    const searchParam = `%${search}%`;
+    searchParams = [searchParam, searchParam, searchParam];
+  }
 
   // Get total count
-  const [countResult] = await db.query(
-    `SELECT COUNT(*) as total FROM users u WHERE ${whereClause}`,
-    params,
-  );
+  const countQuery = `SELECT COUNT(*) as total FROM (${finalQuery}) as count_query`;
+  const [countResult] = await db.query(countQuery, searchParams);
 
-  // Get users with additional info
-  const [users] = await db.query(
-    `SELECT 
-      u.id,
-      u.full_name,
-      u.email,
-      u.phone,
-      u.status,
-      u.created_at,
-      (SELECT COUNT(*) FROM bookings WHERE user_id = u.id) as total_bookings,
-      (SELECT COUNT(*) FROM bookings WHERE user_id = u.id AND status = 'completed') as completed_bookings,
-      (SELECT COALESCE(SUM(total_amount), 0) FROM bookings WHERE user_id = u.id AND status = 'completed') as total_spent
-    FROM users u
-    WHERE ${whereClause}
-    ORDER BY u.created_at DESC
-    LIMIT ? OFFSET ?`,
-    [...params, parseInt(limit), parseInt(offset)],
-  );
+  // Get paginated results
+  finalQuery += ` ORDER BY created_at DESC LIMIT ? OFFSET ?`;
+  const [users] = await db.query(finalQuery, [
+    ...searchParams,
+    parseInt(limit),
+    parseInt(offset),
+  ]);
 
   const response = {
     users,
@@ -799,66 +1195,132 @@ export const getAllUsers = asyncHandler(async (req, res) => {
 export const getUserDetails = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
-  // Get user details
-  const [users] = await db.query(
+  let user = null;
+  let role = null;
+
+  // Try to find user in users table (customers)
+  const [customers] = await db.query(
     `SELECT 
       u.id,
-      u.full_name,
+      u.full_name as name,
       u.email,
       u.phone,
       u.status,
-      u.created_at
+      u.created_at,
+      'customer' as role
     FROM users u
     WHERE u.id = ? AND u.deleted_at IS NULL`,
     [id],
   );
 
-  if (users.length === 0) {
+  if (customers.length > 0) {
+    user = customers[0];
+    role = "customer";
+  } else {
+    // If not found in users, try vendors table
+    const [vendors] = await db.query(
+      `SELECT 
+        v.id,
+        v.name,
+        v.email,
+        v.phone,
+        v.status,
+        v.created_at,
+        v.gst_number,
+        'vendor' as role
+      FROM vendors v
+      WHERE v.id = ? AND v.deleted_at IS NULL`,
+      [id],
+    );
+
+    if (vendors.length > 0) {
+      user = vendors[0];
+      role = "vendor";
+    }
+  }
+
+  // If user not found in either table
+  if (!user) {
     return sendError(res, "User not found", 404);
   }
 
-  const user = users[0];
+  let bookings = [];
+  let stats = {
+    total_bookings: 0,
+    confirmed_bookings: 0,
+    completed_bookings: 0,
+    cancelled_bookings: 0,
+    total_spent: 0,
+  };
 
-  // Get booking history
-  const [bookings] = await db.query(
-    `SELECT 
-      b.id,
-      b.check_in,
-      b.check_out,
-      b.total_amount,
-      b.status,
-      b.created_at,
-      p.title as property_title,
-      p.thumbnail,
-      c.name as city_name
-    FROM bookings b
-    JOIN properties p ON b.property_id = p.id
-    LEFT JOIN cities c ON p.city_id = c.id
-    WHERE b.user_id = ?
-    ORDER BY b.created_at DESC
-    LIMIT 10`,
-    [id],
-  );
+  // Only get bookings for customers (not vendors)
+  if (role === "customer") {
+    // Get booking history
+    const [bookingResults] = await db.query(
+      `SELECT 
+        b.id,
+        b.check_in,
+        b.check_out,
+        b.total_amount,
+        b.status,
+        b.created_at,
+        p.title as property_title,
+        CASE 
+          WHEN p.photos IS NOT NULL AND p.photos != '[]' AND p.photos != '' 
+          THEN JSON_UNQUOTE(JSON_EXTRACT(p.photos, '$[0]'))
+          ELSE NULL 
+        END as thumbnail,
+        c.name as city_name
+      FROM bookings b
+      JOIN properties p ON b.property_id = p.id
+      LEFT JOIN cities c ON p.city_id = c.id
+      WHERE b.user_id = ?
+      ORDER BY b.created_at DESC
+      LIMIT 10`,
+      [id],
+    );
+    bookings = bookingResults;
 
-  // Get activity statistics
-  const [stats] = await db.query(
-    `SELECT 
-      COUNT(*) as total_bookings,
-      SUM(CASE WHEN status = 'confirmed' THEN 1 ELSE 0 END) as confirmed_bookings,
-      SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed_bookings,
-      SUM(CASE WHEN status IN ('cancelled', 'cancel_requested') THEN 1 ELSE 0 END) as cancelled_bookings,
-      COALESCE(SUM(CASE WHEN status = 'completed' THEN total_amount ELSE 0 END), 0) as total_spent
-    FROM bookings
-    WHERE user_id = ?`,
-    [id],
-  );
+    // Get activity statistics
+    const [statsResults] = await db.query(
+      `SELECT 
+        COUNT(*) as total_bookings,
+        SUM(CASE WHEN status = 'confirmed' THEN 1 ELSE 0 END) as confirmed_bookings,
+        SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed_bookings,
+        SUM(CASE WHEN status IN ('cancelled', 'cancel_requested') THEN 1 ELSE 0 END) as cancelled_bookings,
+        COALESCE(SUM(CASE WHEN status = 'completed' THEN total_amount ELSE 0 END), 0) as total_spent
+      FROM bookings
+      WHERE user_id = ?`,
+      [id],
+    );
+    stats = statsResults[0];
+  } else if (role === "vendor") {
+    // For vendors, get their properties count
+    const [propertyStats] = await db.query(
+      `SELECT 
+        COUNT(*) as total_properties,
+        SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active_properties
+      FROM properties
+      WHERE vendor_id = ? AND deleted_at IS NULL`,
+      [id],
+    );
+    stats = {
+      total_properties: propertyStats[0].total_properties || 0,
+      active_properties: propertyStats[0].active_properties || 0,
+      total_bookings: 0,
+      confirmed_bookings: 0,
+      completed_bookings: 0,
+      cancelled_bookings: 0,
+      total_spent: 0,
+    };
+  }
 
   sendSuccess(
     res,
     {
       user,
       bookings,
-      stats: stats[0],
+      stats,
     },
     "User details fetched successfully",
     200,
@@ -936,6 +1398,123 @@ export const updateUserStatus = asyncHandler(async (req, res) => {
   }
 
   sendSuccess(res, null, `User status updated to ${status}`, 200);
+});
+
+// Create new user (customer or vendor)
+export const createUser = asyncHandler(async (req, res) => {
+  const { full_name, email, phone, role = "customer" } = req.body;
+
+  // Validate role
+  if (!["customer", "vendor"].includes(role)) {
+    return sendError(res, "Invalid role. Must be 'customer' or 'vendor'", 400);
+  }
+
+  // Validate required fields
+  if (!full_name || !email) {
+    return sendError(res, "Full name and email are required", 400);
+  }
+
+  // Validate email format
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return sendError(res, "Invalid email format", 400);
+  }
+
+  // Check for duplicate email across all tables (users, vendors, admins)
+  const [existingUsers] = await db.query(
+    "SELECT email FROM users WHERE email = ? AND deleted_at IS NULL",
+    [email],
+  );
+  const [existingVendors] = await db.query(
+    "SELECT email FROM vendors WHERE email = ? AND deleted_at IS NULL",
+    [email],
+  );
+  const [existingAdmins] = await db.query(
+    "SELECT email FROM admins WHERE email = ? AND deleted_at IS NULL",
+    [email],
+  );
+
+  if (
+    existingUsers.length > 0 ||
+    existingVendors.length > 0 ||
+    existingAdmins.length > 0
+  ) {
+    return sendError(
+      res,
+      "This email is already registered. Please use a different email.",
+      409,
+    );
+  }
+
+  try {
+    // Generate secure temporary password
+    const tempPassword = generateSecurePassword(8);
+    const hashedPassword = await hashPassword(tempPassword);
+
+    // Generate UUID for new user
+    const userId = generateUUID();
+
+    // Insert into appropriate table based on role
+    if (role === "vendor") {
+      // Create vendor account
+      await db.query(
+        `INSERT INTO vendors (
+          id, name, email, phone, password_hash, 
+          is_temporary_password, password_change_required, 
+          created_by, status, created_at
+        ) VALUES (?, ?, ?, ?, ?, 1, 1, ?, 'active', NOW())`,
+        [userId, full_name, email, phone || null, hashedPassword, req.user.id],
+      );
+    } else {
+      // Create customer account
+      await db.query(
+        `INSERT INTO users (
+          id, full_name, email, phone, password_hash, 
+          is_temporary_password, password_change_required, 
+          created_by, status, created_at
+        ) VALUES (?, ?, ?, ?, ?, 1, 1, ?, 'active', NOW())`,
+        [userId, full_name, email, phone || null, hashedPassword, req.user.id],
+      );
+    }
+
+    // Create activity log
+    const action = `Created new ${role} account: ${full_name} (${email})`;
+    await db.query(
+      `INSERT INTO activity_logs (
+        id, actor_id, actor_role, action, entity, entity_id, created_at
+      ) VALUES (UUID(), ?, ?, ?, ?, ?, NOW())`,
+      [req.user.id, req.user.role, action, role, userId],
+    );
+
+    // Send welcome email with temporary password
+    try {
+      await sendWelcomeEmail(email, full_name, tempPassword, role);
+    } catch (emailError) {
+      console.error("Failed to send welcome email:", emailError);
+      // Don't fail the user creation if email fails
+      // Account is already created, just log the error
+    }
+
+    sendSuccess(
+      res,
+      {
+        id: userId,
+        email,
+        full_name,
+        role,
+        tempPassword, // Include in response for admin to see/copy
+      },
+      `${role === "vendor" ? "Vendor" : "Customer"} account created successfully. Welcome email sent with temporary password.`,
+      201,
+    );
+  } catch (error) {
+    console.error("Error creating user:", error);
+    return sendError(
+      res,
+      "Failed to create user account. Please try again.",
+      500,
+    );
+  }
 });
 
 // Get user statistics
@@ -1429,6 +2008,46 @@ export const getAllCities = asyncHandler(async (req, res) => {
   sendSuccess(res, cities, "Cities fetched successfully", 200);
 });
 
+// Create a new city (for auto-add in combobox)
+export const createCity = asyncHandler(async (req, res) => {
+  const { name, state } = req.body;
+
+  // Validation
+  if (!name || !state) {
+    return sendError(res, "City name and state are required", 400);
+  }
+
+  // Check if city already exists (case-insensitive)
+  const [existingCity] = await db.query(
+    `SELECT id, name, state, status FROM cities WHERE LOWER(name) = LOWER(?) AND LOWER(state) = LOWER(?)`,
+    [name.trim(), state.trim()],
+  );
+
+  if (existingCity.length > 0) {
+    // Return existing city if found
+    return sendSuccess(res, existingCity[0], "City already exists", 200);
+  }
+
+  // Create new city (auto-approved)
+  const cityId = generateUUID();
+  await db.query(
+    `INSERT INTO cities (id, name, state, status) VALUES (?, ?, ?, 'active')`,
+    [cityId, name.trim(), state.trim()],
+  );
+
+  // Clear cities cache
+  cache.cities = { data: null, timestamp: null };
+
+  const newCity = {
+    id: cityId,
+    name: name.trim(),
+    state: state.trim(),
+    status: "active",
+  };
+
+  sendSuccess(res, newCity, "City created successfully", 201);
+});
+
 // Get all vendors (for dropdown) - WITH CACHING
 export const getAllVendors = asyncHandler(async (req, res) => {
   // Check cache first
@@ -1458,19 +2077,94 @@ export const getAllVendors = asyncHandler(async (req, res) => {
   sendSuccess(res, vendors, "Vendors fetched successfully", 200);
 });
 
+// Get all property types (for dropdown) - WITH CACHING
+export const getAllPropertyTypes = asyncHandler(async (req, res) => {
+  // Check cache first
+  if (isCacheValid(cache.propertyTypes)) {
+    return sendSuccess(
+      res,
+      cache.propertyTypes.data,
+      "Property types fetched successfully (cached)",
+      200,
+    );
+  }
+
+  // Cache miss - fetch from database
+  const [propertyTypes] = await db.query(`
+    SELECT id, name, slug, stay_type, icon, description, sort_order
+    FROM property_types
+    WHERE is_active = 1
+    ORDER BY sort_order ASC, name ASC
+  `);
+
+  // Update cache
+  cache.propertyTypes = {
+    data: propertyTypes,
+    timestamp: Date.now(),
+  };
+
+  sendSuccess(res, propertyTypes, "Property types fetched successfully", 200);
+});
+
+// Get all amenities (for checkbox grid) - WITH CACHING
+export const getAllAmenities = asyncHandler(async (req, res) => {
+  // Check cache first
+  if (isCacheValid(cache.amenities)) {
+    return sendSuccess(
+      res,
+      cache.amenities.data,
+      "Amenities fetched successfully (cached)",
+      200,
+    );
+  }
+
+  // Cache miss - fetch from database
+  const [amenities] = await db.query(`
+    SELECT id, name, category, icon, description, display_order
+    FROM amenities
+    WHERE is_active = 1
+    ORDER BY category ASC, display_order ASC, name ASC
+  `);
+
+  // Group by category for better UI organization
+  const groupedAmenities = amenities.reduce((acc, amenity) => {
+    const category = amenity.category || "general";
+    if (!acc[category]) {
+      acc[category] = [];
+    }
+    acc[category].push(amenity);
+    return acc;
+  }, {});
+
+  const response = {
+    all: amenities,
+    grouped: groupedAmenities,
+  };
+
+  // Update cache
+  cache.amenities = {
+    data: response,
+    timestamp: Date.now(),
+  };
+
+  sendSuccess(res, response, "Amenities fetched successfully", 200);
+});
+
 // Create new property
 export const createProperty = asyncHandler(async (req, res) => {
   const {
     vendor_id,
     employee_id,
     city_id,
+    property_type_id,
     title,
-    property_type,
     description,
     address,
+    area,
     city,
     state,
     pincode,
+    maps_location,
     bedrooms,
     bathrooms,
     max_guests,
@@ -1479,6 +2173,31 @@ export const createProperty = asyncHandler(async (req, res) => {
     min_children,
     max_children,
     extra_child_charge,
+    // Long-term Pricing & Discounts
+    weekly_discount_percent,
+    monthly_discount_percent,
+    quarterly_discount_percent,
+    long_term_discount_percent,
+    allow_corporate_booking,
+    corporate_discount_percent,
+    deposit_amount,
+    maintenance_charges,
+    notice_period_days,
+    // Service Apartment Fields
+    min_stay_days,
+    max_stay_days,
+    housekeeping_frequency,
+    laundry_frequency,
+    utilities_included,
+    parking_slots,
+    floor_number,
+    wifi_speed_mbps,
+    wifi_provider,
+    furnishing_type,
+    // Recommendations
+    is_recommended,
+    recommended_priority,
+    // Existing fields
     primary_incharge_name,
     primary_incharge_phone,
     primary_incharge_email,
@@ -1509,14 +2228,21 @@ export const createProperty = asyncHandler(async (req, res) => {
   } = req.body;
 
   // Validation
-  if (!title || !vendor_id || !city_id || !price_per_night) {
-    return sendError(res, "Title, vendor, city, and price are required", 400);
+  if (
+    !title ||
+    !vendor_id ||
+    !city_id ||
+    !property_type_id ||
+    !price_per_night
+  ) {
+    return sendError(
+      res,
+      "Title, vendor, city, property type, and price are required",
+      400,
+    );
   }
 
-  // ============================================
-  // CRITICAL FIX: XSS PROTECTION
-  // Sanitize all rich text fields to prevent script injection
-  // ============================================
+  // XSS Protection - Sanitize rich text fields
   const safeCheckInGuidelines = check_in_guidelines
     ? sanitizeRichText(check_in_guidelines)
     : null;
@@ -1540,31 +2266,23 @@ export const createProperty = asyncHandler(async (req, res) => {
 
   const query = `
     INSERT INTO properties (
-      id, vendor_id, employee_id, city_id, title, property_type, description,
-      address, city, state, pincode, bedrooms, bathrooms, max_guests,
-      min_guests, extra_guest_charge, min_children, max_children, extra_child_charge,
-      primary_incharge_name, primary_incharge_phone, primary_incharge_email,
-      primary_incharge_whatsapp, primary_incharge_alt_contact,
-      secondary_incharge_name, secondary_incharge_phone, secondary_incharge_email,
-      secondary_incharge_whatsapp, secondary_incharge_alt_contact,
-      check_in_guidelines, house_rules_text, amenities_guide,
-      safety_information, local_area_info, emergency_contacts,
-      same_day_booking_allowed, max_booking_days,
-      check_in_time, check_out_time, amenities, house_rules,
-      cancellation_policy, photos, price_per_night, gst_percentage, status
+      id, vendor_id, employee_id, city_id, property_type_id, title, description,
+      address, area, maps_location,
+      bedrooms, bathrooms, max_guests,
+      min_stay_days, max_stay_days, housekeeping_frequency, laundry_frequency,
+      utilities_included, parking_slots, floor_number, wifi_speed_mbps, wifi_provider, furnishing_type,
+      is_recommended, recommended_priority, recommended_at, recommended_by,
+      same_day_booking_allowed, max_booking_days, check_in_time, check_out_time,
+      house_rules, cancellation_policy, photos, status
     ) VALUES (
       ?, ?, ?, ?, ?, ?, ?,
-      ?, ?, ?, ?, ?, ?, ?,
-      ?, ?, ?, ?, ?,
-      ?, ?, ?,
-      ?, ?,
-      ?, ?, ?,
-      ?, ?,
       ?, ?, ?,
       ?, ?, ?,
-      ?, ?,
       ?, ?, ?, ?,
-      ?, ?, ?, ?, ?
+      ?, ?, ?, ?, ?, ?,
+      ?, ?, ?, ?,
+      ?, ?, ?, ?,
+      ?, ?, ?, ?
     )
   `;
 
@@ -1573,51 +2291,184 @@ export const createProperty = asyncHandler(async (req, res) => {
     vendor_id,
     employee_id || null,
     city_id,
+    property_type_id,
     title,
-    property_type || "Villa",
     description || null,
     address || null,
-    city || null,
-    state || null,
-    pincode || null,
+    area || null,
+    maps_location || null,
     bedrooms || 0,
     bathrooms || 0,
     max_guests || 2,
-    min_guests || 1,
-    extra_guest_charge || 0,
-    min_children || 0,
-    max_children || 5,
-    extra_child_charge || 0,
-    primary_incharge_name || null,
-    primary_incharge_phone || null,
-    primary_incharge_email || null,
-    primary_incharge_whatsapp || null,
-    primary_incharge_alt_contact || null,
-    secondary_incharge_name || null,
-    secondary_incharge_phone || null,
-    secondary_incharge_email || null,
-    secondary_incharge_whatsapp || null,
-    secondary_incharge_alt_contact || null,
-    safeCheckInGuidelines,
-    safeHouseRulesText,
-    safeAmenitiesGuide,
-    safeSafetyInfo,
-    safeLocalAreaInfo,
-    safeEmergencyContacts,
+    min_stay_days || 1,
+    max_stay_days || null,
+    housekeeping_frequency || "weekly",
+    laundry_frequency || "weekly",
+    utilities_included || false,
+    parking_slots || 0,
+    floor_number || null,
+    wifi_speed_mbps || null,
+    wifi_provider || null,
+    furnishing_type || "fully_furnished",
+    is_recommended || false,
+    recommended_priority || 0,
+    is_recommended ? new Date() : null,
+    is_recommended ? req.user.id : null,
     same_day_booking_allowed || false,
     max_booking_days || null,
     check_in_time || "2:00 PM",
     check_out_time || "11:00 AM",
-    amenities || "[]",
     house_rules || "{}",
     cancellation_policy || "{}",
     photos || "[]",
-    price_per_night,
-    gst_percentage || 18,
     status || "draft",
   ];
 
   await db.query(query, values);
+
+  // Insert pricing data into property_pricing table
+  if (price_per_night) {
+    const pricingQuery = `
+      INSERT INTO property_pricing (
+        id, property_id, price_per_night, gst_percentage,
+        min_guests, extra_guest_charge, min_children, max_children, extra_child_charge,
+        weekly_discount_percent, monthly_discount_percent,
+        quarterly_discount_percent, long_term_discount_percent,
+        allow_corporate_booking, corporate_discount_percent,
+        deposit_amount, maintenance_charges, notice_period_days
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    const pricingValues = [
+      generateUUID(),
+      propertyId,
+      price_per_night,
+      gst_percentage || 18,
+      min_guests || 1,
+      extra_guest_charge || 0,
+      min_children || 0,
+      max_children || 5,
+      extra_child_charge || 0,
+      weekly_discount_percent || 0,
+      monthly_discount_percent || 0,
+      quarterly_discount_percent || 0,
+      long_term_discount_percent || 0,
+      allow_corporate_booking || false,
+      corporate_discount_percent || 0,
+      deposit_amount || 0,
+      maintenance_charges || 0,
+      notice_period_days || 30,
+    ];
+
+    await db.query(pricingQuery, pricingValues);
+  }
+
+  // Insert property contacts (primary and secondary)
+  if (
+    primary_incharge_name ||
+    primary_incharge_phone ||
+    primary_incharge_email
+  ) {
+    const primaryContactQuery = `
+      INSERT INTO property_contacts (
+        property_id, contact_type_id, name, phone, email, whatsapp, alt_contact
+      ) VALUES (?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    const primaryContactValues = [
+      propertyId,
+      1, // contact_type_id = 1 for primary
+      primary_incharge_name || null,
+      primary_incharge_phone || null,
+      primary_incharge_email || null,
+      primary_incharge_whatsapp || null,
+      primary_incharge_alt_contact || null,
+    ];
+
+    await db.query(primaryContactQuery, primaryContactValues);
+  }
+
+  if (
+    secondary_incharge_name ||
+    secondary_incharge_phone ||
+    secondary_incharge_email
+  ) {
+    const secondaryContactQuery = `
+      INSERT INTO property_contacts (
+        property_id, contact_type_id, name, phone, email, whatsapp, alt_contact
+      ) VALUES (?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    const secondaryContactValues = [
+      propertyId,
+      2, // contact_type_id = 2 for secondary
+      secondary_incharge_name || null,
+      secondary_incharge_phone || null,
+      secondary_incharge_email || null,
+      secondary_incharge_whatsapp || null,
+      secondary_incharge_alt_contact || null,
+    ];
+
+    await db.query(secondaryContactQuery, secondaryContactValues);
+  }
+
+  // Insert property guidelines (rich text fields)
+  if (
+    check_in_guidelines ||
+    house_rules_text ||
+    amenities_guide ||
+    safety_information ||
+    local_area_info ||
+    emergency_contacts
+  ) {
+    const guidelinesQuery = `
+      INSERT INTO property_guidelines (
+        id, property_id, check_in_guidelines, house_rules_text, amenities_guide,
+        safety_information, local_area_info, emergency_contacts
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    const guidelinesValues = [
+      generateUUID(),
+      propertyId,
+      safeCheckInGuidelines,
+      safeHouseRulesText,
+      safeAmenitiesGuide,
+      safeSafetyInfo,
+      safeLocalAreaInfo,
+      safeEmergencyContacts,
+    ];
+
+    await db.query(guidelinesQuery, guidelinesValues);
+  }
+
+  // Insert amenities into property_amenities junction table
+  if (amenities) {
+    try {
+      // Parse amenities - could be JSON string or array
+      let amenitiesArray = [];
+      if (typeof amenities === "string") {
+        amenitiesArray = JSON.parse(amenities);
+      } else if (Array.isArray(amenities)) {
+        amenitiesArray = amenities;
+      }
+
+      // Insert each amenity into junction table
+      if (amenitiesArray.length > 0) {
+        const amenityInserts = amenitiesArray.map((amenityId) => {
+          return db.query(
+            "INSERT INTO property_amenities (id, property_id, amenity_id) VALUES (?, ?, ?)",
+            [generateUUID(), propertyId, amenityId],
+          );
+        });
+
+        await Promise.all(amenityInserts);
+      }
+    } catch (error) {
+      // Log error but don't fail property creation
+      console.error("Error inserting amenities:", error.message);
+    }
+  }
 
   sendSuccess(res, { id: propertyId }, "Property created successfully", 201);
 });
@@ -1625,17 +2476,30 @@ export const createProperty = asyncHandler(async (req, res) => {
 // Update existing property
 export const updateProperty = asyncHandler(async (req, res) => {
   const { id } = req.params;
+
+  // AGGRESSIVE LOGGING - START
+  console.log("\n========================================");
+  console.log("🔍 UPDATE PROPERTY REQUEST RECEIVED");
+  console.log("========================================");
+  console.log("📝 Property ID:", id);
+  console.log("📊 Request body keys:", Object.keys(req.body));
+  console.log("👤 User:", req.user?.email);
+  console.log("⏰ Timestamp:", new Date().toISOString());
+  console.log("========================================\n");
+
   const {
     vendor_id,
     employee_id,
     city_id,
+    property_type_id, // Changed from property_type (now UUID)
     title,
-    property_type,
     description,
     address,
+    area, // NEW: Specific locality
     city,
     state,
     pincode,
+    maps_location, // NEW: Google Maps URL/coordinates
     bedrooms,
     bathrooms,
     max_guests,
@@ -1644,6 +2508,31 @@ export const updateProperty = asyncHandler(async (req, res) => {
     min_children,
     max_children,
     extra_child_charge,
+    // NEW: Long-term Pricing & Discounts (9 fields)
+    weekly_discount_percent,
+    monthly_discount_percent,
+    quarterly_discount_percent,
+    long_term_discount_percent,
+    allow_corporate_booking,
+    corporate_discount_percent,
+    deposit_amount,
+    maintenance_charges,
+    notice_period_days,
+    // NEW: Service Apartment Fields (10 fields)
+    min_stay_days,
+    max_stay_days,
+    housekeeping_frequency,
+    laundry_frequency,
+    utilities_included,
+    parking_slots,
+    floor_number,
+    wifi_speed_mbps,
+    wifi_provider,
+    furnishing_type,
+    // NEW: Recommendations (2 fields)
+    is_recommended,
+    recommended_priority,
+    // Existing fields
     primary_incharge_name,
     primary_incharge_phone,
     primary_incharge_email,
@@ -1664,18 +2553,20 @@ export const updateProperty = asyncHandler(async (req, res) => {
     max_booking_days,
     check_in_time,
     check_out_time,
-    amenities,
     house_rules,
     cancellation_policy,
-    photos,
     price_per_night,
     gst_percentage,
     status,
   } = req.body;
 
+  // NOTE: photos field removed - images are managed through separate APIs:
+  // - Upload: POST /api/admin/properties/:id/images
+  // - Delete: DELETE /api/admin/properties/:id/images/:imageId
+
   // Check if property exists
   const [existing] = await db.query(
-    "SELECT id FROM properties WHERE id = ? AND deleted_at IS NULL",
+    "SELECT id, is_recommended FROM properties WHERE id = ? AND deleted_at IS NULL",
     [id],
   );
 
@@ -1683,59 +2574,71 @@ export const updateProperty = asyncHandler(async (req, res) => {
     return sendError(res, "Property not found", 404);
   }
 
-  // ============================================
-  // CRITICAL FIX: XSS PROTECTION
-  // Sanitize all rich text fields to prevent script injection
-  // ============================================
-  const safeCheckInGuidelines = check_in_guidelines
-    ? sanitizeRichText(check_in_guidelines)
-    : null;
-  const safeHouseRulesText = house_rules_text
-    ? sanitizeRichText(house_rules_text)
-    : null;
-  const safeAmenitiesGuide = amenities_guide
-    ? sanitizeRichText(amenities_guide)
-    : null;
-  const safeSafetyInfo = safety_information
-    ? sanitizeRichText(safety_information)
-    : null;
-  const safeLocalAreaInfo = local_area_info
-    ? sanitizeRichText(local_area_info)
-    : null;
-  const safeEmergencyContacts = emergency_contacts
-    ? sanitizeRichText(emergency_contacts)
-    : null;
+  const wasRecommended = existing[0].is_recommended;
+
+  // XSS Protection for rich text guideline fields
+  // Use empty string instead of null for TEXT fields
+  const safeCheckInGuidelines =
+    check_in_guidelines && typeof check_in_guidelines === "string"
+      ? sanitizeRichText(check_in_guidelines)
+      : "";
+  const safeHouseRulesText =
+    house_rules_text && typeof house_rules_text === "string"
+      ? sanitizeRichText(house_rules_text)
+      : "";
+  const safeAmenitiesGuide =
+    amenities_guide && typeof amenities_guide === "string"
+      ? sanitizeRichText(amenities_guide)
+      : "";
+  const safeSafetyInfo =
+    safety_information && typeof safety_information === "string"
+      ? sanitizeRichText(safety_information)
+      : "";
+  const safeLocalAreaInfo =
+    local_area_info && typeof local_area_info === "string"
+      ? sanitizeRichText(local_area_info)
+      : "";
+  const safeEmergencyContacts =
+    emergency_contacts && typeof emergency_contacts === "string"
+      ? sanitizeRichText(emergency_contacts)
+      : "";
+
+  // Handle recommendation timestamp
+  const recommendedAt =
+    is_recommended && !wasRecommended ? new Date() : undefined;
+  const recommendedBy =
+    is_recommended && !wasRecommended ? req.user.id : undefined;
 
   const query = `
     UPDATE properties SET
       vendor_id = ?,
       employee_id = ?,
       city_id = ?,
+      property_type_id = ?,
       title = ?,
-      property_type = ?,
       description = ?,
       address = ?,
-      city = ?,
+      area = ?,
       state = ?,
       pincode = ?,
+      maps_location = ?,
       bedrooms = ?,
       bathrooms = ?,
       max_guests = ?,
-      min_guests = ?,
-      extra_guest_charge = ?,
-      min_children = ?,
-      max_children = ?,
-      extra_child_charge = ?,
-      primary_incharge_name = ?,
-      primary_incharge_phone = ?,
-      primary_incharge_email = ?,
-      primary_incharge_whatsapp = ?,
-      primary_incharge_alt_contact = ?,
-      secondary_incharge_name = ?,
-      secondary_incharge_phone = ?,
-      secondary_incharge_email = ?,
-      secondary_incharge_whatsapp = ?,
-      secondary_incharge_alt_contact = ?,
+      min_stay_days = ?,
+      max_stay_days = ?,
+      housekeeping_frequency = ?,
+      laundry_frequency = ?,
+      utilities_included = ?,
+      parking_slots = ?,
+      floor_number = ?,
+      wifi_speed_mbps = ?,
+      wifi_provider = ?,
+      furnishing_type = ?,
+      is_recommended = ?,
+      recommended_priority = ?,
+      ${recommendedAt ? "recommended_at = ?," : ""}
+      ${recommendedBy ? "recommended_by = ?," : ""}
       check_in_guidelines = ?,
       house_rules_text = ?,
       amenities_guide = ?,
@@ -1746,12 +2649,8 @@ export const updateProperty = asyncHandler(async (req, res) => {
       max_booking_days = ?,
       check_in_time = ?,
       check_out_time = ?,
-      amenities = ?,
       house_rules = ?,
       cancellation_policy = ?,
-      photos = ?,
-      price_per_night = ?,
-      gst_percentage = ?,
       status = ?
     WHERE id = ? AND deleted_at IS NULL
   `;
@@ -1760,52 +2659,273 @@ export const updateProperty = asyncHandler(async (req, res) => {
     vendor_id,
     employee_id || null,
     city_id,
+    property_type_id,
     title,
-    property_type,
-    description,
-    address,
-    city,
-    state,
-    pincode,
-    bedrooms,
-    bathrooms,
-    max_guests,
-    min_guests,
-    extra_guest_charge,
-    min_children,
-    max_children,
-    extra_child_charge,
-    primary_incharge_name,
-    primary_incharge_phone,
-    primary_incharge_email,
-    primary_incharge_whatsapp,
-    primary_incharge_alt_contact,
-    secondary_incharge_name,
-    secondary_incharge_phone,
-    secondary_incharge_email,
-    secondary_incharge_whatsapp,
-    secondary_incharge_alt_contact,
+    description || null,
+    address || null,
+    area || null,
+    state || null,
+    pincode || null,
+    maps_location || null,
+    bedrooms || 0,
+    bathrooms || 0,
+    max_guests || 2,
+    min_stay_days || 1,
+    max_stay_days || null,
+    housekeeping_frequency || "weekly",
+    laundry_frequency || "weekly",
+    utilities_included || false,
+    parking_slots || 0,
+    floor_number || null,
+    wifi_speed_mbps || null,
+    wifi_provider || null,
+    furnishing_type || "fully_furnished",
+    is_recommended || false,
+    recommended_priority || 0,
+  ];
+
+  console.log("📋 Base values array length:", values.length);
+
+  if (recommendedAt) {
+    values.push(recommendedAt);
+    console.log("➕ Added recommendedAt:", recommendedAt);
+  }
+  if (recommendedBy) {
+    values.push(recommendedBy);
+    console.log("➕ Added recommendedBy:", recommendedBy);
+  }
+
+  values.push(
     safeCheckInGuidelines,
     safeHouseRulesText,
     safeAmenitiesGuide,
     safeSafetyInfo,
     safeLocalAreaInfo,
     safeEmergencyContacts,
-    same_day_booking_allowed,
-    max_booking_days,
-    check_in_time,
-    check_out_time,
-    amenities,
-    house_rules,
-    cancellation_policy,
-    photos,
-    price_per_night,
-    gst_percentage,
-    status,
+    same_day_booking_allowed || false,
+    max_booking_days || null,
+    check_in_time || "2:00 PM",
+    check_out_time || "11:00 AM",
+    house_rules || "{}",
+    cancellation_policy || "{}",
+    status || "draft",
     id,
-  ];
+  );
 
-  await db.query(query, values);
+  console.log("📊 Final query values count:", values.length);
+  console.log("🎯 Sample values:", {
+    title: values[4],
+    status: values[values.length - 2],
+    id: values[values.length - 1],
+  });
+
+  console.log("🔄 Executing UPDATE query...");
+  try {
+    const updateResult = await db.query(query, values);
+    console.log("✅ Properties table updated:", {
+      affectedRows: updateResult[0].affectedRows,
+      changedRows: updateResult[0].changedRows,
+      warningCount: updateResult[0].warningCount,
+    });
+
+    if (updateResult[0].affectedRows === 0) {
+      console.error(
+        "⚠️ WARNING: No rows affected! Property may not exist or WHERE clause failed",
+      );
+    }
+    if (updateResult[0].changedRows === 0) {
+      console.log("ℹ️  INFO: No changes detected (values match existing data)");
+    }
+  } catch (error) {
+    console.error("❌ UPDATE query failed:", error.message);
+    console.error("Query:", query.substring(0, 200) + "...");
+    console.error("Values length:", values.length);
+    throw error;
+  }
+
+  // Update or insert property_pricing table
+  if (price_per_night) {
+    console.log("💰 Updating property_pricing table...");
+    const [existingPricing] = await db.query(
+      "SELECT id FROM property_pricing WHERE property_id = ?",
+      [id],
+    );
+
+    if (existingPricing.length > 0) {
+      console.log("✏️ Existing pricing found, updating...");
+      // Update existing pricing
+      const pricingUpdateQuery = `
+        UPDATE property_pricing SET
+          price_per_night = ?,
+          gst_percentage = ?,
+          min_guests = ?,
+          extra_guest_charge = ?,
+          min_children = ?,
+          max_children = ?,
+          extra_child_charge = ?,
+          weekly_discount_percent = ?,
+          monthly_discount_percent = ?,
+          quarterly_discount_percent = ?,
+          long_term_discount_percent = ?,
+          allow_corporate_booking = ?,
+          corporate_discount_percent = ?,
+          deposit_amount = ?,
+          maintenance_charges = ?,
+          notice_period_days = ?
+        WHERE property_id = ?
+      `;
+
+      const pricingValues = [
+        price_per_night,
+        gst_percentage || 18,
+        min_guests || 1,
+        extra_guest_charge || 0,
+        min_children || 0,
+        max_children || 5,
+        extra_child_charge || 0,
+        weekly_discount_percent || 0,
+        monthly_discount_percent || 0,
+        quarterly_discount_percent || 0,
+        long_term_discount_percent || 0,
+        allow_corporate_booking || false,
+        corporate_discount_percent || 0,
+        deposit_amount || 0,
+        maintenance_charges || 0,
+        notice_period_days || 30,
+        id,
+      ];
+
+      await db.query(pricingUpdateQuery, pricingValues);
+      console.log("✅ Property pricing updated successfully");
+    } else {
+      console.log("➕ No existing pricing, inserting new...");
+      // Insert new pricing record
+      const pricingInsertQuery = `
+        INSERT INTO property_pricing (
+          id, property_id, price_per_night, gst_percentage,
+          min_guests, extra_guest_charge, min_children, max_children, extra_child_charge,
+          weekly_discount_percent, monthly_discount_percent,
+          quarterly_discount_percent, long_term_discount_percent,
+          allow_corporate_booking, corporate_discount_percent,
+          deposit_amount, maintenance_charges, notice_period_days
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `;
+
+      const pricingValues = [
+        generateUUID(),
+        id,
+        price_per_night,
+        gst_percentage || 18,
+        min_guests || 1,
+        extra_guest_charge || 0,
+        min_children || 0,
+        max_children || 5,
+        extra_child_charge || 0,
+        weekly_discount_percent || 0,
+        monthly_discount_percent || 0,
+        quarterly_discount_percent || 0,
+        long_term_discount_percent || 0,
+        allow_corporate_booking || false,
+        corporate_discount_percent || 0,
+        deposit_amount || 0,
+        maintenance_charges || 0,
+        notice_period_days || 30,
+      ];
+
+      await db.query(pricingInsertQuery, pricingValues);
+      console.log("✅ Property pricing inserted successfully");
+    }
+  }
+
+  // CRITICAL: Update amenities
+  console.log("🏷️  Updating amenities...");
+  const { amenities } = req.body;
+  if (amenities && Array.isArray(amenities)) {
+    console.log("📋 Amenities received:", amenities.length, "items");
+
+    // Delete existing amenities
+    await db.query("DELETE FROM property_amenities WHERE property_id = ?", [
+      id,
+    ]);
+    console.log("🗑️  Deleted existing amenities");
+
+    // Insert new amenities
+    if (amenities.length > 0) {
+      for (const amenity_id of amenities) {
+        await db.query(
+          "INSERT INTO property_amenities (id, property_id, amenity_id) VALUES (UUID(), ?, ?)",
+          [id, amenity_id],
+        );
+      }
+      console.log("✅ Inserted", amenities.length, "amenities");
+    }
+  } else {
+    console.log("ℹ️  No amenities provided or invalid format");
+  }
+
+  // CRITICAL: Update property contacts (NORMALIZED DATABASE APPROACH)
+  console.log("👤 Updating property contacts (incharge info)...");
+  // Note: incharge fields already destructured at top of function
+
+  // Delete existing primary (type 1) and secondary (type 2) contacts
+  await db.query(
+    "DELETE FROM property_contacts WHERE property_id = ? AND contact_type_id IN (1, 2)",
+    [id],
+  );
+  console.log("🗑️  Deleted existing primary/secondary contacts");
+
+  // Insert primary incharge if provided (contact_type_id = 1)
+  if (
+    primary_incharge_name ||
+    primary_incharge_phone ||
+    primary_incharge_email
+  ) {
+    await db.query(
+      "INSERT INTO property_contacts (property_id, contact_type_id, name, phone, email, whatsapp, alt_contact) VALUES (?, 1, ?, ?, ?, ?, ?)",
+      [
+        id,
+        primary_incharge_name || null,
+        primary_incharge_phone || null,
+        primary_incharge_email || null,
+        primary_incharge_whatsapp || null,
+        primary_incharge_alt_contact || null,
+      ],
+    );
+    console.log(
+      "✅ Inserted primary incharge:",
+      primary_incharge_name || primary_incharge_phone,
+    );
+  }
+
+  // Insert secondary incharge if provided (contact_type_id = 2)
+  if (
+    secondary_incharge_name ||
+    secondary_incharge_phone ||
+    secondary_incharge_email
+  ) {
+    await db.query(
+      "INSERT INTO property_contacts (property_id, contact_type_id, name, phone, email, whatsapp, alt_contact) VALUES (?, 2, ?, ?, ?, ?, ?)",
+      [
+        id,
+        secondary_incharge_name || null,
+        secondary_incharge_phone || null,
+        secondary_incharge_email || null,
+        secondary_incharge_whatsapp || null,
+        secondary_incharge_alt_contact || null,
+      ],
+    );
+    console.log(
+      "✅ Inserted secondary incharge:",
+      secondary_incharge_name || secondary_incharge_phone,
+    );
+  }
+
+  console.log("\n========================================");
+  console.log("🎉 PROPERTY UPDATE COMPLETED SUCCESSFULLY");
+  console.log("========================================");
+  console.log("📝 Property ID:", id);
+  console.log("⏰ Completed at:", new Date().toISOString());
+  console.log("========================================\n");
 
   sendSuccess(res, { id }, "Property updated successfully", 200);
 });
@@ -1831,4 +2951,514 @@ export const deleteProperty = asyncHandler(async (req, res) => {
   await db.query("UPDATE properties SET deleted_at = NOW() WHERE id = ?", [id]);
 
   sendSuccess(res, null, "Property deleted successfully", 200);
+});
+
+// ===================================================================
+// RECOMMENDED PROPERTIES MANAGEMENT
+// ===================================================================
+
+// Get all recommended properties with management info
+export const getRecommendedPropertiesAdmin = asyncHandler(async (req, res) => {
+  const { property_type_id } = req.query; // Optional filter
+
+  let query = `
+    SELECT 
+      p.id,
+      p.title,
+      p.city_id,
+      c.name as city_name,
+      c.state,
+      p.property_type_id,
+      pt.name as property_type,
+      p.is_recommended,
+      p.recommended_priority,
+      p.recommended_at,
+      p.recommended_by,
+      a.name as recommended_by_name,
+      p.rating,
+      p.reviews_count,
+      p.status,
+      p.photos
+    FROM properties p
+    LEFT JOIN cities c ON p.city_id = c.id
+    LEFT JOIN property_types pt ON p.property_type_id = pt.id
+    LEFT JOIN admins a ON p.recommended_by = a.id
+    WHERE p.deleted_at IS NULL
+    AND p.status = 'approved'
+    AND p.is_recommended = 1
+  `;
+
+  const params = [];
+
+  if (property_type_id) {
+    query += " AND p.property_type_id = ?";
+    params.push(property_type_id);
+  }
+
+  query += " ORDER BY p.recommended_priority DESC, p.created_at DESC";
+
+  const [properties] = await db.query(query, params);
+
+  // Parse photos
+  const parsedProperties = properties.map((prop) => {
+    try {
+      prop.photos = prop.photos ? JSON.parse(prop.photos) : [];
+      prop.thumbnail = prop.photos[0] || null;
+    } catch (error) {
+      prop.photos = [];
+      prop.thumbnail = null;
+    }
+    return prop;
+  });
+
+  sendSuccess(
+    res,
+    {
+      properties: parsedProperties,
+      count: parsedProperties.length,
+    },
+    "Recommended properties fetched successfully",
+    200,
+  );
+});
+
+// Toggle recommended status for a property
+export const toggleRecommendedStatus = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { is_recommended } = req.body;
+  const adminId = req.user.id;
+
+  // Validate property exists and is approved
+  const [properties] = await db.query(
+    "SELECT id, property_type_id, is_recommended, title FROM properties WHERE id = ? AND deleted_at IS NULL",
+    [id],
+  );
+
+  if (properties.length === 0) {
+    return sendError(res, "Property not found", 404);
+  }
+
+  const property = properties[0];
+
+  // If marking as recommended, check limit (12 per property type)
+  if (is_recommended) {
+    const [count] = await db.query(
+      `SELECT COUNT(*) as total 
+       FROM properties 
+       WHERE property_type_id = ? 
+       AND is_recommended = 1 
+       AND deleted_at IS NULL
+       AND id != ?`,
+      [property.property_type_id, id],
+    );
+
+    if (count[0].total >= 12) {
+      return sendError(
+        res,
+        "Maximum 12 properties can be recommended per property type",
+        400,
+      );
+    }
+
+    // Get next priority (highest current + 1)
+    const [maxPriority] = await db.query(
+      `SELECT COALESCE(MAX(recommended_priority), 0) as max_priority 
+       FROM properties 
+       WHERE property_type_id = ? 
+       AND is_recommended = 1 
+       AND deleted_at IS NULL`,
+      [property.property_type_id],
+    );
+
+    const newPriority = maxPriority[0].max_priority + 1;
+
+    await db.query(
+      `UPDATE properties 
+       SET is_recommended = 1, 
+           recommended_priority = ?,
+           recommended_at = NOW(),
+           recommended_by = ?
+       WHERE id = ?`,
+      [newPriority, adminId, id],
+    );
+
+    sendSuccess(
+      res,
+      {
+        property_id: id,
+        is_recommended: true,
+        recommended_priority: newPriority,
+      },
+      "Property marked as recommended",
+      200,
+    );
+  } else {
+    // Remove from recommended
+    await db.query(
+      `UPDATE properties 
+       SET is_recommended = 0, 
+           recommended_priority = 0,
+           recommended_at = NULL,
+           recommended_by = NULL
+       WHERE id = ?`,
+      [id],
+    );
+
+    // Reorder remaining properties of same type
+    const [remainingProperties] = await db.query(
+      `SELECT id 
+       FROM properties 
+       WHERE property_type_id = ? 
+       AND is_recommended = 1 
+       AND deleted_at IS NULL
+       ORDER BY recommended_priority DESC`,
+      [property.property_type_id],
+    );
+
+    // Reset priorities to 1, 2, 3...
+    for (let i = 0; i < remainingProperties.length; i++) {
+      await db.query(
+        "UPDATE properties SET recommended_priority = ? WHERE id = ?",
+        [remainingProperties.length - i, remainingProperties[i].id],
+      );
+    }
+
+    sendSuccess(
+      res,
+      { property_id: id, is_recommended: false },
+      "Property removed from recommended",
+      200,
+    );
+  }
+});
+
+// Reorder recommended properties (drag and drop)
+export const reorderRecommendedProperties = asyncHandler(async (req, res) => {
+  const { property_type_id, ordered_property_ids } = req.body;
+
+  // Validate inputs
+  if (!property_type_id || !Array.isArray(ordered_property_ids)) {
+    return sendError(
+      res,
+      "property_type_id and ordered_property_ids array required",
+      400,
+    );
+  }
+
+  if (ordered_property_ids.length > 12) {
+    return sendError(res, "Maximum 12 properties can be recommended", 400);
+  }
+
+  // Verify all properties exist and belong to the property type
+  const placeholders = ordered_property_ids.map(() => "?").join(",");
+  const [properties] = await db.query(
+    `SELECT id, property_type_id 
+     FROM properties 
+     WHERE id IN (${placeholders}) 
+     AND property_type_id = ?
+     AND is_recommended = 1
+     AND deleted_at IS NULL`,
+    [...ordered_property_ids, property_type_id],
+  );
+
+  if (properties.length !== ordered_property_ids.length) {
+    return sendError(res, "Some properties not found or not recommended", 400);
+  }
+
+  // Update priorities (highest priority = first in array)
+  const totalProperties = ordered_property_ids.length;
+  for (let i = 0; i < totalProperties; i++) {
+    const priority = totalProperties - i; // Reverse: first = highest
+    await db.query(
+      "UPDATE properties SET recommended_priority = ? WHERE id = ?",
+      [priority, ordered_property_ids[i]],
+    );
+  }
+
+  sendSuccess(
+    res,
+    {
+      property_type_id,
+      reordered_count: totalProperties,
+    },
+    "Recommended properties reordered successfully",
+    200,
+  );
+});
+
+// ===========================================
+// Property Images Management
+// ===========================================
+
+/**
+ * Get property images
+ * GET /api/admin/properties/:id/images
+ */
+export const getPropertyImages = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  console.log("🖼️ Get images request for property:", id);
+
+  // Get property photos
+  const [rows] = await db.query(
+    "SELECT photos FROM properties WHERE id = ? AND deleted_at IS NULL",
+    [id],
+  );
+
+  if (!rows || rows.length === 0) {
+    console.log("❌ Property not found:", id);
+    return sendError(res, "Property not found", 404);
+  }
+
+  let images = [];
+  try {
+    const photosData = rows[0].photos;
+    console.log("📸 Raw photos data:", photosData);
+    if (photosData && photosData !== "[]" && photosData !== "") {
+      const photosArray = JSON.parse(photosData);
+      // Transform array to objects with id (index) and image_url
+      images = photosArray.map((url, index) => ({
+        id: index,
+        image_url: url.trim(),
+        order: index,
+      }));
+      console.log("✅ Parsed images:", images.length);
+    } else {
+      console.log("ℹ️ No photos found for property:", id);
+    }
+  } catch (error) {
+    console.error("❌ Error parsing photos JSON:", error);
+    return sendError(res, "Error parsing property images", 500);
+  }
+
+  console.log("✅ Returning images:", images.length);
+  sendSuccess(res, images, "Property images retrieved successfully", 200);
+});
+
+/**
+ * Upload property images
+ * POST /api/admin/properties/:id/images
+ */
+export const uploadPropertyImages = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const useR2 = isR2Configured();
+
+  console.log("📤 Upload images request for property:", id);
+  console.log("📎 Files received:", req.files?.length || 0);
+  console.log("📦 Storage mode:", useR2 ? "Cloudflare R2" : "Local disk");
+
+  // Check if property exists
+  const [existing] = await db.query(
+    "SELECT id, photos FROM properties WHERE id = ? AND deleted_at IS NULL",
+    [id],
+  );
+
+  if (!existing || existing.length === 0) {
+    console.log("❌ Property not found:", id);
+    return sendError(res, "Property not found", 404);
+  }
+
+  // Check if files were uploaded
+  if (!req.files || req.files.length === 0) {
+    console.log("❌ No files in request");
+    return sendError(res, "No images uploaded", 400);
+  }
+
+  // Get existing photos
+  let existingPhotos = [];
+  try {
+    const photosData = existing[0].photos;
+    if (photosData && photosData !== "[]" && photosData !== "") {
+      existingPhotos = JSON.parse(photosData);
+    }
+    console.log("📸 Existing photos:", existingPhotos.length);
+  } catch (error) {
+    console.error("Error parsing existing photos:", error);
+    existingPhotos = [];
+  }
+
+  // Note: We APPEND new images to existing ones (don't delete old images)
+  // Users can manually delete images they don't want using the delete endpoint
+  console.log("📝 Upload strategy: APPEND new images to existing collection");
+
+  // Upload images based on storage mode
+  let newImageUrls;
+
+  if (useR2) {
+    // Upload to Cloudflare R2
+    console.log("☁️  Uploading to Cloudflare R2...");
+    try {
+      newImageUrls = await uploadMultipleToR2(req.files, "properties");
+      console.log("✅ R2 upload successful:", newImageUrls.length, "images");
+    } catch (error) {
+      console.error("❌ R2 upload failed:", error.message);
+      return sendError(
+        res,
+        `Failed to upload images to R2: ${error.message}`,
+        500,
+      );
+    }
+  } else {
+    // Local storage fallback
+    console.log("💾 Using local disk storage...");
+    newImageUrls = req.files.map(
+      (file) => `/uploads/properties/${file.filename}`,
+    );
+  }
+
+  console.log("✅ New image URLs generated:", newImageUrls);
+
+  // APPEND new images to existing ones (industry standard)
+  // Users can manually delete unwanted images
+  const updatedPhotos = [...existingPhotos, ...newImageUrls];
+  console.log("📦 Photos before upload:", existingPhotos.length);
+  console.log("📤 New images uploaded:", newImageUrls.length);
+  console.log("📊 Total photos after upload:", updatedPhotos.length);
+  console.log("✅ Action: APPENDED new images to existing collection");
+
+  // Update database
+  console.log("💾 Updating database with new photos array...");
+  const updateResult = await db.query(
+    "UPDATE properties SET photos = ? WHERE id = ? AND deleted_at IS NULL",
+    [JSON.stringify(updatedPhotos), id],
+  );
+  console.log("✅ Database UPDATE result:", {
+    affectedRows: updateResult[0].affectedRows,
+    changedRows: updateResult[0].changedRows,
+  });
+
+  if (updateResult[0].affectedRows === 0) {
+    console.error(
+      "⚠️ WARNING: No rows updated! Photos may not have been saved.",
+    );
+  }
+
+  // Verify the photos were actually saved
+  const [verification] = await db.query(
+    "SELECT photos FROM properties WHERE id = ?",
+    [id],
+  );
+  const savedPhotos = verification[0]?.photos;
+  console.log(
+    "🔍 Verification - Photos in database:",
+    savedPhotos ? JSON.parse(savedPhotos).length + " images" : "NULL or empty",
+  );
+
+  // Return all images with indices
+  const allImages = updatedPhotos.map((url, index) => ({
+    id: index,
+    image_url: url.trim(),
+    order: index,
+  }));
+
+  console.log("✅ Returning all images:", allImages.length);
+  sendSuccess(res, allImages, "Images uploaded successfully", 200);
+});
+
+/**
+ * Delete property image
+ * DELETE /api/admin/properties/:id/images/:imageId
+ */
+export const deletePropertyImage = asyncHandler(async (req, res) => {
+  const { id, imageId } = req.params;
+  const imageIndex = parseInt(imageId, 10);
+  const useR2 = isR2Configured();
+
+  console.log("\n🗑️  DELETE IMAGE REQUEST");
+  console.log("Property ID:", id);
+  console.log("Image Index:", imageIndex);
+
+  if (isNaN(imageIndex) || imageIndex < 0) {
+    console.error("❌ Invalid image index:", imageId);
+    return sendError(res, "Invalid image ID", 400);
+  }
+
+  // Get property photos
+  const [existing] = await db.query(
+    "SELECT photos FROM properties WHERE id = ? AND deleted_at IS NULL",
+    [id],
+  );
+
+  if (!existing || existing.length === 0) {
+    console.error("❌ Property not found:", id);
+    return sendError(res, "Property not found", 404);
+  }
+
+  let photos = [];
+  try {
+    const photosData = existing[0].photos;
+    console.log("📸 Raw photos data:", photosData);
+    if (photosData && photosData !== "[]" && photosData !== "") {
+      photos = JSON.parse(photosData);
+    }
+    console.log("📊 Parsed photos count:", photos.length);
+  } catch (error) {
+    console.error("❌ Error parsing photos JSON:", error);
+    return sendError(res, "Error parsing property images", 500);
+  }
+
+  // Check if image index exists
+  if (imageIndex >= photos.length) {
+    console.error(
+      `❌ Image index ${imageIndex} >= photos length ${photos.length}`,
+    );
+    return sendError(
+      res,
+      `Image not found (index ${imageIndex} but only ${photos.length} images exist)`,
+      404,
+    );
+  }
+
+  // Get the image URL to delete
+  const deletedImageUrl = photos[imageIndex];
+  console.log("🗑️  Deleting image:", deletedImageUrl);
+
+  // Delete from R2 if configured
+  if (useR2 && deletedImageUrl.startsWith("http")) {
+    console.log("☁️  Deleting from Cloudflare R2...");
+    const deleted = await deleteFromR2(deletedImageUrl);
+    if (deleted) {
+      console.log("✅ R2 deletion successful");
+    } else {
+      console.warn("⚠️  R2 deletion failed, continuing with DB update");
+    }
+  } else if (!useR2 && deletedImageUrl.startsWith("/uploads/")) {
+    // Delete local file if it exists
+    console.log("💾 Deleting from local storage...");
+    try {
+      const fs = await import("fs/promises");
+      const path = await import("path");
+      const filePath = path.join(process.cwd(), deletedImageUrl);
+      await fs.unlink(filePath);
+      console.log("✅ Local file deleted");
+    } catch (error) {
+      console.warn("⚠️  Local file deletion failed:", error.message);
+    }
+  }
+
+  // Remove image from array
+  photos.splice(imageIndex, 1);
+
+  // Update database
+  await db.query(
+    "UPDATE properties SET photos = ? WHERE id = ? AND deleted_at IS NULL",
+    [JSON.stringify(photos), id],
+  );
+
+  // Note: You may want to delete the physical file from uploads folder
+  // using fs.unlink() if the image is stored locally
+
+  sendSuccess(
+    res,
+    {
+      deleted_image: deletedImageUrl,
+      remaining_images: photos.map((url, index) => ({
+        id: index,
+        image_url: url.trim(),
+        order: index,
+      })),
+    },
+    "Image deleted successfully",
+    200,
+  );
 });

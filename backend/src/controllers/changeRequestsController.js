@@ -19,7 +19,7 @@ export const requestPropertyChange = asyncHandler(async (req, res) => {
   // Check if property belongs to vendor
   const [properties] = await db.query(
     `SELECT id, title FROM properties WHERE id = ? AND vendor_id = ? AND deleted_at IS NULL`,
-    [id, vendorId]
+    [id, vendorId],
   );
 
   if (properties.length === 0) {
@@ -30,14 +30,14 @@ export const requestPropertyChange = asyncHandler(async (req, res) => {
   const [pending] = await db.query(
     `SELECT id FROM property_change_requests 
      WHERE property_id = ? AND status = 'pending'`,
-    [id]
+    [id],
   );
 
   if (pending.length > 0) {
     return sendError(
       res,
       "There is already a pending change request for this property",
-      400
+      400,
     );
   }
 
@@ -47,13 +47,13 @@ export const requestPropertyChange = asyncHandler(async (req, res) => {
     `INSERT INTO property_change_requests 
      (id, property_id, requested_changes, status) 
      VALUES (?, ?, ?, 'pending')`,
-    [requestId, id, JSON.stringify(requested_changes)]
+    [requestId, id, JSON.stringify(requested_changes)],
   );
 
   // Send notification to admin
   const notifId = generateUUID();
   const [admins] = await db.query(
-    `SELECT id FROM admins WHERE role IN ('admin', 'super_admin') AND status = 'active' LIMIT 1`
+    `SELECT id FROM admins WHERE role IN ('admin', 'super_admin') AND status = 'active' LIMIT 1`,
   );
 
   if (admins.length > 0) {
@@ -65,7 +65,7 @@ export const requestPropertyChange = asyncHandler(async (req, res) => {
         admins[0].id,
         "Property Change Request",
         `Vendor requested changes for property: ${properties[0].title}`,
-      ]
+      ],
     );
   }
 
@@ -96,7 +96,7 @@ export const getVendorChangeRequests = asyncHandler(async (req, res) => {
     LEFT JOIN admins a ON pcr.reviewed_by = a.id
     WHERE p.vendor_id = ? ${statusFilter}
     ORDER BY pcr.created_at DESC`,
-    [vendorId]
+    [vendorId],
   );
 
   sendSuccess(res, "Change requests retrieved successfully", { requests });
@@ -129,13 +129,13 @@ export const getAllChangeRequests = asyncHandler(async (req, res) => {
     WHERE 1=1 ${statusFilter}
     ORDER BY pcr.created_at DESC
     LIMIT ? OFFSET ?`,
-    [parseInt(limit), parseInt(offset)]
+    [parseInt(limit), parseInt(offset)],
   );
 
   // Get total count
   const [countResult] = await db.query(
     `SELECT COUNT(*) as total FROM property_change_requests pcr 
-     WHERE 1=1 ${statusFilter}`
+     WHERE 1=1 ${statusFilter}`,
   );
 
   sendSuccess(res, "Change requests retrieved successfully", {
@@ -166,7 +166,7 @@ export const approveChangeRequest = asyncHandler(async (req, res) => {
     FROM property_change_requests pcr
     LEFT JOIN properties p ON pcr.property_id = p.id
     WHERE pcr.id = ? AND pcr.status = 'pending'`,
-    [id]
+    [id],
   );
 
   if (requests.length === 0) {
@@ -176,21 +176,130 @@ export const approveChangeRequest = asyncHandler(async (req, res) => {
   const request = requests[0];
   const changes = JSON.parse(request.requested_changes);
 
-  // Build update query dynamically
-  const updateFields = [];
-  const params = [];
+  // Define which fields belong to which tables
+  const pricingFields = [
+    "price_per_night",
+    "gst_percentage",
+    "min_guests",
+    "extra_guest_charge",
+    "min_children",
+    "max_children",
+    "extra_child_charge",
+    "weekly_discount_percent",
+    "monthly_discount_percent",
+    "quarterly_discount_percent",
+    "long_term_discount_percent",
+    "allow_corporate_booking",
+    "corporate_discount_percent",
+    "deposit_amount",
+    "maintenance_charges",
+    "notice_period_days",
+  ];
 
+  const propertyFields = {};
+  const pricingUpdates = {};
+  let amenitiesUpdate = null;
+
+  // Separate changes by table
   Object.keys(changes).forEach((field) => {
-    updateFields.push(`${field} = ?`);
-    params.push(changes[field]);
+    if (field === "amenities") {
+      amenitiesUpdate = changes[field]; // Array of amenity IDs
+    } else if (pricingFields.includes(field)) {
+      pricingUpdates[field] = changes[field];
+    } else {
+      // Property table fields
+      propertyFields[field] = changes[field];
+    }
   });
 
-  if (updateFields.length > 0) {
+  // Update properties table
+  if (Object.keys(propertyFields).length > 0) {
+    const updateFields = [];
+    const params = [];
+
+    Object.keys(propertyFields).forEach((field) => {
+      updateFields.push(`${field} = ?`);
+      // Handle JSON fields
+      if (["house_rules", "cancellation_policy", "photos"].includes(field)) {
+        params.push(
+          typeof propertyFields[field] === "string"
+            ? propertyFields[field]
+            : JSON.stringify(propertyFields[field]),
+        );
+      } else {
+        params.push(propertyFields[field]);
+      }
+    });
+
     params.push(request.property_id);
     await db.query(
       `UPDATE properties SET ${updateFields.join(", ")} WHERE id = ?`,
-      params
+      params,
     );
+  }
+
+  // Update property_pricing table
+  if (Object.keys(pricingUpdates).length > 0) {
+    const updateFields = [];
+    const params = [];
+
+    Object.keys(pricingUpdates).forEach((field) => {
+      updateFields.push(`${field} = ?`);
+      params.push(pricingUpdates[field]);
+    });
+
+    params.push(request.property_id);
+    // Check if pricing exists
+    const [existingPricing] = await db.query(
+      `SELECT id FROM property_pricing WHERE property_id = ?`,
+      [request.property_id],
+    );
+
+    if (existingPricing.length > 0) {
+      // Update existing
+      await db.query(
+        `UPDATE property_pricing SET ${updateFields.join(", ")}, updated_at = NOW() WHERE property_id = ?`,
+        params,
+      );
+    } else {
+      // Create new (shouldn't happen for approved properties, but handle it)
+      const pricingId = generateUUID();
+      const insertFields = [
+        "id",
+        "property_id",
+        ...Object.keys(pricingUpdates),
+      ];
+      const insertValues = [
+        pricingId,
+        request.property_id,
+        ...Object.values(pricingUpdates),
+      ];
+      await db.query(
+        `INSERT INTO property_pricing (${insertFields.join(", ")}) VALUES (${insertFields.map(() => "?").join(", ")})`,
+        insertValues,
+      );
+    }
+  }
+
+  // Update amenities
+  if (amenitiesUpdate && Array.isArray(amenitiesUpdate)) {
+    // Delete existing amenities
+    await db.query(`DELETE FROM property_amenities WHERE property_id = ?`, [
+      request.property_id,
+    ]);
+
+    // Insert new amenities
+    if (amenitiesUpdate.length > 0) {
+      const amenityValues = amenitiesUpdate.map((amenityId) => [
+        generateUUID(),
+        request.property_id,
+        amenityId,
+      ]);
+      await db.query(
+        `INSERT INTO property_amenities (id, property_id, amenity_id) VALUES ?`,
+        [amenityValues],
+      );
+    }
   }
 
   // Update request status
@@ -198,21 +307,25 @@ export const approveChangeRequest = asyncHandler(async (req, res) => {
     `UPDATE property_change_requests 
      SET status = 'approved', reviewed_by = ?, reviewed_at = NOW() 
      WHERE id = ?`,
-    [adminId, id]
+    [adminId, id],
   );
 
-  // Send notification to vendor
-  const notifId = generateUUID();
-  await db.query(
-    `INSERT INTO notifications (id, recipient_id, recipient_role, title, message) 
-     VALUES (?, ?, 'vendor', ?, ?)`,
-    [
-      notifId,
-      request.vendor_id,
-      "Change Request Approved",
-      `Your change request for "${request.title}" has been approved`,
-    ]
-  );
+  // Send notification to vendor (don't let failure block response)
+  try {
+    const notifId = generateUUID();
+    await db.query(
+      `INSERT INTO notifications (id, recipient_id, recipient_role, title, message, created_at) 
+       VALUES (?, ?, 'vendor', ?, ?, NOW())`,
+      [
+        notifId,
+        request.vendor_id,
+        "Change Request Approved",
+        `Your change request for "${request.title}" has been approved`,
+      ],
+    );
+  } catch (notifError) {
+    console.error("Failed to send notification:", notifError);
+  }
 
   sendSuccess(res, "Change request approved and applied successfully");
 });
@@ -234,7 +347,7 @@ export const rejectChangeRequest = asyncHandler(async (req, res) => {
     FROM property_change_requests pcr
     LEFT JOIN properties p ON pcr.property_id = p.id
     WHERE pcr.id = ? AND pcr.status = 'pending'`,
-    [id]
+    [id],
   );
 
   if (requests.length === 0) {
@@ -248,20 +361,24 @@ export const rejectChangeRequest = asyncHandler(async (req, res) => {
     `UPDATE property_change_requests 
      SET status = 'rejected', reviewed_by = ?, reviewed_at = NOW() 
      WHERE id = ?`,
-    [adminId, id]
+    [adminId, id],
   );
 
-  // Send notification to vendor
-  const notifId = generateUUID();
-  const message = rejection_reason
-    ? `Your change request for "${request.title}" was rejected. Reason: ${rejection_reason}`
-    : `Your change request for "${request.title}" was rejected`;
+  // Send notification to vendor (don't let failure block response)
+  try {
+    const notifId = generateUUID();
+    const message = rejection_reason
+      ? `Your change request for "${request.title}" was rejected. Reason: ${rejection_reason}`
+      : `Your change request for "${request.title}" was rejected`;
 
-  await db.query(
-    `INSERT INTO notifications (id, recipient_id, recipient_role, title, message) 
-     VALUES (?, ?, 'vendor', ?, ?)`,
-    [notifId, request.vendor_id, "Change Request Rejected", message]
-  );
+    await db.query(
+      `INSERT INTO notifications (id, recipient_id, recipient_role, title, message, created_at) 
+       VALUES (?, ?, 'vendor', ?, ?, NOW())`,
+      [notifId, request.vendor_id, "Change Request Rejected", message],
+    );
+  } catch (notifError) {
+    console.error("Failed to send notification:", notifError);
+  }
 
   sendSuccess(res, "Change request rejected successfully");
 });

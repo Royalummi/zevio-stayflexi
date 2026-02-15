@@ -1,353 +1,531 @@
+/**
+ * SESSION 64: COUPON SYSTEM
+ * Complete coupon management and validation APIs
+ * Features: Percentage, Flat, First-Time user coupons
+ */
+
 import db from "../config/database.js";
 import { asyncHandler, sendSuccess, sendError } from "../utils/response.js";
 import { generateUUID } from "../utils/helpers.js";
 
-/**
- * @route   GET /api/admin/coupons
- * @desc    Get all coupons with pagination and filtering
- * @access  Private (Admin)
- */
-export const getAllCoupons = asyncHandler(async (req, res) => {
-  const { status, page = 1, limit = 20, search } = req.query;
+// ============================================
+// ADMIN: CREATE COUPON
+// POST /api/admin/coupons
+// ============================================
+export const createCoupon = asyncHandler(async (req, res) => {
+  const {
+    code,
+    type, // 'percentage', 'flat', 'first_time'
+    discount_percentage,
+    discount_amount,
+    min_booking_amount,
+    max_discount_cap,
+    valid_from,
+    valid_until,
+    usage_limit,
+    per_user_limit = 1,
+    applicable_properties, // JSON array of property IDs
+    description,
+    is_active = true,
+  } = req.body;
+
+  const adminId = req.user.id;
+
+  // Validation
+  if (!code || !type || !valid_from || !valid_until) {
+    return sendError(res, "Code, type, and validity dates are required", 400);
+  }
+
+  // Validate discount values based on type
+  if (type === "percentage" || type === "first_time") {
+    if (!discount_percentage || discount_percentage <= 0 || discount_percentage > 100) {
+      return sendError(res, "Invalid discount percentage (must be 1-100)", 400);
+    }
+  } else if (type === "flat") {
+    if (!discount_amount || discount_amount <= 0) {
+      return sendError(res, "Invalid discount amount", 400);
+    }
+  }
+
+  // Check if coupon code already exists
+  const [existing] = await db.query(
+    "SELECT id FROM coupons WHERE code = ? AND deleted_at IS NULL",
+    [code.toUpperCase()]
+  );
+
+  if (existing.length > 0) {
+    return sendError(res, "Coupon code already exists", 400);
+  }
+
+  // Create coupon
+  const couponId = generateUUID();
+  await db.query(
+    `INSERT INTO coupons (
+      id, code, type, discount_percentage, discount_amount,
+      min_booking_amount, max_discount_cap, valid_from, valid_until,
+      usage_limit, usage_count, per_user_limit, applicable_properties,
+      description, is_active, created_by
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?)`,
+    [
+      couponId,
+      code.toUpperCase(),
+      type,
+      discount_percentage || null,
+      discount_amount || null,
+      min_booking_amount || 0,
+      max_discount_cap || null,
+      valid_from,
+      valid_until,
+      usage_limit || null,
+      per_user_limit,
+      applicable_properties ? JSON.stringify(applicable_properties) : null,
+      description || null,
+      is_active ? 1 : 0,
+      adminId,
+    ]
+  );
+
+  // Log activity
+  await db.query(
+    `INSERT INTO activity_logs (id, actor_id, actor_role, action, entity, entity_id) 
+     VALUES (?, ?, 'admin', 'Created coupon', 'coupon', ?)`,
+    [generateUUID(), adminId, couponId]
+  );
+
+  sendSuccess(res, { coupon_id: couponId }, "Coupon created successfully", 201);
+});
+
+// ============================================
+// ADMIN: LIST ALL COUPONS
+// GET /api/admin/coupons
+// ============================================
+export const listCoupons = asyncHandler(async (req, res) => {
+  const { status, type, search, page = 1, limit = 20 } = req.query;
   const offset = (page - 1) * limit;
 
-  let statusFilter = "";
-  let searchFilter = "";
-  const params = [];
+  let whereConditions = ["c.deleted_at IS NULL"];
+  const queryParams = [];
 
-  if (status && ["active", "inactive"].includes(status)) {
-    statusFilter = "AND status = ?";
-    params.push(status);
+  // Filter by status
+  if (status === "active") {
+    whereConditions.push("c.is_active = 1");
+    whereConditions.push("c.valid_until >= CURDATE()");
+  } else if (status === "inactive") {
+    whereConditions.push("c.is_active = 0");
+  } else if (status === "expired") {
+    whereConditions.push("c.valid_until < CURDATE()");
   }
 
+  // Filter by type
+  if (type && ["percentage", "flat", "first_time"].includes(type)) {
+    whereConditions.push("c.type = ?");
+    queryParams.push(type);
+  }
+
+  // Search by code or description
   if (search) {
-    searchFilter = "AND code LIKE ?";
-    params.push(`%${search}%`);
+    whereConditions.push("(c.code LIKE ? OR c.description LIKE ?)");
+    queryParams.push(`%${search}%`, `%${search}%`);
   }
 
-  params.push(parseInt(limit), parseInt(offset));
-
-  const [coupons] = await db.query(
-    `SELECT 
-      id, code, discount_type, discount_value, max_discount,
-      min_booking_amount, start_date, end_date, usage_limit, status,
-      (SELECT COUNT(*) FROM coupon_usages WHERE coupon_id = coupons.id) as times_used
-    FROM coupons 
-    WHERE 1=1 ${statusFilter} ${searchFilter}
-    ORDER BY created_at DESC
-    LIMIT ? OFFSET ?`,
-    params
-  );
+  const whereClause = whereConditions.join(" AND ");
 
   // Get total count
-  const countParams = [];
-  if (status) countParams.push(status);
-  if (search) countParams.push(`%${search}%`);
-
   const [countResult] = await db.query(
-    `SELECT COUNT(*) as total FROM coupons 
-     WHERE 1=1 ${statusFilter} ${searchFilter}`,
-    countParams
+    `SELECT COUNT(*) as total FROM coupons c WHERE ${whereClause}`,
+    queryParams
+  );
+  const total = countResult[0].total;
+
+  // Get coupons with admin details
+  queryParams.push(parseInt(limit), offset);
+  const [coupons] = await db.query(
+    `SELECT 
+      c.*,
+      a.name as created_by_name,
+      (SELECT COUNT(*) FROM coupon_usages cu WHERE cu.coupon_id = c.id AND cu.status = 'completed') as actual_usage
+    FROM coupons c
+    LEFT JOIN admins a ON c.created_by = a.id
+    WHERE ${whereClause}
+    ORDER BY c.created_at DESC
+    LIMIT ? OFFSET ?`,
+    queryParams
   );
 
-  sendSuccess(res, "Coupons retrieved successfully", {
+  sendSuccess(res, {
     coupons,
     pagination: {
-      total: countResult[0].total,
       page: parseInt(page),
       limit: parseInt(limit),
-      totalPages: Math.ceil(countResult[0].total / limit),
+      total,
+      total_pages: Math.ceil(total / limit),
     },
   });
 });
 
-/**
- * @route   GET /api/admin/coupons/:id
- * @desc    Get single coupon details with usage statistics
- * @access  Private (Admin)
- */
+// ============================================
+// ADMIN: GET COUPON DETAILS
+// GET /api/admin/coupons/:id
+// ============================================
 export const getCouponDetails = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
-  const [coupons] = await db.query(`SELECT * FROM coupons WHERE id = ?`, [id]);
+  const [coupons] = await db.query(
+    `SELECT 
+      c.*,
+      a.name as created_by_name
+    FROM coupons c
+    LEFT JOIN admins a ON c.created_by = a.id
+    WHERE c.id = ? AND c.deleted_at IS NULL`,
+    [id]
+  );
 
   if (coupons.length === 0) {
     return sendError(res, "Coupon not found", 404);
   }
 
+  const coupon = coupons[0];
+
   // Get usage statistics
   const [usageStats] = await db.query(
     `SELECT 
       COUNT(*) as total_uses,
-      SUM(b.total_amount) as total_booking_value,
-      SUM(b.discount_amount) as total_discount_given
-    FROM coupon_usages cu
-    LEFT JOIN bookings b ON cu.booking_id = b.id
-    WHERE cu.coupon_id = ?`,
+      SUM(discount_applied) as total_discount_given,
+      COUNT(DISTINCT user_id) as unique_users
+    FROM coupon_usages
+    WHERE coupon_id = ? AND status = 'completed'`,
     [id]
   );
 
   // Get recent usages
   const [recentUsages] = await db.query(
     `SELECT 
-      cu.used_at,
+      cu.*, 
       u.full_name as user_name,
-      u.email as user_email,
-      b.total_amount as booking_amount,
-      b.discount_amount
+      b.id as booking_id,
+      b.total_amount
     FROM coupon_usages cu
     LEFT JOIN users u ON cu.user_id = u.id
     LEFT JOIN bookings b ON cu.booking_id = b.id
     WHERE cu.coupon_id = ?
-    ORDER BY cu.used_at DESC
+    ORDER BY cu.reserved_at DESC
     LIMIT 10`,
     [id]
   );
 
-  sendSuccess(res, "Coupon details retrieved successfully", {
-    coupon: coupons[0],
+  sendSuccess(res, {
+    coupon,
     usage_stats: usageStats[0],
     recent_usages: recentUsages,
   });
 });
 
-/**
- * @route   POST /api/admin/coupons
- * @desc    Create new coupon
- * @access  Private (Admin)
- */
-export const createCoupon = asyncHandler(async (req, res) => {
-  const {
-    code,
-    discount_type,
-    discount_value,
-    max_discount,
-    min_booking_amount,
-    start_date,
-    end_date,
-    usage_limit,
-  } = req.body;
-
-  // Validate required fields
-  if (!code || !discount_type || !discount_value) {
-    return sendError(
-      res,
-      "Code, discount type, and discount value are required",
-      400
-    );
-  }
-
-  // Validate discount type
-  if (!["percentage", "flat"].includes(discount_type)) {
-    return sendError(res, "Discount type must be 'percentage' or 'flat'", 400);
-  }
-
-  // Check if coupon code already exists
-  const [existingCoupons] = await db.query(
-    `SELECT id FROM coupons WHERE code = ?`,
-    [code.toUpperCase()]
-  );
-
-  if (existingCoupons.length > 0) {
-    return sendError(res, "Coupon code already exists", 400);
-  }
-
-  // Insert coupon
-  const couponId = generateUUID();
-  await db.query(
-    `INSERT INTO coupons (
-      id, code, discount_type, discount_value, max_discount,
-      min_booking_amount, start_date, end_date, usage_limit, status
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'active')`,
-    [
-      couponId,
-      code.toUpperCase(),
-      discount_type,
-      discount_value,
-      max_discount || null,
-      min_booking_amount || 0,
-      start_date,
-      end_date,
-      usage_limit || null,
-    ]
-  );
-
-  sendSuccess(res, "Coupon created successfully", { couponId }, 201);
-});
-
-/**
- * @route   PATCH /api/admin/coupons/:id
- * @desc    Update coupon
- * @access  Private (Admin)
- */
+// ============================================
+// ADMIN: UPDATE COUPON
+// PATCH /api/admin/coupons/:id
+// ============================================
 export const updateCoupon = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const {
     code,
-    discount_type,
-    discount_value,
-    max_discount,
+    type,
+    discount_percentage,
+    discount_amount,
     min_booking_amount,
-    start_date,
-    end_date,
+    max_discount_cap,
+    valid_from,
+    valid_until,
     usage_limit,
-    status,
+    per_user_limit,
+    applicable_properties,
+    description,
+    is_active,
   } = req.body;
 
-  // Check if coupon exists
-  const [coupons] = await db.query(`SELECT id FROM coupons WHERE id = ?`, [id]);
+  const adminId = req.user.id;
 
-  if (coupons.length === 0) {
+  // Check if coupon exists
+  const [existing] = await db.query(
+    "SELECT * FROM coupons WHERE id = ? AND deleted_at IS NULL",
+    [id]
+  );
+
+  if (existing.length === 0) {
     return sendError(res, "Coupon not found", 404);
   }
 
-  // If updating code, check for duplicates
-  if (code) {
-    const [existingCoupons] = await db.query(
-      `SELECT id FROM coupons WHERE code = ? AND id != ?`,
+  // If code is being changed, check for duplicates
+  if (code && code !== existing[0].code) {
+    const [duplicate] = await db.query(
+      "SELECT id FROM coupons WHERE code = ? AND id != ? AND deleted_at IS NULL",
       [code.toUpperCase(), id]
     );
 
-    if (existingCoupons.length > 0) {
+    if (duplicate.length > 0) {
       return sendError(res, "Coupon code already exists", 400);
     }
   }
 
   // Build update query dynamically
   const updates = [];
-  const params = [];
+  const values = [];
 
   if (code) {
     updates.push("code = ?");
-    params.push(code.toUpperCase());
+    values.push(code.toUpperCase());
   }
-  if (discount_type) {
-    updates.push("discount_type = ?");
-    params.push(discount_type);
+  if (type) {
+    updates.push("type = ?");
+    values.push(type);
   }
-  if (discount_value !== undefined) {
-    updates.push("discount_value = ?");
-    params.push(discount_value);
+  if (discount_percentage !== undefined) {
+    updates.push("discount_percentage = ?");
+    values.push(discount_percentage);
   }
-  if (max_discount !== undefined) {
-    updates.push("max_discount = ?");
-    params.push(max_discount);
+  if (discount_amount !== undefined) {
+    updates.push("discount_amount = ?");
+    values.push(discount_amount);
   }
   if (min_booking_amount !== undefined) {
     updates.push("min_booking_amount = ?");
-    params.push(min_booking_amount);
+    values.push(min_booking_amount);
   }
-  if (start_date) {
-    updates.push("start_date = ?");
-    params.push(start_date);
+  if (max_discount_cap !== undefined) {
+    updates.push("max_discount_cap = ?");
+    values.push(max_discount_cap);
   }
-  if (end_date) {
-    updates.push("end_date = ?");
-    params.push(end_date);
+  if (valid_from) {
+    updates.push("valid_from = ?");
+    values.push(valid_from);
+  }
+  if (valid_until) {
+    updates.push("valid_until = ?");
+    values.push(valid_until);
   }
   if (usage_limit !== undefined) {
     updates.push("usage_limit = ?");
-    params.push(usage_limit);
+    values.push(usage_limit);
   }
-  if (status && ["active", "inactive"].includes(status)) {
-    updates.push("status = ?");
-    params.push(status);
+  if (per_user_limit !== undefined) {
+    updates.push("per_user_limit = ?");
+    values.push(per_user_limit);
+  }
+  if (applicable_properties !== undefined) {
+    updates.push("applicable_properties = ?");
+    values.push(applicable_properties ? JSON.stringify(applicable_properties) : null);
+  }
+  if (description !== undefined) {
+    updates.push("description = ?");
+    values.push(description);
+  }
+  if (is_active !== undefined) {
+    updates.push("is_active = ?");
+    values.push(is_active ? 1 : 0);
   }
 
   if (updates.length === 0) {
     return sendError(res, "No fields to update", 400);
   }
 
-  params.push(id);
+  values.push(id);
 
   await db.query(
     `UPDATE coupons SET ${updates.join(", ")} WHERE id = ?`,
-    params
+    values
   );
 
-  sendSuccess(res, "Coupon updated successfully");
+  // Log activity
+  await db.query(
+    `INSERT INTO activity_logs (id, actor_id, actor_role, action, entity, entity_id) 
+     VALUES (?, ?, 'admin', 'Updated coupon', 'coupon', ?)`,
+    [generateUUID(), adminId, id]
+  );
+
+  sendSuccess(res, null, "Coupon updated successfully");
 });
 
-/**
- * @route   DELETE /api/admin/coupons/:id
- * @desc    Deactivate coupon (soft delete)
- * @access  Private (Admin)
- */
+// ============================================
+// ADMIN: DELETE COUPON (Soft delete)
+// DELETE /api/admin/coupons/:id
+// ============================================
 export const deleteCoupon = asyncHandler(async (req, res) => {
   const { id } = req.params;
+  const adminId = req.user.id;
 
-  // Check if coupon exists
-  const [coupons] = await db.query(`SELECT id FROM coupons WHERE id = ?`, [id]);
+  const [existing] = await db.query(
+    "SELECT * FROM coupons WHERE id = ? AND deleted_at IS NULL",
+    [id]
+  );
 
-  if (coupons.length === 0) {
+  if (existing.length === 0) {
     return sendError(res, "Coupon not found", 404);
   }
 
-  // Deactivate coupon
-  await db.query(`UPDATE coupons SET status = 'inactive' WHERE id = ?`, [id]);
+  // Soft delete
+  await db.query(
+    "UPDATE coupons SET deleted_at = NOW() WHERE id = ?",
+    [id]
+  );
 
-  sendSuccess(res, "Coupon deactivated successfully");
+  // Log activity
+  await db.query(
+    `INSERT INTO activity_logs (id, actor_id, actor_role, action, entity, entity_id) 
+     VALUES (?, ?, 'admin', 'Deleted coupon', 'coupon', ?)`,
+    [generateUUID(), adminId, id]
+  );
+
+  sendSuccess(res, null, "Coupon deleted successfully");
 });
 
-/**
- * @route   GET /api/admin/coupons/:id/usage
- * @desc    Get detailed usage statistics for a coupon
- * @access  Private (Admin)
- */
-export const getCouponUsage = asyncHandler(async (req, res) => {
-  const { id } = req.params;
+// ============================================
+// USER: VALIDATE COUPON (Before checkout)
+// POST /api/coupons/validate
+// ============================================
+export const validateCoupon = asyncHandler(async (req, res) => {
+  const { code, property_id, booking_amount } = req.body;
+  const userId = req.user.id;
 
-  // Check if coupon exists
+  if (!code || !booking_amount) {
+    return sendError(res, "Coupon code and booking amount are required", 400);
+  }
+
+  // Fetch coupon
   const [coupons] = await db.query(
-    `SELECT code, usage_limit FROM coupons WHERE id = ?`,
-    [id]
+    `SELECT * FROM coupons 
+     WHERE code = ? AND is_active = 1 AND deleted_at IS NULL`,
+    [code.toUpperCase()]
   );
 
   if (coupons.length === 0) {
-    return sendError(res, "Coupon not found", 404);
+    return sendError(res, "Invalid or inactive coupon code", 400);
   }
 
-  // Get all usages with details
-  const [usages] = await db.query(
-    `SELECT 
-      cu.used_at,
-      u.full_name as user_name,
-      u.email as user_email,
-      u.phone as user_phone,
-      b.id as booking_id,
-      b.check_in,
-      b.check_out,
-      b.total_amount as booking_amount,
-      b.discount_amount,
-      p.title as property_title
-    FROM coupon_usages cu
-    LEFT JOIN users u ON cu.user_id = u.id
-    LEFT JOIN bookings b ON cu.booking_id = b.id
-    LEFT JOIN properties p ON b.property_id = p.id
-    WHERE cu.coupon_id = ?
-    ORDER BY cu.used_at DESC`,
-    [id]
+  const coupon = coupons[0];
+
+  // Check expiry date
+  const today = new Date().toISOString().split("T")[0];
+  if (today < coupon.valid_from || today > coupon.valid_until) {
+    return sendError(res, "Coupon has expired or not yet valid", 400);
+  }
+
+  // Check minimum booking amount
+  if (booking_amount < coupon.min_booking_amount) {
+    return sendError(
+      res,
+      `Minimum booking amount of ₹${coupon.min_booking_amount} required for this coupon`,
+      400
+    );
+  }
+
+  // Check usage limit (total)
+  if (coupon.usage_limit) {
+    const [usageCount] = await db.query(
+      "SELECT COUNT(*) as count FROM coupon_usages WHERE coupon_id = ? AND status = 'completed'",
+      [coupon.id]
+    );
+
+    if (usageCount[0].count >= coupon.usage_limit) {
+      return sendError(res, "Coupon usage limit reached", 400);
+    }
+  }
+
+  // Check per-user limit
+  const [userUsage] = await db.query(
+    "SELECT COUNT(*) as count FROM coupon_usages WHERE coupon_id = ? AND user_id = ? AND status = 'completed'",
+    [coupon.id, userId]
   );
 
-  // Get summary statistics
-  const [summary] = await db.query(
-    `SELECT 
-      COUNT(*) as total_uses,
-      COUNT(DISTINCT cu.user_id) as unique_users,
-      SUM(b.total_amount) as total_booking_value,
-      SUM(b.discount_amount) as total_discount_given,
-      AVG(b.total_amount) as avg_booking_value,
-      MAX(cu.used_at) as last_used
-    FROM coupon_usages cu
-    LEFT JOIN bookings b ON cu.booking_id = b.id
-    WHERE cu.coupon_id = ?`,
-    [id]
-  );
+  if (userUsage[0].count >= coupon.per_user_limit) {
+    return sendError(res, "You have already used this coupon the maximum number of times", 400);
+  }
 
-  sendSuccess(res, "Coupon usage retrieved successfully", {
-    coupon_code: coupons[0].code,
-    usage_limit: coupons[0].usage_limit,
-    summary: summary[0],
-    usages,
+  // Check first-time user restriction
+  if (coupon.type === "first_time") {
+    const [completedBookings] = await db.query(
+      "SELECT COUNT(*) as count FROM bookings WHERE user_id = ? AND payment_status = 'completed'",
+      [userId]
+    );
+
+    if (completedBookings[0].count > 0) {
+      return sendError(res, "This coupon is only valid for first-time bookings", 400);
+    }
+  }
+
+  // Check property applicability
+  if (coupon.applicable_properties && property_id) {
+    const applicableProps = JSON.parse(coupon.applicable_properties);
+    if (!applicableProps.includes(property_id)) {
+      return sendError(res, "This coupon is not applicable to the selected property", 400);
+    }
+  }
+
+  // Calculate discount
+  let discount = 0;
+  if (coupon.type === "percentage" || coupon.type === "first_time") {
+    discount = (booking_amount * coupon.discount_percentage) / 100;
+    if (coupon.max_discount_cap) {
+      discount = Math.min(discount, coupon.max_discount_cap);
+    }
+  } else if (coupon.type === "flat") {
+    discount = coupon.discount_amount;
+  }
+
+  // Round to 2 decimals
+  discount = Math.round(discount * 100) / 100;
+
+  sendSuccess(res, {
+    valid: true,
+    coupon_id: coupon.id,
+    coupon_code: coupon.code,
+    discount_amount: discount,
+    final_amount: booking_amount - discount,
+    message: coupon.description || `Coupon applied! You save ₹${discount}`,
+  });
+});
+
+// ============================================
+// ADMIN: GET COUPON ANALYTICS
+// GET /api/admin/coupons/analytics
+// ============================================
+export const getCouponAnalytics = asyncHandler(async (req, res) => {
+  // Overall stats
+  const [overallStats] = await db.query(`
+    SELECT 
+      COUNT(*) as total_coupons,
+      SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) as active_coupons,
+      SUM(CASE WHEN valid_until < CURDATE() THEN 1 ELSE 0 END) as expired_coupons
+    FROM coupons
+    WHERE deleted_at IS NULL
+  `);
+
+  // Usage stats
+  const [usageStats] = await db.query(`
+    SELECT 
+      COUNT(*) as total_redemptions,
+      SUM(discount_applied) as total_discount_given,
+      COUNT(DISTINCT user_id) as unique_users
+    FROM coupon_usages
+    WHERE status = 'completed'
+  `);
+
+  // Top performing coupons
+  const [topCoupons] = await db.query(`
+    SELECT 
+      c.code,
+      c.description,
+      COUNT(cu.id) as redemptions,
+      SUM(cu.discount_applied) as total_discount
+    FROM coupons c
+    LEFT JOIN coupon_usages cu ON c.id = cu.coupon_id AND cu.status = 'completed'
+    WHERE c.deleted_at IS NULL
+    GROUP BY c.id
+    ORDER BY redemptions DESC
+    LIMIT 10
+  `);
+
+  sendSuccess(res, {
+    overall: overallStats[0],
+    usage: usageStats[0],
+    top_coupons: topCoupons,
   });
 });

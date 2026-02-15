@@ -27,7 +27,13 @@ export default function Register() {
 
   const password = watch("password");
 
-  const onSubmit = async (data) => {
+  const onSubmit = async (data, event) => {
+    // Prevent any default behavior
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+
     setLoading(true);
     try {
       const response = await api.post("/auth/register", {
@@ -43,8 +49,11 @@ export default function Register() {
       localStorage.setItem("accessToken", accessToken);
       localStorage.setItem("refreshToken", refreshToken);
 
-      toast.success("Registration successful!");
-      navigate("/dashboard");
+      toast.success("Registration successful! Redirecting to dashboard...");
+      // Redirect users to Next.js dashboard
+      setTimeout(() => {
+        window.location.href = "http://localhost:3000/dashboard";
+      }, 1000);
     } catch (error) {
       toast.error(error.response?.data?.message || "Registration failed");
     } finally {
@@ -56,7 +65,7 @@ export default function Register() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 p-4">
       {/* Back to Home Link */}
       <a
-        href="http://localhost:4322/"
+        href="http://localhost:3000/"
         className="absolute top-4 left-4 flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:text-primary transition-colors"
       >
         <svg
@@ -89,7 +98,11 @@ export default function Register() {
           </p>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            noValidate
+            className="space-y-4"
+          >
             <div className="space-y-2">
               <label className="text-sm font-medium">Full Name</label>
               <Input

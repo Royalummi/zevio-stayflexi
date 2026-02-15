@@ -5,29 +5,86 @@ import {
   sendCheckInReminderEmail,
   sendCheckOutReminderEmail,
   sendReviewRequestEmail,
+  sendBookingExpiryEmail,
 } from "../services/emailService.js";
 
 // ==========================================
-// SESSION 30: EXPIRED BOOKINGS CRON JOB
-// Runs every hour to auto-cancel expired pending bookings
+// SESSION 30 + SESSION 47: EXPIRED BOOKINGS CRON JOB
+// Runs every 5 minutes to auto-cancel expired pending bookings (reduced from 1 minute for performance)
+// SESSION 47: Now checks payment_expires_at for 15-min payment window
 // ==========================================
 export const expiredBookingsCleaner = cron.schedule(
-  "0 * * * *", // Every hour at minute 0
+  "*/5 * * * *", // Every 5 minutes (changed from every minute)
   async () => {
-    console.log("🕒 Running expired bookings cleaner...");
-
     try {
-      const [result] = await db.query(
-        `UPDATE bookings 
-         SET status = 'expired' 
-         WHERE status IN ('pending', 'pending_payment')
-         AND expires_at IS NOT NULL
-         AND expires_at < NOW()
-         AND deleted_at IS NULL`,
+      // SESSION 47: Get bookings with expired payment window (15 minutes)
+      const [expiredBookings] = await db.query(
+        `SELECT 
+           b.id, 
+           b.user_id,
+           b.status,
+           b.payment_status,
+           b.payment_expires_at,
+           p.title as property_title
+         FROM bookings b
+         LEFT JOIN properties p ON b.property_id = p.id
+         WHERE b.status = 'pending_payment'
+         AND b.payment_status = 'pending'
+         AND b.payment_expires_at IS NOT NULL
+         AND b.payment_expires_at < NOW()
+         AND b.deleted_at IS NULL`,
       );
 
-      if (result.affectedRows > 0) {
-        console.log(`✅ Expired ${result.affectedRows} pending booking(s)`);
+      if (expiredBookings.length === 0) {
+        console.log("🕒 Expired bookings cleaner: No expired bookings found");
+        return; // No expired bookings
+      }
+
+      console.log(
+        `🕒 Expired bookings cleaner: Found ${expiredBookings.length} expired booking(s)`,
+      );
+
+      let cancelledCount = 0;
+      let emailFailures = 0;
+
+      for (const booking of expiredBookings) {
+        try {
+          // Cancel the booking and mark payment as failed
+          await db.query(
+            `UPDATE bookings 
+             SET status = 'cancelled',
+                 payment_status = 'failed'
+             WHERE id = ?`,
+            [booking.id],
+          );
+
+          // Send expiry email to user
+          try {
+            await sendBookingExpiryEmail(booking.id);
+          } catch (emailError) {
+            console.error(
+              `⚠️  Failed to send expiry email for booking ${booking.id}:`,
+              emailError.message,
+            );
+            emailFailures++;
+          }
+
+          cancelledCount++;
+          console.log(
+            `✅ Auto-cancelled booking ${booking.id} (${booking.property_title}) - Payment not received within 15 minutes`,
+          );
+        } catch (error) {
+          console.error(
+            `❌ Error cancelling booking ${booking.id}:`,
+            error.message,
+          );
+        }
+      }
+
+      if (cancelledCount > 0) {
+        console.log(
+          `✅ SESSION 47: Cancelled ${cancelledCount} expired pending booking(s), ${emailFailures} email failures`,
+        );
       }
     } catch (error) {
       console.error("❌ Error cleaning expired bookings:", error);
@@ -400,42 +457,82 @@ export const checkOutReminderJob = cron.schedule(
 );
 
 // Post-checkout review request: Runs at 10 AM every day
+// SESSION 64: Enhanced with multi-day reminders (Day 2, 7, 14) and review_email_log tracking
 export const reviewRequestJob = cron.schedule(
   "0 10 * * *",
   async () => {
-    console.log("📧 Running post-checkout review request job...");
+    console.log(
+      "📧 Running post-checkout review request job (Day 2, 7, 14)...",
+    );
 
     const jobId = generateUUID();
     const today = new Date().toISOString().split("T")[0];
 
     try {
-      // Get bookings that checked out yesterday (24h ago)
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      const yesterdayDate = yesterday.toISOString().split("T")[0];
+      const currentDate = new Date();
 
-      const [bookings] = await db.query(
-        `SELECT id, user_id, property_id, check_out 
-         FROM bookings 
-         WHERE status = 'completed'
-         AND check_out = ?
-         AND deleted_at IS NULL`,
-        [yesterdayDate],
-      );
+      // Calculate target dates for Day 2, 7, and 14 reminders
+      const day2Date = new Date(currentDate);
+      day2Date.setDate(day2Date.getDate() - 2);
 
-      let successCount = 0;
-      let failCount = 0;
+      const day7Date = new Date(currentDate);
+      day7Date.setDate(day7Date.getDate() - 7);
 
-      for (const booking of bookings) {
-        try {
-          await sendReviewRequestEmail(booking.id);
-          successCount++;
-        } catch (error) {
-          console.error(
-            `Failed to send review request for booking ${booking.id}:`,
-            error.message,
-          );
-          failCount++;
+      const day14Date = new Date(currentDate);
+      day14Date.setDate(day14Date.getDate() - 14);
+
+      const targetDates = [
+        { date: day2Date.toISOString().split("T")[0], type: "day_2" },
+        { date: day7Date.toISOString().split("T")[0], type: "day_7" },
+        { date: day14Date.toISOString().split("T")[0], type: "day_14" },
+      ];
+
+      let totalSuccess = 0;
+      let totalFail = 0;
+
+      for (const target of targetDates) {
+        // Get completed bookings that checked out on this target date
+        // and don't have a review yet and haven't received this reminder type
+        const [bookings] = await db.query(
+          `SELECT DISTINCT b.id, b.user_id, b.property_id, b.check_out 
+           FROM bookings b
+           WHERE b.status = 'completed'
+           AND DATE(b.check_out) = ?
+           AND b.deleted_at IS NULL
+           AND NOT EXISTS (
+             SELECT 1 FROM reviews r WHERE r.booking_id = b.id
+           )
+           AND NOT EXISTS (
+             SELECT 1 FROM review_email_log rel 
+             WHERE rel.booking_id = b.id 
+             AND rel.email_type = ?
+           )`,
+          [target.date, target.type],
+        );
+
+        console.log(
+          `   → Found ${bookings.length} booking(s) eligible for ${target.type} reminder (checkout: ${target.date})`,
+        );
+
+        for (const booking of bookings) {
+          try {
+            await sendReviewRequestEmail(booking.id);
+
+            // Log the email send in review_email_log
+            await db.query(
+              `INSERT INTO review_email_log (id, booking_id, email_type, sent_at) 
+               VALUES (?, ?, ?, NOW())`,
+              [generateUUID(), booking.id, target.type],
+            );
+
+            totalSuccess++;
+          } catch (error) {
+            console.error(
+              `   Failed to send ${target.type} review request for booking ${booking.id}:`,
+              error.message,
+            );
+            totalFail++;
+          }
         }
       }
 
@@ -447,12 +544,12 @@ export const reviewRequestJob = cron.schedule(
           "review_request",
           today,
           "success",
-          `Sent ${successCount} review requests, ${failCount} failed`,
+          `Sent ${totalSuccess} review requests (multi-day), ${totalFail} failed`,
         ],
       );
 
       console.log(
-        `✅ Review requests sent: ${successCount} success, ${failCount} failed`,
+        `✅ Review requests sent: ${totalSuccess} success, ${totalFail} failed`,
       );
     } catch (error) {
       console.error("❌ Review request job failed:", error);

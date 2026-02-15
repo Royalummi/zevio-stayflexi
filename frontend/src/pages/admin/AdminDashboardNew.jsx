@@ -342,63 +342,6 @@ const AdminDashboardNew = () => {
           </CardContent>
         </Card>
       </div>
-
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="cursor-pointer hover:shadow-lg transition-shadow">
-          <CardContent className="p-6 text-center">
-            <div className="h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center mx-auto mb-3">
-              <Calendar className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-            </div>
-            <h3 className="font-medium text-gray-900 dark:text-white">
-              Manage Bookings
-            </h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              View and manage all bookings
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="cursor-pointer hover:shadow-lg transition-shadow">
-          <CardContent className="p-6 text-center">
-            <div className="h-12 w-12 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center mx-auto mb-3">
-              <DollarSign className="h-6 w-6 text-green-600 dark:text-green-400" />
-            </div>
-            <h3 className="font-medium text-gray-900 dark:text-white">
-              Process Refunds
-            </h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              Handle cancellation requests
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="cursor-pointer hover:shadow-lg transition-shadow">
-          <CardContent className="p-6 text-center">
-            <div className="h-12 w-12 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center mx-auto mb-3">
-              <Building2 className="h-6 w-6 text-purple-600 dark:text-purple-400" />
-            </div>
-            <h3 className="font-medium text-gray-900 dark:text-white">
-              Properties
-            </h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              Approve and manage properties
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="cursor-pointer hover:shadow-lg transition-shadow">
-          <CardContent className="p-6 text-center">
-            <div className="h-12 w-12 rounded-full bg-orange-100 dark:bg-orange-900 flex items-center justify-center mx-auto mb-3">
-              <Users className="h-6 w-6 text-orange-600 dark:text-orange-400" />
-            </div>
-            <h3 className="font-medium text-gray-900 dark:text-white">Users</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              Manage user accounts
-            </p>
-          </CardContent>
-        </Card>
-      </div>
     </div>
   );
 };

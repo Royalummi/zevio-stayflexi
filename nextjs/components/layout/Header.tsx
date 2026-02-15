@@ -18,7 +18,12 @@ export default function Header() {
 
   // Fix hydration mismatch by waiting for client mount
   useEffect(() => {
-    setIsMounted(true);
+    // Defer state update to avoid synchronous setState in effect
+    const timer = setTimeout(() => {
+      setIsMounted(true);
+    }, 0);
+
+    return () => clearTimeout(timer);
   }, []);
 
   const navItems = useMemo(
@@ -31,7 +36,7 @@ export default function Header() {
       { href: "/support", label: "Support" },
       { href: "/about", label: "About Us" },
     ],
-    []
+    [],
   );
 
   const toggleMobileMenu = () => setMobileMenuOpen((prev) => !prev);

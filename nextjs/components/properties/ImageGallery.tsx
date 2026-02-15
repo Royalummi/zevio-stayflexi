@@ -108,6 +108,7 @@ export default function ImageGallery({
               sizes="(max-width: 768px) 100vw, (max-width: 1024px) 60vw, 800px"
               onLoad={() => setImageLoaded(true)}
               className={`${styles.mainImage} ${imageLoaded ? styles.loaded : ""}`}
+              unoptimized
             />
 
             {/* Loading Spinner */}
@@ -183,6 +184,7 @@ export default function ImageGallery({
                 fill
                 style={{ objectFit: "cover" }}
                 sizes="(max-width: 768px) 100px, 150px"
+                unoptimized
               />
 
               {/* Overflow Indicator on Last Thumbnail */}
@@ -255,6 +257,7 @@ export default function ImageGallery({
                 style={{ objectFit: "contain" }}
                 quality={100}
                 sizes="100vw"
+                unoptimized
               />
             </div>
 
@@ -284,6 +287,7 @@ export default function ImageGallery({
                     fill
                     style={{ objectFit: "cover" }}
                     sizes="80px"
+                    unoptimized
                   />
                 </div>
               ))}

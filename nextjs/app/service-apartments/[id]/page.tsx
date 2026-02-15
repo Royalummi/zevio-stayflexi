@@ -1,9 +1,7 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useRef } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
 import axios, { AxiosError } from "axios";
 import styles from "./property-detail.module.css";
 import {
@@ -26,9 +24,11 @@ import { useCorporateUser } from "@/hooks/useCorporateUser";
 import { useBooking } from "@/contexts/BookingContext";
 import { formatDateForAPI } from "@/lib/utils";
 import ImageGallery from "@/components/properties/ImageGallery";
+import DateRangeSelector from "@/components/DateRangeSelector";
 import { useToast } from "@/hooks/useToast";
 import ToastContainer from "@/components/ui/ToastContainer";
 import { useAuthModals } from "@/contexts/AuthModalContext";
+import { getImageUrl, getPropertyImages } from "@/lib/imageUtils";
 
 interface PriceBreakdown {
   nights: number;
@@ -55,6 +55,8 @@ interface Property {
   city: string;
   state: string;
   address: string;
+  area?: string;
+  maps_location?: string;
   bedrooms: number;
   bathrooms?: number;
   max_guests?: number;
@@ -130,6 +132,11 @@ function ServiceApartmentDetailContent() {
   const [checkOut, setCheckOut] = useState<Date | null>(null);
   const [adults, setAdults] = useState(2);
   const [children, setChildren] = useState(0);
+
+  // Modern dropdown states - guests only
+  const [showGuestsDropdown, setShowGuestsDropdown] = useState(false);
+  const guestsDropdownRef = useRef<HTMLDivElement>(null);
+
   const [priceBreakdown, setPriceBreakdown] = useState<PriceBreakdown | null>(
     null,
   );
@@ -160,8 +167,86 @@ function ServiceApartmentDetailContent() {
     checkWishlist();
   }, [params.id]);
 
+  // Click outside handler for guests dropdown only
   useEffect(() => {
-    fetchProperty();
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        guestsDropdownRef.current &&
+        !guestsDropdownRef.current.contains(event.target as Node)
+      ) {
+        setShowGuestsDropdown(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+    const abortController = new AbortController();
+
+    const fetchPropertySafe = async () => {
+      if (!isMounted) return;
+
+      try {
+        setLoading(true);
+        console.log("[Fetch Property] Fetching property with ID:", params.id);
+
+        const response = await axios.get(
+          `${process.env.NEXT_PUBLIC_API_URL}/service-apartments`,
+          { signal: abortController.signal },
+        );
+
+        if (!isMounted) return;
+
+        console.log("[Fetch Property] Response received:", {
+          success: response.data.success,
+          propertyCount: response.data.data?.properties?.length || 0,
+        });
+
+        if (response.data.success) {
+          const properties = response.data.data.properties;
+          console.log(
+            "[Fetch Property] Available property IDs:",
+            properties.map((p: Property) => p.id),
+          );
+
+          const found = properties.find((p: Property) => p.id === params.id);
+
+          if (found) {
+            console.log("[Fetch Property] Property found:", {
+              id: found.id,
+              title: found.title,
+              price_per_night: found.price_per_night,
+            });
+            // Parse features array into boolean flags
+            const parsedProperty = parseFeatures(found);
+            setProperty(parsedProperty);
+          } else {
+            console.error(
+              "[Fetch Property] Property not found with ID:",
+              params.id,
+            );
+          }
+        }
+      } catch (error: unknown) {
+        if (
+          isMounted &&
+          (error as Error)?.name !== "AbortError" &&
+          (error as { response?: { status?: number } })?.response?.status !==
+            429
+        ) {
+          console.error("[Fetch Property] Error:", error);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchPropertySafe();
 
     // Restore dates from URL if present
     const checkInParam = searchParams.get("checkIn");
@@ -173,7 +258,11 @@ function ServiceApartmentDetailContent() {
     if (checkOutParam) setCheckOut(new Date(checkOutParam));
     if (adultsParam) setAdults(parseInt(adultsParam));
     if (childrenParam) setChildren(parseInt(childrenParam));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
+    return () => {
+      isMounted = false;
+      abortController.abort();
+    };
   }, [params.id, searchParams]);
 
   useEffect(() => {
@@ -202,58 +291,6 @@ function ServiceApartmentDetailContent() {
       }
     }
   }, [checkIn, checkOut, property, hasShownInvalidToast, toast]);
-
-  const fetchProperty = async () => {
-    try {
-      console.log("[Fetch Property] Fetching property with ID:", params.id);
-
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_URL}/service-apartments`,
-      );
-
-      console.log("[Fetch Property] Response received:", {
-        success: response.data.success,
-        propertyCount: response.data.data?.properties?.length || 0,
-      });
-
-      if (response.data.success) {
-        const properties = response.data.data.properties;
-        console.log(
-          "[Fetch Property] Available property IDs:",
-          properties.map((p: Property) => p.id),
-        );
-
-        const found = properties.find((p: Property) => p.id === params.id);
-
-        if (found) {
-          console.log("[Fetch Property] Property found:", {
-            id: found.id,
-            title: found.title,
-            price_per_night: found.price_per_night,
-          });
-          // Parse features array into boolean flags
-          const parsedProperty = parseFeatures(found);
-          setProperty(parsedProperty);
-        } else {
-          console.error(
-            "[Fetch Property] Property not found with ID:",
-            params.id,
-          );
-          console.log("[Fetch Property] Trying to match by comparing:", {
-            searchId: params.id,
-            availableIds: properties.map((p: Property) => ({
-              id: p.id,
-              matches: p.id === params.id,
-            })),
-          });
-        }
-      }
-    } catch (error) {
-      console.error("[Fetch Property] Error fetching property:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const calculatePrice = async () => {
     if (!property || !checkIn || !checkOut) return;
@@ -440,6 +477,17 @@ function ServiceApartmentDetailContent() {
       return;
     }
 
+    // Validate guest count
+    const maxGuestsAllowed =
+      property!.max_guests || property!.max_occupancy || 4;
+    if (adults + children > maxGuestsAllowed) {
+      toast.warning(
+        `Maximum ${maxGuestsAllowed} guests allowed for this property`,
+        5000,
+      );
+      return;
+    }
+
     // Validate minimum stay
     const nights = Math.ceil(
       (checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24),
@@ -454,14 +502,17 @@ function ServiceApartmentDetailContent() {
       return;
     }
 
-    const baseAmount = property!.price_per_night * nights;
-    const gstAmount = baseAmount * 0.18;
-    const totalAmount = baseAmount + gstAmount;
+    // Calculate amounts - use priceBreakdown if available, otherwise calculate
+    const baseAmount =
+      priceBreakdown?.base_total || property!.price_per_night * nights;
+    const gstAmount = priceBreakdown?.gst_amount || baseAmount * 0.18;
+    const totalAmount = priceBreakdown?.total_amount || baseAmount + gstAmount;
 
     // Use booking context to set booking data
     setBookingData({
       propertyId: property!.id,
       propertyType: "service-apartment", // Track property type for back navigation
+      propertyTypeId: "pt-002",
       checkIn: formatDateForAPI(checkIn),
       checkOut: formatDateForAPI(checkOut),
       adults,
@@ -469,7 +520,8 @@ function ServiceApartmentDetailContent() {
       infants: 0,
       propertyName: property!.title,
       propertyLocation: `${property!.city}, ${property!.state}`,
-      propertyImage: property!.photos[0] || "/placeholder-property.jpg",
+      propertyImage:
+        getImageUrl(property!.photos[0]) || "/placeholder-property.jpg",
       pricePerNight: property!.price_per_night,
       nights,
       baseAmount,
@@ -477,12 +529,12 @@ function ServiceApartmentDetailContent() {
       extraChildrenCharges: 0,
       gstAmount,
       totalAmount,
-      minGuests: 1,
+      minGuests: property!.base_occupancy || 1,
       maxGuests: property!.max_guests || property!.max_occupancy || 4,
       minChildren: 0,
       maxChildren: 2,
-      extraGuestCharge: 0,
-      extraChildCharge: 0,
+      extraGuestCharge: property!.extra_guest_charge || 0,
+      extraChildCharge: property!.extra_child_charge || 0,
     });
 
     router.push("/booking-review");
@@ -521,10 +573,21 @@ function ServiceApartmentDetailContent() {
             {/* Left: Property Title & Location */}
             <div className={styles.propertyTitleSection}>
               <h1 className={styles.propertyNameHeader}>{property.title}</h1>
-              <p className={styles.propertyLocationHeader}>
+              <p
+                className={`${styles.propertyLocationHeader} ${property.maps_location ? styles.locationClickable : ""}`}
+                onClick={(e) => {
+                  if (property.maps_location) {
+                    e.preventDefault();
+                    window.open(property.maps_location, "_blank");
+                  }
+                }}
+                title={property.maps_location ? "View on Google Maps" : ""}
+              >
                 <FiMapPin />
                 <span>
-                  {property.city}, {property.state}
+                  {property.area
+                    ? `${property.area}, ${property.city}`
+                    : `${property.city}, ${property.state}`}
                 </span>
               </p>
             </div>
@@ -565,7 +628,7 @@ function ServiceApartmentDetailContent() {
 
       {/* Image Gallery - Airbnb-Style Layout */}
       <ImageGallery
-        images={property.photos}
+        images={getPropertyImages(property)}
         title={property.title}
         maxThumbnails={4}
       />
@@ -826,129 +889,135 @@ function ServiceApartmentDetailContent() {
             </div>
           </div>
 
-          {/* Date Selection */}
-          <div className={styles.dateSelectionSection}>
-            <div className={styles.guestsRow}>
-              <div className={styles.formGroup}>
-                <label>Check-in</label>
-                <DatePicker
-                  selected={checkIn}
-                  onChange={(date: Date | null) => {
-                    setCheckIn(date);
-                    // Clear check-out if it violates minimum stay
-                    if (date && checkOut) {
-                      const minStay =
-                        property.min_stay_days || property.min_stay_nights || 1;
-                      const nights = Math.ceil(
-                        (checkOut.getTime() - date.getTime()) /
-                          (1000 * 60 * 60 * 24),
-                      );
-                      if (nights < minStay) {
-                        setCheckOut(null);
-                        // Show toast when clearing invalid check-out
-                        toast.info(
-                          `This property requires a minimum stay of ${minStay} nights. Please select a longer duration.`,
-                          5000,
-                        );
-                      }
-                    }
-                    // Reset toast flag when check-in changes
-                    setHasShownInvalidToast(false);
-                  }}
-                  selectsStart
-                  startDate={checkIn}
-                  endDate={checkOut}
-                  minDate={new Date()}
-                  placeholderText="Select check-in"
-                  className={styles.input}
-                  dateFormat="MMM d, yyyy"
-                />
+          <div className={styles.bookingFields}>
+            {/* New Date Range Selector Component */}
+            <DateRangeSelector
+              checkIn={checkIn}
+              checkOut={checkOut}
+              onCheckInChange={setCheckIn}
+              onCheckOutChange={setCheckOut}
+              minDate={new Date()}
+              label="Select check-in date"
+            />
+
+            {/* Guest Selection */}
+            <div className={styles.modernFieldWrapper} ref={guestsDropdownRef}>
+              <div
+                className={styles.modernField}
+                onClick={() => setShowGuestsDropdown(!showGuestsDropdown)}
+              >
+                <div className={styles.fieldInner}>
+                  <FiUsers className={styles.fieldIcon} />
+                  <div className={styles.fieldText}>
+                    <label className={styles.fieldLabel}>Guests</label>
+                    <div className={styles.fieldValue}>
+                      {(adults || 0) + (children || 0)}{" "}
+                      {(adults || 0) + (children || 0) === 1
+                        ? "Guest"
+                        : "Guests"}
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className={styles.formGroup}>
-                <label>Check-out</label>
-                <DatePicker
-                  selected={checkOut}
-                  onChange={(date: Date | null) => setCheckOut(date)}
-                  selectsEnd
-                  startDate={checkIn}
-                  endDate={checkOut}
-                  minDate={
-                    checkIn
-                      ? new Date(
-                          checkIn.getTime() +
-                            (property.min_stay_days ||
-                              property.min_stay_nights ||
-                              1) *
-                              24 *
-                              60 *
-                              60 *
-                              1000,
-                        )
-                      : new Date()
-                  }
-                  disabled={!checkIn}
-                  placeholderText={
-                    checkIn ? "Select check-out" : "Select check-in first"
-                  }
-                  className={styles.input}
-                  dateFormat="MMM d, yyyy"
-                  filterDate={(date) => {
-                    if (!checkIn) return true;
-                    const minStay =
-                      property.min_stay_days || property.min_stay_nights || 1;
-                    const nights = Math.ceil(
-                      (date.getTime() - checkIn.getTime()) /
-                        (1000 * 60 * 60 * 24),
-                    );
-                    return nights >= minStay;
-                  }}
-                />
-              </div>
+
+              {/* Guests Dropdown */}
+              {showGuestsDropdown && (
+                <div className={styles.dropdownModern}>
+                  {/* Adults Counter */}
+                  <div className={styles.guestsControlModern}>
+                    <div className={styles.guestsInfoModern}>
+                      <div className={styles.guestsLabelModern}>Adults</div>
+                      <div className={styles.guestsSublabelModern}>Age 13+</div>
+                    </div>
+                    <div className={styles.guestsCounter}>
+                      <button
+                        className={styles.counterBtn}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setAdults(Math.max(1, adults - 1));
+                        }}
+                        disabled={adults <= 1}
+                      >
+                        −
+                      </button>
+                      <span className={styles.counterValue}>{adults || 0}</span>
+                      <button
+                        className={styles.counterBtn}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (property) {
+                            setAdults(
+                              Math.min(
+                                property.max_guests ||
+                                  property.max_occupancy ||
+                                  4,
+                                adults + 1,
+                              ),
+                            );
+                          }
+                        }}
+                        disabled={
+                          !property ||
+                          adults >=
+                            (property.max_guests || property.max_occupancy || 4)
+                        }
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Divider */}
+                  <div className={styles.guestsDivider} />
+
+                  {/* Children Counter */}
+                  <div className={styles.guestsControlModern}>
+                    <div className={styles.guestsInfoModern}>
+                      <div className={styles.guestsLabelModern}>Children</div>
+                      <div className={styles.guestsSublabelModern}>
+                        Ages 2-12
+                      </div>
+                    </div>
+                    <div className={styles.guestsCounter}>
+                      <button
+                        className={styles.counterBtn}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setChildren(Math.max(0, children - 1));
+                        }}
+                        disabled={children <= 0}
+                      >
+                        −
+                      </button>
+                      <span className={styles.counterValue}>
+                        {children || 0}
+                      </span>
+                      <button
+                        className={styles.counterBtn}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setChildren(Math.min(5, children + 1));
+                        }}
+                        disabled={children >= 5}
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
-
-          {/* Guest Selection */}
-          <div className={styles.guestsRow}>
-            <div className={styles.formGroup}>
-              <label>Adults</label>
-              <select
-                value={adults}
-                onChange={(e) => setAdults(parseInt(e.target.value))}
-                className={styles.select}
-              >
-                {[
-                  ...Array(property.max_guests || property.max_occupancy || 4),
-                ].map((_, i) => (
-                  <option key={i} value={i + 1}>
-                    {i + 1}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className={styles.formGroup}>
-              <label>Children</label>
-              <select
-                value={children}
-                onChange={(e) => setChildren(parseInt(e.target.value))}
-                className={styles.select}
-              >
-                {[...Array(5)].map((_, i) => (
-                  <option key={i} value={i}>
-                    {i}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
           {/* Price Breakdown */}
           {priceBreakdown && (
             <div className={styles.priceBreakdown}>
               <div className={styles.breakdownRow}>
                 <span>
-                  ₹{(property.price_per_night || 0).toLocaleString("en-IN")} ×{" "}
-                  {priceBreakdown.nights || 0} nights
+                  ₹
+                  {property
+                    ? (property.price_per_night || 0).toLocaleString("en-IN")
+                    : "0"}{" "}
+                  × {priceBreakdown.nights || 0} nights
                 </span>
                 <span>
                   ₹{(priceBreakdown.base_total || 0).toLocaleString("en-IN")}
@@ -1025,14 +1094,23 @@ function ServiceApartmentDetailContent() {
 
 export default function ServiceApartmentDetailPage() {
   return (
-    <Suspense fallback={
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
-        <div style={{ textAlign: 'center' }}>
-          <div className="spinner"></div>
-          <p>Loading service apartment...</p>
+    <Suspense
+      fallback={
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            minHeight: "100vh",
+          }}
+        >
+          <div style={{ textAlign: "center" }}>
+            <div className="spinner"></div>
+            <p>Loading service apartment...</p>
+          </div>
         </div>
-      </div>
-    }>
+      }
+    >
       <ServiceApartmentDetailContent />
     </Suspense>
   );

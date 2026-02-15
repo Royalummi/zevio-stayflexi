@@ -33,28 +33,28 @@ export const getPricingSelectClause = (alias = "pr") => {
 };
 
 /**
- * Get pricing SELECT clause with ANY_VALUE for GROUP BY compatibility
+ * Get pricing SELECT clause with MAX for GROUP BY compatibility
  * @param {string} alias - Table alias for property_pricing (default: 'pr')
- * @returns {string} SQL SELECT clause for pricing fields with ANY_VALUE
+ * @returns {string} SQL SELECT clause for pricing fields with MAX
  */
 export const getPricingSelectClauseGrouped = (alias = "pr") => {
   return `
-    ANY_VALUE(${alias}.price_per_night) as price_per_night,
-    ANY_VALUE(${alias}.gst_percentage) as gst_percentage,
-    ANY_VALUE(${alias}.min_guests) as min_guests,
-    ANY_VALUE(${alias}.extra_guest_charge) as extra_guest_charge,
-    ANY_VALUE(${alias}.min_children) as min_children,
-    ANY_VALUE(${alias}.max_children) as max_children,
-    ANY_VALUE(${alias}.extra_child_charge) as extra_child_charge,
-    ANY_VALUE(${alias}.weekly_discount_percent) as weekly_discount_percent,
-    ANY_VALUE(${alias}.monthly_discount_percent) as monthly_discount_percent,
-    ANY_VALUE(${alias}.quarterly_discount_percent) as quarterly_discount_percent,
-    ANY_VALUE(${alias}.long_term_discount_percent) as long_term_discount_percent,
-    ANY_VALUE(${alias}.allow_corporate_booking) as allow_corporate_booking,
-    ANY_VALUE(${alias}.corporate_discount_percent) as corporate_discount_percent,
-    ANY_VALUE(${alias}.deposit_amount) as deposit_amount,
-    ANY_VALUE(${alias}.maintenance_charges) as maintenance_charges,
-    ANY_VALUE(${alias}.notice_period_days) as notice_period_days
+    MAX(${alias}.price_per_night) as price_per_night,
+    MAX(${alias}.gst_percentage) as gst_percentage,
+    MAX(${alias}.min_guests) as min_guests,
+    MAX(${alias}.extra_guest_charge) as extra_guest_charge,
+    MAX(${alias}.min_children) as min_children,
+    MAX(${alias}.max_children) as max_children,
+    MAX(${alias}.extra_child_charge) as extra_child_charge,
+    MAX(${alias}.weekly_discount_percent) as weekly_discount_percent,
+    MAX(${alias}.monthly_discount_percent) as monthly_discount_percent,
+    MAX(${alias}.quarterly_discount_percent) as quarterly_discount_percent,
+    MAX(${alias}.long_term_discount_percent) as long_term_discount_percent,
+    MAX(${alias}.allow_corporate_booking) as allow_corporate_booking,
+    MAX(${alias}.corporate_discount_percent) as corporate_discount_percent,
+    MAX(${alias}.deposit_amount) as deposit_amount,
+    MAX(${alias}.maintenance_charges) as maintenance_charges,
+    MAX(${alias}.notice_period_days) as notice_period_days
   `;
 };
 

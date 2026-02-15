@@ -11,6 +11,7 @@ import {
 } from "react-icons/fi";
 import { getAmenityIcon, getPriorityAmenities } from "@/lib/amenityIconMap";
 import styles from "./CorporatePropertyCard.module.css";
+import { getImageUrl } from "@/lib/imageUtils";
 
 export interface CorporateProperty {
   id: string;
@@ -58,18 +59,17 @@ export default function CorporatePropertyCard({
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
 
+  // Map photos through getImageUrl to handle backend URLs
+  const photos = (property.photos || []).map(getImageUrl);
+
   const handlePrevPhoto = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setCurrentPhotoIndex((prev) =>
-      prev === 0 ? property.photos.length - 1 : prev - 1,
-    );
+    setCurrentPhotoIndex((prev) => (prev === 0 ? photos.length - 1 : prev - 1));
   };
 
   const handleNextPhoto = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setCurrentPhotoIndex((prev) =>
-      prev === property.photos.length - 1 ? 0 : prev + 1,
-    );
+    setCurrentPhotoIndex((prev) => (prev === photos.length - 1 ? 0 : prev + 1));
   };
 
   // Get amenities to display (prioritized top 4)
@@ -93,14 +93,13 @@ export default function CorporatePropertyCard({
       <div className={styles.imageContainer}>
         <div className={styles.imageWrapper}>
           <Image
-            src={
-              property.photos[currentPhotoIndex] || "/placeholder-property.jpg"
-            }
+            src={photos[currentPhotoIndex] || "/placeholder-property.jpg"}
             alt={property.title}
             width={400}
             height={280}
             className={styles.image}
             style={{ objectFit: "cover" }}
+            unoptimized
           />
 
           {/* Property Type Badge */}
@@ -121,7 +120,7 @@ export default function CorporatePropertyCard({
           </div>
 
           {/* Photo Navigation - Show on Hover */}
-          {isHovered && property.photos.length > 1 && (
+          {isHovered && photos.length > 1 && (
             <>
               <button
                 className={`${styles.navBtn} ${styles.prevBtn}`}
@@ -141,9 +140,9 @@ export default function CorporatePropertyCard({
           )}
 
           {/* Photo Indicators */}
-          {property.photos.length > 1 && (
+          {photos.length > 1 && (
             <div className={styles.indicators}>
-              {property.photos.map((_, index) => (
+              {photos.map((_, index) => (
                 <div
                   key={index}
                   className={`${styles.indicator} ${

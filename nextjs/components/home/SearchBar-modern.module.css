@@ -325,7 +325,6 @@
     position: absolute;
     top: calc(100% + 20px);
     left: 0;
-    min-width: 350px;
     background: #ffffff;
     border-radius: 24px;
     box-shadow:
@@ -486,7 +485,6 @@
 
 /* Guests Dropdown - Compact Design */
 .guestsDropdownModern {
-    min-width: 320px;
     max-width: 340px;
     right: 0;
     left: auto;
@@ -499,6 +497,7 @@
     align-items: center;
     justify-content: space-between;
     padding: 12px 0;
+    gap: 24px;
 }
 
 .guestsDivider {
@@ -1294,17 +1293,14 @@
 .datesDropdownModern {
     min-width: 500px;
     max-width: 500px;
-    padding: 16px;
+    padding: 0;
     left: 50%;
     margin-left: -250px;
     overflow: visible;
-    background: #ffffff;
+    background: transparent;
     z-index: 10001;
     top: calc(100% + 16px);
-    box-shadow:
-        0 24px 72px rgba(31, 58, 95, 0.3),
-        0 12px 32px rgba(31, 58, 95, 0.2),
-        0 0 0 1px rgba(31, 58, 95, 0.1);
+    box-shadow: none;
     will-change: opacity;
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
@@ -1312,51 +1308,22 @@
     transform: translateZ(0);
 }
 
+/* Override DateRangeSelector positioning for SearchBar */
+.datesDropdownModern :global(.DateRangeSelector-module__EnZQlG__wrapper) {
+    position: static;
+}
+
+.datesDropdownModern :global(.DateRangeSelector-module__EnZQlG__dropdownContent) {
+    position: static;
+    right: auto;
+    top: auto;
+    left: auto;
+    transform: none;
+    width: 100%;
+    max-width: 100%;
+}
+
 /* Instructions at top */
-.datesInstructions {
-    text-align: center;
-    margin-bottom: 16px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid rgba(31, 58, 95, 0.08);
-}
-
-.datesInstructions p {
-    margin: 0;
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--brand-navy);
-}
-
-/* Calendar Headers (Check-in / Check-out) - Improved */
-.calendarHeaders {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 16px;
-    background: linear-gradient(135deg, rgba(47, 164, 169, 0.08) 0%, rgba(31, 58, 95, 0.05) 100%);
-    border-radius: 12px;
-    padding: 12px 8px;
-}
-
-.calendarHeader {
-    flex: 1;
-    text-align: center;
-    padding: 4px 0;
-}
-
-.calendarHeader span {
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--brand-navy);
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
-}
-
-.datesPickerWrapper {
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    background: transparent;
-}
 
 /* Calendar Footer with Clear Button */
 .calendarFooter {
@@ -1391,178 +1358,6 @@
     font-family: inherit !important;
 }
 
-/* Calendar container for dual month view */
-.datesPickerWrapper :global(.react-datepicker) {
-    border: none;
-    display: flex;
-    gap: 12px;
-    background: #ffffff;
-}
-
-.datesPickerWrapper :global(.react-datepicker__month-container) {
-    background: #ffffff;
-    border-radius: 12px;
-    padding: 12px;
-    border: 1px solid rgba(31, 58, 95, 0.08);
-    flex: 1;
-    position: relative;
-}
-
-/* Subtle divider between calendars */
-.datesPickerWrapper :global(.react-datepicker__month-container:first-child::after) {
-    content: '';
-    position: absolute;
-    right: -7px;
-    top: 10%;
-    bottom: 10%;
-    width: 1px;
-    background: linear-gradient(180deg,
-            transparent 0%,
-            rgba(31, 58, 95, 0.1) 50%,
-            transparent 100%);
-}
-
-/* Calendar header styling */
-.datesPickerWrapper :global(.react-datepicker__header) {
-    background: transparent;
-    border: none;
-    padding: 0 0 12px 0;
-}
-
-.datesPickerWrapper :global(.react-datepicker__current-month) {
-    color: var(--brand-navy);
-    font-size: 16px;
-    font-weight: 600;
-    margin-bottom: 12px;
-}
-
-.datesPickerWrapper :global(.react-datepicker__day-names) {
-    display: flex;
-    justify-content: space-around;
-    margin-top: 8px;
-}
-
-.datesPickerWrapper :global(.react-datepicker__day-name) {
-    color: var(--brand-text-dark);
-    font-size: 13px;
-    font-weight: 600;
-    width: 38px;
-    line-height: 38px;
-    margin: 0;
-}
-
-/* Calendar days */
-.datesPickerWrapper :global(.react-datepicker__month) {
-    margin: 0;
-}
-
-.datesPickerWrapper :global(.react-datepicker__week) {
-    display: flex;
-    justify-content: space-around;
-}
-
-.datesPickerWrapper :global(.react-datepicker__day) {
-    width: 36px;
-    height: 36px;
-    line-height: 36px;
-    margin: 2px;
-    border-radius: 50%;
-    color: var(--brand-navy);
-    font-size: 13px;
-    font-weight: 500;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    cursor: pointer;
-    position: relative;
-}
-
-.datesPickerWrapper :global(.react-datepicker__day:hover) {
-    background: var(--brand-teal-lighter);
-    border-radius: 50%;
-    transform: scale(1.05);
-    box-shadow: 0 2px 8px rgba(47, 164, 169, 0.2);
-}
-
-.datesPickerWrapper :global(.react-datepicker__day--selected),
-.datesPickerWrapper :global(.react-datepicker__day--in-selecting-range),
-.datesPickerWrapper :global(.react-datepicker__day--in-range) {
-    background: rgba(47, 164, 169, 0.12);
-    color: var(--brand-teal-dark);
-    border-radius: 0;
-    font-weight: 500;
-}
-
-.datesPickerWrapper :global(.react-datepicker__day--range-start),
-.datesPickerWrapper :global(.react-datepicker__day--range-end),
-.datesPickerWrapper :global(.react-datepicker__day--selecting-range-start),
-.datesPickerWrapper :global(.react-datepicker__day--selecting-range-end) {
-    background: var(--brand-teal);
-    color: white;
-    border-radius: 50%;
-    font-weight: 700;
-    box-shadow: 0 2px 12px rgba(47, 164, 169, 0.3);
-    transform: scale(1.05);
-}
-
-/* Range start gets left rounded edge */
-.datesPickerWrapper :global(.react-datepicker__day--range-start) {
-    border-radius: 50% 0 0 50%;
-}
-
-/* Range end gets right rounded edge */
-.datesPickerWrapper :global(.react-datepicker__day--range-end) {
-    border-radius: 0 50% 50% 0;
-}
-
-/* If start and end are the same, keep it circular */
-.datesPickerWrapper :global(.react-datepicker__day--range-start.react-datepicker__day--range-end) {
-    border-radius: 50%;
-}
-
-.datesPickerWrapper :global(.react-datepicker__day--keyboard-selected) {
-    background: var(--brand-teal-lighter);
-    color: var(--brand-navy);
-}
-
-.datesPickerWrapper :global(.react-datepicker__day--disabled) {
-    color: var(--brand-text-light);
-    cursor: not-allowed;
-}
-
-.datesPickerWrapper :global(.react-datepicker__day--disabled:hover) {
-    background: transparent;
-}
-
-.datesPickerWrapper :global(.react-datepicker__day--outside-month) {
-    color: var(--brand-text-light);
-}
-
-/* Navigation arrows */
-.datesPickerWrapper :global(.react-datepicker__navigation) {
-    top: 20px;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    transition: all 0.2s ease;
-}
-
-.datesPickerWrapper :global(.react-datepicker__navigation:hover) {
-    background: var(--brand-teal-lighter);
-}
-
-.datesPickerWrapper :global(.react-datepicker__navigation-icon::before) {
-    border-color: var(--brand-teal);
-    border-width: 2px 2px 0 0;
-    height: 8px;
-    width: 8px;
-    top: 10px;
-}
-
-/* Today indicator */
-.datesPickerWrapper :global(.react-datepicker__day--today) {
-    font-weight: 600;
-    border: 2px solid var(--brand-teal);
-}
-
 /* ============================================================================
    RESPONSIVE DESIGN FOR DATES DROPDOWN
    ============================================================================ */
@@ -1595,37 +1390,6 @@
         padding: 16px;
         left: 50%;
         transform: translateX(-50%);
-    }
-
-    .calendarHeaders {
-        flex-direction: column;
-        gap: 8px;
-        margin-bottom: 8px;
-    }
-
-    .calendarHeader {
-        padding: 6px 0;
-        border-bottom: 1px solid rgba(31, 58, 95, 0.08);
-    }
-
-    .datesPickerWrapper :global(.react-datepicker) {
-        flex-direction: column;
-        gap: 16px;
-    }
-
-    .datesPickerWrapper :global(.react-datepicker__month-container) {
-        width: 100%;
-    }
-
-    .datesPickerWrapper :global(.react-datepicker__month-container:first-child::after) {
-        display: none;
-    }
-
-    .datesPickerWrapper :global(.react-datepicker__day) {
-        width: 32px;
-        height: 32px;
-        line-height: 32px;
-        font-size: 12px;
     }
 
     .datesInstructions p {

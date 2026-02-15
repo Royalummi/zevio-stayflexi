@@ -1,22 +1,59 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
+import { useLocation } from "react-router-dom";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
+import "./AdminPropertyFormQuill.css";
 import DOMPurify from "dompurify";
-import "./AdminPropertyForm.css";
+import { toast } from "sonner";
+import {
+  Loader2,
+  Info,
+  MapPin,
+  DollarSign,
+  Calendar,
+  Home,
+  Image,
+  Shield,
+  FileText,
+  Phone,
+  Star,
+  Building,
+  UserCircle,
+  Users,
+} from "lucide-react";
+import api from "../../lib/api";
+import PropertyImageUpload from "./PropertyImageUpload";
+import CityCombobox from "./CityCombobox";
+import AmenitiesGrid from "./AmenitiesGrid";
+import FormSection from "./FormSection";
+import FormProgressBar from "./FormProgressBar";
 
 const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
+  // Ensure propertyId is either null or a string
+  const sanitizedPropertyId = propertyId ? String(propertyId) : null;
+
+  const location = useLocation();
   const [loading, setLoading] = useState(false);
   const [cities, setCities] = useState([]);
   const [vendors, setVendors] = useState([]);
+  const [propertyTypes, setPropertyTypes] = useState([]);
+  const [pendingImageUpload, setPendingImageUpload] = useState(null);
+  const [hasSelectedImages, setHasSelectedImages] = useState(false);
+  const [selectedImageCount, setSelectedImageCount] = useState(0);
+
+  // Get property type from location state (passed from modal)
+  const preSelectedPropertyType = location.state?.propertyTypeId || null;
+  const preSelectedPropertyTypeName = location.state?.propertyTypeName || null;
 
   // Basic Information
   const [formData, setFormData] = useState({
     vendor_id: "",
     city_id: "",
+    property_type_id: "",
     title: "",
-    property_type: "Villa",
     description: "",
     address: "",
+    area: "",
     city: "",
     state: "",
     pincode: "",
@@ -29,12 +66,49 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
     gst_percentage: 18,
     status: "draft",
 
+    // Location
+    maps_location: "",
+
     // Advanced Pricing
     min_guests: 1,
     extra_guest_charge: 0,
     min_children: 0,
     max_children: 5,
     extra_child_charge: 0,
+
+    // Long-term Pricing & Discounts
+    weekly_discount_percent: 15,
+    monthly_discount_percent: 25,
+    quarterly_discount_percent: 30,
+    long_term_discount_percent: 35,
+    allow_corporate_booking: false,
+    corporate_discount_percent: 20,
+    deposit_amount: 0,
+    maintenance_charges: 0,
+    notice_period_days: 30,
+
+    // Service Apartment Fields
+    min_stay_days: 1,
+    max_stay_days: null,
+    housekeeping_frequency: "weekly",
+    laundry_frequency: "weekly",
+    utilities_included: false,
+    parking_slots: 0,
+    floor_number: null,
+    wifi_speed_mbps: null,
+    wifi_provider: "",
+    furnishing_type: "fully_furnished",
+
+    // Villa Specific Fields
+    pool_type: "none",
+    garden_type: "none",
+    pets_allowed: false,
+    events_allowed: false,
+    event_capacity: null,
+
+    // Recommendations
+    is_recommended: false,
+    recommended_priority: 0,
 
     // Primary Incharge
     primary_incharge_name: "",
@@ -101,8 +175,100 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
 
   const [additionalRule, setAdditionalRule] = useState("");
   const [newAmenity, setNewAmenity] = useState("");
-  const [photoUrls, setPhotoUrls] = useState("");
+  const [photoUrls, setPhotoUrls] = useState([]);
   const [errors, setErrors] = useState({});
+  const [templatesLoaded, setTemplatesLoaded] = useState(false);
+
+  // Dirty field tracking for optimized updates (Industry Standard)
+  const [originalFormData, setOriginalFormData] = useState(null);
+  const [originalGuidelines, setOriginalGuidelines] = useState(null);
+  const [dirtyFields, setDirtyFields] = useState({});
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+  // Default guideline templates by property type
+  const guidelineTemplates = {
+    "pt-001": {
+      // Villa
+      check_in_guidelines: `<h3>Check-In Guidelines</h3><ul><li><strong>Check-in Time:</strong> 2:00 PM onwards</li><li><strong>Check-out Time:</strong> 11:00 AM</li><li><strong>Key Collection:</strong> Keys will be handed over by our property manager at the villa</li><li><strong>ID Proof:</strong> Please carry a valid government-issued ID</li><li><strong>Security Deposit:</strong> Refundable deposit will be collected at check-in</li><li><strong>Parking:</strong> Designated parking available on premises</li></ul>`,
+      house_rules_text: `<h3>House Rules</h3><ul><li>No smoking inside the villa</li><li>Parties and events require prior approval</li><li>Quiet hours: 10:00 PM - 8:00 AM</li><li>Please respect the neighbors</li><li>Maximum occupancy must be maintained</li><li>Pets allowed with prior approval</li></ul>`,
+      amenities_guide: `<h3>Amenities Guide</h3><ul><li><strong>WiFi:</strong> Network name and password will be provided at check-in</li><li><strong>Air Conditioning:</strong> Remote controls available in all bedrooms</li><li><strong>Kitchen:</strong> Fully equipped with basic utensils, gas stove, microwave, and refrigerator</li><li><strong>Swimming Pool:</strong> Pool usage hours 7:00 AM - 8:00 PM. Children must be supervised</li><li><strong>TV:</strong> Smart TV with streaming services access</li><li><strong>Washing Machine:</strong> Available in utility area</li></ul>`,
+      safety_information: `<h3>Safety Information</h3><ul><li><strong>Fire Safety:</strong> Fire extinguisher located in the kitchen</li><li><strong>First Aid:</strong> Basic first aid kit available</li><li><strong>Emergency Exits:</strong> Clearly marked exit routes</li><li><strong>Swimming Pool:</strong> No lifeguard on duty - swim at your own risk</li><li><strong>Security:</strong> 24/7 CCTV surveillance for your safety</li></ul>`,
+      local_area_info: `<h3>Local Area Information</h3><ul><li><strong>Restaurants:</strong> Several dining options within 2 km</li><li><strong>Grocery:</strong> Supermarket 1.5 km away</li><li><strong>ATM:</strong> Nearest ATM 1 km from the property</li><li><strong>Hospital:</strong> Multi-specialty hospital 5 km away</li><li><strong>Beach/Attractions:</strong> Popular tourist spots nearby</li></ul>`,
+      emergency_contacts: `<h3>Emergency Contacts</h3><ul><li><strong>Property Manager:</strong> +91 XXXXX XXXXX</li><li><strong>Local Police:</strong> 100</li><li><strong>Ambulance:</strong> 102 / 108</li><li><strong>Fire Department:</strong> 101</li><li><strong>Nearest Hospital:</strong> +91 XXXXX XXXXX</li></ul>`,
+    },
+    "pt-002": {
+      // Service Apartment
+      check_in_guidelines: `<h3>Check-In Guidelines</h3><ul><li><strong>Check-in Time:</strong> 2:00 PM onwards</li><li><strong>Check-out Time:</strong> 11:00 AM</li><li><strong>Key Collection:</strong> Collect keys from reception desk with valid ID</li><li><strong>ID Proof:</strong> Government-issued photo ID mandatory</li><li><strong>Rent Agreement:</strong> Will be provided for long-term stays</li><li><strong>Security Deposit:</strong> One month rent as refundable deposit</li><li><strong>Parking:</strong> Designated parking slot will be assigned</li></ul>`,
+      house_rules_text: `<h3>House Rules</h3><ul><li>No smoking inside the apartment</li><li>No loud music or parties</li><li>Visitor hours: 8:00 AM - 10:00 PM (register at reception)</li><li>Monthly rent due on 1st of every month</li><li>30 days notice required for vacating</li><li>Pets not allowed</li><li>No alterations to the property without permission</li></ul>`,
+      amenities_guide: `<h3>Amenities Guide</h3><ul><li><strong>WiFi:</strong> High-speed WiFi credentials at reception</li><li><strong>Air Conditioning:</strong> Available in all rooms</li><li><strong>Kitchen:</strong> Fully equipped with modular fittings</li><li><strong>Housekeeping:</strong> Weekly cleaning service included</li><li><strong>Laundry:</strong> Common laundry facilities available</li><li><strong>Gym:</strong> Access card required (obtain from reception)</li><li><strong>Power Backup:</strong> 100% power backup for essential appliances</li></ul>`,
+      safety_information: `<h3>Safety Information</h3><ul><li><strong>Fire Safety:</strong> Fire extinguishers on every floor</li><li><strong>First Aid:</strong> First aid available at reception</li><li><strong>Emergency Exits:</strong> Marked on each floor</li><li><strong>Security:</strong> 24/7 security personnel and CCTV</li><li><strong>Elevator:</strong> Regular maintenance schedule followed</li></ul>`,
+      local_area_info: `<h3>Local Area Information</h3><ul><li><strong>Public Transport:</strong> Bus stop/Metro within 500m</li><li><strong>Restaurants:</strong> Multiple dining options nearby</li><li><strong>Shopping:</strong> Supermarkets and malls within 2 km</li><li><strong>ATM/Banks:</strong> Within walking distance</li><li><strong>Hospital:</strong> 24/7 emergency care available nearby</li></ul>`,
+      emergency_contacts: `<h3>Emergency Contacts</h3><ul><li><strong>Reception:</strong> +91 XXXXX XXXXX (24/7)</li><li><strong>Security:</strong> Extension 100</li><li><strong>Maintenance:</strong> Extension 200</li><li><strong>Police:</strong> 100</li><li><strong>Ambulance:</strong> 102 / 108</li><li><strong>Fire:</strong> 101</li></ul>`,
+    },
+  };
+
+  // Helper functions to determine property type
+  const isVilla = useMemo(() => {
+    return formData.property_type_id === "pt-001";
+  }, [formData.property_type_id]);
+
+  const isServiceApartment = useMemo(() => {
+    return formData.property_type_id === "pt-002";
+  }, [formData.property_type_id]);
+
+  // Calculate form completion progress
+  const formProgress = useMemo(() => {
+    const sections = [
+      {
+        name: "Basic Info",
+        complete: !!(
+          formData.vendor_id &&
+          formData.city_id &&
+          formData.property_type_id &&
+          formData.title &&
+          formData.description
+        ),
+      },
+      {
+        name: "Location",
+        complete: !!(
+          formData.address &&
+          formData.city &&
+          formData.state &&
+          formData.pincode
+        ),
+      },
+      {
+        name: "Property Details",
+        complete: !!(
+          formData.bedrooms &&
+          formData.bathrooms &&
+          formData.max_guests
+        ),
+      },
+      {
+        name: "Pricing",
+        complete: !!(formData.price_per_night && formData.gst_percentage),
+      },
+      {
+        name: "Amenities",
+        complete: formData.amenities && formData.amenities.length > 0,
+      },
+      {
+        name: "Photos (Optional)",
+        complete: true, // Images uploaded separately, always mark as complete
+      },
+      {
+        name: "Policies",
+        complete: !!(formData.house_rules && formData.cancellation_policy),
+      },
+    ];
+
+    const completedCount = sections.filter((s) => s.complete).length;
+    const percentage = Math.round((completedCount / sections.length) * 100);
+
+    return { sections, percentage };
+  }, [formData]); // Removed photoUrls dependency
 
   const quillModules = {
     toolbar: [
@@ -128,33 +294,46 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
     fetchDropdownData();
     if (propertyId) {
       fetchPropertyData();
+    } else if (preSelectedPropertyType) {
+      // Set property type from modal selection
+      setFormData((prev) => ({
+        ...prev,
+        property_type_id: preSelectedPropertyType,
+      }));
     }
-  }, [propertyId]);
+  }, [propertyId, preSelectedPropertyType]);
+
+  // Auto-load guideline templates when property type is selected (only for new properties)
+  useEffect(() => {
+    if (!propertyId && formData.property_type_id && !templatesLoaded) {
+      const templates = guidelineTemplates[formData.property_type_id];
+      if (templates) {
+        setGuidelines(templates);
+        setTemplatesLoaded(true);
+        // Use setTimeout to avoid setState during render warning
+        setTimeout(() => {
+          toast.success(
+            "Default guidelines loaded! You can customize them as needed.",
+          );
+        }, 0);
+      }
+    }
+  }, [formData.property_type_id, propertyId, templatesLoaded]);
 
   const fetchDropdownData = async () => {
     try {
-      const token = localStorage.getItem("token");
-
       // Fetch cities
-      const citiesRes = await fetch("/api/admin/cities", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const citiesData = await citiesRes.json();
-      if (citiesData.success) setCities(citiesData.data);
+      const citiesRes = await api.get("/admin/cities");
+      if (citiesRes.data.success) setCities(citiesRes.data.data);
 
       // Fetch vendors
-      const vendorsRes = await fetch("/api/admin/vendors", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const vendorsData = await vendorsRes.json();
-      if (vendorsData.success) setVendors(vendorsData.data);
+      const vendorsRes = await api.get("/admin/vendors");
+      if (vendorsRes.data.success) setVendors(vendorsRes.data.data);
 
-      // Fetch employees
-      const employeesRes = await fetch("/api/admin/employees", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const employeesData = await employeesRes.json();
-      if (employeesData.success) setEmployees(employeesData.data);
+      // Fetch property types
+      const propertyTypesRes = await api.get("/admin/property-types");
+      if (propertyTypesRes.data.success)
+        setPropertyTypes(propertyTypesRes.data.data);
     } catch (error) {
       console.error("Error fetching dropdown data:", error);
     }
@@ -163,36 +342,113 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
   const fetchPropertyData = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem("token");
-      const response = await fetch(`/api/admin/properties/${propertyId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await response.json();
+      const response = await api.get(`/admin/properties/${propertyId}`);
 
-      if (data.success) {
-        const property = data.data;
-        setFormData({
+      if (response.data.success) {
+        const property = response.data.data;
+
+        // Safe JSON parsing helper
+        const safeJsonParse = (value, fallback) => {
+          if (!value) return fallback;
+          if (typeof value === "object") return value;
+          try {
+            return JSON.parse(value);
+          } catch (e) {
+            console.warn("JSON parse error:", e);
+            return fallback;
+          }
+        };
+
+        // Extract pricing data if it's nested
+        const pricing = property.pricing || {};
+
+        // Map API fields to form fields with proper field name corrections
+        const loadedFormData = {
           ...formData,
           ...property,
-          amenities: JSON.parse(property.amenities || "[]"),
-          house_rules: JSON.parse(property.house_rules || "{}"),
-          cancellation_policy: JSON.parse(property.cancellation_policy || "{}"),
-          photos: JSON.parse(property.photos || "[]"),
-        });
+          // FIX: Map city_name to city (API returns city_name, form expects city)
+          city: property.city_name || property.city || "",
+          // FIX: Map city_state to state (API returns city_state, form expects state)
+          state: property.city_state || property.state || "",
+          // FIX: Extract pricing fields from nested pricing object
+          price_per_night:
+            pricing.price_per_night || property.price_per_night || "",
+          gst_percentage:
+            pricing.gst_percentage || property.gst_percentage || 18,
+          min_guests: pricing.min_guests || property.min_guests || 1,
+          extra_guest_charge:
+            pricing.extra_guest_charge || property.extra_guest_charge || 0,
+          min_children: pricing.min_children || property.min_children || 0,
+          max_children: pricing.max_children || property.max_children || 5,
+          extra_child_charge:
+            pricing.extra_child_charge || property.extra_child_charge || 0,
+          weekly_discount_percent:
+            pricing.weekly_discount_percent ||
+            property.weekly_discount_percent ||
+            15,
+          monthly_discount_percent:
+            pricing.monthly_discount_percent ||
+            property.monthly_discount_percent ||
+            25,
+          quarterly_discount_percent:
+            pricing.quarterly_discount_percent ||
+            property.quarterly_discount_percent ||
+            30,
+          long_term_discount_percent:
+            pricing.long_term_discount_percent ||
+            property.long_term_discount_percent ||
+            35,
+          allow_corporate_booking:
+            pricing.allow_corporate_booking ||
+            property.allow_corporate_booking ||
+            false,
+          corporate_discount_percent:
+            pricing.corporate_discount_percent ||
+            property.corporate_discount_percent ||
+            20,
+          deposit_amount:
+            pricing.deposit_amount || property.deposit_amount || 0,
+          maintenance_charges:
+            pricing.maintenance_charges || property.maintenance_charges || 0,
+          notice_period_days:
+            pricing.notice_period_days || property.notice_period_days || 30,
+          // Parse JSON fields safely
+          amenities: safeJsonParse(property.amenities, []),
+          house_rules: safeJsonParse(
+            property.house_rules,
+            formData.house_rules,
+          ),
+          cancellation_policy: safeJsonParse(
+            property.cancellation_policy,
+            formData.cancellation_policy,
+          ),
+          photos: safeJsonParse(property.photos, []),
+        };
 
-        setGuidelines({
+        setFormData(loadedFormData);
+        // Store original data for dirty field tracking
+        setOriginalFormData(JSON.parse(JSON.stringify(loadedFormData)));
+
+        const loadedGuidelines = {
           check_in_guidelines: property.check_in_guidelines || "",
           house_rules_text: property.house_rules_text || "",
           amenities_guide: property.amenities_guide || "",
           safety_information: property.safety_information || "",
           local_area_info: property.local_area_info || "",
           emergency_contacts: property.emergency_contacts || "",
-        });
+        };
 
-        setPhotoUrls(JSON.parse(property.photos || "[]").join("\n"));
+        setGuidelines(loadedGuidelines);
+        // Store original guidelines for dirty field tracking
+        setOriginalGuidelines(JSON.parse(JSON.stringify(loadedGuidelines)));
+
+        // Parse photos as array safely
+        const parsedPhotos = safeJsonParse(property.photos, []);
+        setPhotoUrls(Array.isArray(parsedPhotos) ? parsedPhotos : []);
       }
     } catch (error) {
       console.error("Error fetching property:", error);
+      toast.error("Failed to load property data. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -200,10 +456,60 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
+
+    let processedValue = type === "checkbox" ? checked : value;
+
+    // Trim email fields
+    if (
+      name.includes("email") &&
+      type !== "checkbox" &&
+      typeof value === "string"
+    ) {
+      processedValue = value.trim();
+    }
+
+    // Clear dependent fields when master checkbox is unchecked
+    if (type === "checkbox" && checked === false) {
+      if (name === "allow_corporate_booking") {
+        setFormData((prev) => ({
+          ...prev,
+          [name]: checked,
+          corporate_discount_percent: 0,
+        }));
+        // Mark both fields as dirty
+        setDirtyFields((prev) => ({
+          ...prev,
+          [name]: true,
+          corporate_discount_percent: true,
+        }));
+        setHasUnsavedChanges(true);
+        return;
+      }
+      if (name === "events_allowed") {
+        setFormData((prev) => ({
+          ...prev,
+          [name]: checked,
+          event_capacity: null,
+        }));
+        // Mark both fields as dirty
+        setDirtyFields((prev) => ({
+          ...prev,
+          [name]: true,
+          event_capacity: true,
+        }));
+        setHasUnsavedChanges(true);
+        return;
+      }
+    }
+
     setFormData((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: processedValue,
     }));
+
+    // Mark field as dirty (changed from original)
+    setDirtyFields((prev) => ({ ...prev, [name]: true }));
+    setHasUnsavedChanges(true);
   };
 
   const handleNestedChange = (parent, field, value) => {
@@ -235,6 +541,9 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
       ALLOWED_ATTR: ["href", "target"],
     });
     setGuidelines((prev) => ({ ...prev, [field]: sanitized }));
+    // Mark guideline field as dirty
+    setDirtyFields((prev) => ({ ...prev, [field]: true }));
+    setHasUnsavedChanges(true);
   };
 
   const addAmenity = () => {
@@ -276,11 +585,52 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
       house_rules: {
         ...prev.house_rules,
         additional_rules: prev.house_rules.additional_rules.filter(
-          (_, i) => i !== index
+          (_, i) => i !== index,
         ),
       },
     }));
   };
+
+  // Reset form to original values
+  const handleResetForm = () => {
+    if (!originalFormData || !originalGuidelines) {
+      toast.error("No original data to reset to");
+      return;
+    }
+
+    if (
+      !window.confirm(
+        "Are you sure you want to reset all changes? This will discard all unsaved modifications.",
+      )
+    ) {
+      return;
+    }
+
+    // Deep clone to avoid reference issues
+    setFormData(JSON.parse(JSON.stringify(originalFormData)));
+    setGuidelines(JSON.parse(JSON.stringify(originalGuidelines)));
+    setDirtyFields({});
+    setHasUnsavedChanges(false);
+    toast.success("Form reset to original values");
+  };
+
+  // Warn user before leaving with unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue =
+          "You have unsaved changes. Are you sure you want to leave?";
+        return e.returnValue;
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [hasUnsavedChanges]);
 
   const validateForm = () => {
     const newErrors = {};
@@ -289,21 +639,95 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
     if (!formData.title.trim()) newErrors.title = "Title is required";
     if (!formData.vendor_id) newErrors.vendor_id = "Vendor is required";
     if (!formData.city_id) newErrors.city_id = "City is required";
-    if (!formData.price_per_night || formData.price_per_night <= 0) {
-      newErrors.price_per_night = "Valid price is required";
+    if (!formData.property_type_id)
+      newErrors.property_type_id = "Property type is required";
+    if (
+      !formData.price_per_night ||
+      parseFloat(formData.price_per_night) < 0.01
+    ) {
+      newErrors.price_per_night = "Valid price (minimum ₹0.01) is required";
     }
 
-    // Email validations
+    // GST validation - Indian GST rates only
+    const validGSTRates = [0, 5, 12, 18, 28];
+    const gst = parseFloat(formData.gst_percentage);
+    if (isNaN(gst) || !validGSTRates.includes(gst)) {
+      newErrors.gst_percentage = "GST must be 0%, 5%, 12%, 18%, or 28%";
+    }
+
+    // Discount validation - each discount must be <= 100%
+    const discounts = [
+      {
+        field: "weekly_discount_percent",
+        value: formData.weekly_discount_percent,
+        label: "Weekly discount",
+      },
+      {
+        field: "monthly_discount_percent",
+        value: formData.monthly_discount_percent,
+        label: "Monthly discount",
+      },
+      {
+        field: "quarterly_discount_percent",
+        value: formData.quarterly_discount_percent,
+        label: "Quarterly discount",
+      },
+      {
+        field: "long_term_discount_percent",
+        value: formData.long_term_discount_percent,
+        label: "Long-term discount",
+      },
+      {
+        field: "corporate_discount_percent",
+        value: formData.corporate_discount_percent,
+        label: "Corporate discount",
+      },
+    ];
+    discounts.forEach(({ field, value, label }) => {
+      const discount = parseFloat(value) || 0;
+      if (discount < 0 || discount > 100) {
+        newErrors[field] = `${label} must be between 0% and 100%`;
+      }
+    });
+
+    // Cross-field validations
+    if (formData.min_guests && formData.max_guests) {
+      if (parseInt(formData.min_guests) > parseInt(formData.max_guests)) {
+        newErrors.max_guests = "Maximum guests must be >= minimum guests";
+      }
+    }
+
+    if (formData.min_children && formData.max_children) {
+      if (parseInt(formData.min_children) > parseInt(formData.max_children)) {
+        newErrors.max_children = "Maximum children must be >= minimum children";
+      }
+    }
+
+    if (formData.min_stay_days && formData.max_stay_days) {
+      if (parseInt(formData.min_stay_days) > parseInt(formData.max_stay_days)) {
+        newErrors.max_stay_days = "Maximum stay must be >= minimum stay";
+      }
+    }
+
+    // Pincode validation
+    if (formData.pincode && formData.pincode.trim()) {
+      const pincodeRegex = /^[0-9]{5,10}$|^[A-Z0-9]{6,10}$/i;
+      if (!pincodeRegex.test(formData.pincode.trim())) {
+        newErrors.pincode = "Invalid postal code format";
+      }
+    }
+
+    // Email validations (with trim)
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (
       formData.primary_incharge_email &&
-      !emailRegex.test(formData.primary_incharge_email)
+      !emailRegex.test(formData.primary_incharge_email.trim())
     ) {
       newErrors.primary_incharge_email = "Invalid email format";
     }
     if (
       formData.secondary_incharge_email &&
-      !emailRegex.test(formData.secondary_incharge_email)
+      !emailRegex.test(formData.secondary_incharge_email.trim())
     ) {
       newErrors.secondary_incharge_email = "Invalid email format";
     }
@@ -323,76 +747,287 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    e.stopPropagation();
+    console.log("[AdminPropertyForm] Form submitted");
 
     if (!validateForm()) {
-      alert("Please fix validation errors");
+      toast.error("Please fix validation errors before submitting");
+      // Scroll to first error
+      const firstError = document.querySelector(".error");
+      if (firstError) {
+        firstError.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
       return;
     }
 
     try {
       setLoading(true);
 
-      // Process photo URLs
-      const photosArray = photoUrls
-        .split("\n")
-        .map((url) => url.trim())
-        .filter((url) => url.length > 0);
+      // Photos validation - images are uploaded separately via PropertyImageUpload
+      // No need to validate here as images can be added after property creation
 
-      // Prepare payload
-      const payload = {
-        ...formData,
-        ...guidelines,
-        amenities: JSON.stringify(formData.amenities),
-        house_rules: JSON.stringify(formData.house_rules),
-        cancellation_policy: JSON.stringify(formData.cancellation_policy),
-        photos: JSON.stringify(photosArray),
-      };
+      // INDUSTRY STANDARD: Only send changed fields for updates
+      // For new properties, send all fields
+      let payload;
 
-      const token = localStorage.getItem("token");
-      const url = propertyId
-        ? `/api/admin/properties/${propertyId}`
-        : "/api/admin/properties";
-      const method = propertyId ? "PUT" : "POST";
+      if (sanitizedPropertyId && originalFormData) {
+        // UPDATE: Only send dirty fields (optimized)
+        payload = {};
 
-      const response = await fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-      });
+        // Add changed form fields
+        Object.keys(dirtyFields).forEach((field) => {
+          if (formData.hasOwnProperty(field)) {
+            payload[field] = formData[field];
+          }
+          if (guidelines.hasOwnProperty(field)) {
+            payload[field] = guidelines[field];
+          }
+        });
 
-      const data = await response.json();
+        // Always include amenities if it was changed or exists
+        if (dirtyFields.amenities || formData.amenities) {
+          payload.amenities = formData.amenities || [];
+        }
 
-      if (data.success) {
-        alert(
-          propertyId
-            ? "Property updated successfully!"
-            : "Property created successfully!"
+        // Always include incharge contacts (they're separate table operations)
+        payload.primary_incharge_name = formData.primary_incharge_name || "";
+        payload.primary_incharge_phone = formData.primary_incharge_phone || "";
+        payload.primary_incharge_email = formData.primary_incharge_email || "";
+        payload.primary_incharge_whatsapp =
+          formData.primary_incharge_whatsapp || "";
+        payload.primary_incharge_alt_contact =
+          formData.primary_incharge_alt_contact || "";
+        payload.secondary_incharge_name =
+          formData.secondary_incharge_name || "";
+        payload.secondary_incharge_phone =
+          formData.secondary_incharge_phone || "";
+        payload.secondary_incharge_email =
+          formData.secondary_incharge_email || "";
+        payload.secondary_incharge_whatsapp =
+          formData.secondary_incharge_whatsapp || "";
+        payload.secondary_incharge_alt_contact =
+          formData.secondary_incharge_alt_contact || "";
+
+        // JSON fields - stringify if changed
+        if (dirtyFields.house_rules) {
+          payload.house_rules = JSON.stringify(formData.house_rules);
+        }
+        if (dirtyFields.cancellation_policy) {
+          payload.cancellation_policy = JSON.stringify(
+            formData.cancellation_policy,
+          );
+        }
+
+        console.log(
+          "🎯 Optimized UPDATE - Sending only changed fields:",
+          Object.keys(payload).length,
+          "fields",
         );
+      } else {
+        // CREATE: Send all fields
+        const { city, ...restFormData } = formData;
+
+        payload = {
+          ...restFormData,
+          ...guidelines,
+          // Include amenities for new properties
+          amenities: formData.amenities || [],
+          // Include incharge contacts
+          primary_incharge_name: formData.primary_incharge_name || "",
+          primary_incharge_phone: formData.primary_incharge_phone || "",
+          primary_incharge_email: formData.primary_incharge_email || "",
+          primary_incharge_whatsapp: formData.primary_incharge_whatsapp || "",
+          primary_incharge_alt_contact:
+            formData.primary_incharge_alt_contact || "",
+          secondary_incharge_name: formData.secondary_incharge_name || "",
+          secondary_incharge_phone: formData.secondary_incharge_phone || "",
+          secondary_incharge_email: formData.secondary_incharge_email || "",
+          secondary_incharge_whatsapp:
+            formData.secondary_incharge_whatsapp || "",
+          secondary_incharge_alt_contact:
+            formData.secondary_incharge_alt_contact || "",
+          house_rules: JSON.stringify(formData.house_rules),
+          cancellation_policy: JSON.stringify(formData.cancellation_policy),
+          photos: JSON.stringify([]),
+        };
+
+        console.log(
+          "📝 CREATE - Sending all fields:",
+          Object.keys(payload).length,
+          "fields",
+        );
+      }
+
+      // Convert numeric fields (for both create and update)
+      if (payload.price_per_night !== undefined) {
+        payload.price_per_night = parseFloat(payload.price_per_night) || 0;
+      }
+      if (payload.gst_percentage !== undefined) {
+        payload.gst_percentage = parseFloat(payload.gst_percentage) || 18;
+      }
+      if (payload.weekly_discount_percent !== undefined) {
+        payload.weekly_discount_percent =
+          parseFloat(payload.weekly_discount_percent) || 0;
+      }
+      if (payload.monthly_discount_percent !== undefined) {
+        payload.monthly_discount_percent =
+          parseFloat(payload.monthly_discount_percent) || 0;
+      }
+      if (payload.quarterly_discount_percent !== undefined) {
+        payload.quarterly_discount_percent =
+          parseFloat(payload.quarterly_discount_percent) || 0;
+      }
+      if (payload.long_term_discount_percent !== undefined) {
+        payload.long_term_discount_percent =
+          parseFloat(payload.long_term_discount_percent) || 0;
+      }
+      if (payload.corporate_discount_percent !== undefined) {
+        payload.corporate_discount_percent =
+          parseFloat(payload.corporate_discount_percent) || 0;
+      }
+      if (payload.deposit_amount !== undefined) {
+        payload.deposit_amount = parseFloat(payload.deposit_amount) || 0;
+      }
+      if (payload.maintenance_charges !== undefined) {
+        payload.maintenance_charges =
+          parseFloat(payload.maintenance_charges) || 0;
+      }
+      if (payload.bedrooms !== undefined) {
+        payload.bedrooms = parseInt(payload.bedrooms) || 0;
+      }
+      if (payload.bathrooms !== undefined) {
+        payload.bathrooms = parseInt(payload.bathrooms) || 0;
+      }
+      if (payload.max_guests !== undefined) {
+        payload.max_guests = parseInt(payload.max_guests) || 2;
+      }
+      if (payload.min_stay_days !== undefined) {
+        payload.min_stay_days = parseInt(payload.min_stay_days) || 1;
+      }
+      if (payload.max_stay_days !== undefined) {
+        payload.max_stay_days = payload.max_stay_days
+          ? parseInt(payload.max_stay_days)
+          : null;
+      }
+      if (payload.parking_slots !== undefined) {
+        payload.parking_slots = parseInt(payload.parking_slots) || 0;
+      }
+      if (payload.floor_number !== undefined) {
+        payload.floor_number = payload.floor_number
+          ? parseInt(payload.floor_number)
+          : null;
+      }
+      if (payload.wifi_speed_mbps !== undefined) {
+        payload.wifi_speed_mbps = payload.wifi_speed_mbps
+          ? parseInt(payload.wifi_speed_mbps)
+          : null;
+      }
+      if (payload.recommended_priority !== undefined) {
+        payload.recommended_priority =
+          parseInt(payload.recommended_priority) || 0;
+      }
+      if (payload.notice_period_days !== undefined) {
+        payload.notice_period_days = parseInt(payload.notice_period_days) || 30;
+      }
+
+      // Use api.js module for consistent error handling
+      let response;
+      if (sanitizedPropertyId) {
+        response = await api.put(
+          `/admin/properties/${sanitizedPropertyId}`,
+          payload,
+        );
+      } else {
+        response = await api.post("/admin/properties", payload);
+      }
+
+      if (response.data.success) {
+        const savedProperty = response.data.data;
+        const isNewProperty = !sanitizedPropertyId;
+
+        // Clear unsaved changes flag
+        setHasUnsavedChanges(false);
+        setDirtyFields({});
+
+        // If creating new property and has pending images, upload them
+        if (isNewProperty && hasSelectedImages && pendingImageUpload) {
+          toast.success("Property created! Uploading images...");
+          try {
+            // Ensure we extract the ID properly
+            const newPropertyId = savedProperty?.id || savedProperty;
+            const uploadResult = await pendingImageUpload(
+              String(newPropertyId),
+            );
+            if (uploadResult.success) {
+              toast.success("Property and images saved successfully! 🎉");
+            } else {
+              toast.warning("Property saved but some images failed to upload");
+            }
+          } catch (uploadError) {
+            console.error("Image upload error:", uploadError);
+            toast.warning(
+              "Property saved but image upload failed. You can upload them later.",
+            );
+          }
+        } else {
+          toast.success(
+            propertyId
+              ? "Property updated successfully! 🎉"
+              : "Property created successfully! 🎉",
+          );
+        }
+
         if (onSuccess) onSuccess();
       } else {
-        alert("Error: " + data.message);
+        toast.error(response.data.message || "Failed to save property");
       }
     } catch (error) {
       console.error("Error submitting form:", error);
-      alert("Error submitting form");
+
+      // Better error messages
+      if (error.response?.data?.message) {
+        toast.error(error.response.data.message);
+      } else if (error.response?.status === 400) {
+        toast.error("Invalid data. Please check all fields.");
+      } else if (error.response?.status === 401) {
+        toast.error("Session expired. Please login again.");
+      } else if (error.response?.status === 403) {
+        toast.error("You don't have permission to perform this action.");
+      } else {
+        toast.error("Failed to save property. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
   };
 
   if (loading && propertyId) {
-    return <div className="loading">Loading property data...</div>;
+    return (
+      <div className="flex items-center justify-center p-10">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-3 text-lg">Loading property data...</span>
+      </div>
+    );
   }
 
   return (
-    <div className="admin-property-form">
-      <div className="form-header">
-        <h2>{propertyId ? "Edit Property" : "Create New Property"}</h2>
+    <div className="max-w-6xl mx-auto p-6">
+      {/* Progress Bar */}
+      <FormProgressBar
+        completionPercentage={formProgress.percentage}
+        sections={formProgress.sections}
+      />
+
+      <div className="flex justify-between items-center mb-8 pb-5 border-b-2 border-border">
+        <h2 className="text-3xl font-bold text-foreground">
+          {propertyId ? "Edit Property" : "Create New Property"}
+        </h2>
         {onCancel && (
-          <button type="button" onClick={onCancel} className="btn-cancel">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="px-6 py-3 bg-muted text-foreground border border-border rounded-lg font-semibold hover:bg-muted/80 transition-all"
+          >
             Cancel
           </button>
         )}
@@ -400,17 +1035,23 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
 
       <form onSubmit={handleSubmit}>
         {/* Section 1: Basic Information */}
-        <section className="form-section">
-          <h3>Basic Information</h3>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label>Vendor *</label>
+        <FormSection
+          title="Basic Information"
+          icon={Info}
+          required={true}
+          defaultOpen={true}
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Vendor *
+              </label>
               <select
                 name="vendor_id"
-                value={formData.vendor_id}
+                value={formData.vendor_id || ""}
                 onChange={handleInputChange}
                 required
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               >
                 <option value="">Select Vendor</option>
                 {vendors.map((vendor) => (
@@ -420,14 +1061,18 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
                 ))}
               </select>
               {errors.vendor_id && (
-                <span className="error">{errors.vendor_id}</span>
+                <span className="text-sm text-destructive mt-1">
+                  {errors.vendor_id}
+                </span>
               )}
             </div>
           </div>
 
-          <div className="form-row">
-            <div className="form-group full-width">
-              <label>Property Title *</label>
+          <div className="mb-6">
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Property Title *
+              </label>
               <input
                 type="text"
                 name="title"
@@ -435,34 +1080,73 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
                 onChange={handleInputChange}
                 placeholder="e.g., Luxury Beach Villa - Goa"
                 required
+                maxLength="200"
+                aria-required="true"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
-              {errors.title && <span className="error">{errors.title}</span>}
+              <span className="text-xs text-muted-foreground mt-1">
+                {formData.title.length}/200 characters
+              </span>
+              {errors.title && (
+                <span className="text-sm text-destructive mt-1" role="alert">
+                  {errors.title}
+                </span>
+              )}
             </div>
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label>Property Type</label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2 flex items-center gap-2">
+                Property Type *
+                {(propertyId || preSelectedPropertyType) && (
+                  <span className="text-xs text-yellow-600 dark:text-yellow-400 font-normal">
+                    (Cannot be changed)
+                  </span>
+                )}
+              </label>
               <select
-                name="property_type"
-                value={formData.property_type}
+                name="property_type_id"
+                value={formData.property_type_id || ""}
                 onChange={handleInputChange}
+                required
+                disabled={!!(propertyId || preSelectedPropertyType)}
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <option value="Villa">Villa</option>
-                <option value="Premium Villa">Premium Villa</option>
-                <option value="Apartment">Apartment</option>
-                <option value="Cottage">Cottage</option>
-                <option value="Farmhouse">Farmhouse</option>
-                <option value="Bungalow">Bungalow</option>
+                <option value="">Select Property Type</option>
+                {propertyTypes.map((type) => (
+                  <option key={type.id} value={type.id}>
+                    {type.name} -{" "}
+                    {type.stay_type === "short_term"
+                      ? "Short Term"
+                      : type.stay_type === "long_term"
+                        ? "Long Term"
+                        : "Hybrid"}
+                  </option>
+                ))}
               </select>
+              {errors.property_type_id && (
+                <span className="text-sm text-destructive mt-1">
+                  {errors.property_type_id}
+                </span>
+              )}
+              {preSelectedPropertyTypeName && !propertyId && (
+                <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                  <Info className="h-3 w-3" />
+                  Selected: {preSelectedPropertyTypeName}
+                </p>
+              )}
             </div>
 
-            <div className="form-group">
-              <label>Status</label>
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Status
+              </label>
               <select
                 name="status"
-                value={formData.status}
+                value={formData.status || "draft"}
                 onChange={handleInputChange}
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               >
                 <option value="draft">Draft</option>
                 <option value="pending_approval">Pending Approval</option>
@@ -472,27 +1156,39 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
             </div>
           </div>
 
-          <div className="form-row">
-            <div className="form-group full-width">
-              <label>Description</label>
+          <div className="mb-6">
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Description
+              </label>
               <textarea
                 name="description"
                 value={formData.description}
                 onChange={handleInputChange}
                 rows="4"
                 placeholder="Describe the property..."
+                maxLength="2000"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all resize-y"
               />
+              <span className="text-xs text-muted-foreground mt-1">
+                {(formData.description || "").length}/2000 characters
+              </span>
             </div>
           </div>
-        </section>
+        </FormSection>
 
         {/* Section 2: Location */}
-        <section className="form-section">
-          <h3>Location Details</h3>
-
-          <div className="form-row">
-            <div className="form-group full-width">
-              <label>Address *</label>
+        <FormSection
+          title="Location Details"
+          icon={MapPin}
+          required={true}
+          defaultOpen={false}
+        >
+          <div className="mb-6">
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Address *
+              </label>
               <input
                 type="text"
                 name="address"
@@ -500,184 +1196,309 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
                 onChange={handleInputChange}
                 placeholder="Street address"
                 required
+                maxLength="500"
+                aria-required="true"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
+              <span className="text-xs text-muted-foreground mt-1">
+                {(formData.address || "").length}/500 characters
+              </span>
             </div>
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label>City (Dropdown) *</label>
-              <select
-                name="city_id"
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                City *
+              </label>
+              <CityCombobox
                 value={formData.city_id}
-                onChange={handleInputChange}
-                required
-              >
-                <option value="">Select City</option>
-                {cities.map((city) => (
-                  <option key={city.id} value={city.id}>
-                    {city.name}, {city.state}
-                  </option>
-                ))}
-              </select>
-              {errors.city_id && (
-                <span className="error">{errors.city_id}</span>
-              )}
+                onChange={(cityId, cityData) => {
+                  setFormData((prev) => ({
+                    ...prev,
+                    city_id: cityId,
+                    city: cityData?.name || "",
+                    state: cityData?.state || "",
+                  }));
+                  // Clear error when city is selected
+                  if (errors.city_id) {
+                    setErrors((prev) => ({ ...prev, city_id: "" }));
+                  }
+                }}
+                error={errors.city_id}
+                required={true}
+              />
+              <small className="text-xs text-muted-foreground mt-1">
+                {formData.city && formData.state ? (
+                  <span className="text-primary font-medium">
+                    Selected: {formData.city}, {formData.state}
+                  </span>
+                ) : (
+                  "Search or add a new city"
+                )}
+              </small>
             </div>
 
-            <div className="form-group">
-              <label>City (Text)</label>
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Area / Locality
+              </label>
               <input
                 type="text"
-                name="city"
-                value={formData.city}
+                name="area"
+                value={formData.area}
                 onChange={handleInputChange}
-                placeholder="City name"
+                placeholder="e.g., Koramangala, Candolim Beach"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
+              <small className="text-xs text-muted-foreground mt-1">
+                Specific neighborhood or locality within the city
+              </small>
             </div>
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label>State</label>
-              <input
-                type="text"
-                name="state"
-                value={formData.state}
-                onChange={handleInputChange}
-                placeholder="State"
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Pincode</label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Pincode
+              </label>
               <input
                 type="text"
                 name="pincode"
                 value={formData.pincode}
                 onChange={handleInputChange}
-                placeholder="Pincode"
+                placeholder="e.g., 560001 or SW1A 1AA"
                 maxLength="10"
+                pattern="[0-9]{5,10}|[A-Z0-9]{6,10}"
+                aria-describedby="pincode-help"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
+              <span
+                id="pincode-help"
+                className="text-xs text-muted-foreground mt-1"
+              >
+                5-10 digits or alphanumeric postal code
+              </span>
+              {errors.pincode && (
+                <span className="text-sm text-destructive mt-1" role="alert">
+                  {errors.pincode}
+                </span>
+              )}
+            </div>
+
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Google Maps Location
+              </label>
+              <input
+                type="text"
+                name="maps_location"
+                value={formData.maps_location}
+                onChange={handleInputChange}
+                placeholder="https://www.google.com/maps?q=12.9352,77.6245"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+              />
+              <small className="text-xs text-muted-foreground mt-1">
+                Google Maps URL or coordinates
+              </small>
             </div>
           </div>
-        </section>
+        </FormSection>
 
         {/* Section 3: Property Specifications */}
-        <section className="form-section">
-          <h3>Property Specifications</h3>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label>Bedrooms</label>
+        <FormSection
+          title="Property Specifications"
+          icon={Home}
+          required={true}
+          defaultOpen={false}
+        >
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Bedrooms
+              </label>
               <input
                 type="number"
                 name="bedrooms"
                 value={formData.bedrooms}
                 onChange={handleInputChange}
                 min="0"
+                max="50"
+                aria-describedby="bedrooms-help"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
+              <span
+                id="bedrooms-help"
+                className="text-xs text-muted-foreground mt-1"
+              >
+                Maximum 50 bedrooms
+              </span>
             </div>
 
-            <div className="form-group">
-              <label>Bathrooms</label>
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Bathrooms
+              </label>
               <input
                 type="number"
                 name="bathrooms"
                 value={formData.bathrooms}
                 onChange={handleInputChange}
                 min="0"
+                max="30"
+                aria-describedby="bathrooms-help"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
+              <span
+                id="bathrooms-help"
+                className="text-xs text-muted-foreground mt-1"
+              >
+                Maximum 30 bathrooms
+              </span>
             </div>
 
-            <div className="form-group">
-              <label>Max Guests</label>
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Max Guests
+              </label>
               <input
                 type="number"
                 name="max_guests"
                 value={formData.max_guests}
                 onChange={handleInputChange}
                 min="1"
+                max="100"
+                aria-describedby="max-guests-help"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
+              <span
+                id="max-guests-help"
+                className="text-xs text-muted-foreground mt-1"
+              >
+                Maximum 100 guests
+              </span>
+              {errors.max_guests && (
+                <span className="text-sm text-destructive mt-1" role="alert">
+                  {errors.max_guests}
+                </span>
+              )}
             </div>
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label>Check-in Time</label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Check-in Time
+              </label>
               <input
                 type="text"
                 name="check_in_time"
                 value={formData.check_in_time}
                 onChange={handleInputChange}
                 placeholder="e.g., 2:00 PM"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
             </div>
 
-            <div className="form-group">
-              <label>Check-out Time</label>
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Check-out Time
+              </label>
               <input
                 type="text"
                 name="check_out_time"
                 value={formData.check_out_time}
                 onChange={handleInputChange}
                 placeholder="e.g., 11:00 AM"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
             </div>
           </div>
-        </section>
+        </FormSection>
 
         {/* Section 4: Pricing */}
-        <section className="form-section">
-          <h3>Pricing & GST</h3>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label>Price Per Night (₹) *</label>
+        <FormSection
+          title="Pricing & GST"
+          icon={DollarSign}
+          required={true}
+          defaultOpen={false}
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Price Per Night (\u20b9) *
+              </label>
               <input
                 type="number"
                 name="price_per_night"
                 value={formData.price_per_night}
                 onChange={handleInputChange}
-                min="0"
+                min="0.01"
                 step="0.01"
                 required
+                aria-required="true"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
+              <span className="text-xs text-muted-foreground mt-1">
+                Minimum \u20b90.01 per night
+              </span>
               {errors.price_per_night && (
-                <span className="error">{errors.price_per_night}</span>
+                <span className="text-sm text-destructive mt-1" role="alert">
+                  {errors.price_per_night}
+                </span>
               )}
             </div>
 
-            <div className="form-group">
-              <label>GST Percentage (%)</label>
-              <input
-                type="number"
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                GST Percentage (%)
+              </label>
+              <select
                 name="gst_percentage"
-                value={formData.gst_percentage}
+                value={formData.gst_percentage || "18"}
                 onChange={handleInputChange}
-                min="0"
-                max="100"
-                step="0.01"
-              />
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+              >
+                <option value="0">0% - Exempt</option>
+                <option value="5">5% - Essential goods</option>
+                <option value="12">12% - Standard rate</option>
+                <option value="18">18% - Services</option>
+                <option value="28">28% - Luxury items</option>
+              </select>
+              <span className="text-xs text-muted-foreground mt-1">
+                Select applicable Indian GST rate
+              </span>
+              {errors.gst_percentage && (
+                <span className="text-sm text-destructive mt-1" role="alert">
+                  {errors.gst_percentage}
+                </span>
+              )}
             </div>
           </div>
 
-          <h4 style={{ marginTop: "20px" }}>Advanced Pricing</h4>
+          <h4 className="text-lg font-semibold text-foreground mt-6 mb-4">
+            Advanced Pricing
+          </h4>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label>Min Guests (Included in Base Price)</label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Min Guests (Included in Base Price)
+              </label>
               <input
                 type="number"
                 name="min_guests"
                 value={formData.min_guests}
                 onChange={handleInputChange}
                 min="1"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
             </div>
 
-            <div className="form-group">
-              <label>Extra Guest Charge (₹ per night)</label>
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Extra Guest Charge (₹ per night)
+              </label>
               <input
                 type="number"
                 name="extra_guest_charge"
@@ -685,35 +1506,44 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
                 onChange={handleInputChange}
                 min="0"
                 step="0.01"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
             </div>
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label>Min Children (Included in Base Price)</label>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Min Children (Included in Base Price)
+              </label>
               <input
                 type="number"
                 name="min_children"
                 value={formData.min_children}
                 onChange={handleInputChange}
                 min="0"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
             </div>
 
-            <div className="form-group">
-              <label>Max Children Allowed</label>
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Max Children Allowed
+              </label>
               <input
                 type="number"
                 name="max_children"
                 value={formData.max_children}
                 onChange={handleInputChange}
                 min="0"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
             </div>
 
-            <div className="form-group">
-              <label>Extra Child Charge (₹ per night)</label>
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Extra Child Charge (₹ per night)
+              </label>
               <input
                 type="number"
                 name="extra_child_charge"
@@ -721,172 +1551,759 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
                 onChange={handleInputChange}
                 min="0"
                 step="0.01"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
             </div>
           </div>
 
-          <p className="info-text">
-            <strong>Note:</strong> Infants (0-2 years) are always FREE and
-            unlimited
-          </p>
-        </section>
+          <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
+            <p className="text-sm text-blue-900 dark:text-blue-200">
+              <strong className="font-semibold">Note:</strong> Infants (0-2
+              years) are always FREE and unlimited
+            </p>
+          </div>
+
+          <h4 className="text-lg font-semibold text-foreground mt-6 mb-4">
+            Long-term Stay Discounts
+          </h4>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Weekly Discount (%)
+              </label>
+              <input
+                type="number"
+                name="weekly_discount_percent"
+                value={formData.weekly_discount_percent}
+                onChange={handleInputChange}
+                min="0"
+                max="100"
+                step="0.01"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+              />
+              <small className="text-xs text-muted-foreground mt-1">
+                7+ days stays
+              </small>
+            </div>
+
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Monthly Discount (%)
+              </label>
+              <input
+                type="number"
+                name="monthly_discount_percent"
+                value={formData.monthly_discount_percent}
+                onChange={handleInputChange}
+                min="0"
+                max="100"
+                step="0.01"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+              />
+              <small className="text-xs text-muted-foreground mt-1">
+                30+ days stays
+              </small>
+            </div>
+
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Quarterly Discount (%)
+              </label>
+              <input
+                type="number"
+                name="quarterly_discount_percent"
+                value={formData.quarterly_discount_percent}
+                onChange={handleInputChange}
+                min="0"
+                max="100"
+                step="0.01"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+              />
+              <small className="text-xs text-muted-foreground mt-1">
+                90+ days stays
+              </small>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Long-term Discount (%)
+              </label>
+              <input
+                type="number"
+                name="long_term_discount_percent"
+                value={formData.long_term_discount_percent}
+                onChange={handleInputChange}
+                min="0"
+                max="100"
+                step="0.01"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+              />
+              <small className="text-xs text-muted-foreground mt-1">
+                180+ days stays
+              </small>
+            </div>
+          </div>
+
+          <h4 className="text-lg font-semibold text-foreground mt-6 mb-4">
+            Corporate & Deposits
+          </h4>
+
+          <div className="flex items-center gap-3 mb-6">
+            <input
+              type="checkbox"
+              name="allow_corporate_booking"
+              checked={formData.allow_corporate_booking}
+              onChange={handleInputChange}
+              className="h-5 w-5 rounded border-border text-primary focus:ring-2 focus:ring-primary focus:ring-offset-0"
+              id="allow_corporate_booking"
+            />
+            <label
+              htmlFor="allow_corporate_booking"
+              className="text-sm font-medium text-foreground cursor-pointer"
+            >
+              Allow Corporate Bookings
+            </label>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Corporate Discount (%)
+              </label>
+              <input
+                type="number"
+                name="corporate_discount_percent"
+                value={formData.corporate_discount_percent}
+                onChange={handleInputChange}
+                min="0"
+                max="100"
+                step="0.01"
+                disabled={!formData.allow_corporate_booking}
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              />
+            </div>
+
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Security Deposit (₹)
+              </label>
+              <input
+                type="number"
+                name="deposit_amount"
+                value={formData.deposit_amount}
+                onChange={handleInputChange}
+                min="0"
+                step="0.01"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+              />
+            </div>
+
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Maintenance Charges (₹/month)
+              </label>
+              <input
+                type="number"
+                name="maintenance_charges"
+                value={formData.maintenance_charges}
+                onChange={handleInputChange}
+                min="0"
+                step="0.01"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Notice Period (Days)
+              </label>
+              <input
+                type="number"
+                name="notice_period_days"
+                value={formData.notice_period_days}
+                onChange={handleInputChange}
+                min="0"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+              />
+              <small className="text-xs text-muted-foreground mt-1">
+                Required notice for cancellation/checkout
+              </small>
+            </div>
+          </div>
+        </FormSection>
+
+        {/* Section 4.5: Service Apartment Details - Only for Service Apartments */}
+        {isServiceApartment && (
+          <FormSection
+            title="Service Apartment Details"
+            icon={Building}
+            defaultOpen={true}
+          >
+            <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
+              <p className="text-sm text-blue-900 dark:text-blue-200">
+                <strong className="font-semibold">
+                  Service Apartment Specific:
+                </strong>{" "}
+                These fields are tailored for long-term stays (30+ days).
+              </p>
+            </div>
+
+            <h4 className="text-lg font-semibold text-foreground mb-4">
+              Stay Duration
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div className="flex flex-col">
+                <label className="text-sm font-medium text-foreground mb-2">
+                  Minimum Stay (Days)
+                </label>
+                <input
+                  type="number"
+                  name="min_stay_days"
+                  value={formData.min_stay_days}
+                  onChange={handleInputChange}
+                  min="1"
+                  className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                />
+                <small className="text-xs text-muted-foreground mt-1">
+                  Required minimum booking duration
+                </small>
+              </div>
+
+              <div className="flex flex-col">
+                <label className="text-sm font-medium text-foreground mb-2">
+                  Maximum Stay (Days)
+                </label>
+                <input
+                  type="number"
+                  name="max_stay_days"
+                  value={formData.max_stay_days || ""}
+                  onChange={handleInputChange}
+                  min="1"
+                  placeholder="Unlimited"
+                  className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                />
+                <small className="text-xs text-muted-foreground mt-1">
+                  Leave empty for unlimited
+                </small>
+              </div>
+            </div>
+
+            <h4 className="text-lg font-semibold text-foreground mt-6 mb-4">
+              Services & Amenities
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+              <div className="flex flex-col">
+                <label className="text-sm font-medium text-foreground mb-2">
+                  Housekeeping Frequency
+                </label>
+                <select
+                  name="housekeeping_frequency"
+                  value={formData.housekeeping_frequency || "weekly"}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                >
+                  <option value="daily">Daily</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="bi-weekly">Bi-weekly</option>
+                  <option value="on-demand">On-demand</option>
+                </select>
+              </div>
+
+              <div className="flex flex-col">
+                <label className="text-sm font-medium text-foreground mb-2">
+                  Laundry Frequency
+                </label>
+                <select
+                  name="laundry_frequency"
+                  value={formData.laundry_frequency || "weekly"}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                >
+                  <option value="weekly">Weekly</option>
+                  <option value="bi-weekly">Bi-weekly</option>
+                  <option value="on-demand">On-demand</option>
+                </select>
+              </div>
+
+              <div className="flex flex-col">
+                <label className="text-sm font-medium text-foreground mb-2">
+                  Furnishing Type
+                </label>
+                <select
+                  name="furnishing_type"
+                  value={formData.furnishing_type || "fully_furnished"}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                >
+                  <option value="fully_furnished">Fully Furnished</option>
+                  <option value="semi_furnished">Semi Furnished</option>
+                  <option value="unfurnished">Unfurnished</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 mb-6">
+              <input
+                type="checkbox"
+                name="utilities_included"
+                checked={formData.utilities_included}
+                onChange={handleInputChange}
+                className="h-5 w-5 rounded border-border text-primary focus:ring-2 focus:ring-primary focus:ring-offset-0"
+                id="utilities_included"
+              />
+              <label
+                htmlFor="utilities_included"
+                className="text-sm font-medium text-foreground cursor-pointer"
+              >
+                Utilities Included (Electricity, Water)
+              </label>
+            </div>
+
+            <h4 className="text-lg font-semibold text-foreground mt-6 mb-4">
+              Property Facilities
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div className="flex flex-col">
+                <label className="text-sm font-medium text-foreground mb-2">
+                  Parking Slots
+                </label>
+                <input
+                  type="number"
+                  name="parking_slots"
+                  value={formData.parking_slots}
+                  onChange={handleInputChange}
+                  min="0"
+                  className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                />
+              </div>
+
+              <div className="flex flex-col">
+                <label className="text-sm font-medium text-foreground mb-2">
+                  Floor Number
+                </label>
+                <input
+                  type="number"
+                  name="floor_number"
+                  value={formData.floor_number || ""}
+                  onChange={handleInputChange}
+                  placeholder="Ground floor = 0"
+                  className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                />
+                <small className="text-xs text-muted-foreground mt-1">
+                  For apartments in buildings
+                </small>
+              </div>
+            </div>
+
+            <h4 className="text-lg font-semibold text-foreground mt-6 mb-4">
+              Internet & Connectivity
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div className="flex flex-col">
+                <label className="text-sm font-medium text-foreground mb-2">
+                  WiFi Speed (Mbps)
+                </label>
+                <input
+                  type="number"
+                  name="wifi_speed_mbps"
+                  value={formData.wifi_speed_mbps || ""}
+                  onChange={handleInputChange}
+                  min="0"
+                  placeholder="e.g., 100"
+                  className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                />
+              </div>
+
+              <div className="flex flex-col">
+                <label className="text-sm font-medium text-foreground mb-2">
+                  WiFi Provider
+                </label>
+                <input
+                  type="text"
+                  name="wifi_provider"
+                  value={formData.wifi_provider}
+                  onChange={handleInputChange}
+                  placeholder="e.g., ACT Fibernet, Airtel Xstream"
+                  className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                />
+              </div>
+            </div>
+          </FormSection>
+        )}
+
+        {/* Section 4.5B: Villa Details - Only for Villas */}
+        {isVilla && (
+          <FormSection title="Villa Features" icon={Home} defaultOpen={true}>
+            <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-6">
+              <p className="text-sm text-green-900 dark:text-green-200">
+                <strong className="font-semibold">Villa Specific:</strong> These
+                features are tailored for vacation villas and short-term stays.
+              </p>
+            </div>
+
+            <h4 className="text-lg font-semibold text-foreground mb-4">
+              Outdoor & Recreational Facilities
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div className="flex flex-col">
+                <label className="text-sm font-medium text-foreground mb-2">
+                  Pool Availability
+                </label>
+                <select
+                  name="pool_type"
+                  value={formData.pool_type || "none"}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                >
+                  <option value="none">No Pool</option>
+                  <option value="private">Private Pool</option>
+                  <option value="shared">Shared Pool</option>
+                </select>
+              </div>
+
+              <div className="flex flex-col">
+                <label className="text-sm font-medium text-foreground mb-2">
+                  Garden/Outdoor Space
+                </label>
+                <select
+                  name="garden_type"
+                  value={formData.garden_type || "none"}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                >
+                  <option value="none">No Garden</option>
+                  <option value="private">Private Garden</option>
+                  <option value="shared">Shared Garden</option>
+                  <option value="terrace">Terrace/Balcony</option>
+                </select>
+              </div>
+            </div>
+
+            <h4 className="text-lg font-semibold text-foreground mt-6 mb-4">
+              Guest Policies
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  name="pets_allowed"
+                  checked={formData.pets_allowed || false}
+                  onChange={handleInputChange}
+                  className="h-5 w-5 rounded border-border text-primary focus:ring-2 focus:ring-primary focus:ring-offset-0"
+                  id="pets_allowed"
+                />
+                <label
+                  htmlFor="pets_allowed"
+                  className="text-sm font-medium text-foreground cursor-pointer"
+                >
+                  Pets Allowed
+                </label>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  name="events_allowed"
+                  checked={formData.events_allowed || false}
+                  onChange={handleInputChange}
+                  className="h-5 w-5 rounded border-border text-primary focus:ring-2 focus:ring-primary focus:ring-offset-0"
+                  id="events_allowed"
+                />
+                <label
+                  htmlFor="events_allowed"
+                  className="text-sm font-medium text-foreground cursor-pointer"
+                >
+                  Events/Parties Allowed
+                </label>
+              </div>
+            </div>
+
+            <div className="flex flex-col mb-6">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Maximum Event Capacity (if allowed)
+              </label>
+              <input
+                type="number"
+                name="event_capacity"
+                value={formData.event_capacity || ""}
+                onChange={handleInputChange}
+                min="0"
+                placeholder="e.g., 50"
+                disabled={!formData.events_allowed}
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all disabled:opacity-50"
+              />
+              <small className="text-xs text-muted-foreground mt-1">
+                Leave empty if not applicable
+              </small>
+            </div>
+          </FormSection>
+        )}
+
+        {/* Section 4.6: Recommendations */}
+        <FormSection
+          title="Property Recommendations"
+          icon={Star}
+          defaultOpen={true}
+        >
+          <div className="bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4 mb-6">
+            <p className="text-sm text-purple-900 dark:text-purple-200">
+              <strong className="font-semibold">Admin Only:</strong> Mark
+              properties as recommended to feature them prominently on the
+              homepage
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3 mb-6">
+            <input
+              type="checkbox"
+              name="is_recommended"
+              checked={formData.is_recommended}
+              onChange={handleInputChange}
+              className="h-5 w-5 rounded border-border text-primary focus:ring-2 focus:ring-primary focus:ring-offset-0"
+              id="is_recommended"
+            />
+            <label
+              htmlFor="is_recommended"
+              className="text-sm font-medium text-foreground cursor-pointer"
+            >
+              Mark as Recommended Property
+            </label>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Recommended Priority (1-12)
+              </label>
+              <input
+                type="number"
+                name="recommended_priority"
+                value={formData.recommended_priority}
+                onChange={handleInputChange}
+                min="0"
+                max="12"
+                disabled={!formData.is_recommended}
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              />
+              <small className="text-xs text-muted-foreground mt-1">
+                Higher number = shows first (1-12 range)
+              </small>
+            </div>
+          </div>
+        </FormSection>
 
         {/* Section 5: Primary Incharge */}
-        <section className="form-section">
-          <h3>Primary Property Incharge</h3>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label>Name</label>
+        <FormSection
+          title="Primary Property Incharge"
+          icon={UserCircle}
+          defaultOpen={true}
+          required
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Name
+              </label>
               <input
                 type="text"
                 name="primary_incharge_name"
                 value={formData.primary_incharge_name}
                 onChange={handleInputChange}
                 placeholder="Full name"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
             </div>
 
-            <div className="form-group">
-              <label>Phone</label>
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Phone
+              </label>
               <input
                 type="text"
                 name="primary_incharge_phone"
                 value={formData.primary_incharge_phone}
                 onChange={handleInputChange}
                 placeholder="+919876543210"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
               {errors.primary_incharge_phone && (
-                <span className="error">{errors.primary_incharge_phone}</span>
+                <span className="text-sm text-destructive mt-1">
+                  {errors.primary_incharge_phone}
+                </span>
               )}
             </div>
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label>Email</label>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Email
+              </label>
               <input
                 type="email"
                 name="primary_incharge_email"
                 value={formData.primary_incharge_email}
                 onChange={handleInputChange}
                 placeholder="email@example.com"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
               {errors.primary_incharge_email && (
-                <span className="error">{errors.primary_incharge_email}</span>
+                <span className="text-sm text-destructive mt-1">
+                  {errors.primary_incharge_email}
+                </span>
               )}
             </div>
 
-            <div className="form-group">
-              <label>WhatsApp</label>
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                WhatsApp
+              </label>
               <input
                 type="text"
                 name="primary_incharge_whatsapp"
                 value={formData.primary_incharge_whatsapp}
                 onChange={handleInputChange}
                 placeholder="+919876543210"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
             </div>
 
-            <div className="form-group">
-              <label>Alternative Contact</label>
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Alternative Contact
+              </label>
               <input
                 type="text"
                 name="primary_incharge_alt_contact"
                 value={formData.primary_incharge_alt_contact}
                 onChange={handleInputChange}
                 placeholder="+918765432109"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
             </div>
           </div>
-        </section>
+        </FormSection>
 
         {/* Section 6: Secondary Incharge */}
-        <section className="form-section">
-          <h3>Secondary Property Incharge (Optional)</h3>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label>Name</label>
+        <FormSection
+          title="Secondary Property Incharge (Optional)"
+          icon={Users}
+          defaultOpen={false}
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Name
+              </label>
               <input
                 type="text"
                 name="secondary_incharge_name"
                 value={formData.secondary_incharge_name}
                 onChange={handleInputChange}
                 placeholder="Full name"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
             </div>
 
-            <div className="form-group">
-              <label>Phone</label>
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Phone
+              </label>
               <input
                 type="text"
                 name="secondary_incharge_phone"
                 value={formData.secondary_incharge_phone}
                 onChange={handleInputChange}
                 placeholder="+919988776655"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
             </div>
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label>Email</label>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Email
+              </label>
               <input
                 type="email"
                 name="secondary_incharge_email"
                 value={formData.secondary_incharge_email}
                 onChange={handleInputChange}
                 placeholder="email@example.com"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
               {errors.secondary_incharge_email && (
-                <span className="error">{errors.secondary_incharge_email}</span>
+                <span className="text-sm text-destructive mt-1">
+                  {errors.secondary_incharge_email}
+                </span>
               )}
             </div>
 
-            <div className="form-group">
-              <label>WhatsApp</label>
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                WhatsApp
+              </label>
               <input
                 type="text"
                 name="secondary_incharge_whatsapp"
                 value={formData.secondary_incharge_whatsapp}
                 onChange={handleInputChange}
                 placeholder="+919988776655"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
             </div>
 
-            <div className="form-group">
-              <label>Alternative Contact</label>
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Alternative Contact
+              </label>
               <input
                 type="text"
                 name="secondary_incharge_alt_contact"
                 value={formData.secondary_incharge_alt_contact}
                 onChange={handleInputChange}
                 placeholder="+918877665544"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
             </div>
           </div>
-        </section>
+        </FormSection>
 
         {/* Section 7: Booking Rules */}
-        <section className="form-section">
-          <h3>Booking Rules</h3>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label className="checkbox-label">
-                <input
-                  type="checkbox"
-                  name="same_day_booking_allowed"
-                  checked={formData.same_day_booking_allowed}
-                  onChange={handleInputChange}
-                />
-                <span>Allow Same-Day Bookings</span>
+        <FormSection
+          title="Booking Rules"
+          icon={Shield}
+          defaultOpen={true}
+          required
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                name="same_day_booking_allowed"
+                checked={formData.same_day_booking_allowed}
+                onChange={handleInputChange}
+                className="h-5 w-5 rounded border-border text-primary focus:ring-2 focus:ring-primary focus:ring-offset-0"
+                id="same_day_booking_allowed"
+              />
+              <label
+                htmlFor="same_day_booking_allowed"
+                className="text-sm font-medium text-foreground cursor-pointer"
+              >
+                Allow Same-Day Bookings
               </label>
             </div>
 
-            <div className="form-group">
-              <label>Max Booking Days (Leave empty for unlimited)</label>
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Max Booking Days (Leave empty for unlimited)
+              </label>
               <input
                 type="number"
                 name="max_booking_days"
@@ -894,53 +2311,39 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
                 onChange={handleInputChange}
                 min="1"
                 placeholder="e.g., 30"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
             </div>
           </div>
-        </section>
+        </FormSection>
 
         {/* Section 8: Amenities */}
-        <section className="form-section">
-          <h3>Amenities</h3>
-
-          <div className="amenities-input">
-            <input
-              type="text"
-              value={newAmenity}
-              onChange={(e) => setNewAmenity(e.target.value)}
-              placeholder="Enter amenity (e.g., WiFi, Pool, AC)"
-              onKeyPress={(e) =>
-                e.key === "Enter" && (e.preventDefault(), addAmenity())
-              }
-            />
-            <button type="button" onClick={addAmenity} className="btn-add">
-              Add Amenity
-            </button>
-          </div>
-
-          <div className="tags-list">
-            {formData.amenities.map((amenity, index) => (
-              <div key={index} className="tag">
-                {amenity}
-                <button
-                  type="button"
-                  onClick={() => removeAmenity(index)}
-                  className="tag-remove"
-                >
-                  ×
-                </button>
-              </div>
-            ))}
-          </div>
-        </section>
+        <FormSection
+          title="Amenities"
+          icon={Star}
+          required={false}
+          defaultOpen={true}
+        >
+          <AmenitiesGrid
+            selectedAmenities={formData.amenities}
+            onChange={(amenities) => {
+              setFormData((prev) => ({ ...prev, amenities }));
+            }}
+          />
+        </FormSection>
 
         {/* Section 9: House Rules (JSON) */}
-        <section className="form-section">
-          <h3>House Rules (JSON Format)</h3>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label>Check-in After</label>
+        <FormSection
+          title="House Rules (JSON Format)"
+          icon={FileText}
+          defaultOpen={true}
+          required
+        >
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Check-in After
+              </label>
               <input
                 type="text"
                 value={formData.house_rules.check_in_after}
@@ -948,15 +2351,18 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
                   handleNestedChange(
                     "house_rules",
                     "check_in_after",
-                    e.target.value
+                    e.target.value,
                   )
                 }
                 placeholder="2:00 PM"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
             </div>
 
-            <div className="form-group">
-              <label>Check-out Before</label>
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Check-out Before
+              </label>
               <input
                 type="text"
                 value={formData.house_rules.check_out_before}
@@ -964,15 +2370,18 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
                   handleNestedChange(
                     "house_rules",
                     "check_out_before",
-                    e.target.value
+                    e.target.value,
                   )
                 }
                 placeholder="11:00 AM"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
             </div>
 
-            <div className="form-group">
-              <label>Quiet Hours</label>
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Quiet Hours
+              </label>
               <input
                 type="text"
                 value={formData.house_rules.quiet_hours}
@@ -980,16 +2389,17 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
                   handleNestedChange(
                     "house_rules",
                     "quiet_hours",
-                    e.target.value
+                    e.target.value,
                   )
                 }
                 placeholder="10:00 PM - 8:00 AM"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
             </div>
           </div>
 
-          <div className="form-row checkboxes">
-            <label className="checkbox-label">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div className="flex items-center gap-3">
               <input
                 type="checkbox"
                 checked={formData.house_rules.no_smoking}
@@ -997,14 +2407,21 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
                   handleNestedChange(
                     "house_rules",
                     "no_smoking",
-                    e.target.checked
+                    e.target.checked,
                   )
                 }
+                className="h-5 w-5 rounded border-border text-primary focus:ring-2 focus:ring-primary focus:ring-offset-0"
+                id="no_smoking"
               />
-              <span>No Smoking</span>
-            </label>
+              <label
+                htmlFor="no_smoking"
+                className="text-sm font-medium text-foreground cursor-pointer"
+              >
+                No Smoking
+              </label>
+            </div>
 
-            <label className="checkbox-label">
+            <div className="flex items-center gap-3">
               <input
                 type="checkbox"
                 checked={formData.house_rules.no_parties}
@@ -1012,14 +2429,21 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
                   handleNestedChange(
                     "house_rules",
                     "no_parties",
-                    e.target.checked
+                    e.target.checked,
                   )
                 }
+                className="h-5 w-5 rounded border-border text-primary focus:ring-2 focus:ring-primary focus:ring-offset-0"
+                id="no_parties"
               />
-              <span>No Parties</span>
-            </label>
+              <label
+                htmlFor="no_parties"
+                className="text-sm font-medium text-foreground cursor-pointer"
+              >
+                No Parties
+              </label>
+            </div>
 
-            <label className="checkbox-label">
+            <div className="flex items-center gap-3">
               <input
                 type="checkbox"
                 checked={formData.house_rules.no_events}
@@ -1027,14 +2451,21 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
                   handleNestedChange(
                     "house_rules",
                     "no_events",
-                    e.target.checked
+                    e.target.checked,
                   )
                 }
+                className="h-5 w-5 rounded border-border text-primary focus:ring-2 focus:ring-primary focus:ring-offset-0"
+                id="no_events"
               />
-              <span>No Events</span>
-            </label>
+              <label
+                htmlFor="no_events"
+                className="text-sm font-medium text-foreground cursor-pointer"
+              >
+                No Events
+              </label>
+            </div>
 
-            <label className="checkbox-label">
+            <div className="flex items-center gap-3">
               <input
                 type="checkbox"
                 checked={formData.house_rules.pets_allowed}
@@ -1042,15 +2473,22 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
                   handleNestedChange(
                     "house_rules",
                     "pets_allowed",
-                    e.target.checked
+                    e.target.checked,
                   )
                 }
+                className="h-5 w-5 rounded border-border text-primary focus:ring-2 focus:ring-primary focus:ring-offset-0"
+                id="pets_allowed"
               />
-              <span>Pets Allowed</span>
-            </label>
+              <label
+                htmlFor="pets_allowed"
+                className="text-sm font-medium text-foreground cursor-pointer"
+              >
+                Pets Allowed
+              </label>
+            </div>
 
             {formData.house_rules.pets_allowed && (
-              <label className="checkbox-label">
+              <div className="flex items-center gap-3">
                 <input
                   type="checkbox"
                   checked={formData.house_rules.pets_approval_required}
@@ -1058,18 +2496,27 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
                     handleNestedChange(
                       "house_rules",
                       "pets_approval_required",
-                      e.target.checked
+                      e.target.checked,
                     )
                   }
+                  className="h-5 w-5 rounded border-border text-primary focus:ring-2 focus:ring-primary focus:ring-offset-0"
+                  id="pets_approval_required"
                 />
-                <span>Pets Approval Required</span>
-              </label>
+                <label
+                  htmlFor="pets_approval_required"
+                  className="text-sm font-medium text-foreground cursor-pointer"
+                >
+                  Pets Approval Required
+                </label>
+              </div>
             )}
           </div>
 
-          <div className="additional-rules">
-            <label>Additional Rules</label>
-            <div className="amenities-input">
+          <div className="mb-6">
+            <label className="text-sm font-medium text-foreground mb-3 block">
+              Additional Rules
+            </label>
+            <div className="flex gap-3 mb-4">
               <input
                 type="text"
                 value={additionalRule}
@@ -1078,24 +2525,29 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
                 onKeyPress={(e) =>
                   e.key === "Enter" && (e.preventDefault(), addAdditionalRule())
                 }
+                className="flex-1 px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
               <button
                 type="button"
                 onClick={addAdditionalRule}
-                className="btn-add"
+                className="px-6 py-3 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 transition-all shadow-sm hover:shadow-md"
               >
                 Add Rule
               </button>
             </div>
 
-            <div className="tags-list">
+            <div className="flex flex-wrap gap-3">
               {formData.house_rules.additional_rules.map((rule, index) => (
-                <div key={index} className="tag">
-                  {rule}
+                <div
+                  key={index}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-full border border-border shadow-sm hover:shadow transition-shadow"
+                >
+                  <span className="text-sm font-medium">{rule}</span>
                   <button
                     type="button"
                     onClick={() => removeAdditionalRule(index)}
-                    className="tag-remove"
+                    className="text-destructive hover:text-destructive/80 font-bold text-lg leading-none transition-colors"
+                    aria-label="Remove rule"
                   >
                     ×
                   </button>
@@ -1103,24 +2555,30 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
               ))}
             </div>
           </div>
-        </section>
+        </FormSection>
 
         {/* Section 10: Cancellation Policy (JSON) */}
-        <section className="form-section">
-          <h3>Cancellation Policy</h3>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label>Policy Type</label>
+        <FormSection
+          title="Cancellation Policy"
+          icon={FileText}
+          defaultOpen={true}
+          required
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Policy Type
+              </label>
               <select
-                value={formData.cancellation_policy.policy_type}
+                value={formData.cancellation_policy.policy_type || "Flexible"}
                 onChange={(e) =>
                   handleNestedChange(
                     "cancellation_policy",
                     "policy_type",
-                    e.target.value
+                    e.target.value,
                   )
                 }
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               >
                 <option value="Flexible">Flexible</option>
                 <option value="Moderate">Moderate</option>
@@ -1128,8 +2586,10 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
               </select>
             </div>
 
-            <div className="form-group">
-              <label>Free Cancellation Hours</label>
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Free Cancellation Hours
+              </label>
               <input
                 type="number"
                 value={formData.cancellation_policy.free_cancellation_hours}
@@ -1137,17 +2597,20 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
                   handleNestedChange(
                     "cancellation_policy",
                     "free_cancellation_hours",
-                    parseInt(e.target.value)
+                    parseInt(e.target.value),
                   )
                 }
                 min="0"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
             </div>
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label>Partial Refund Days</label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Partial Refund Days
+              </label>
               <input
                 type="number"
                 value={formData.cancellation_policy.partial_refund_days}
@@ -1155,15 +2618,18 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
                   handleNestedChange(
                     "cancellation_policy",
                     "partial_refund_days",
-                    parseInt(e.target.value)
+                    parseInt(e.target.value),
                   )
                 }
                 min="0"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
             </div>
 
-            <div className="form-group">
-              <label>Partial Refund Percentage (%)</label>
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Partial Refund Percentage (%)
+              </label>
               <input
                 type="number"
                 value={formData.cancellation_policy.partial_refund_percentage}
@@ -1171,60 +2637,77 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
                   handleNestedChange(
                     "cancellation_policy",
                     "partial_refund_percentage",
-                    parseInt(e.target.value)
+                    parseInt(e.target.value),
                   )
                 }
                 min="0"
                 max="100"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
             </div>
           </div>
 
-          <div className="form-row checkboxes">
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                checked={formData.cancellation_policy.cleaning_fee_refundable}
-                onChange={(e) =>
-                  handleNestedChange(
-                    "cancellation_policy",
-                    "cleaning_fee_refundable",
-                    e.target.checked
-                  )
-                }
-              />
-              <span>Cleaning Fee Refundable</span>
+          <div className="flex items-center gap-3 mb-6">
+            <input
+              type="checkbox"
+              checked={formData.cancellation_policy.cleaning_fee_refundable}
+              onChange={(e) =>
+                handleNestedChange(
+                  "cancellation_policy",
+                  "cleaning_fee_refundable",
+                  e.target.checked,
+                )
+              }
+              className="h-5 w-5 rounded border-border text-primary focus:ring-2 focus:ring-primary focus:ring-offset-0"
+              id="cleaning_fee_refundable"
+            />
+            <label
+              htmlFor="cleaning_fee_refundable"
+              className="text-sm font-medium text-foreground cursor-pointer"
+            >
+              Cleaning Fee Refundable
             </label>
           </div>
 
-          <div className="form-row">
-            <div className="form-group full-width">
-              <label>Notes</label>
+          <div className="mb-6">
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Notes
+              </label>
               <textarea
                 value={formData.cancellation_policy.notes}
                 onChange={(e) =>
                   handleNestedChange(
                     "cancellation_policy",
                     "notes",
-                    e.target.value
+                    e.target.value,
                   )
                 }
                 rows="2"
                 placeholder="Additional cancellation policy notes..."
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all resize-y"
               />
             </div>
           </div>
-        </section>
+        </FormSection>
 
         {/* Section 11: Rich Text Guidelines */}
-        <section className="form-section">
-          <h3>Property Guidelines (Rich Text)</h3>
-          <p className="info-text">
-            These guidelines will be sent to guests 24 hours before check-in
-          </p>
+        <FormSection
+          title="Property Guidelines (Rich Text)"
+          icon={FileText}
+          defaultOpen={true}
+          required
+        >
+          <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-6">
+            <p className="text-sm text-green-900 dark:text-green-200">
+              These guidelines will be sent to guests 24 hours before check-in
+            </p>
+          </div>
 
-          <div className="guideline-editor">
-            <label>Check-In Guidelines</label>
+          <div className="mb-6">
+            <label className="text-sm font-medium text-foreground mb-3 block">
+              Check-In Guidelines
+            </label>
             <ReactQuill
               value={guidelines.check_in_guidelines}
               onChange={(value) =>
@@ -1236,8 +2719,10 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
             />
           </div>
 
-          <div className="guideline-editor">
-            <label>House Rules Text</label>
+          <div className="mb-6">
+            <label className="text-sm font-medium text-foreground mb-3 block">
+              House Rules Text
+            </label>
             <ReactQuill
               value={guidelines.house_rules_text}
               onChange={(value) =>
@@ -1249,8 +2734,10 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
             />
           </div>
 
-          <div className="guideline-editor">
-            <label>Amenities Guide</label>
+          <div className="mb-6">
+            <label className="text-sm font-medium text-foreground mb-3 block">
+              Amenities Guide
+            </label>
             <ReactQuill
               value={guidelines.amenities_guide}
               onChange={(value) =>
@@ -1262,8 +2749,10 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
             />
           </div>
 
-          <div className="guideline-editor">
-            <label>Safety Information</label>
+          <div className="mb-6">
+            <label className="text-sm font-medium text-foreground mb-3 block">
+              Safety Information
+            </label>
             <ReactQuill
               value={guidelines.safety_information}
               onChange={(value) =>
@@ -1275,8 +2764,10 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
             />
           </div>
 
-          <div className="guideline-editor">
-            <label>Local Area Information</label>
+          <div className="mb-6">
+            <label className="text-sm font-medium text-foreground mb-3 block">
+              Local Area Information
+            </label>
             <ReactQuill
               value={guidelines.local_area_info}
               onChange={(value) =>
@@ -1288,8 +2779,10 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
             />
           </div>
 
-          <div className="guideline-editor">
-            <label>Emergency Contacts</label>
+          <div className="mb-6">
+            <label className="text-sm font-medium text-foreground mb-3 block">
+              Emergency Contacts
+            </label>
             <ReactQuill
               value={guidelines.emergency_contacts}
               onChange={(value) =>
@@ -1300,42 +2793,105 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
               placeholder="Police, ambulance, fire, property manager..."
             />
           </div>
-        </section>
+        </FormSection>
 
         {/* Section 12: Photos */}
-        <section className="form-section">
-          <h3>Property Photos</h3>
-          <p className="info-text">Enter one image URL per line</p>
-
-          <textarea
-            value={photoUrls}
-            onChange={(e) => setPhotoUrls(e.target.value)}
-            rows="6"
-            placeholder="https://example.com/photo1.jpg&#10;https://example.com/photo2.jpg&#10;https://example.com/photo3.jpg"
-            className="photos-textarea"
+        <FormSection
+          title="Property Photos"
+          icon={Image}
+          required={true}
+          defaultOpen={false}
+        >
+          <PropertyImageUpload
+            propertyId={sanitizedPropertyId}
+            allowPreUpload={!sanitizedPropertyId}
+            onImagesChange={(data) => {
+              if (data.hasPendingUploads) {
+                setPendingImageUpload(() => data.uploadPending);
+                setHasSelectedImages(true);
+                setSelectedImageCount(data.selectedFiles?.length || 0);
+              } else if (data.uploadedImages) {
+                setHasSelectedImages(false);
+                setPendingImageUpload(null);
+                setSelectedImageCount(0);
+              }
+            }}
           />
-
-          <p className="info-text">
-            Total photos:{" "}
-            {photoUrls.split("\n").filter((url) => url.trim()).length}
-          </p>
-        </section>
+          {!propertyId && (
+            <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700">
+              <Info className="h-4 w-4 inline mr-1" />
+              {hasSelectedImages ? (
+                <span>
+                  <strong>
+                    ✓ {selectedImageCount} Image
+                    {selectedImageCount !== 1 ? "s" : ""} Ready:
+                  </strong>{" "}
+                  Will be uploaded automatically when you save the property.
+                </span>
+              ) : (
+                <span>
+                  <strong>Tip:</strong> You can select images now. They'll be
+                  uploaded automatically when you save the property.
+                </span>
+              )}
+            </div>
+          )}
+        </FormSection>
 
         {/* Submit Button */}
-        <div className="form-actions">
-          <button type="submit" disabled={loading} className="btn-submit">
-            {loading
-              ? "Saving..."
-              : propertyId
-              ? "Update Property"
-              : "Create Property"}
-          </button>
-
-          {onCancel && (
-            <button type="button" onClick={onCancel} className="btn-cancel">
-              Cancel
-            </button>
+        <div className="space-y-4 mt-8 pt-6 border-t-2 border-border">
+          {/* Unsaved changes indicator */}
+          {hasUnsavedChanges && (
+            <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 px-4 py-2 rounded-lg border border-amber-200 dark:border-amber-800">
+              <Info className="h-4 w-4" />
+              <span className="text-sm font-medium">
+                You have unsaved changes ({Object.keys(dirtyFields).length}{" "}
+                fields modified)
+              </span>
+            </div>
           )}
+
+          <div className="flex justify-end gap-4">
+            {onCancel && (
+              <button
+                type="button"
+                onClick={onCancel}
+                className="px-8 py-3 bg-muted text-foreground border border-border rounded-lg font-semibold hover:bg-muted/80 transition-all shadow-sm hover:shadow-md"
+              >
+                Cancel
+              </button>
+            )}
+
+            {/* Reset button - only show when editing with unsaved changes */}
+            {sanitizedPropertyId && hasUnsavedChanges && (
+              <button
+                type="button"
+                onClick={handleResetForm}
+                disabled={loading}
+                className="px-8 py-3 bg-amber-100 dark:bg-amber-900/30 text-amber-900 dark:text-amber-100 border border-amber-300 dark:border-amber-700 rounded-lg font-semibold hover:bg-amber-200 dark:hover:bg-amber-900/50 transition-all shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Reset Changes
+              </button>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="px-8 py-3 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 min-w-[180px] justify-center"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  <span>Saving...</span>
+                </>
+              ) : (
+                <span>
+                  {propertyId ? "Update Property" : "Create Property"}
+                  {hasUnsavedChanges && " *"}
+                </span>
+              )}
+            </button>
+          </div>
         </div>
       </form>
     </div>

@@ -139,8 +139,9 @@ export const listServiceApartments = async (req, res) => {
         p.description,
         p.address,
         p.area,
-        ANY_VALUE(c.name) as city,
-        ANY_VALUE(c.state) as state,
+        p.maps_location,
+        c.name as city,
+        c.state as state,
         p.pincode,
         p.bedrooms,
         p.bathrooms,
@@ -167,7 +168,7 @@ export const listServiceApartments = async (req, res) => {
       ${featuresService.getFeaturesJoinClause("p", "pf", "f")}
       LEFT JOIN cities c ON p.city_id = c.id
       WHERE ${whereClause}
-      GROUP BY p.id
+      GROUP BY p.id, c.name, c.state
       ORDER BY ${
         sortColumn.includes("price") ||
         sortColumn.includes("discount") ||

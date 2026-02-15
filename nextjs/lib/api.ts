@@ -3,6 +3,9 @@ import axios from "axios";
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
+// Request tracking to prevent duplicate simultaneous requests
+const pendingRequests = new Map<string, Promise<any>>();
+
 // Create axios instance
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -10,6 +13,32 @@ const apiClient = axios.create({
     "Content-Type": "application/json",
   },
 });
+
+// Response interceptor to handle rate limiting
+apiClient.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+
+    // Handle 429 (Too Many Requests)
+    if (error.response?.status === 429 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      // Extract retry-after header or use default backoff
+      const retryAfter = error.response.headers["retry-after"];
+      const waitTime = retryAfter ? parseInt(retryAfter) * 1000 : 2000;
+
+      console.warn(`Rate limited. Retrying after ${waitTime}ms...`);
+
+      // Wait before retrying
+      await new Promise((resolve) => setTimeout(resolve, waitTime));
+
+      return apiClient(originalRequest);
+    }
+
+    return Promise.reject(error);
+  },
+);
 
 // Types
 export interface City {
@@ -174,7 +203,7 @@ export async function getProperty(id: string): Promise<Property | null> {
 export async function checkAvailability(
   propertyId: string,
   checkin: string,
-  checkout: string
+  checkout: string,
 ): Promise<{ available: boolean; message?: string }> {
   try {
     const response = await apiClient.post("/public/check-availability", {

@@ -13,9 +13,15 @@ import {
   CardTitle,
   CardContent,
 } from "../components/ui/card";
+import PasswordChangeModal from "../components/auth/PasswordChangeModal";
 
 export default function Login() {
   const [loading, setLoading] = useState(false);
+  const [showPasswordChange, setShowPasswordChange] = useState(false);
+  const [tempPasswordData, setTempPasswordData] = useState({
+    email: "",
+    tempToken: "",
+  });
   const navigate = useNavigate();
   const setAuth = useAuthStore((state) => state.setAuth);
   const {
@@ -24,14 +30,37 @@ export default function Login() {
     formState: { errors },
   } = useForm();
 
-  const onSubmit = async (data) => {
-    setLoading(true);
+  const onSubmit = async (data, event) => {
+    // Prevent any default behavior
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+
     try {
+      setLoading(true);
+      console.log("Login attempt:", { email: data.email });
+
       const response = await api.post("/auth/login", {
         email: data.email,
         password: data.password,
       });
 
+      console.log("Login response:", response.data);
+
+      // Check if password change is required
+      if (response.data.data.requirePasswordChange) {
+        // Store temp data and show password change modal
+        setTempPasswordData({
+          email: data.email,
+          tempToken: response.data.data.tempToken,
+        });
+        setShowPasswordChange(true);
+        toast.warning("Password change required for first-time login");
+        return;
+      }
+
+      // Normal login flow
       const { user, accessToken, refreshToken } = response.data.data;
 
       // Store in Zustand store
@@ -41,23 +70,59 @@ export default function Login() {
       localStorage.setItem("accessToken", accessToken);
       localStorage.setItem("refreshToken", refreshToken);
 
+      // Show success message
       toast.success(`Welcome back, ${user.name || user.full_name}!`);
 
       // Redirect based on role
       if (user.role === "admin" || user.role === "super_admin") {
-        navigate("/admin");
-      } else if (user.role === "user") {
-        navigate("/dashboard");
+        console.log("Redirecting admin to /admin");
+        navigate("/admin", { replace: true });
       } else if (user.role === "vendor") {
-        navigate("/vendor/dashboard");
+        navigate("/vendor/dashboard", { replace: true });
+      } else if (user.role === "user") {
+        // Redirect users to Next.js dashboard
+        toast.info("Redirecting to customer dashboard...");
+        setTimeout(() => {
+          window.location.href = "http://localhost:3000/dashboard";
+        }, 1000);
       }
     } catch (error) {
+      console.error("Login error:", error);
       toast.error(
         error.response?.data?.message ||
           "Login failed. Please check your credentials.",
       );
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Handle password changed successfully
+  const handlePasswordChanged = (authData) => {
+    const { user, accessToken, refreshToken } = authData;
+
+    // Store in Zustand store
+    setAuth(user, accessToken, refreshToken);
+
+    // Store in localStorage for API interceptor
+    localStorage.setItem("accessToken", accessToken);
+    localStorage.setItem("refreshToken", refreshToken);
+
+    // Close modal
+    setShowPasswordChange(false);
+
+    // Show success and redirect
+    toast.success(`Welcome, ${user.name || user.full_name}!`);
+
+    if (user.role === "admin" || user.role === "super_admin") {
+      navigate("/admin", { replace: true });
+    } else if (user.role === "vendor") {
+      navigate("/vendor/dashboard", { replace: true });
+    } else if (user.role === "user") {
+      toast.info("Redirecting to customer dashboard...");
+      setTimeout(() => {
+        window.location.href = "http://localhost:3000/dashboard";
+      }, 1000);
     }
   };
 
@@ -96,7 +161,11 @@ export default function Login() {
           <p className="text-muted-foreground">Sign in to your account</p>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            noValidate
+            className="space-y-4"
+          >
             <div className="space-y-2">
               <label className="text-sm font-medium">Email</label>
               <Input
@@ -162,6 +231,15 @@ export default function Login() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Password Change Modal */}
+      <PasswordChangeModal
+        open={showPasswordChange}
+        onOpenChange={setShowPasswordChange}
+        email={tempPasswordData.email}
+        tempToken={tempPasswordData.tempToken}
+        onPasswordChanged={handlePasswordChanged}
+      />
     </div>
   );
 }

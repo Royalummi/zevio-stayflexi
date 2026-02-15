@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { AxiosError } from "axios";
 import {
   FiCalendar,
   FiHome,
@@ -46,6 +47,8 @@ interface Booking {
     | "cancelled"
     | "pending"
     | "expired";
+  payment_status?: "pending" | "completed" | "failed" | "refunded"; // SESSION 47: Payment tracking
+  payment_expires_at?: string; // SESSION 47: 15-minute payment window
   created_at: string;
   expires_at?: string; // SESSION 30: 12-hour expiry timestamp
 }
@@ -174,31 +177,31 @@ export default function BookingsEnhanced() {
         (b) =>
           b.property_title?.toLowerCase().includes(query) ||
           b.property_city?.toLowerCase().includes(query) ||
-          b.id.toLowerCase().includes(query)
+          b.id.toLowerCase().includes(query),
       );
     }
 
     // Date range filter
     if (dateFrom) {
       filtered = filtered.filter(
-        (b) => new Date(b.check_in) >= new Date(dateFrom)
+        (b) => new Date(b.check_in) >= new Date(dateFrom),
       );
     }
     if (dateTo) {
       filtered = filtered.filter(
-        (b) => new Date(b.check_out) <= new Date(dateTo)
+        (b) => new Date(b.check_out) <= new Date(dateTo),
       );
     }
 
     // Amount range filter
     if (minAmount) {
       filtered = filtered.filter(
-        (b) => b.total_amount >= parseFloat(minAmount)
+        (b) => b.total_amount >= parseFloat(minAmount),
       );
     }
     if (maxAmount) {
       filtered = filtered.filter(
-        (b) => b.total_amount <= parseFloat(maxAmount)
+        (b) => b.total_amount <= parseFloat(maxAmount),
       );
     }
 
@@ -235,7 +238,7 @@ export default function BookingsEnhanced() {
         `${API_ENDPOINTS.BOOKINGS.MY_BOOKINGS}?${params.toString()}`,
         {
           responseType: "blob", // Important for file download
-        }
+        },
       );
 
       // Create download link
@@ -285,7 +288,7 @@ export default function BookingsEnhanced() {
     if (!bookingToDelete) return;
 
     try {
-      await api.delete(`/bookings/${bookingToDelete.id}/cancel-pending`);
+      await api.delete(`/api/bookings/${bookingToDelete.id}/cancel-pending`);
       setToast({
         message: "Pending booking cancelled successfully!",
         type: "success",
@@ -295,8 +298,13 @@ export default function BookingsEnhanced() {
       fetchBookings(); // Refresh bookings list
     } catch (error) {
       console.error("Cancel booking error:", error);
+      const axiosError = error as AxiosError<{ message: string }> | Error;
+      const errorMsg =
+        axiosError instanceof AxiosError
+          ? axiosError.response?.data?.message || "Failed to cancel booking"
+          : axiosError.message || "Failed to cancel booking. Please try again.";
       setToast({
-        message: "Failed to cancel booking. Please try again.",
+        message: errorMsg,
         type: "error",
       });
       setShowDeleteModal(false);
@@ -308,13 +316,13 @@ export default function BookingsEnhanced() {
     setSelectedBookings((prev) =>
       prev.includes(bookingId)
         ? prev.filter((id) => id !== bookingId)
-        : [...prev, bookingId]
+        : [...prev, bookingId],
     );
   };
 
   const handleSelectAll = () => {
     const pendingBookings = paginatedBookings.filter(
-      (b) => b.status === "pending" || b.status === "pending_payment"
+      (b) => b.status === "pending" || b.status === "pending_payment",
     );
 
     if (selectedBookings.length === pendingBookings.length) {
@@ -333,8 +341,8 @@ export default function BookingsEnhanced() {
     try {
       await Promise.all(
         selectedBookings.map((id) =>
-          api.delete(`/bookings/${id}/cancel-pending`)
-        )
+          api.delete(`/api/bookings/${id}/cancel-pending`),
+        ),
       );
 
       setToast({
@@ -347,8 +355,14 @@ export default function BookingsEnhanced() {
       fetchBookings();
     } catch (error) {
       console.error("Bulk cancel failed:", error);
+      const axiosError = error as AxiosError<{ message: string }> | Error;
+      const errorMsg =
+        axiosError instanceof AxiosError
+          ? axiosError.response?.data?.message || "Failed to cancel bookings"
+          : axiosError.message ||
+            "Failed to cancel bookings. Please try again.";
       setToast({
-        message: "Some bookings failed to cancel. Please try again.",
+        message: errorMsg,
         type: "error",
       });
       setShowBulkCancelModal(false);
@@ -397,7 +411,7 @@ export default function BookingsEnhanced() {
     });
   };
 
-  // SESSION 30: Calculate countdown timer for pending bookings
+  // SESSION 30 + SESSION 47: Calculate countdown timer for pending bookings
   const calculateTimeLeft = (expiresAt: string) => {
     const now = new Date();
     const expiry = new Date(expiresAt);
@@ -409,12 +423,24 @@ export default function BookingsEnhanced() {
 
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
     if (hours > 0) {
-      return `Expires in ${hours}h ${minutes}m`;
+      return `${hours}h ${minutes}m`;
+    } else if (minutes > 0) {
+      return `${minutes}m ${seconds}s`;
     } else {
-      return `Expires in ${minutes}m`;
+      return `${seconds}s`;
     }
+  };
+
+  // SESSION 47: Check if user can check-in (only confirmed + payment completed)
+  const canUserCheckIn = (booking: Booking): boolean => {
+    return (
+      booking.status === "confirmed" &&
+      booking.payment_status === "completed" &&
+      new Date(booking.check_in) <= new Date()
+    );
   };
 
   const getStatusCounts = () => {
@@ -422,7 +448,7 @@ export default function BookingsEnhanced() {
       all: bookings.length,
       confirmed: bookings.filter((b) => b.status === "confirmed").length,
       pending_payment: bookings.filter(
-        (b) => b.status === "pending_payment" || b.status === "pending"
+        (b) => b.status === "pending_payment" || b.status === "pending",
       ).length,
       completed: bookings.filter((b) => b.status === "completed").length,
       cancelled: bookings.filter((b) => b.status === "cancelled").length,
@@ -431,7 +457,7 @@ export default function BookingsEnhanced() {
 
   const paginatedBookings = filteredBookings.slice(
     (page - 1) * itemsPerPage,
-    page * itemsPerPage
+    page * itemsPerPage,
   );
 
   if (isLoading || !user) {
@@ -644,7 +670,7 @@ export default function BookingsEnhanced() {
         {/* SESSION 34: Bulk Actions Toolbar */}
         {(activeStatus === "pending_payment" || activeStatus === "all") &&
           paginatedBookings.some(
-            (b) => b.status === "pending" || b.status === "pending_payment"
+            (b) => b.status === "pending" || b.status === "pending_payment",
           ) && (
             <div className={styles.bulkActionsToolbar}>
               <label className={styles.selectAllCheckbox}>
@@ -656,7 +682,7 @@ export default function BookingsEnhanced() {
                       paginatedBookings.filter(
                         (b) =>
                           b.status === "pending" ||
-                          b.status === "pending_payment"
+                          b.status === "pending_payment",
                       ).length
                   }
                   onChange={handleSelectAll}
@@ -666,7 +692,8 @@ export default function BookingsEnhanced() {
                   {
                     paginatedBookings.filter(
                       (b) =>
-                        b.status === "pending" || b.status === "pending_payment"
+                        b.status === "pending" ||
+                        b.status === "pending_payment",
                     ).length
                   }
                   )
@@ -744,29 +771,52 @@ export default function BookingsEnhanced() {
                   </div>
 
                   <div className={styles.bookingDetailsGrid}>
-                    <div className={styles.detailItem}>
-                      <div className={styles.detailIcon}>
-                        <FiCalendar size={18} />
+                    {/* SESSION 47: Hide check-in details for pending payment bookings */}
+                    {booking.status === "pending_payment" &&
+                    booking.payment_status === "pending" ? (
+                      <div className={styles.paymentPendingNotice}>
+                        <div className={styles.paymentWarning}>
+                          <FiAlertCircle size={24} />
+                          <div>
+                            <h4>Payment Required</h4>
+                            <p>
+                              Complete payment within{" "}
+                              {booking.payment_expires_at &&
+                                calculateTimeLeft(
+                                  booking.payment_expires_at,
+                                )}{" "}
+                              to confirm your booking
+                            </p>
+                          </div>
+                        </div>
                       </div>
-                      <div className={styles.detailContent}>
-                        <p className={styles.detailLabel}>Check-in</p>
-                        <p className={styles.detailValue}>
-                          {formatDate(booking.check_in)}
-                        </p>
-                      </div>
-                    </div>
+                    ) : (
+                      <>
+                        <div className={styles.detailItem}>
+                          <div className={styles.detailIcon}>
+                            <FiCalendar size={18} />
+                          </div>
+                          <div className={styles.detailContent}>
+                            <p className={styles.detailLabel}>Check-in</p>
+                            <p className={styles.detailValue}>
+                              {formatDate(booking.check_in)}
+                            </p>
+                          </div>
+                        </div>
 
-                    <div className={styles.detailItem}>
-                      <div className={styles.detailIcon}>
-                        <FiCalendar size={18} />
-                      </div>
-                      <div className={styles.detailContent}>
-                        <p className={styles.detailLabel}>Check-out</p>
-                        <p className={styles.detailValue}>
-                          {formatDate(booking.check_out)}
-                        </p>
-                      </div>
-                    </div>
+                        <div className={styles.detailItem}>
+                          <div className={styles.detailIcon}>
+                            <FiCalendar size={18} />
+                          </div>
+                          <div className={styles.detailContent}>
+                            <p className={styles.detailLabel}>Check-out</p>
+                            <p className={styles.detailValue}>
+                              {formatDate(booking.check_out)}
+                            </p>
+                          </div>
+                        </div>
+                      </>
+                    )}
 
                     <div className={styles.detailItem}>
                       <div className={styles.detailIcon}>
@@ -797,61 +847,68 @@ export default function BookingsEnhanced() {
                     </div>
                   </div>
 
+                  {/* SESSION 47: Enhanced Action Section with Prominent Cancel Button */}
                   <div className={styles.bookingActions}>
-                    <button
-                      onClick={() =>
-                        router.push(`/properties/${booking.property_id}`)
-                      }
-                      className={`${styles.actionBtn} ${styles.actionBtnSecondary}`}
-                    >
-                      <FiHome size={16} />
-                      View Property
-                    </button>
-
-                    {/* SESSION 34: Show Continue/Delete buttons for pending bookings */}
-                    {booking.status === "pending" ||
-                    booking.status === "pending_payment" ? (
-                      <>
+                    {booking.status === "pending_payment" &&
+                    booking.payment_status === "pending" ? (
+                      <div className={styles.pendingPaymentActions}>
                         <button
-                          className={`${styles.actionBtn} ${styles.actionBtnPrimary}`}
+                          className={`${styles.actionBtn} ${styles.actionBtnPrimaryLarge}`}
                           onClick={() => handleContinueBooking(booking)}
                         >
-                          <FiCheckCircle size={16} />
-                          Continue Booking
+                          <FiCheckCircle size={20} />
+                          <div className={styles.buttonContent}>
+                            <strong>Complete Payment</strong>
+                            <small>
+                              Expires in{" "}
+                              {booking.payment_expires_at &&
+                                calculateTimeLeft(booking.payment_expires_at)}
+                            </small>
+                          </div>
                         </button>
                         <button
-                          className={`${styles.actionBtn} ${styles.actionBtnDanger}`}
+                          className={`${styles.actionBtn} ${styles.actionBtnCancelLarge}`}
                           onClick={() => handleDeletePendingBooking(booking)}
                         >
-                          <FiXCircle size={16} />
-                          Cancel
+                          <FiXCircle size={18} />
+                          Cancel Booking
                         </button>
-                      </>
+                      </div>
                     ) : (
-                      <button
-                        className={`${styles.actionBtn} ${styles.actionBtnPrimary}`}
-                        onClick={() =>
-                          router.push(`/dashboard/bookings/${booking.id}`)
-                        }
-                      >
-                        <FiEye size={16} />
-                        View Details
-                      </button>
-                    )}
-
-                    {booking.status === "confirmed" && (
-                      <button
-                        className={`${styles.actionBtn} ${styles.actionBtnDanger}`}
-                        onClick={() => {
-                          setToast({
-                            message: "Cancellation feature coming soon!",
-                            type: "success",
-                          });
-                        }}
-                      >
-                        <FiXCircle size={16} />
-                        Request Cancellation
-                      </button>
+                      <>
+                        <button
+                          onClick={() =>
+                            router.push(`/properties/${booking.property_id}`)
+                          }
+                          className={`${styles.actionBtn} ${styles.actionBtnSecondary}`}
+                        >
+                          <FiHome size={16} />
+                          View Property
+                        </button>
+                        <button
+                          className={`${styles.actionBtn} ${styles.actionBtnPrimary}`}
+                          onClick={() =>
+                            router.push(`/dashboard/bookings/${booking.id}`)
+                          }
+                        >
+                          <FiEye size={16} />
+                          View Details
+                        </button>
+                        {booking.status === "confirmed" && (
+                          <button
+                            className={`${styles.actionBtn} ${styles.actionBtnDanger}`}
+                            onClick={() => {
+                              setToast({
+                                message: "Cancellation feature coming soon!",
+                                type: "success",
+                              });
+                            }}
+                          >
+                            <FiXCircle size={16} />
+                            Request Cancellation
+                          </button>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>
@@ -877,8 +934,8 @@ export default function BookingsEnhanced() {
                     setPage((p) =>
                       Math.min(
                         Math.ceil(filteredBookings.length / itemsPerPage),
-                        p + 1
-                      )
+                        p + 1,
+                      ),
                     )
                   }
                   disabled={
@@ -901,7 +958,7 @@ export default function BookingsEnhanced() {
               {activeStatus !== "all"
                 ? `You don't have any ${activeStatus.replace(
                     "_",
-                    " "
+                    " ",
                   )} bookings.`
                 : "Start exploring our luxury villas and make your first booking!"}
             </p>

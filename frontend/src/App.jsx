@@ -8,16 +8,6 @@ import DashboardLayout from "./components/layout/DashboardLayout";
 // Pages
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import PropertyListing from "./pages/PropertyListing";
-import PropertyDetail from "./pages/PropertyDetail";
-import Payment from "./pages/Payment";
-import BookingSuccess from "./pages/BookingSuccess";
-
-// User Pages
-import UserDashboardNew from "./pages/user/UserDashboardNew";
-import MyBookings from "./pages/user/MyBookings";
-import UserProfile from "./pages/user/UserProfile";
-import UserPayments from "./pages/user/UserPayments";
 
 // Admin Pages
 import AdminDashboardNew from "./pages/admin/AdminDashboardNew";
@@ -25,11 +15,22 @@ import AdminBookings from "./pages/admin/ManageBookings";
 import ProcessRefunds from "./pages/admin/ProcessRefunds";
 import VendorSettlements from "./pages/admin/VendorSettlements";
 import AdminProperties from "./pages/admin/AdminProperties";
+import AddEditProperty from "./pages/admin/AddEditProperty";
+import RecommendedPropertiesManager from "./pages/admin/RecommendedPropertiesManager";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminReports from "./pages/admin/AdminReports";
+import PropertyChangeRequests from "./pages/admin/PropertyChangeRequests";
+import CouponManagement from "./pages/admin/CouponManagement";
+import ReviewManagement from "./pages/admin/ReviewManagement";
 
 // Vendor Pages
 import VendorDashboard from "./pages/vendor/VendorDashboard";
+import VendorProperties from "./pages/vendor/VendorProperties";
+import AddEditVendorProperty from "./pages/vendor/AddEditVendorProperty";
+import VendorBookings from "./pages/vendor/VendorBookings";
+import VendorSettlementsPage from "./pages/vendor/VendorSettlements";
+import VendorAnalytics from "./pages/vendor/VendorAnalytics";
+import VendorProfile from "./pages/vendor/VendorProfile";
 
 // Protected Route Component
 const ProtectedRoute = ({ children, allowedRoles }) => {
@@ -50,27 +51,9 @@ function App() {
   return (
     <>
       <Routes>
-        {/* Public Routes */}
+        {/* Public Routes - Auth Only */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/properties" element={<PropertyListing />} />
-        <Route path="/property/:id" element={<PropertyDetail />} />
-
-        {/* User Dashboard with Layout */}
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute allowedRoles={["user"]}>
-              <DashboardLayout />
-            </ProtectedRoute>
-          }
-        >
-          <Route index element={<UserDashboardNew />} />
-          <Route path="bookings" element={<MyBookings />} />
-          <Route path="profile" element={<UserProfile />} />
-          <Route path="payments" element={<UserPayments />} />
-          <Route path="favorites" element={<div>User Favorites Page</div>} />
-        </Route>
 
         {/* Admin Dashboard with Layout */}
         <Route
@@ -86,7 +69,16 @@ function App() {
           <Route path="refunds" element={<ProcessRefunds />} />
           <Route path="settlements" element={<VendorSettlements />} />
           <Route path="properties" element={<AdminProperties />} />
+          <Route path="properties/new" element={<AddEditProperty />} />
+          <Route path="properties/:id/edit" element={<AddEditProperty />} />
+          <Route path="change-requests" element={<PropertyChangeRequests />} />
+          <Route
+            path="recommended-properties"
+            element={<RecommendedPropertiesManager />}
+          />
           <Route path="users" element={<AdminUsers />} />
+          <Route path="coupons" element={<CouponManagement />} />
+          <Route path="reviews" element={<ReviewManagement />} />
           <Route path="reports" element={<AdminReports />} />
         </Route>
 
@@ -100,39 +92,22 @@ function App() {
           }
         >
           <Route path="dashboard" element={<VendorDashboard />} />
+          <Route path="properties" element={<VendorProperties />} />
+          <Route path="properties/add" element={<AddEditVendorProperty />} />
           <Route
-            path="properties"
-            element={<div>Vendor Properties Page</div>}
+            path="properties/:id/edit"
+            element={<AddEditVendorProperty />}
           />
-          <Route path="bookings" element={<div>Vendor Bookings Page</div>} />
-          <Route
-            path="settlements"
-            element={<div>Vendor Settlements Page</div>}
-          />
-          <Route path="analytics" element={<div>Vendor Analytics Page</div>} />
-          <Route path="profile" element={<div>Vendor Profile Page</div>} />
+          <Route path="bookings" element={<VendorBookings />} />
+          <Route path="settlements" element={<VendorSettlementsPage />} />
+          <Route path="analytics" element={<VendorAnalytics />} />
+          <Route path="profile" element={<VendorProfile />} />
         </Route>
 
-        {/* Other Protected Routes */}
-        <Route
-          path="/payment/:bookingId"
-          element={
-            <ProtectedRoute allowedRoles={["user"]}>
-              <Payment />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/booking-success"
-          element={
-            <ProtectedRoute allowedRoles={["user"]}>
-              <BookingSuccess />
-            </ProtectedRoute>
-          }
-        />
+        {/* Default Route - Redirect to Login */}
+        <Route path="/" element={<Navigate to="/login" replace />} />
 
-        {/* Default Route */}
-        <Route path="/" element={<Navigate to="/properties" replace />} />
+        {/* Unauthorized Access Page */}
         <Route
           path="/unauthorized"
           element={

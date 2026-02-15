@@ -2,11 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { FiX, FiCalendar, FiUsers, FiLoader } from "react-icons/fi";
-import DatePicker from "react-datepicker";
+import DateRangeSelector from "@/components/DateRangeSelector";
 import { api } from "@/lib/axios";
-import { useToast } from "@/hooks/useToast";
-import styles from "./ModifyBookingModal.module.css";
-import "react-datepicker/dist/react-datepicker.css";
 
 interface PendingBooking {
   id: string;
@@ -43,10 +40,10 @@ export default function ModifyBookingModal({
 
   // Form state
   const [checkIn, setCheckIn] = useState<Date | null>(
-    new Date(booking.check_in)
+    new Date(booking.check_in),
   );
   const [checkOut, setCheckOut] = useState<Date | null>(
-    new Date(booking.check_out)
+    new Date(booking.check_out),
   );
   const [adults, setAdults] = useState(booking.guest_count);
   const [children, setChildren] = useState(booking.children_count);
@@ -65,7 +62,7 @@ export default function ModifyBookingModal({
   useEffect(() => {
     if (checkIn && checkOut) {
       const nights = Math.ceil(
-        (checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24)
+        (checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24),
       );
 
       if (nights > 0) {
@@ -146,33 +143,17 @@ export default function ModifyBookingModal({
 
         {/* Form */}
         <div className={styles.formSection}>
-          {/* Dates */}
-          <div className={styles.formRow}>
-            <div className={styles.formGroup}>
-              <label className={styles.label}>
-                <FiCalendar /> Check-in
-              </label>
-              <DatePicker
-                selected={checkIn}
-                onChange={(date: Date | null) => setCheckIn(date)}
-                minDate={new Date()}
-                dateFormat="dd MMM, yyyy"
-                className={styles.dateInput}
-              />
-            </div>
-
-            <div className={styles.formGroup}>
-              <label className={styles.label}>
-                <FiCalendar /> Check-out
-              </label>
-              <DatePicker
-                selected={checkOut}
-                onChange={(date: Date | null) => setCheckOut(date)}
-                minDate={checkIn || new Date()}
-                dateFormat="dd MMM, yyyy"
-                className={styles.dateInput}
-              />
-            </div>
+          {/* Dates - Using DateRangeSelector */}
+          <div className={styles.dateRangeSection}>
+            <DateRangeSelector
+              checkIn={checkIn}
+              checkOut={checkOut}
+              onCheckInChange={setCheckIn}
+              onCheckOutChange={setCheckOut}
+              minDate={new Date()}
+              label="Select new dates"
+              luxuryStyles={styles}
+            />
           </div>
 
           {/* Guests */}

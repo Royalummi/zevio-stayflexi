@@ -15,10 +15,10 @@ export const calculateNights = (checkIn, checkOut) => {
 export const calculateBookingAmount = (
   pricePerNight,
   nights,
-  gstPercentage,
+  gstPercentage, // DEPRECATED - will use tiered GST instead
   discountAmount = 0,
   propertyPricing = {},
-  guestCounts = {}
+  guestCounts = {},
 ) => {
   // Base amount (includes minimum guests/children in property price)
   const baseAmount = pricePerNight * nights;
@@ -32,7 +32,7 @@ export const calculateBookingAmount = (
   ) {
     const extraGuests = Math.max(
       0,
-      guestCounts.guest_count - propertyPricing.min_guests
+      guestCounts.guest_count - propertyPricing.min_guests,
     );
     extraGuestCharges =
       extraGuests * propertyPricing.extra_guest_charge * nights;
@@ -47,7 +47,7 @@ export const calculateBookingAmount = (
   ) {
     const extraChildren = Math.max(
       0,
-      guestCounts.children_count - propertyPricing.min_children
+      guestCounts.children_count - propertyPricing.min_children,
     );
     extraChildrenCharges =
       extraChildren * propertyPricing.extra_child_charge * nights;
@@ -55,23 +55,45 @@ export const calculateBookingAmount = (
 
   // Note: Infants (0-2 years) are FREE - no charges
 
-  // Subtotal before GST
-  const subtotal =
-    baseAmount + extraGuestCharges + extraChildrenCharges - discountAmount;
+  // Subtotal before discount
+  const subtotal = baseAmount + extraGuestCharges + extraChildrenCharges;
 
-  // Calculate GST on total (base + extra guests + extra children - discount)
-  const gstAmount = (subtotal * gstPercentage) / 100;
+  // Apply coupon discount
+  const bookingAmount = subtotal - discountAmount;
 
-  // Final total
-  const totalAmount = subtotal + gstAmount;
+  // ============================================
+  // SESSION 64: NEW PRICING LOGIC
+  // - Tiered GST (5% if ≤₹7500, 18% if >₹7500)
+  // - GST calculated on booking amount only
+  // - Service charge (5% of booking amount, NO GST on it)
+  // ============================================
+
+  // Tiered GST calculation
+  const GST_THRESHOLD = 7500; // ₹7,500 threshold
+  const GST_RATE_LOW = 5; // 5% for bookings ≤ ₹7,500
+  const GST_RATE_HIGH = 18; // 18% for bookings > ₹7,500
+
+  const gstRate = bookingAmount <= GST_THRESHOLD ? GST_RATE_LOW : GST_RATE_HIGH;
+  const gstAmount = (bookingAmount * gstRate) / 100;
+
+  // Service charge (5% of booking amount, flat - no GST on it per client requirement)
+  const SERVICE_CHARGE_RATE = 5; // 5%
+  const serviceCharge = (bookingAmount * SERVICE_CHARGE_RATE) / 100;
+
+  // Final total = Booking Amount + GST + Service Charge
+  const totalAmount = bookingAmount + gstAmount + serviceCharge;
 
   return {
     baseAmount: parseFloat(baseAmount.toFixed(2)),
     extraGuestCharges: parseFloat(extraGuestCharges.toFixed(2)),
     extraChildrenCharges: parseFloat(extraChildrenCharges.toFixed(2)),
-    gstAmount: parseFloat(gstAmount.toFixed(2)),
-    discountAmount: parseFloat(discountAmount.toFixed(2)),
-    totalAmount: parseFloat(totalAmount.toFixed(2)),
+    subtotal: parseFloat(subtotal.toFixed(2)), // Before discount
+    discountAmount: parseFloat(discountAmount.toFixed(2)), // Coupon discount
+    bookingAmount: parseFloat(bookingAmount.toFixed(2)), // After discount
+    gstRate, // 5 or 18 (for display)
+    gstAmount: parseFloat(gstAmount.toFixed(2)), // GST on booking amount only
+    serviceCharge: parseFloat(serviceCharge.toFixed(2)), // 5% platform fee
+    totalAmount: parseFloat(totalAmount.toFixed(2)), // Final payable amount
     nights,
   };
 };

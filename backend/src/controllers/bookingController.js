@@ -5,13 +5,9 @@ import {
   calculateNights,
   calculateBookingAmount,
 } from "../utils/helpers.js";
-import Razorpay from "razorpay";
 
-// Initialize Razorpay
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID || "rzp_test_dummy",
-  key_secret: process.env.RAZORPAY_KEY_SECRET || "dummy_secret",
-});
+// SESSION 41: Razorpay removed - Payment order creation moved to paymentController.js
+// Bookings are created first, then payment orders are created separately via /api/payments/create-order
 
 // Create booking
 export const createBooking = asyncHandler(async (req, res) => {
@@ -31,7 +27,7 @@ export const createBooking = asyncHandler(async (req, res) => {
     return sendError(
       res,
       "Property ID, check-in, and check-out dates are required",
-      400
+      400,
     );
   }
 
@@ -43,16 +39,16 @@ export const createBooking = asyncHandler(async (req, res) => {
   if (is_corporate) {
     if (!req.user || !req.user.corporate_verified) {
       console.log(
-        `Rejected corporate booking attempt by user ${userId} - not verified`
+        `Rejected corporate booking attempt by user ${userId} - not verified`,
       );
       return sendError(
         res,
         "Corporate bookings require a verified corporate account. Please contact support to verify your corporate status.",
-        403
+        403,
       );
     }
     console.log(
-      `Corporate booking validated for user ${userId} (${req.user.email})`
+      `Corporate booking validated for user ${userId} (${req.user.email})`,
     );
   }
 
@@ -70,16 +66,25 @@ export const createBooking = asyncHandler(async (req, res) => {
     return sendError(res, "Check-out date must be after check-in date", 400);
   }
 
-  // Get property details
+  // Get property details with pricing
   const [properties] = await db.query(
     `SELECT 
-      id, price_per_night, gst_percentage, employee_id,
-      min_guests, max_guests, extra_guest_charge,
-      min_children, max_children, extra_child_charge,
-      same_day_booking_allowed, max_booking_days
-    FROM properties 
-    WHERE id = ? AND status = "approved" AND deleted_at IS NULL`,
-    [property_id]
+      p.id, 
+      p.employee_id,
+      p.max_guests,
+      p.same_day_booking_allowed, 
+      p.max_booking_days,
+      pp.price_per_night,
+      pp.gst_percentage,
+      pp.min_guests,
+      pp.extra_guest_charge,
+      pp.min_children,
+      pp.max_children,
+      pp.extra_child_charge
+    FROM properties p
+    INNER JOIN property_pricing pp ON p.id = pp.property_id
+    WHERE p.id = ? AND p.status = "approved" AND p.deleted_at IS NULL`,
+    [property_id],
   );
 
   if (properties.length === 0) {
@@ -101,7 +106,7 @@ export const createBooking = asyncHandler(async (req, res) => {
     return sendError(
       res,
       `Maximum ${property.max_children} children allowed`,
-      400
+      400,
     );
   }
 
@@ -133,7 +138,7 @@ export const createBooking = asyncHandler(async (req, res) => {
     AND b.status IN ('pending', 'pending_payment')
     AND (b.expires_at IS NULL OR b.expires_at > NOW())
     LIMIT 1`,
-    [userId, property_id]
+    [userId, property_id],
   );
 
   let existingBookingId = null;
@@ -143,7 +148,7 @@ export const createBooking = asyncHandler(async (req, res) => {
     existingBookingId = pendingBookings[0].id;
     isUpdatingExisting = true;
     console.log(
-      `Updating existing pending booking ${existingBookingId} with new dates/guests`
+      `Updating existing pending booking ${existingBookingId} with new dates/guests`,
     );
   }
 
@@ -158,7 +163,7 @@ export const createBooking = asyncHandler(async (req, res) => {
       return sendError(
         res,
         "Same-day bookings are not allowed for this property",
-        400
+        400,
       );
     }
   }
@@ -168,7 +173,7 @@ export const createBooking = asyncHandler(async (req, res) => {
     return sendError(
       res,
       `Maximum ${property.max_booking_days} days booking allowed`,
-      400
+      400,
     );
   }
 
@@ -182,14 +187,22 @@ export const createBooking = asyncHandler(async (req, res) => {
        (start_date <= ? AND end_date >= ?) OR
        (start_date >= ? AND end_date <= ?)
      )`,
-    [property_id, check_in, check_in, check_out, check_out, check_in, check_out]
+    [
+      property_id,
+      check_in,
+      check_in,
+      check_out,
+      check_out,
+      check_in,
+      check_out,
+    ],
   );
 
   if (blackouts[0].count > 0) {
     return sendError(
       res,
       "Property is not available for selected dates (blackout period)",
-      400
+      400,
     );
   }
 
@@ -239,7 +252,7 @@ export const createBooking = asyncHandler(async (req, res) => {
        AND status = 'active' 
        AND start_date <= CURDATE() 
        AND end_date >= CURDATE()`,
-      [coupon_code]
+      [coupon_code],
     );
 
     if (coupons.length > 0) {
@@ -251,7 +264,7 @@ export const createBooking = asyncHandler(async (req, res) => {
         // Check usage limit
         const [usageCount] = await db.query(
           "SELECT COUNT(*) as count FROM coupon_usages WHERE coupon_id = ?",
-          [coupon.id]
+          [coupon.id],
         );
 
         if (usageCount[0].count < coupon.usage_limit) {
@@ -286,12 +299,15 @@ export const createBooking = asyncHandler(async (req, res) => {
       guest_count,
       children_count,
       infants_count,
-    }
+    },
   );
 
   // Create NEW booking OR update EXISTING pending booking
   const bookingId = existingBookingId || generateUUID();
   const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes from now
+
+  // SESSION 47: Set payment expiry window (15 minutes for payment completion)
+  const paymentExpiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes from now
 
   if (isUpdatingExisting) {
     // UPDATE existing pending booking with new dates/guests/amounts
@@ -307,9 +323,12 @@ export const createBooking = asyncHandler(async (req, res) => {
         extra_guest_charges = ?,
         extra_children_charges = ?,
         gst_amount = ?,
+        service_charge = ?,
         discount_amount = ?,
         total_amount = ?,
-        expires_at = ?
+        expires_at = ?,
+        payment_expires_at = ?,
+        payment_status = 'pending'
       WHERE id = ?`,
       [
         check_in,
@@ -322,21 +341,24 @@ export const createBooking = asyncHandler(async (req, res) => {
         amounts.extraGuestCharges,
         amounts.extraChildrenCharges,
         amounts.gstAmount,
+        amounts.serviceCharge,
         amounts.discountAmount,
         amounts.totalAmount,
         expiresAt,
+        paymentExpiresAt,
         bookingId,
-      ]
+      ],
     );
   } else {
-    // INSERT new booking
+    // INSERT new booking with payment tracking (SESSION 64: Added service_charge)
     await db.query(
       `INSERT INTO bookings 
        (id, user_id, property_id, check_in, check_out, nights, 
         guest_count, children_count, infants_count,
         base_amount, extra_guest_charges, extra_children_charges, 
-        gst_amount, discount_amount, total_amount, status, expires_at) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending_payment', ?)`,
+        gst_amount, service_charge, discount_amount, total_amount, 
+        status, payment_status, expires_at, payment_expires_at) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending_payment', 'pending', ?, ?)`,
       [
         bookingId,
         userId,
@@ -351,10 +373,12 @@ export const createBooking = asyncHandler(async (req, res) => {
         amounts.extraGuestCharges,
         amounts.extraChildrenCharges,
         amounts.gstAmount,
+        amounts.serviceCharge,
         amounts.discountAmount,
         amounts.totalAmount,
         expiresAt,
-      ]
+        paymentExpiresAt,
+      ],
     );
   }
 
@@ -362,7 +386,7 @@ export const createBooking = asyncHandler(async (req, res) => {
   if (couponId) {
     await db.query(
       "INSERT INTO coupon_usages (id, coupon_id, booking_id, user_id) VALUES (?, ?, ?, ?)",
-      [generateUUID(), couponId, bookingId, userId]
+      [generateUUID(), couponId, bookingId, userId],
     );
   }
 
@@ -370,7 +394,7 @@ export const createBooking = asyncHandler(async (req, res) => {
   if (property.employee_id) {
     const [employee] = await db.query(
       "SELECT incentive_percentage FROM employees WHERE id = ?",
-      [property.employee_id]
+      [property.employee_id],
     );
 
     if (employee.length > 0 && employee[0].incentive_percentage) {
@@ -378,7 +402,7 @@ export const createBooking = asyncHandler(async (req, res) => {
         (amounts.baseAmount * employee[0].incentive_percentage) / 100;
       await db.query(
         'INSERT INTO employee_points (id, employee_id, booking_id, points, status) VALUES (?, ?, ?, ?, "pending")',
-        [generateUUID(), property.employee_id, bookingId, points]
+        [generateUUID(), property.employee_id, bookingId, points],
       );
     }
   }
@@ -389,86 +413,26 @@ export const createBooking = asyncHandler(async (req, res) => {
      FROM bookings b 
      INNER JOIN properties p ON b.property_id = p.id 
      WHERE b.id = ?`,
-    [bookingId]
+    [bookingId],
   );
 
   const booking = bookings[0];
 
-  // Create Razorpay order for payment
-  const razorpayOptions = {
-    amount: Math.round(booking.total_amount * 100), // Amount in paise
-    currency: "INR",
-    receipt: bookingId,
-    notes: {
-      booking_id: bookingId,
-      user_id: userId,
-      property_id: property_id,
-    },
-  };
-
-  let razorpayOrder = null;
-  const isTestMode =
-    process.env.RAZORPAY_KEY_ID === "rzp_test_dummy" ||
-    !process.env.RAZORPAY_KEY_SECRET ||
-    process.env.RAZORPAY_KEY_SECRET === "dummy_secret";
-
-  try {
-    if (!isTestMode) {
-      // Try to create real Razorpay order
-      razorpayOrder = await razorpay.orders.create(razorpayOptions);
-      console.log("✓ Razorpay order created:", razorpayOrder.id);
-    } else {
-      console.log("🧪 TEST MODE: Skipping Razorpay order creation");
-      razorpayOrder = { id: `test_order_${bookingId}` };
-    }
-
-    // Store payment record
-    const paymentId = generateUUID();
-    await db.query(
-      "INSERT INTO payments (id, booking_id, gateway, gateway_payment_id, amount, status) VALUES (?, ?, ?, ?, ?, ?)",
-      [
-        paymentId,
-        bookingId,
-        "razorpay",
-        razorpayOrder.id,
-        booking.total_amount,
-        "pending",
-      ]
-    );
-  } catch (error) {
-    console.error("❌ Razorpay order creation failed:", error.message);
-    console.error("Error details:", error);
-    // Create test order for fallback
-    razorpayOrder = { id: `test_order_${bookingId}` };
-
-    // Store payment record even if Razorpay fails
-    const paymentId = generateUUID();
-    await db.query(
-      "INSERT INTO payments (id, booking_id, gateway, gateway_payment_id, amount, status) VALUES (?, ?, ?, ?, ?, ?)",
-      [
-        paymentId,
-        bookingId,
-        "razorpay",
-        razorpayOrder.id,
-        booking.total_amount,
-        "pending",
-      ]
-    );
-  }
+  // SESSION 41: Payment order creation moved to separate endpoint
+  // Frontend now calls /api/payments/create-order after booking creation
+  // This separates booking creation from payment initialization
 
   sendSuccess(
     res,
     {
       ...booking,
       booking_id: bookingId,
-      razorpay_order_id: razorpayOrder?.id || `test_order_${bookingId}`,
-      amount: Math.round(booking.total_amount * 100),
       isUpdate: isUpdatingExisting,
     },
     isUpdatingExisting
       ? "Booking updated successfully"
       : "Booking created successfully",
-    201
+    201,
   );
 });
 
@@ -482,6 +446,7 @@ export const getMyBookings = asyncHandler(async (req, res) => {
   // Before: 1 query for bookings + N queries for images (N+1)
   // After: 1 query with LEFT JOIN (just 1 query)
   // Performance gain: 10-100x faster for large booking lists
+  // SESSION 47: Now includes payment_status and payment_expires_at
   // ============================================
   let query = `
     SELECT 
@@ -544,7 +509,7 @@ export const getMyBookings = asyncHandler(async (req, res) => {
         `₹${booking.total_amount.toFixed(2)}`,
         booking.status.toUpperCase(),
         new Date(booking.created_at).toLocaleString("en-IN"),
-      ].join(",")
+      ].join(","),
     );
 
     const csv = [csvHeaders.join(","), ...csvRows].join("\n");
@@ -554,7 +519,7 @@ export const getMyBookings = asyncHandler(async (req, res) => {
       "Content-Disposition",
       `attachment; filename=bookings_${
         new Date().toISOString().split("T")[0]
-      }.csv`
+      }.csv`,
     );
     return res.send(csv);
   }
@@ -562,7 +527,7 @@ export const getMyBookings = asyncHandler(async (req, res) => {
   // Count total
   const countQuery = query.replace(
     /SELECT.*FROM/,
-    "SELECT COUNT(*) as total FROM"
+    "SELECT COUNT(*) as total FROM",
   );
   const [countResult] = await db.query(countQuery, params);
   const total = countResult[0].total;
@@ -586,7 +551,7 @@ export const getMyBookings = asyncHandler(async (req, res) => {
       },
     },
     "Bookings fetched successfully",
-    200
+    200,
   );
 });
 
@@ -601,13 +566,14 @@ export const getBookingDetails = asyncHandler(async (req, res) => {
       b.*,
       p.title as property_title,
       p.description as property_description,
-      p.price_per_night,
-      p.min_guests,
+      p.property_type_id,
+      pp.price_per_night,
+      pp.min_guests,
       p.max_guests,
-      p.min_children,
-      p.max_children,
-      p.extra_guest_charge,
-      p.extra_child_charge,
+      pp.min_children,
+      pp.max_children,
+      pp.extra_guest_charge,
+      pp.extra_child_charge,
       c.name as city_name,
       c.state as city_state,
       u.full_name as user_name,
@@ -615,6 +581,7 @@ export const getBookingDetails = asyncHandler(async (req, res) => {
       u.phone as user_phone
     FROM bookings b
     INNER JOIN properties p ON b.property_id = p.id
+    LEFT JOIN property_pricing pp ON p.id = pp.property_id
     INNER JOIN cities c ON p.city_id = c.id
     INNER JOIN users u ON b.user_id = u.id
     WHERE b.id = ? AND b.deleted_at IS NULL
@@ -639,21 +606,21 @@ export const getBookingDetails = asyncHandler(async (req, res) => {
   // Get property images
   const [images] = await db.query(
     "SELECT image_url FROM property_images WHERE property_id = ? ORDER BY sort_order LIMIT 5",
-    [booking.property_id]
+    [booking.property_id],
   );
   booking.property_images = images;
 
   // Get payment details
   const [payments] = await db.query(
     "SELECT * FROM payments WHERE booking_id = ? ORDER BY created_at DESC",
-    [id]
+    [id],
   );
   booking.payments = payments;
 
   // Get invoice if exists
   const [invoices] = await db.query(
     "SELECT * FROM invoices WHERE booking_id = ?",
-    [id]
+    [id],
   );
   booking.invoice = invoices.length > 0 ? invoices[0] : null;
 
@@ -668,7 +635,7 @@ export const requestCancellation = asyncHandler(async (req, res) => {
   // Get booking
   const [bookings] = await db.query(
     "SELECT * FROM bookings WHERE id = ? AND user_id = ? AND deleted_at IS NULL",
-    [id, userId]
+    [id, userId],
   );
 
   if (bookings.length === 0) {
@@ -697,7 +664,7 @@ export const requestCancellation = asyncHandler(async (req, res) => {
   // Update booking status
   await db.query(
     'UPDATE bookings SET status = "cancel_requested" WHERE id = ?',
-    [id]
+    [id],
   );
 
   // Create notification for admin
@@ -709,7 +676,7 @@ export const requestCancellation = asyncHandler(async (req, res) => {
       "admin",
       "Cancellation Request",
       `Booking ${id} cancellation requested by user`,
-    ]
+    ],
   );
 
   sendSuccess(res, null, "Cancellation request submitted successfully", 200);
@@ -729,7 +696,7 @@ export const validateCoupon = asyncHandler(async (req, res) => {
      AND status = 'active' 
      AND start_date <= CURDATE() 
      AND end_date >= CURDATE()`,
-    [code]
+    [code],
   );
 
   if (coupons.length === 0) {
@@ -743,14 +710,14 @@ export const validateCoupon = asyncHandler(async (req, res) => {
     return sendError(
       res,
       `Minimum booking amount of ₹${coupon.min_booking_amount} required`,
-      400
+      400,
     );
   }
 
   // Check usage limit
   const [usageCount] = await db.query(
     "SELECT COUNT(*) as count FROM coupon_usages WHERE coupon_id = ?",
-    [coupon.id]
+    [coupon.id],
   );
 
   if (usageCount[0].count >= coupon.usage_limit) {
@@ -778,7 +745,7 @@ export const validateCoupon = asyncHandler(async (req, res) => {
       final_amount: parseFloat((booking_amount - discountAmount).toFixed(2)),
     },
     "Coupon applied successfully",
-    200
+    200,
   );
 });
 
@@ -810,15 +777,16 @@ export const checkPendingBooking = asyncHandler(async (req, res) => {
       b.expires_at,
       b.created_at,
       p.title as property_title,
-      p.price_per_night as property_price
+      pp.price_per_night as property_price
     FROM bookings b
     INNER JOIN properties p ON b.property_id = p.id
+    LEFT JOIN property_pricing pp ON p.id = pp.property_id
     WHERE b.user_id = ? 
     AND b.property_id = ? 
     AND b.status IN ('pending', 'pending_payment')
     AND (b.expires_at IS NULL OR b.expires_at > NOW())
     LIMIT 1`,
-    [userId, propertyId]
+    [userId, propertyId],
   );
 
   if (bookings.length === 0) {
@@ -826,7 +794,7 @@ export const checkPendingBooking = asyncHandler(async (req, res) => {
       res,
       { hasPendingBooking: false, booking: null },
       "No pending booking found",
-      200
+      200,
     );
   }
 
@@ -858,7 +826,7 @@ export const checkPendingBooking = asyncHandler(async (req, res) => {
       },
     },
     "Pending booking found",
-    200
+    200,
   );
 });
 
@@ -878,14 +846,14 @@ export const modifyPendingBooking = asyncHandler(async (req, res) => {
     return sendError(
       res,
       "Check-in, check-out dates and guest count are required",
-      400
+      400,
     );
   }
 
   // Get booking
   const [bookings] = await db.query(
     "SELECT * FROM bookings WHERE id = ? AND user_id = ? AND deleted_at IS NULL",
-    [id, userId]
+    [id, userId],
   );
 
   if (bookings.length === 0) {
@@ -921,12 +889,19 @@ export const modifyPendingBooking = asyncHandler(async (req, res) => {
   // Get CURRENT property details (recalculate with current rates)
   const [properties] = await db.query(
     `SELECT 
-      id, price_per_night, gst_percentage,
-      min_guests, max_guests, extra_guest_charge,
-      min_children, max_children, extra_child_charge
-    FROM properties 
-    WHERE id = ? AND status = "approved" AND deleted_at IS NULL`,
-    [booking.property_id]
+      p.id, 
+      p.max_guests,
+      pp.price_per_night,
+      pp.gst_percentage,
+      pp.min_guests,
+      pp.extra_guest_charge,
+      pp.min_children,
+      pp.max_children,
+      pp.extra_child_charge
+    FROM properties p
+    INNER JOIN property_pricing pp ON p.id = pp.property_id
+    WHERE p.id = ? AND p.status = "approved" AND p.deleted_at IS NULL`,
+    [booking.property_id],
   );
 
   if (properties.length === 0) {
@@ -948,7 +923,7 @@ export const modifyPendingBooking = asyncHandler(async (req, res) => {
     return sendError(
       res,
       `Maximum ${property.max_children} children allowed`,
-      400
+      400,
     );
   }
 
@@ -963,7 +938,7 @@ export const modifyPendingBooking = asyncHandler(async (req, res) => {
      AND id != ?
      AND status IN ('confirmed', 'completed', 'pending_payment') 
      AND (check_in < ? AND check_out > ?)`,
-    [booking.property_id, id, check_out, check_in]
+    [booking.property_id, id, check_out, check_in],
   );
 
   if (existingBookings[0].count > 0) {
@@ -986,13 +961,13 @@ export const modifyPendingBooking = asyncHandler(async (req, res) => {
       guest_count,
       children_count,
       infants_count,
-    }
+    },
   );
 
   // Reset expires_at to 15 minutes from now
   const newExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
 
-  // Update booking
+  // Update booking (SESSION 64: Added service_charge)
   await db.query(
     `UPDATE bookings 
      SET check_in = ?, 
@@ -1005,6 +980,7 @@ export const modifyPendingBooking = asyncHandler(async (req, res) => {
          extra_guest_charges = ?,
          extra_children_charges = ?,
          gst_amount = ?,
+         service_charge = ?,
          total_amount = ?,
          expires_at = ?
      WHERE id = ?`,
@@ -1019,10 +995,11 @@ export const modifyPendingBooking = asyncHandler(async (req, res) => {
       amounts.extraGuestCharges,
       amounts.extraChildrenCharges,
       amounts.gstAmount,
+      amounts.serviceCharge,
       amounts.totalAmount,
       newExpiresAt,
       id,
-    ]
+    ],
   );
 
   // Fetch updated booking
@@ -1031,7 +1008,7 @@ export const modifyPendingBooking = asyncHandler(async (req, res) => {
      FROM bookings b 
      INNER JOIN properties p ON b.property_id = p.id 
      WHERE b.id = ?`,
-    [id]
+    [id],
   );
 
   sendSuccess(res, updatedBookings[0], "Booking modified successfully", 200);
@@ -1045,7 +1022,7 @@ export const cancelPendingBooking = asyncHandler(async (req, res) => {
   // Get booking
   const [bookings] = await db.query(
     "SELECT * FROM bookings WHERE id = ? AND user_id = ? AND deleted_at IS NULL",
-    [id, userId]
+    [id, userId],
   );
 
   if (bookings.length === 0) {
@@ -1063,4 +1040,100 @@ export const cancelPendingBooking = asyncHandler(async (req, res) => {
   await db.query('UPDATE bookings SET status = "cancelled" WHERE id = ?', [id]);
 
   sendSuccess(res, null, "Booking cancelled successfully", 200);
+});
+
+// ==========================================
+// SESSION 64: REVIEW REQUEST ENDPOINTS
+// ==========================================
+
+/**
+ * Check if user has submitted a review for a booking
+ * GET /bookings/:id/reviews/check
+ */
+export const checkReviewStatus = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user.id;
+
+  // Verify booking belongs to user
+  const [bookings] = await db.query(
+    "SELECT id, status FROM bookings WHERE id = ? AND user_id = ? AND deleted_at IS NULL",
+    [id, userId],
+  );
+
+  if (bookings.length === 0) {
+    return sendError(res, "Booking not found", 404);
+  }
+
+  // Check if review exists
+  const [reviews] = await db.query(
+    "SELECT id FROM reviews WHERE booking_id = ?",
+    [id],
+  );
+
+  sendSuccess(
+    res,
+    { hasReview: reviews.length > 0 },
+    "Review status retrieved",
+    200,
+  );
+});
+
+/**
+ * Admin manual trigger for review request email
+ * POST /bookings/:id/send-review-request
+ */
+export const sendManualReviewRequest = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  // Verify booking exists and is completed
+  const [bookings] = await db.query(
+    "SELECT id, status, user_id FROM bookings WHERE id = ? AND deleted_at IS NULL",
+    [id],
+  );
+
+  if (bookings.length === 0) {
+    return sendError(res, "Booking not found", 404);
+  }
+
+  const booking = bookings[0];
+
+  if (booking.status !== "completed") {
+    return sendError(
+      res,
+      "Review requests can only be sent for completed bookings",
+      400,
+    );
+  }
+
+  // Check if review already exists
+  const [reviews] = await db.query(
+    "SELECT id FROM reviews WHERE booking_id = ?",
+    [id],
+  );
+
+  if (reviews.length > 0) {
+    return sendError(res, "User has already submitted a review", 400);
+  }
+
+  // Import email service dynamically to avoid circular dependencies
+  const { sendReviewRequestEmail } =
+    await import("../services/emailService.js");
+  const { generateUUID } = await import("../utils/helpers.js");
+
+  try {
+    // Send review request email
+    await sendReviewRequestEmail(id);
+
+    // Log manual send in review_email_log
+    await db.query(
+      `INSERT INTO review_email_log (id, booking_id, email_type, sent_at) 
+       VALUES (?, ?, ?, NOW())`,
+      [generateUUID(), id, "manual_admin"],
+    );
+
+    sendSuccess(res, null, "Review request email sent successfully", 200);
+  } catch (error) {
+    console.error("Failed to send review request email:", error);
+    return sendError(res, "Failed to send review request email", 500);
+  }
 });

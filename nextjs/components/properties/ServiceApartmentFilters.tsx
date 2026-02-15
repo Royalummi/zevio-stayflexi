@@ -2,8 +2,7 @@
 
 import { useState, useEffect, useRef, useMemo } from "react";
 import type { City } from "@/types";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
+import DateRangeSelector from "@/components/DateRangeSelector";
 import {
   FiFilter,
   FiX,
@@ -399,16 +398,29 @@ export default function ServiceApartmentFilters({
                 className={styles.dropdown}
                 style={{ width: "auto", minWidth: "320px" }}
               >
-                <DatePicker
-                  selected={checkinDate}
-                  onChange={handleDateChange}
-                  startDate={checkinDate}
-                  endDate={checkoutDate}
-                  selectsRange
+                <DateRangeSelector
+                  checkIn={checkinDate}
+                  checkOut={checkoutDate}
+                  onCheckInChange={(date) => {
+                    setCheckinDate(date);
+                    // Keep dropdown open to select checkout date
+                  }}
+                  onCheckOutChange={(date) => {
+                    setCheckoutDate(date);
+                    // Apply filter only when BOTH dates are selected
+                    if (checkinDate && date) {
+                      onFilterChange(
+                        "checkin",
+                        checkinDate.toISOString().split("T")[0],
+                      );
+                      onFilterChange(
+                        "checkout",
+                        date.toISOString().split("T")[0],
+                      );
+                    }
+                  }}
                   minDate={new Date()}
-                  inline
-                  monthsShown={2}
-                  dateFormat="MMM d, yyyy"
+                  label="Select dates"
                 />
                 {(checkinDate || checkoutDate) && (
                   <div className={styles.dateFooter}>

@@ -1,9 +1,7 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useRef } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
 import { api } from "@/lib/axios";
 import { formatDateForAPI } from "@/lib/utils";
 import type { Property } from "@/types";
@@ -37,6 +35,8 @@ import { IoBed } from "react-icons/io5";
 import propertyStyles from "./property-detail.module.css";
 import luxuryStyles from "./luxury-property.module.css";
 import PropertyGallery from "./PropertyGallery";
+import DateRangeSelector from "@/components/DateRangeSelector";
+import { getImageUrl } from "@/lib/imageUtils";
 
 const getAmenityIcon = (amenity: string) => {
   const lower = amenity.toLowerCase();
@@ -62,6 +62,10 @@ function PropertyDetailContent() {
   const [loading, setLoading] = useState(true);
   const [checkIn, setCheckIn] = useState<Date | null>(null);
   const [checkOut, setCheckOut] = useState<Date | null>(null);
+
+  // Modern dropdown states for guests only
+  const [showGuestsDropdown, setShowGuestsDropdown] = useState(false);
+  const guestsDropdownRef = useRef<HTMLDivElement>(null);
   // Pre-fill from SearchBar URL params
   const [adults, setAdults] = useState(() => {
     const adultsParam = searchParams.get("adults");
@@ -128,26 +132,70 @@ function PropertyDetailContent() {
 
   // Check if property is in wishlist on mount
   useEffect(() => {
+    let isMounted = true;
+
     const checkWishlist = async () => {
       const token = localStorage.getItem("token");
-      if (!token) return;
+      if (!token || !isMounted) return;
 
       try {
         const response = await api.get(`/wishlist/check/${propertyId}`);
-        setIsSaved(response.data.data.isSaved || false);
-      } catch (error) {
-        console.error("Error checking wishlist:", error);
+        if (isMounted) {
+          setIsSaved(response.data.data.isSaved || false);
+        }
+      } catch (error: unknown) {
+        if (
+          isMounted &&
+          (error as { response?: { status?: number } })?.response?.status !==
+            429
+        ) {
+          console.error("Error checking wishlist:", error);
+        }
+        // If rate limited, don't retry
       }
     };
 
-    checkWishlist();
+    // Debounce the check to avoid rapid calls
+    const timeoutId = setTimeout(() => {
+      checkWishlist();
+    }, 100);
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timeoutId);
+    };
   }, [propertyId]);
 
+  // Click outside handler for guests dropdown only
   useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        guestsDropdownRef.current &&
+        !guestsDropdownRef.current.contains(event.target as Node)
+      ) {
+        setShowGuestsDropdown(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+    const abortController = new AbortController();
+
     const fetchProperty = async () => {
+      if (!isMounted) return;
+
       try {
         setLoading(true);
-        const response = await api.get(`/public/property/${propertyId}`);
+        const response = await api.get(`/public/property/${propertyId}`, {
+          signal: abortController.signal,
+        });
+
+        if (!isMounted) return;
+
         const data = response.data.data;
 
         // Map backend fields to frontend Property interface
@@ -156,9 +204,11 @@ function PropertyDetailContent() {
           name: data.title || data.name,
           description: data.description,
           address: data.address,
+          area: data.area,
           city: data.city,
           state: data.state,
           pincode: data.pincode,
+          maps_location: data.maps_location,
           price_per_night: data.price_per_night,
           max_guests: data.max_guests,
           bedrooms: data.bedrooms,
@@ -193,14 +243,28 @@ function PropertyDetailContent() {
           max_children: data.max_children || 5,
           extra_child_charge: data.extra_child_charge || 0,
         });
-      } catch (error) {
-        console.error("Error fetching property:", error);
+      } catch (error: unknown) {
+        if (
+          isMounted &&
+          (error as Error)?.name !== "AbortError" &&
+          (error as { response?: { status?: number } })?.response?.status !==
+            429
+        ) {
+          console.error("Error fetching property:", error);
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     fetchProperty();
+
+    return () => {
+      isMounted = false;
+      abortController.abort();
+    };
   }, [propertyId]);
 
   // Calculate pricing when dates or guests change
@@ -282,8 +346,10 @@ function PropertyDetailContent() {
       return;
     }
 
-    if (adults + children > (property?.max_guests || 0)) {
-      toast.warning(`Maximum ${property?.max_guests} guests allowed`);
+    const maxGuestsAllowed =
+      propertyPricing.max_guests || property?.max_guests || 10;
+    if (adults + children > maxGuestsAllowed) {
+      toast.warning(`Maximum ${maxGuestsAllowed} guests allowed`);
       return;
     }
 
@@ -299,9 +365,12 @@ function PropertyDetailContent() {
       setBookingData({
         propertyId: property.id,
         propertyType: "villa", // Track property type for back navigation
+        propertyTypeId: "pt-001",
         propertyName: property.name,
         propertyLocation: `${property.city}, ${property.state}`,
-        propertyImage: property.photos[0] || "/placeholder.jpg",
+        propertyImage:
+          getImageUrl(property.photos[0]) ||
+          "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='600'%3E%3Crect width='800' height='600' fill='%23f0f0f0'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='Arial' font-size='32' fill='%23999'%3ENo Image Available%3C/text%3E%3C/svg%3E",
         checkIn: formatDateForAPI(checkIn),
         checkOut: formatDateForAPI(checkOut),
         adults: adults,
@@ -486,7 +555,9 @@ function PropertyDetailContent() {
       ? [property.photos]
       : [];
 
-  const photos = photosArray.length > 0 ? photosArray : defaultPhotos;
+  const photos = (photosArray.length > 0 ? photosArray : defaultPhotos).map(
+    getImageUrl,
+  );
 
   // Normalize amenities to array (handle both string and array types)
   const amenities = Array.isArray(property.amenities)
@@ -506,12 +577,36 @@ function PropertyDetailContent() {
               <h1 className={propertyStyles.propertyNameNav}>
                 {property.name}
               </h1>
-              <p className={propertyStyles.propertyLocationNav}>
+              <div
+                className={`${propertyStyles.propertyLocationNav} ${
+                  property.maps_location ? propertyStyles.locationClickable : ""
+                }`}
+                onClick={(e) => {
+                  if (property.maps_location) {
+                    e.preventDefault();
+                    window.open(property.maps_location, "_blank");
+                  }
+                }}
+                title={property.maps_location ? "View on Google Maps" : ""}
+              >
                 <FiMapPin />
                 <span>
-                  {property.city}, {property.state}
+                  {property.area ? (
+                    <>
+                      {property.area}, {property.city}
+                    </>
+                  ) : (
+                    <>
+                      {property.city}, {property.state}
+                    </>
+                  )}
                 </span>
-              </p>
+                {property.maps_location && (
+                  <span className={propertyStyles.mapLinkText}>
+                    • View on Map
+                  </span>
+                )}
+              </div>
             </div>
 
             {/* Right: Action Buttons */}
@@ -624,6 +719,37 @@ function PropertyDetailContent() {
                   {property.description}
                 </p>
               </section>
+
+              {/* Location Section */}
+              {(property.area || property.maps_location) && (
+                <section className={luxuryStyles.locationSectionLuxury}>
+                  <h2 className={luxuryStyles.sectionTitleLuxury}>
+                    <FiMapPin /> Location
+                  </h2>
+                  <div className={luxuryStyles.locationCard}>
+                    <div className={luxuryStyles.locationDetails}>
+                      <div className={luxuryStyles.locationAddress}>
+                        <strong>Address:</strong>
+                        <p>
+                          {property.area && <span>{property.area}, </span>}
+                          {property.city}, {property.state} - {property.pincode}
+                        </p>
+                      </div>
+                      {property.maps_location && (
+                        <button
+                          onClick={() =>
+                            window.open(property.maps_location, "_blank")
+                          }
+                          className={luxuryStyles.viewMapButton}
+                        >
+                          <FiMapPin />
+                          <span>View on Google Maps</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </section>
+              )}
 
               {/* Amenities */}
               {amenities.length > 0 && (
@@ -782,306 +908,332 @@ function PropertyDetailContent() {
           </div>
 
           {/* RIGHT SIDE - Property Header + Booking Card (Sticky) */}
-          <aside className={luxuryStyles.bookingSidebar}>
-            {/* Booking Card */}
-            <div className={luxuryStyles.bookingCard}>
-              <div className={luxuryStyles.bookingCardContent}>
-                {/* SESSION 33: Pending Booking Banner */}
-                {pendingBooking && (
-                  <div className={luxuryStyles.pendingBookingBanner}>
-                    <div className={luxuryStyles.pendingBookingHeader}>
-                      <div className={luxuryStyles.pendingBookingTitle}>
-                        <FiClock size={20} />
-                        <span>You have a pending booking</span>
-                      </div>
-                      {pendingBooking.expires_at && (
-                        <div className={luxuryStyles.pendingBookingTimer}>
-                          Expires in{" "}
-                          {calculateTimeLeft(pendingBooking.expires_at)}
+          <div className={luxuryStyles.sidebarColumn}>
+            <aside className={luxuryStyles.bookingSidebar}>
+              {/* Booking Card */}
+              <div className={luxuryStyles.bookingCard}>
+                <div className={luxuryStyles.bookingCardContent}>
+                  {/* SESSION 33: Pending Booking Banner */}
+                  {pendingBooking && (
+                    <div className={luxuryStyles.pendingBookingBanner}>
+                      <div className={luxuryStyles.pendingBookingHeader}>
+                        <div className={luxuryStyles.pendingBookingTitle}>
+                          <FiClock size={20} />
+                          <span>You have a pending booking</span>
                         </div>
-                      )}
-                    </div>
-                    <div className={luxuryStyles.pendingBookingDetails}>
-                      <div className={luxuryStyles.pendingBookingRow}>
-                        <FiCalendar size={16} />
-                        <span>
-                          {new Date(pendingBooking.check_in).toLocaleDateString(
-                            "en-US",
-                            {
-                              month: "short",
-                              day: "numeric",
-                            },
-                          )}{" "}
-                          -{" "}
-                          {new Date(
-                            pendingBooking.check_out,
-                          ).toLocaleDateString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                          })}
-                          {" · "}
-                          {pendingBooking.nights}{" "}
-                          {pendingBooking.nights === 1 ? "night" : "nights"}
-                        </span>
-                      </div>
-                      <div className={luxuryStyles.pendingBookingRow}>
-                        <FiUsers size={16} />
-                        <span>
-                          {pendingBooking.guest_count}{" "}
-                          {pendingBooking.guest_count === 1
-                            ? "Guest"
-                            : "Guests"}
-                          {pendingBooking.children_count > 0 &&
-                            ` + ${pendingBooking.children_count} ${
-                              pendingBooking.children_count === 1
-                                ? "Child"
-                                : "Children"
-                            }`}
-                        </span>
-                      </div>
-                      <div className={luxuryStyles.pendingBookingRow}>
-                        <span className={luxuryStyles.pendingBookingPrice}>
-                          ₹{pendingBooking.total_amount.toLocaleString()}
-                        </span>
-                      </div>
-                    </div>
-                    <div className={luxuryStyles.pendingBookingActions}>
-                      <button
-                        onClick={handleContinuePendingBooking}
-                        className={luxuryStyles.pendingBookingContinue}
-                      >
-                        <FiCheckCircle size={18} />
-                        Continue Booking
-                      </button>
-                      <button
-                        onClick={handleCancelPendingBooking}
-                        className={luxuryStyles.pendingBookingCancel}
-                      >
-                        <FiX size={18} />
-                        Cancel Booking
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                <div className={luxuryStyles.bookingHeader}>
-                  <div className={luxuryStyles.priceSection}>
-                    <div className={luxuryStyles.priceDisplay}>
-                      <span className={luxuryStyles.bookingPrice}>
-                        ₹{property.price_per_night.toLocaleString()}
-                      </span>
-                      <span className={luxuryStyles.bookingPeriod}>
-                        / night
-                      </span>
-                      {totalPrice > 0 &&
-                        adults + children > propertyPricing.min_guests && (
-                          <div className={luxuryStyles.guestInfo}>
-                            (for {adults + children} guests)
+                        {pendingBooking.expires_at && (
+                          <div className={luxuryStyles.pendingBookingTimer}>
+                            Expires in{" "}
+                            {calculateTimeLeft(pendingBooking.expires_at)}
                           </div>
                         )}
-                    </div>
-                    <div className={luxuryStyles.basePriceNote}>
-                      Base price includes up to {propertyPricing.min_guests}{" "}
-                      {propertyPricing.min_guests === 1 ? "guest" : "guests"}
-                      {propertyPricing.min_children > 0 &&
-                        ` & ${propertyPricing.min_children} ${
-                          propertyPricing.min_children === 1
-                            ? "child"
-                            : "children"
-                        }`}
-                    </div>
-                  </div>
-                  {property.rating > 0 && (
-                    <div className={luxuryStyles.metaRating}>
-                      <div className={luxuryStyles.ratingBox}>
-                        <FiStar />
-                        <span>{Number(property.rating).toFixed(1)}</span>
                       </div>
-                      <span className={luxuryStyles.reviewsCount}>
-                        ({property.reviews_count} reviews)
-                      </span>
+                      <div className={luxuryStyles.pendingBookingDetails}>
+                        <div className={luxuryStyles.pendingBookingRow}>
+                          <FiCalendar size={16} />
+                          <span>
+                            {new Date(
+                              pendingBooking.check_in,
+                            ).toLocaleDateString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                            })}{" "}
+                            -{" "}
+                            {new Date(
+                              pendingBooking.check_out,
+                            ).toLocaleDateString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                            })}
+                            {" · "}
+                            {pendingBooking.nights}{" "}
+                            {pendingBooking.nights === 1 ? "night" : "nights"}
+                          </span>
+                        </div>
+                        <div className={luxuryStyles.pendingBookingRow}>
+                          <FiUsers size={16} />
+                          <span>
+                            {pendingBooking.guest_count}{" "}
+                            {pendingBooking.guest_count === 1
+                              ? "Guest"
+                              : "Guests"}
+                            {pendingBooking.children_count > 0 &&
+                              ` + ${pendingBooking.children_count} ${
+                                pendingBooking.children_count === 1
+                                  ? "Child"
+                                  : "Children"
+                              }`}
+                          </span>
+                        </div>
+                        <div className={luxuryStyles.pendingBookingRow}>
+                          <span className={luxuryStyles.pendingBookingPrice}>
+                            ₹{pendingBooking.total_amount.toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
+                      <div className={luxuryStyles.pendingBookingActions}>
+                        <button
+                          onClick={handleContinuePendingBooking}
+                          className={luxuryStyles.pendingBookingContinue}
+                        >
+                          <FiCheckCircle size={18} />
+                          Continue Booking
+                        </button>
+                        <button
+                          onClick={handleCancelPendingBooking}
+                          className={luxuryStyles.pendingBookingCancel}
+                        >
+                          <FiX size={18} />
+                          Cancel Booking
+                        </button>
+                      </div>
                     </div>
                   )}
+
+                  <div className={luxuryStyles.bookingHeader}>
+                    <div className={luxuryStyles.priceSection}>
+                      <div className={luxuryStyles.priceDisplay}>
+                        <span className={luxuryStyles.bookingPrice}>
+                          ₹{property.price_per_night.toLocaleString()}
+                        </span>
+                        <span className={luxuryStyles.bookingPeriod}>
+                          / night
+                        </span>
+                        {totalPrice > 0 &&
+                          adults + children > propertyPricing.min_guests && (
+                            <div className={luxuryStyles.guestInfo}>
+                              (for {adults + children} guests)
+                            </div>
+                          )}
+                      </div>
+                      <div className={luxuryStyles.basePriceNote}>
+                        Base price includes up to {propertyPricing.min_guests}{" "}
+                        {propertyPricing.min_guests === 1 ? "guest" : "guests"}
+                        {propertyPricing.min_children > 0 &&
+                          ` & ${propertyPricing.min_children} ${
+                            propertyPricing.min_children === 1
+                              ? "child"
+                              : "children"
+                          }`}
+                      </div>
+                    </div>
+                    {property.rating > 0 && (
+                      <div className={luxuryStyles.metaRating}>
+                        <div className={luxuryStyles.ratingBox}>
+                          <FiStar />
+                          <span>{Number(property.rating).toFixed(1)}</span>
+                        </div>
+                        <span className={luxuryStyles.reviewsCount}>
+                          ({property.reviews_count} reviews)
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* SESSION 33: Hide booking form when pending booking exists */}
+                  {!pendingBooking && (
+                    <div className={luxuryStyles.bookingForm}>
+                      {/* New Date Range Selector Component */}
+                      <DateRangeSelector
+                        checkIn={checkIn}
+                        checkOut={checkOut}
+                        onCheckInChange={setCheckIn}
+                        onCheckOutChange={setCheckOut}
+                        minDate={new Date()}
+                        label="Check-in date"
+                        luxuryStyles={luxuryStyles}
+                      />
+
+                      {/* Modern Guests Field */}
+                      <div
+                        className={luxuryStyles.modernFieldWrapper}
+                        ref={guestsDropdownRef}
+                      >
+                        <div
+                          className={luxuryStyles.modernField}
+                          onClick={() =>
+                            setShowGuestsDropdown(!showGuestsDropdown)
+                          }
+                        >
+                          <div className={luxuryStyles.fieldInner}>
+                            <FiUsers className={luxuryStyles.fieldIcon} />
+                            <div className={luxuryStyles.fieldText}>
+                              <label className={luxuryStyles.fieldLabel}>
+                                Guests
+                              </label>
+                              <div className={luxuryStyles.fieldValue}>
+                                {(adults || 0) + (children || 0)}{" "}
+                                {(adults || 0) + (children || 0) === 1
+                                  ? "Guest"
+                                  : "Guests"}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Guests Dropdown */}
+                        {showGuestsDropdown && (
+                          <div className={luxuryStyles.dropdownModern}>
+                            {/* Adults Counter */}
+                            <div className={luxuryStyles.guestsControlModern}>
+                              <div className={luxuryStyles.guestsInfoModern}>
+                                <div className={luxuryStyles.guestsLabelModern}>
+                                  Adults
+                                </div>
+                                <div
+                                  className={luxuryStyles.guestsSublabelModern}
+                                >
+                                  Age 13+
+                                </div>
+                              </div>
+                              <div className={luxuryStyles.guestsCounter}>
+                                <button
+                                  className={luxuryStyles.counterBtn}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setAdults(Math.max(1, adults - 1));
+                                  }}
+                                  disabled={adults <= 1}
+                                >
+                                  −
+                                </button>
+                                <span className={luxuryStyles.counterValue}>
+                                  {adults || 0}
+                                </span>
+                                <button
+                                  className={luxuryStyles.counterBtn}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setAdults(
+                                      Math.min(
+                                        propertyPricing.max_guests,
+                                        adults + 1,
+                                      ),
+                                    );
+                                  }}
+                                  disabled={
+                                    adults >= propertyPricing.max_guests
+                                  }
+                                >
+                                  +
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Divider */}
+                            <div className={luxuryStyles.guestsDivider} />
+
+                            {/* Children Counter */}
+                            <div className={luxuryStyles.guestsControlModern}>
+                              <div className={luxuryStyles.guestsInfoModern}>
+                                <div className={luxuryStyles.guestsLabelModern}>
+                                  Children
+                                </div>
+                                <div
+                                  className={luxuryStyles.guestsSublabelModern}
+                                >
+                                  Ages 2-12
+                                </div>
+                              </div>
+                              <div className={luxuryStyles.guestsCounter}>
+                                <button
+                                  className={luxuryStyles.counterBtn}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setChildren(Math.max(0, children - 1));
+                                  }}
+                                  disabled={children <= 0}
+                                >
+                                  −
+                                </button>
+                                <span className={luxuryStyles.counterValue}>
+                                  {children || 0}
+                                </span>
+                                <button
+                                  className={luxuryStyles.counterBtn}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setChildren(
+                                      Math.min(
+                                        propertyPricing.max_children,
+                                        children + 1,
+                                      ),
+                                    );
+                                  }}
+                                  disabled={
+                                    children >= propertyPricing.max_children
+                                  }
+                                >
+                                  +
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Price Breakdown */}
+                  {!pendingBooking && totalPrice > 0 && (
+                    <div className={luxuryStyles.priceBreakdown}>
+                      <h4 className={luxuryStyles.breakdownTitle}>
+                        Price Breakdown
+                      </h4>
+                      <div className={luxuryStyles.breakdownItems}>
+                        <div className={luxuryStyles.breakdownItem}>
+                          <span>
+                            Base ({nights} {nights === 1 ? "night" : "nights"})
+                          </span>
+                          <span>
+                            ₹{priceBreakdown.baseAmount.toLocaleString()}
+                          </span>
+                        </div>
+                        {priceBreakdown.extraGuestCharges > 0 && (
+                          <div className={luxuryStyles.breakdownItem}>
+                            <span>Extra Guest Charges</span>
+                            <span>
+                              ₹
+                              {priceBreakdown.extraGuestCharges.toLocaleString()}
+                            </span>
+                          </div>
+                        )}
+                        {priceBreakdown.extraChildrenCharges > 0 && (
+                          <div className={luxuryStyles.breakdownItem}>
+                            <span>Extra Children Charges</span>
+                            <span>
+                              ₹
+                              {priceBreakdown.extraChildrenCharges.toLocaleString()}
+                            </span>
+                          </div>
+                        )}
+                        <div className={luxuryStyles.breakdownItem}>
+                          <span>GST (18%)</span>
+                          <span>
+                            ₹{priceBreakdown.gstAmount.toLocaleString()}
+                          </span>
+                        </div>
+                        <div className={luxuryStyles.breakdownTotal}>
+                          <span>Total</span>
+                          <span>
+                            ₹{priceBreakdown.totalAmount.toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {!pendingBooking && (
+                    <button
+                      onClick={handleBooking}
+                      className={luxuryStyles.reserveBtnLuxury}
+                    >
+                      <span>Reserve Now</span>
+                    </button>
+                  )}
                 </div>
-
-                {/* SESSION 33: Hide booking form when pending booking exists */}
-                {!pendingBooking && (
-                  <div className={luxuryStyles.bookingForm}>
-                    {/* Row 1: Check-in and Check-out Dates */}
-                    <div className={luxuryStyles.dateSelectionGrid}>
-                      <div className={luxuryStyles.formGroup}>
-                        <label>
-                          <FiCalendar />
-                          Check-in
-                        </label>
-                        <DatePicker
-                          selected={checkIn}
-                          onChange={(date: Date | null) => setCheckIn(date)}
-                          selectsStart
-                          startDate={checkIn}
-                          endDate={checkOut}
-                          minDate={new Date()}
-                          placeholderText="Select check-in"
-                          dateFormat="MMM d, yyyy"
-                          className={luxuryStyles.formInput}
-                        />
-                      </div>
-
-                      <div className={luxuryStyles.formGroup}>
-                        <label>
-                          <FiCalendar />
-                          Check-out
-                        </label>
-                        <DatePicker
-                          selected={checkOut}
-                          onChange={(date: Date | null) => setCheckOut(date)}
-                          selectsEnd
-                          startDate={checkIn}
-                          endDate={checkOut}
-                          minDate={checkIn || new Date()}
-                          placeholderText="Select check-out"
-                          dateFormat="MMM d, yyyy"
-                          className={luxuryStyles.formInput}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Row 2: Adults and Children Counters */}
-                    <div className={luxuryStyles.guestsSelectionGrid}>
-                      <div className={luxuryStyles.guestsIncrementer}>
-                        <label className={luxuryStyles.guestsLabel}>
-                          <FiUsers />
-                          Adults
-                        </label>
-                        <div className={luxuryStyles.guestsControls}>
-                          <button
-                            type="button"
-                            onClick={() => setAdults(Math.max(1, adults - 1))}
-                            disabled={adults <= 1}
-                            className={`${luxuryStyles.guestBtn} ${luxuryStyles.guestDecrement}`}
-                            aria-label="Decrease adults"
-                          >
-                            −
-                          </button>
-                          <span className={luxuryStyles.guestsCount}>
-                            {adults} {adults === 1 ? "Adult" : "Adults"}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setAdults(
-                                Math.min(property.max_guests, adults + 1),
-                              )
-                            }
-                            disabled={adults >= property.max_guests}
-                            className={`${luxuryStyles.guestBtn} ${luxuryStyles.guestIncrement}`}
-                            aria-label="Increase adults"
-                          >
-                            +
-                          </button>
-                        </div>
-                      </div>
-
-                      <div className={luxuryStyles.guestsIncrementer}>
-                        <label className={luxuryStyles.guestsLabel}>
-                          <FiUsers />
-                          Children (Ages 2-12)
-                        </label>
-                        <div className={luxuryStyles.guestsControls}>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setChildren(Math.max(0, children - 1))
-                            }
-                            disabled={children <= 0}
-                            className={`${luxuryStyles.guestBtn} ${luxuryStyles.guestDecrement}`}
-                            aria-label="Decrease children"
-                          >
-                            −
-                          </button>
-                          <span className={luxuryStyles.guestsCount}>
-                            {children} {children === 1 ? "Child" : "Children"}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setChildren(
-                                Math.min(
-                                  propertyPricing.max_children,
-                                  children + 1,
-                                ),
-                              )
-                            }
-                            disabled={children >= propertyPricing.max_children}
-                            className={`${luxuryStyles.guestBtn} ${luxuryStyles.guestIncrement}`}
-                            aria-label="Increase children"
-                          >
-                            +
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Price Breakdown */}
-                {!pendingBooking && totalPrice > 0 && (
-                  <div className={luxuryStyles.priceBreakdown}>
-                    <h4 className={luxuryStyles.breakdownTitle}>
-                      Price Breakdown
-                    </h4>
-                    <div className={luxuryStyles.breakdownItems}>
-                      <div className={luxuryStyles.breakdownItem}>
-                        <span>
-                          Base ({nights} {nights === 1 ? "night" : "nights"})
-                        </span>
-                        <span>
-                          ₹{priceBreakdown.baseAmount.toLocaleString()}
-                        </span>
-                      </div>
-                      {priceBreakdown.extraGuestCharges > 0 && (
-                        <div className={luxuryStyles.breakdownItem}>
-                          <span>Extra Guest Charges</span>
-                          <span>
-                            ₹{priceBreakdown.extraGuestCharges.toLocaleString()}
-                          </span>
-                        </div>
-                      )}
-                      {priceBreakdown.extraChildrenCharges > 0 && (
-                        <div className={luxuryStyles.breakdownItem}>
-                          <span>Extra Children Charges</span>
-                          <span>
-                            ₹
-                            {priceBreakdown.extraChildrenCharges.toLocaleString()}
-                          </span>
-                        </div>
-                      )}
-                      <div className={luxuryStyles.breakdownItem}>
-                        <span>GST (18%)</span>
-                        <span>
-                          ₹{priceBreakdown.gstAmount.toLocaleString()}
-                        </span>
-                      </div>
-                      <div className={luxuryStyles.breakdownTotal}>
-                        <span>Total</span>
-                        <span>
-                          ₹{priceBreakdown.totalAmount.toLocaleString()}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                {!pendingBooking && (
-                  <button
-                    onClick={handleBooking}
-                    className={luxuryStyles.reserveBtnLuxury}
-                  >
-                    <span>Reserve Now</span>
-                  </button>
-                )}
               </div>
-            </div>
-          </aside>
+            </aside>
+          </div>
         </div>
 
         {/* Mobile Floating Booking Button */}
@@ -1110,14 +1262,23 @@ function PropertyDetailContent() {
 
 export default function PropertyDetailPage() {
   return (
-    <Suspense fallback={
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
-        <div style={{ textAlign: 'center' }}>
-          <div className="spinner"></div>
-          <p>Loading property...</p>
+    <Suspense
+      fallback={
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            minHeight: "100vh",
+          }}
+        >
+          <div style={{ textAlign: "center" }}>
+            <div className="spinner"></div>
+            <p>Loading property...</p>
+          </div>
         </div>
-      </div>
-    }>
+      }
+    >
       <PropertyDetailContent />
     </Suspense>
   );

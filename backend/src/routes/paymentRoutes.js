@@ -19,9 +19,7 @@ const createOrderValidation = [
 ];
 
 const verifyPaymentValidation = [
-  body("razorpay_order_id").notEmpty().withMessage("Order ID is required"),
-  body("razorpay_payment_id").notEmpty().withMessage("Payment ID is required"),
-  body("razorpay_signature").notEmpty().withMessage("Signature is required"),
+  body("order_id").notEmpty().withMessage("Order ID is required"),
   body("booking_id").notEmpty().withMessage("Booking ID is required"),
   validate,
 ];
@@ -35,14 +33,14 @@ router.post(
   authenticate,
   authorize("user"),
   createOrderValidation,
-  createPaymentOrder
+  createPaymentOrder,
 );
 router.post(
   "/verify",
   authenticate,
   authorize("user"),
   verifyPaymentValidation,
-  verifyPayment
+  verifyPayment,
 );
 
 // Admin routes
@@ -50,7 +48,7 @@ router.get(
   "/history",
   authenticate,
   authorize("admin", "super_admin"),
-  getPaymentHistory
+  getPaymentHistory,
 );
 
 // Invoice route (user can access their own, admin can access all)
@@ -58,7 +56,7 @@ router.get(
   "/invoice/:bookingId",
   authenticate,
   authorize("user", "admin", "super_admin"),
-  getInvoice
+  getInvoice,
 );
 
 export default router;

@@ -17,12 +17,35 @@ import {
   FiArrowLeft,
 } from "react-icons/fi";
 import styles from "./booking-review.module.css";
+// SESSION 64: New components for coupon and price breakdown
+import CouponInput from "@/components/booking/CouponInput";
+import PriceBreakdown from "@/components/booking/PriceBreakdown";
 
-// Load Razorpay script
-const loadRazorpayScript = () => {
+// Declare Cashfree global for TypeScript
+declare global {
+  interface Window {
+    Cashfree: (config: { mode: string }) => {
+      checkout: (options: {
+        paymentSessionId: string;
+        returnUrl: string;
+        customerDetails: {
+          customerName: string;
+          customerEmail: string;
+          customerPhone: string;
+        };
+      }) => Promise<{
+        error?: { message: string };
+        paymentDetails?: { orderId: string };
+      }>;
+    };
+  }
+}
+
+// Load Cashfree SDK script
+const loadCashfreeScript = () => {
   return new Promise((resolve) => {
     const script = document.createElement("script");
-    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.src = "https://sdk.cashfree.com/js/v3/cashfree.js";
     script.onload = () => resolve(true);
     script.onerror = () => resolve(false);
     document.body.appendChild(script);
@@ -44,6 +67,11 @@ function BookingReviewContent() {
   const [earlyCheckIn, setEarlyCheckIn] = useState(false);
   const [lateCheckOut, setLateCheckOut] = useState(false);
   const [agreeToTerms, setAgreeToTerms] = useState(false);
+
+  // SESSION 64: Coupon system state
+  const [appliedCouponCode, setAppliedCouponCode] = useState<string>("");
+  const [appliedCouponId, setAppliedCouponId] = useState<string>("");
+  const [couponDiscount, setCouponDiscount] = useState<number>(0);
 
   // SESSION 31: Fetch existing booking if bookingId parameter is present
   useEffect(() => {
@@ -80,10 +108,12 @@ function BookingReviewContent() {
           // Set booking data in context (matching BookingData interface)
           setBookingData({
             propertyId: booking.property_id,
+            propertyTypeId: booking.property_type_id, // Added from backend
             propertyName: booking.property_title,
             propertyLocation: `${booking.city_name}, ${booking.city_state}`,
             propertyImage:
-              booking.property_images?.[0]?.image_url || "/placeholder.jpg",
+              booking.property_images?.[0]?.image_url ||
+              "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect width='400' height='300' fill='%23f0f0f0'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='Arial' font-size='20' fill='%23999'%3ENo Image%3C/text%3E%3C/svg%3E",
             checkIn: booking.check_in,
             checkOut: booking.check_out,
             adults: booking.guest_count, // guest_count is adults only
@@ -102,7 +132,16 @@ function BookingReviewContent() {
             maxChildren: booking.max_children || 5,
             extraGuestCharge: booking.extra_guest_charge || 0,
             extraChildCharge: booking.extra_child_charge || 0,
+            // SESSION 64: Restore coupon data if present
+            couponCode: booking.coupon_code,
+            couponDiscount: booking.discount_amount || 0,
           });
+
+          // SESSION 64: Set coupon state if coupon was applied
+          if (booking.coupon_code) {
+            setAppliedCouponCode(booking.coupon_code);
+            setCouponDiscount(booking.discount_amount || 0);
+          }
         } catch (error: unknown) {
           console.error("Error fetching booking:", error);
           toast.error("Failed to load booking details");
@@ -134,6 +173,47 @@ function BookingReviewContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, bookingData, fetchingBooking, router]);
 
+  // SESSION 64: Coupon event handlers
+  const handleCouponApplied = (
+    couponCode: string,
+    discountAmount: number,
+    couponId: string,
+  ) => {
+    setAppliedCouponCode(couponCode);
+    setAppliedCouponId(couponId);
+    setCouponDiscount(discountAmount);
+
+    // Update booking data with coupon
+    if (bookingData) {
+      setBookingData({
+        ...bookingData,
+        couponCode,
+        couponId,
+        couponDiscount: discountAmount,
+      });
+    }
+
+    toast.success(`Coupon ${couponCode} applied successfully!`);
+  };
+
+  const handleCouponRemoved = () => {
+    setAppliedCouponCode("");
+    setAppliedCouponId("");
+    setCouponDiscount(0);
+
+    // Update booking data to remove coupon
+    if (bookingData) {
+      setBookingData({
+        ...bookingData,
+        couponCode: undefined,
+        couponId: undefined,
+        couponDiscount: 0,
+      });
+    }
+
+    toast.success("Coupon removed");
+  };
+
   const handlePayment = async () => {
     // Validation
     if (!fullName || !email || !phone) {
@@ -149,26 +229,50 @@ function BookingReviewContent() {
     setLoading(true);
 
     try {
-      // Load Razorpay script
-      const scriptLoaded = await loadRazorpayScript();
+      // Load Cashfree SDK script
+      const scriptLoaded = await loadCashfreeScript();
       if (!scriptLoaded) {
         toast.error("Failed to load payment gateway");
         setLoading(false);
         return;
       }
 
-      // Create booking and get Razorpay order
-      const response = await api.post("/bookings", {
-        property_id: bookingData?.propertyId,
-        check_in: bookingData?.checkIn,
-        check_out: bookingData?.checkOut,
-        guest_count: bookingData?.adults,
-        children_count: bookingData?.children,
-        infants_count: 0,
-      });
+      // Create booking and get Cashfree order
+      let response;
+      try {
+        response = await api.post("/bookings", {
+          property_id: bookingData?.propertyId,
+          property_type_id: bookingData?.propertyTypeId,
+          check_in: bookingData?.checkIn,
+          check_out: bookingData?.checkOut,
+          guest_count: bookingData?.adults,
+          children_count: bookingData?.children,
+          infants_count: 0,
+          // SESSION 64: Include coupon data if applied
+          coupon_code: appliedCouponCode || undefined,
+          coupon_id: appliedCouponId || undefined,
+        });
+      } catch (bookingError: unknown) {
+        let errorMsg = "Failed to create booking";
+        if (
+          bookingError &&
+          typeof bookingError === "object" &&
+          "response" in bookingError
+        ) {
+          const axiosErr = bookingError as {
+            response?: { data?: { message?: string; error?: string } };
+          };
+          errorMsg =
+            axiosErr.response?.data?.message ||
+            axiosErr.response?.data?.error ||
+            errorMsg;
+        }
+        toast.error(errorMsg);
+        setLoading(false);
+        return;
+      }
 
-      const { booking_id, razorpay_order_id, amount, isUpdate } =
-        response.data.data;
+      const { booking_id, isUpdate } = response.data.data;
 
       // Show appropriate message if booking was updated
       if (isUpdate) {
@@ -177,135 +281,118 @@ function BookingReviewContent() {
         );
       }
 
-      // ============================================
-      // TEST MODE: Bypass Razorpay for local testing
-      // Only trigger test mode if using dummy key or test order
-      // ============================================
-      const isTestMode =
-        razorpay_order_id?.startsWith("test_order_") ||
-        process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID === "rzp_test_dummykey123456";
-
-      console.log("Payment mode:", isTestMode ? "TEST" : "LIVE");
-      console.log("Razorpay Key:", process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID);
-      console.log("Order ID:", razorpay_order_id);
-
-      if (isTestMode) {
-        console.log("🧪 TEST MODE: Simulating successful payment");
-
-        // Simulate payment success directly
-        try {
-          const verifyResponse = await api.post("/payments/verify", {
-            razorpay_order_id: razorpay_order_id,
-            razorpay_payment_id: `test_payment_${Date.now()}`,
-            razorpay_signature: "test_signature",
-            booking_id: booking_id,
-          });
-
-          if (verifyResponse.data.success) {
-            toast.success("Payment successful! (Test Mode)");
-            clearBookingData();
-            router.push(`/booking-success?bookingId=${booking_id}`);
-          }
-        } catch (error: unknown) {
-          const errorMessage =
-            error instanceof Error
-              ? error.message
-              : "Payment verification failed";
-          toast.error(errorMessage);
+      // Create payment order
+      let paymentResponse;
+      try {
+        paymentResponse = await api.post("/payments/create-order", {
+          booking_id: booking_id,
+        });
+      } catch (paymentError: unknown) {
+        let errorMsg = "Failed to create payment order";
+        if (
+          paymentError &&
+          typeof paymentError === "object" &&
+          "response" in paymentError
+        ) {
+          const axiosErr = paymentError as {
+            response?: { data?: { message?: string; error?: string } };
+          };
+          errorMsg =
+            axiosErr.response?.data?.message ||
+            axiosErr.response?.data?.error ||
+            errorMsg;
         }
+        toast.error(errorMsg);
         setLoading(false);
         return;
       }
 
-      // ============================================
-      // LIVE MODE: Use real Razorpay
-      // ============================================
+      const { order_id, payment_session_id } = paymentResponse.data.data;
 
-      // Initialize Razorpay
-      const options = {
-        key:
-          process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_dummykey123456", // Use environment variable
-        amount: amount, // Amount in paise
-        currency: "INR",
-        name: "Zevio",
-        description: `Booking for ${bookingData?.propertyName}`,
-        order_id: razorpay_order_id,
-        prefill: {
-          name: fullName,
-          email: email,
-          contact: phone,
-        },
-        theme: {
-          color: "#2FA4A9",
-        },
-        handler: async function (response: {
-          razorpay_order_id: string;
-          razorpay_payment_id: string;
-          razorpay_signature: string;
-        }) {
-          try {
-            // Verify payment
-            const verifyResponse = await api.post("/payments/verify", {
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-              booking_id: booking_id,
-            });
+      // Initialize Cashfree Drop-in checkout @ts-ignore - Cashfree SDK is loaded dynamically from CDN
+      const cashfree = window.Cashfree({
+        mode: "sandbox", // Use "sandbox" for TEST, "production" for PROD
+      });
 
-            if (verifyResponse.data.success) {
-              toast.success("Payment successful!");
-              clearBookingData();
-              router.push(`/booking-success?bookingId=${booking_id}`);
-            }
-          } catch (error: unknown) {
-            const errorMessage =
-              error instanceof Error
-                ? error.message
-                : "Payment verification failed";
-            toast.error(errorMessage);
-            setLoading(false);
-          }
-        },
-        modal: {
-          ondismiss: function () {
-            toast.warning("Payment cancelled");
-            setLoading(false);
-          },
+      const checkoutOptions = {
+        paymentSessionId: payment_session_id,
+        returnUrl: `${window.location.origin}/booking-success?bookingId=${booking_id}`,
+        redirectTarget: "_modal", // Open in modal instead of redirect
+        customerDetails: {
+          customerName: fullName,
+          customerEmail: email,
+          customerPhone: phone,
         },
       };
 
-      interface RazorpayOptions {
-        key: string;
-        amount: number;
-        currency: string;
-        name: string;
-        description: string;
-        order_id: string;
-        prefill: {
-          name: string;
-          email: string;
-          contact: string;
-        };
-        theme: {
-          color: string;
-        };
-        handler: (response: {
-          razorpay_order_id: string;
-          razorpay_payment_id: string;
-          razorpay_signature: string;
-        }) => void;
-        modal: {
-          ondismiss: () => void;
-        };
-      }
+      // Open Cashfree payment modal
+      cashfree
+        .checkout(checkoutOptions)
+        .then(
+          async (result: {
+            error?: { message: string };
+            paymentDetails?: { orderId: string };
+          }) => {
+            if (result.error) {
+              console.error("Payment error:", result.error);
+              toast.error(result.error.message || "Payment failed");
+              setLoading(false);
+              return;
+            }
 
-      interface RazorpayWindow extends Window {
-        Razorpay: new (options: RazorpayOptions) => { open: () => void };
-      }
-      const razorpay = new (window as unknown as RazorpayWindow).Razorpay(
-        options,
-      );
-      razorpay.open();
+            if (result.paymentDetails) {
+              console.log("✅ Payment successful:", result.paymentDetails);
+
+              // Verify payment with backend
+              try {
+                const verifyResponse = await api.post("/payments/verify", {
+                  order_id: order_id,
+                  booking_id: booking_id,
+                });
+
+                if (verifyResponse.data.success) {
+                  toast.success("Payment successful! Redirecting...");
+                  clearBookingData();
+                  setTimeout(() => {
+                    router.push(`/booking-success?bookingId=${booking_id}`);
+                  }, 1500);
+                } else {
+                  toast.error(
+                    verifyResponse.data.message ||
+                      "Payment verification failed",
+                  );
+                  setLoading(false);
+                }
+              } catch (verifyError: unknown) {
+                let errorMsg = "Payment verification failed";
+                if (
+                  verifyError &&
+                  typeof verifyError === "object" &&
+                  "response" in verifyError
+                ) {
+                  const axiosErr = verifyError as {
+                    response?: { data?: { message?: string; error?: string } };
+                  };
+                  errorMsg =
+                    axiosErr.response?.data?.message ||
+                    axiosErr.response?.data?.error ||
+                    errorMsg;
+                } else if (verifyError instanceof Error) {
+                  errorMsg = verifyError.message;
+                }
+                toast.error(errorMsg);
+                setLoading(false);
+              }
+            }
+          },
+        )
+        .catch((error: Error) => {
+          console.error("Cashfree checkout error:", error);
+          toast.error(
+            error.message || "Payment gateway error. Please try again.",
+          );
+          setLoading(false);
+        });
     } catch (error: unknown) {
       console.error("Booking error:", error);
 
@@ -314,20 +401,24 @@ function BookingReviewContent() {
       if (error && typeof error === "object" && "response" in error) {
         const axiosError = error as {
           response?: {
+            status?: number;
             data?: {
               message?: string;
               error?: string;
             };
           };
-          message?: string;
         };
-        if (axiosError.response?.data?.message) {
-          errorMessage = axiosError.response.data.message;
-        } else if (axiosError.response?.data?.error) {
-          errorMessage = axiosError.response.data.error;
-        } else if (axiosError.message) {
-          errorMessage = axiosError.message;
-        }
+        errorMessage =
+          axiosError.response?.data?.message ||
+          axiosError.response?.data?.error ||
+          errorMessage;
+
+        // Log full error details for debugging
+        console.error("Full booking error details:", {
+          status: axiosError.response?.status,
+          data: axiosError.response?.data,
+          bookingData: bookingData,
+        });
       } else if (error instanceof Error) {
         errorMessage = error.message;
       }
@@ -481,105 +572,23 @@ function BookingReviewContent() {
                 </div>
               </div>
 
-              {/* Price Breakdown Card */}
-              <div className={styles.priceCard}>
-                <h2 className={styles.sectionTitle}>Price Breakdown</h2>
-                <div className={styles.priceBreakdown}>
-                  <div className={styles.priceRow}>
-                    <span>
-                      ₹{bookingData.pricePerNight.toLocaleString("en-IN")} ×{" "}
-                      {bookingData.nights}{" "}
-                      {bookingData.nights === 1 ? "night" : "nights"}
-                      <span className={styles.priceNote}>
-                        {" "}
-                        (Base price for {bookingData.minGuests}{" "}
-                        {bookingData.minGuests === 1 ? "guest" : "guests"}
-                        {bookingData.minChildren > 0 &&
-                          ` + ${bookingData.minChildren} ${
-                            bookingData.minChildren === 1 ? "child" : "children"
-                          }`}
-                        )
-                      </span>
-                    </span>
-                    <span>
-                      ₹{bookingData.baseAmount.toLocaleString("en-IN")}
-                    </span>
-                  </div>
-                  {bookingData.extraGuestCharges > 0 && (
-                    <div className={styles.priceRow}>
-                      <span>
-                        Extra guest charges
-                        <span className={styles.priceNote}>
-                          {" "}
-                          (
-                          {Math.max(
-                            0,
-                            bookingData.adults - bookingData.minGuests,
-                          )}{" "}
-                          additional{" "}
-                          {Math.max(
-                            0,
-                            bookingData.adults - bookingData.minGuests,
-                          ) === 1
-                            ? "adult"
-                            : "adults"}{" "}
-                          × ₹
-                          {bookingData.extraGuestCharge.toLocaleString("en-IN")}{" "}
-                          × {bookingData.nights}{" "}
-                          {bookingData.nights === 1 ? "night" : "nights"})
-                        </span>
-                      </span>
-                      <span>
-                        ₹{bookingData.extraGuestCharges.toLocaleString("en-IN")}
-                      </span>
-                    </div>
-                  )}
-                  {bookingData.extraChildrenCharges > 0 && (
-                    <div className={styles.priceRow}>
-                      <span>
-                        Extra children charges
-                        <span className={styles.priceNote}>
-                          {" "}
-                          (
-                          {Math.max(
-                            0,
-                            bookingData.children - bookingData.minChildren,
-                          )}{" "}
-                          additional{" "}
-                          {Math.max(
-                            0,
-                            bookingData.children - bookingData.minChildren,
-                          ) === 1
-                            ? "child"
-                            : "children"}{" "}
-                          × ₹
-                          {bookingData.extraChildCharge.toLocaleString("en-IN")}{" "}
-                          × {bookingData.nights}{" "}
-                          {bookingData.nights === 1 ? "night" : "nights"})
-                        </span>
-                      </span>
-                      <span>
-                        ₹
-                        {bookingData.extraChildrenCharges.toLocaleString(
-                          "en-IN",
-                        )}
-                      </span>
-                    </div>
-                  )}
-                  <div className={styles.priceRow}>
-                    <span>GST (18%)</span>
-                    <span>
-                      ₹{bookingData.gstAmount.toLocaleString("en-IN")}
-                    </span>
-                  </div>
-                  <div className={styles.priceRowTotal}>
-                    <span>Total Amount</span>
-                    <span>
-                      ₹{bookingData.totalAmount.toLocaleString("en-IN")}
-                    </span>
-                  </div>
-                </div>
-              </div>
+              {/* SESSION 64: New Price Breakdown Component with Tiered GST & Service Charges */}
+              <PriceBreakdown
+                baseAmount={bookingData.baseAmount}
+                extraGuestCharges={bookingData.extraGuestCharges}
+                extraChildrenCharges={bookingData.extraChildrenCharges}
+                nights={bookingData.nights}
+                pricePerNight={bookingData.pricePerNight}
+                minGuests={bookingData.minGuests}
+                minChildren={bookingData.minChildren}
+                adults={bookingData.adults}
+                childrenCount={bookingData.children}
+                extraGuestCharge={bookingData.extraGuestCharge}
+                extraChildCharge={bookingData.extraChildCharge}
+                couponDiscount={couponDiscount}
+                couponCode={appliedCouponCode}
+                showDetails={true}
+              />
             </div>
 
             {/* Right: Guest Details Form */}
@@ -653,6 +662,20 @@ function BookingReviewContent() {
                 </div>
               </div>
 
+              {/* SESSION 64: Coupon Input Component */}
+              <CouponInput
+                propertyId={bookingData.propertyId}
+                bookingAmount={
+                  bookingData.baseAmount +
+                  bookingData.extraGuestCharges +
+                  bookingData.extraChildrenCharges
+                }
+                onCouponApplied={handleCouponApplied}
+                onCouponRemoved={handleCouponRemoved}
+                appliedCouponCode={appliedCouponCode}
+                appliedDiscount={couponDiscount}
+              />
+
               {/* Terms & Conditions */}
               <div className={styles.termsCard}>
                 <label className={styles.termsLabel}>
@@ -690,7 +713,24 @@ function BookingReviewContent() {
                 ) : (
                   <>
                     <FiCheck /> Confirm & Pay ₹
-                    {bookingData.totalAmount.toLocaleString("en-IN")}
+                    {/* SESSION 64: Calculate total with Session 64 pricing logic */}
+                    {(() => {
+                      const subtotal =
+                        bookingData.baseAmount +
+                        bookingData.extraGuestCharges +
+                        bookingData.extraChildrenCharges;
+                      const bookingAmount = subtotal - couponDiscount;
+                      const gstRate = bookingAmount <= 7500 ? 5 : 18;
+                      const gstAmount = Math.round(
+                        (bookingAmount * gstRate) / 100,
+                      );
+                      const serviceCharge = Math.round(
+                        (bookingAmount * 5) / 100,
+                      );
+                      const totalAmount =
+                        bookingAmount + gstAmount + serviceCharge;
+                      return totalAmount.toLocaleString("en-IN");
+                    })()}
                   </>
                 )}
               </button>
@@ -705,14 +745,16 @@ function BookingReviewContent() {
 
 export default function BookingReviewPage() {
   return (
-    <Suspense fallback={
-      <div className={styles.pageContainer}>
-        <div className={styles.loadingContainer}>
-          <div className={styles.loadingSpinner}></div>
-          <p className={styles.loadingText}>Loading...</p>
+    <Suspense
+      fallback={
+        <div className={styles.pageContainer}>
+          <div className={styles.loadingContainer}>
+            <div className={styles.loadingSpinner}></div>
+            <p className={styles.loadingText}>Loading...</p>
+          </div>
         </div>
-      </div>
-    }>
+      }
+    >
       <BookingReviewContent />
     </Suspense>
   );

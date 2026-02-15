@@ -17,6 +17,7 @@ import {
   useCorporateUser,
   calculateCorporateSavings,
 } from "@/hooks/useCorporateUser";
+import { getImageUrl } from "@/lib/imageUtils";
 
 interface ServiceApartmentCardProps {
   property: ServiceApartment;
@@ -46,7 +47,7 @@ export default function ServiceApartmentCard({
     hasCorporateDiscount && showCorporateFeatures
       ? calculateCorporateSavings(
           property.price_per_night,
-          corporateDiscountPercent
+          corporateDiscountPercent,
         )
       : null;
 
@@ -64,7 +65,7 @@ export default function ServiceApartmentCard({
         const isInWishlist = wishlist.some(
           (item: { property_id: string }) =>
             item.property_id === property.id ||
-            item.property_id === property.property_id
+            item.property_id === property.property_id,
         );
         setIsWishlisted(isInWishlist);
       } catch {
@@ -83,7 +84,7 @@ export default function ServiceApartmentCard({
     setLoading(true);
     await onWishlistToggle(
       property.id || property.property_id || "",
-      isWishlisted
+      isWishlisted,
     );
     setIsWishlisted(!isWishlisted);
     setLoading(false);
@@ -91,10 +92,11 @@ export default function ServiceApartmentCard({
 
   const defaultPhoto =
     "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&h=400&fit=crop";
-  const photos =
+  const photos = (
     Array.isArray(property.photos) && property.photos.length > 0
       ? property.photos
-      : [defaultPhoto];
+      : [defaultPhoto]
+  ).map(getImageUrl);
 
   const monthlyDiscount =
     property.monthly_discount_percent ||
@@ -115,6 +117,7 @@ export default function ServiceApartmentCard({
           height={300}
           className={styles.image}
           priority={false}
+          unoptimized
         />
 
         {/* Wishlist Button */}
@@ -159,10 +162,22 @@ export default function ServiceApartmentCard({
         </div>
 
         {/* Location */}
-        <div className={styles.location}>
+        <div
+          className={`${styles.location} ${property.maps_location ? styles.locationClickable : ""}`}
+          onClick={(e) => {
+            if (property.maps_location) {
+              e.preventDefault();
+              e.stopPropagation();
+              window.open(property.maps_location, "_blank");
+            }
+          }}
+          title={property.maps_location ? "View on Google Maps" : ""}
+        >
           <FiMapPin className={styles.locationIcon} />
           <span>
-            {property.city}, {property.state}
+            {property.area
+              ? `${property.area}, ${property.city}`
+              : `${property.city}, ${property.state}`}
           </span>
         </div>
 

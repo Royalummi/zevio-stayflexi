@@ -11,10 +11,10 @@ import {
   FiHome,
 } from "react-icons/fi";
 import { BsBuilding } from "react-icons/bs";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
+import DateRangeSelector from "@/components/DateRangeSelector";
 import { City } from "@/types";
 import { formatDateForAPI } from "@/lib/utils";
+import { api } from "@/lib/axios";
 import styles from "./SearchBar-modern.module.css";
 
 interface SearchBarProps {
@@ -29,8 +29,8 @@ export default function SearchBar({ cities }: SearchBarProps) {
   // Property type toggle
   const [propertyType, setPropertyType] = useState<PropertyType>("villas");
 
-  // Service apartment locations (fetched from API)
-  const [apartmentLocations, setApartmentLocations] = useState<City[]>([]);
+  // Areas/localities for area-wise search (both villas and apartments)
+  const [areas, setAreas] = useState<City[]>([]);
 
   const [selectedCity, setSelectedCity] = useState<City | null>(null);
   const [searchInput, setSearchInput] = useState("");
@@ -138,54 +138,51 @@ export default function SearchBar({ cities }: SearchBarProps) {
     return () => window.removeEventListener("keydown", handleEscKey);
   }, [isSearchModalOpen]);
 
-  // Fetch service apartment locations on mount
+  // Fetch areas/localities based on property type
   useEffect(() => {
-    const fetchApartmentLocations = async () => {
+    const fetchAreas = async () => {
       try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/service-apartments/locations`,
+        const propertyTypeParam =
+          propertyType === "villas" ? "villa" : "service_apartment";
+        const response = await api.get(
+          `/public/areas?property_type=${propertyTypeParam}`,
         );
-        if (response.ok) {
-          const data = await response.json();
-          if (data.success && data.data) {
-            setApartmentLocations(data.data);
-          }
+        if (response.data.success && response.data.data) {
+          setAreas(response.data.data.areas || []);
         }
       } catch (error) {
-        console.error("Failed to fetch apartment locations:", error);
+        console.error("Failed to fetch areas:", error);
       }
     };
-    fetchApartmentLocations();
-  }, []);
+    fetchAreas();
+  }, [propertyType]);
 
   // Filter cities based on property type
   const filteredCities = useMemo(() => {
-    // Use different location data based on property type
-    const locationsData =
-      propertyType === "apartments" ? apartmentLocations : cities;
-    const locationsArray = Array.isArray(locationsData) ? locationsData : [];
+    // Combine cities and areas for comprehensive search
+    const allLocations = [...cities, ...areas];
 
     if (!searchInput.trim()) {
-      return locationsArray;
+      return allLocations;
     }
 
-    return locationsArray.filter((location) => {
+    return allLocations.filter((location) => {
       const searchLower = searchInput.toLowerCase();
-      // For apartments, search in area, city, and state
-      if (propertyType === "apartments" && location.area) {
+      // Search in area, city, and state
+      if (location.area) {
         return (
           location.area.toLowerCase().includes(searchLower) ||
-          location.name.toLowerCase().includes(searchLower) ||
+          location.city?.toLowerCase().includes(searchLower) ||
           location.state.toLowerCase().includes(searchLower)
         );
       }
-      // For villas, search in city and state only
+      // For cities without area, search in city name and state
       return (
         location.name.toLowerCase().includes(searchLower) ||
         location.state.toLowerCase().includes(searchLower)
       );
     });
-  }, [searchInput, cities, apartmentLocations, propertyType]);
+  }, [searchInput, cities, areas]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -236,9 +233,9 @@ export default function SearchBar({ cities }: SearchBarProps) {
 
   const selectCity = (city: City) => {
     setSelectedCity(city);
-    // Format display based on property type
-    if (propertyType === "apartments" && city.area) {
-      setSearchInput(`${city.area}, ${city.name}, ${city.state}`);
+    // Format display - show area if available
+    if (city.area) {
+      setSearchInput(`${city.area}, ${city.city || city.name}, ${city.state}`);
     } else {
       setSearchInput(`${city.name}, ${city.state}`);
     }
@@ -372,10 +369,13 @@ export default function SearchBar({ cities }: SearchBarProps) {
     const params = new URLSearchParams();
 
     if (selectedCity) {
-      params.append("city", selectedCity.name.toLowerCase());
-      // Add area parameter for service apartments
-      if (propertyType === "apartments" && selectedCity.area) {
-        params.append("area", selectedCity.area.toLowerCase());
+      params.append(
+        "city",
+        selectedCity.city || selectedCity.name.toLowerCase(),
+      );
+      // Add area parameter if area is selected
+      if (selectedCity.area) {
+        params.append("area", selectedCity.area);
       }
     }
 
@@ -408,16 +408,6 @@ export default function SearchBar({ cities }: SearchBarProps) {
     }
 
     const query = params.toString();
-    console.log("SearchBar - Property Type:", propertyType);
-    console.log("SearchBar - Navigating with params:", query);
-    console.log(
-      "SearchBar - Adults:",
-      adults,
-      "Children:",
-      children,
-      "Infants:",
-      infants,
-    );
 
     // Close modal before navigation
     closeModal();
@@ -559,8 +549,8 @@ export default function SearchBar({ cities }: SearchBarProps) {
                         </div>
                         <div className={styles.itemText}>
                           <div className={styles.itemTitleModern}>
-                            {propertyType === "apartments" && city.area
-                              ? `${city.area}, ${city.name}`
+                            {city.area
+                              ? `${city.area}, ${city.city || city.name}`
                               : city.name}
                           </div>
                           <div className={styles.itemSubtitleModern}>
@@ -627,66 +617,48 @@ export default function SearchBar({ cities }: SearchBarProps) {
               <div
                 className={`${styles.dropdownModern} ${styles.datesDropdownModern}`}
               >
-                {/* Calendar Headers */}
-                <div className={styles.calendarHeaders}>
-                  <div className={styles.calendarHeader}>
-                    <span>
-                      {propertyType === "villas" ? "Check-in" : "Move-in"}
-                    </span>
-                  </div>
-                  <div className={styles.calendarHeader}>
-                    <span>
-                      {propertyType === "villas" ? "Check-out" : "Move-out"}
-                    </span>
-                  </div>
-                </div>
-
                 {propertyType === "villas" ? (
-                  <div className={styles.datesPickerWrapper}>
-                    <DatePicker
-                      selected={checkin}
-                      onChange={(dates: [Date | null, Date | null]) => {
-                        const [start, end] = dates;
-                        setCheckin(start);
-                        setCheckout(end);
-                        if (start && end) {
-                          setShowDatesDropdown(false);
-                          setActiveField(null);
-                        }
-                      }}
-                      startDate={checkin}
-                      endDate={checkout}
-                      selectsRange
-                      minDate={new Date()}
-                      monthsShown={2}
-                      inline
-                      dateFormat="MMM d, yyyy"
-                      calendarClassName={styles.sideBySideCalendar}
-                    />
-                  </div>
+                  <DateRangeSelector
+                    checkIn={checkin}
+                    checkOut={checkout}
+                    onCheckInChange={(date) => {
+                      setCheckin(date);
+                      // Keep dropdown open to select checkout
+                    }}
+                    onCheckOutChange={(date) => {
+                      setCheckout(date);
+                      // Only close when BOTH dates are selected
+                      if (checkin && date) {
+                        setShowDatesDropdown(false);
+                        setActiveField(null);
+                      }
+                    }}
+                    minDate={new Date()}
+                    calendarOnly={true}
+                    isOpen={showDatesDropdown}
+                    onOpenChange={setShowDatesDropdown}
+                  />
                 ) : (
-                  <div className={styles.datesPickerWrapper}>
-                    <DatePicker
-                      selected={moveInDate}
-                      onChange={(dates: [Date | null, Date | null]) => {
-                        const [start, end] = dates;
-                        setMoveInDate(start);
-                        setMoveOutDate(end);
-                        if (start && end) {
-                          setShowDatesDropdown(false);
-                          setActiveField(null);
-                        }
-                      }}
-                      startDate={moveInDate}
-                      endDate={moveOutDate}
-                      selectsRange
-                      minDate={new Date()}
-                      monthsShown={2}
-                      inline
-                      dateFormat="MMM d, yyyy"
-                      calendarClassName={styles.sideBySideCalendar}
-                    />
-                  </div>
+                  <DateRangeSelector
+                    checkIn={moveInDate}
+                    checkOut={moveOutDate}
+                    onCheckInChange={(date) => {
+                      setMoveInDate(date);
+                      // Keep dropdown open to select move-out date
+                    }}
+                    onCheckOutChange={(date) => {
+                      setMoveOutDate(date);
+                      // Only close when BOTH dates are selected
+                      if (moveInDate && date) {
+                        setShowDatesDropdown(false);
+                        setActiveField(null);
+                      }
+                    }}
+                    minDate={new Date()}
+                    calendarOnly={true}
+                    isOpen={showDatesDropdown}
+                    onOpenChange={setShowDatesDropdown}
+                  />
                 )}
 
                 {/* Clear Dates Button */}
