@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { FiX, FiCalendar, FiUsers, FiLoader } from "react-icons/fi";
 import DateRangeSelector from "@/components/DateRangeSelector";
 import { api } from "@/lib/axios";
+import { useToast } from "@/hooks/useToast";
 
 interface PendingBooking {
   id: string;
