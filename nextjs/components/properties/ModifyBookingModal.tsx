@@ -5,6 +5,7 @@ import { FiX, FiCalendar, FiUsers, FiLoader } from "react-icons/fi";
 import DateRangeSelector from "@/components/DateRangeSelector";
 import { api } from "@/lib/axios";
 import { useToast } from "@/hooks/useToast";
+import styles from "./ModifyBookingModal.module.css";
 
 interface PendingBooking {
   id: string;
