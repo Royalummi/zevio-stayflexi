@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Feb 21, 2026 at 09:27 AM
+-- Generation Time: Feb 25, 2026 at 07:44 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -222,8 +222,10 @@ CREATE TABLE `bookings` (
 INSERT INTO `bookings` (`id`, `user_id`, `property_id`, `check_in`, `check_out`, `nights`, `guest_count`, `children_count`, `infants_count`, `base_amount`, `extra_guest_charges`, `extra_children_charges`, `gst_amount`, `service_charge`, `coupon_id`, `coupon_code`, `coupon_discount`, `discount_amount`, `total_amount`, `status`, `payment_status`, `created_at`, `expires_at`, `payment_expires_at`, `deleted_at`) VALUES
 ('1b73aa2f-bd80-4313-accf-96ed1f8c61ed', 'bb5538d1-e418-11f0-9f30-00410e2b5e6e', 'bb927936-e418-11f0-9f30-00410e2b5e6e', '2026-01-17', '2026-01-18', 1, 4, 2, 0, 15000.00, 0.00, 1600.00, 2988.00, 0.00, NULL, NULL, 0.00, 0.00, 19588.00, 'cancelled', 'failed', '2026-01-16 10:07:40', NULL, NULL, '2026-02-03 17:17:02'),
 ('23051548-964f-4dab-851a-0763ce72948c', 'bb5538d1-e418-11f0-9f30-00410e2b5e6e', '495ca2b2-f31f-11f0-8f27-00410e2b5e6e', '2026-02-01', '2026-02-04', 3, 2, 0, 0, 8400.00, 0.00, 0.00, 1512.00, 0.00, NULL, NULL, 0.00, 0.00, 9912.00, '', 'pending', '2026-01-29 16:06:36', '2026-01-29 21:51:36', NULL, '2026-02-03 17:17:02'),
+('3c5e8c53-794f-4820-a5ac-ee46aa587004', '244c2909-85ef-4d38-8a0a-2723ff145942', 'bb927936-e418-11f0-9f30-00410e2b5e6e', '2026-03-04', '2026-03-07', 3, 2, 0, 0, 45000.00, 0.00, 0.00, 8100.00, 2250.00, NULL, NULL, 0.00, 0.00, 55350.00, 'cancel_requested', 'pending', '2026-02-22 03:24:19', '2026-02-22 09:09:19', '2026-02-22 09:09:19', NULL),
 ('40b35828-fb3c-4069-8f95-0593a164e36d', 'bb5538d1-e418-11f0-9f30-00410e2b5e6e', 'bb927936-e418-11f0-9f30-00410e2b5e6e', '2026-01-17', '2026-01-18', 1, 4, 2, 0, 15000.00, 0.00, 1600.00, 2988.00, 0.00, NULL, NULL, 0.00, 0.00, 19588.00, 'cancelled', 'failed', '2026-01-16 13:27:48', '2026-01-17 07:41:53', NULL, '2026-02-03 17:17:02'),
 ('5d0e628a-f343-4d59-9c7a-7a7730a51a22', 'bb5538d1-e418-11f0-9f30-00410e2b5e6e', 'bb927936-e418-11f0-9f30-00410e2b5e6e', '2026-01-31', '2026-02-03', 3, 7, 0, 0, 45000.00, 13500.00, 0.00, 10530.00, 0.00, NULL, NULL, 0.00, 0.00, 69030.00, '', 'pending', '2026-01-29 16:44:05', '2026-01-29 22:37:39', NULL, '2026-02-03 17:17:02'),
+('82b4cf48-b0bd-49e8-acfb-4ff3d2c3507e', '244c2909-85ef-4d38-8a0a-2723ff145942', 'bb927936-e418-11f0-9f30-00410e2b5e6e', '2026-03-04', '2026-03-07', 3, 2, 0, 0, 45000.00, 0.00, 0.00, 8100.00, 2250.00, NULL, NULL, 0.00, 0.00, 55350.00, 'cancel_requested', 'pending', '2026-02-22 03:14:38', '2026-02-22 09:02:41', '2026-02-22 09:02:41', NULL),
 ('830cd3d6-0ffb-47dd-b5f0-59611c66b88c', 'bb5538d1-e418-11f0-9f30-00410e2b5e6e', 'bb929607-e418-11f0-9f30-00410e2b5e6e', '2026-01-19', '2026-01-21', 2, 4, 1, 0, 16000.00, 4000.00, 0.00, 3600.00, 0.00, NULL, NULL, 0.00, 0.00, 23600.00, 'cancelled', 'failed', '2026-01-16 14:29:17', '2026-01-17 08:02:31', NULL, '2026-02-03 17:17:02'),
 ('bbc94743-e418-11f0-9f30-00410e2b5e6e', 'bb551978-e418-11f0-9f30-00410e2b5e6e', 'bb927936-e418-11f0-9f30-00410e2b5e6e', '2025-02-15', '2025-02-18', 3, 5, 2, 1, 45000.00, 1500.00, 1600.00, 8100.00, 0.00, NULL, NULL, 0.00, 0.00, 53100.00, 'completed', 'completed', '2025-12-28 18:12:12', NULL, NULL, NULL),
 ('bbcd0c8e-e418-11f0-9f30-00410e2b5e6e', 'bb5538d1-e418-11f0-9f30-00410e2b5e6e', 'bb929607-e418-11f0-9f30-00410e2b5e6e', '2025-03-10', '2025-03-12', 2, 4, 1, 0, 16000.00, 0.00, 0.00, 2880.00, 0.00, NULL, NULL, 0.00, 0.00, 18880.00, 'cancelled', 'failed', '2025-12-28 18:12:12', NULL, NULL, '2026-02-03 17:17:02'),
@@ -423,6 +425,8 @@ INSERT INTO `cron_jobs_log` (`id`, `job_name`, `run_date`, `status`, `remarks`) 
 ('0916d3db-78be-4cd2-bba6-bedeaa2ba859', 'check_in_reminder_24h', '2026-01-10', 'success', 'Sent 0 reminders, 0 failed'),
 ('0b28c8cb-f910-4b88-a2fc-d912400b6e4a', 'daily_cleanup', '2026-02-14', 'success', 'Cancelled 0 expired bookings'),
 ('0fbfdcc5-d87d-4542-b33d-3ced967abded', 'check_out_reminder', '2026-01-24', 'success', 'Sent 0 reminders, 0 failed'),
+('1048eca0-bd8d-4f6a-83f4-e2cd154046a4', 'check_in_reminder_24h', '2026-02-25', 'success', 'Sent 0 reminders, 0 failed'),
+('2bcd0a3c-a8af-424c-bb44-f95f1ccd0d0d', 'check_in_reminder_24h', '2026-02-22', 'success', 'Sent 0 reminders, 0 failed'),
 ('3e2e27ab-923d-4a80-a3c8-dc22537cc210', 'review_request', '2026-02-15', 'success', 'Sent 0 review requests, 0 failed'),
 ('4e4f6494-4b55-4a62-8c18-2fdca9d49b5c', 'daily_booking_processor', '2026-01-19', 'success', 'Processed 0 settlements'),
 ('4eee4cab-7f09-4fde-bad2-c049d800b1c6', 'daily_booking_processor', '2026-02-14', 'success', 'Processed 0 settlements'),
@@ -523,6 +527,9 @@ CREATE TABLE `employee_points` (
 --
 
 INSERT INTO `employee_points` (`id`, `employee_id`, `booking_id`, `points`, `status`, `created_at`) VALUES
+('aed55a3e-7db7-4363-bbeb-bb1907f63fe8', 'bb5c7d89-e418-11f0-9f30-00410e2b5e6e', '3c5e8c53-794f-4820-a5ac-ee46aa587004', 2250.00, 'pending', '2026-02-22 03:24:19'),
+('bf5d2dc4-71f7-4bda-a1ae-2fe1a99a99be', 'bb5c7d89-e418-11f0-9f30-00410e2b5e6e', '82b4cf48-b0bd-49e8-acfb-4ff3d2c3507e', 2250.00, 'pending', '2026-02-22 03:17:41'),
+('ebdccc3f-2127-459b-a5d0-e715e73ab47f', 'bb5c7d89-e418-11f0-9f30-00410e2b5e6e', '82b4cf48-b0bd-49e8-acfb-4ff3d2c3507e', 2250.00, 'pending', '2026-02-22 03:14:38'),
 ('emp-points-001', 'bb5c7d89-e418-11f0-9f30-00410e2b5e6e', 'booking-test-001', 3053.40, 'confirmed', '2026-01-08 05:05:00'),
 ('emp-points-002', 'bb5c7d89-e418-11f0-9f30-00410e2b5e6e', 'booking-test-002', 1250.80, 'confirmed', '2026-01-09 05:35:00'),
 ('emp-points-003', 'bb5c91ad-e418-11f0-9f30-00410e2b5e6e', 'booking-test-004', 5085.00, 'confirmed', '2026-01-10 04:35:00'),
@@ -613,6 +620,8 @@ CREATE TABLE `invoices` (
 --
 
 INSERT INTO `invoices` (`id`, `invoice_number`, `booking_id`, `user_id`, `base_amount`, `gst_amount`, `total_amount`, `invoice_type`, `created_at`) VALUES
+('3ed7a7cc-d180-4c81-bfd5-c9a2f519c49d', 100012, '3c5e8c53-794f-4820-a5ac-ee46aa587004', '244c2909-85ef-4d38-8a0a-2723ff145942', 45000.00, 8100.00, 55350.00, 'invoice', '2026-02-22 03:24:20'),
+('fcba624e-8264-43e6-b0be-e3f3bb20474f', 100011, '82b4cf48-b0bd-49e8-acfb-4ff3d2c3507e', '244c2909-85ef-4d38-8a0a-2723ff145942', 45000.00, 8100.00, 55350.00, 'invoice', '2026-02-22 03:17:41'),
 ('invoice-001', 100001, 'booking-test-001', 'bb551978-e418-11f0-9f30-00410e2b5e6e', 51600.00, 9468.00, 61068.00, 'invoice', '2026-01-08 05:05:00'),
 ('invoice-002', 100002, 'booking-test-002', 'user-test-001', 21200.00, 3816.00, 25016.00, 'invoice', '2026-01-09 05:35:00'),
 ('invoice-003', 100003, 'booking-test-004', 'user-test-003', 95000.00, 18000.00, 113000.00, 'invoice', '2026-01-10 04:35:00'),
@@ -674,6 +683,10 @@ CREATE TABLE `notifications` (
 --
 
 INSERT INTO `notifications` (`id`, `recipient_id`, `recipient_role`, `title`, `message`, `is_read`, `created_at`) VALUES
+('51402de2-bcda-4f86-a2b7-0c071211d164', '244c2909-85ef-4d38-8a0a-2723ff145942', 'user', 'Booking Confirmed', 'Your booking has been confirmed. Booking ID: 3c5e8c53-794f-4820-a5ac-ee46aa587004', 0, '2026-02-22 03:24:20'),
+('67f742a3-79a4-4807-9d1f-8cab1a0c76f7', '244c2909-85ef-4d38-8a0a-2723ff145942', 'user', 'Booking Confirmed', 'Your booking has been confirmed. Booking ID: 82b4cf48-b0bd-49e8-acfb-4ff3d2c3507e', 0, '2026-02-22 03:17:41'),
+('71e83126-6219-46bb-9a2c-85df7627d541', NULL, 'admin', 'Cancellation Request', 'Booking 82b4cf48-b0bd-49e8-acfb-4ff3d2c3507e cancellation requested by user', 0, '2026-02-22 03:17:43'),
+('99448f86-3b48-48e5-bf93-fc41ee7ff8dc', NULL, 'admin', 'Cancellation Request', 'Booking 3c5e8c53-794f-4820-a5ac-ee46aa587004 cancellation requested by user', 0, '2026-02-22 03:24:26'),
 ('notif-test-001', 'bb551978-e418-11f0-9f30-00410e2b5e6e', 'user', 'Booking Confirmed', 'Your booking for Luxury Beach Villa - Goa has been confirmed. Check-in: Feb 15, 2026', 1, '2026-01-08 05:05:00'),
 ('notif-test-002', 'bb551978-e418-11f0-9f30-00410e2b5e6e', 'user', 'Review Reminder', 'How was your stay at Luxury Beach Villa? Please leave a review to help other travelers.', 0, '2026-02-19 04:30:00'),
 ('notif-test-003', 'user-test-001', 'user', 'Payment Successful', 'Payment of ?25,016 received for Hill View Villa - Lonavala booking.', 1, '2026-01-09 05:35:00'),
@@ -700,7 +713,9 @@ CREATE TABLE `payments` (
 --
 
 INSERT INTO `payments` (`id`, `booking_id`, `gateway`, `gateway_payment_id`, `amount`, `status`, `created_at`) VALUES
+('8e595c87-4258-4abd-974a-c65833be2338', '3c5e8c53-794f-4820-a5ac-ee46aa587004', 'cashfree', '3c5e8c53-794f-4820-a5ac-ee46aa587004_1771730659999', 55350.00, 'success', '2026-02-22 03:24:20'),
 ('bbd7cb58-e418-11f0-9f30-00410e2b5e6e', 'bbc94743-e418-11f0-9f30-00410e2b5e6e', 'razorpay', 'pay_test_123456789', 53100.00, 'success', '2025-12-28 18:12:13'),
+('fe71da5f-0315-4524-b584-ec6bbde9c6a5', '82b4cf48-b0bd-49e8-acfb-4ff3d2c3507e', 'cashfree', '82b4cf48-b0bd-49e8-acfb-4ff3d2c3507e_1771730095281', 55350.00, 'success', '2026-02-22 03:14:55'),
 ('payment-test-001', 'booking-test-001', 'razorpay', 'pay_rzp_test_001', 61068.00, 'success', '2026-01-08 05:05:00'),
 ('payment-test-002', 'booking-test-002', 'razorpay', 'pay_rzp_test_002', 25016.00, 'success', '2026-01-09 05:35:00'),
 ('payment-test-004', 'booking-test-004', 'razorpay', 'pay_rzp_test_004', 113000.00, 'success', '2026-01-10 04:35:00'),
@@ -1539,6 +1554,7 @@ CREATE TABLE `users` (
 
 INSERT INTO `users` (`id`, `full_name`, `email`, `phone`, `password_hash`, `status`, `created_at`, `deleted_at`, `avatar`, `reset_token`, `reset_token_expiry`, `is_corporate_user`, `company_name`, `company_gst`, `company_email_verified`, `email_verification_token`, `email_verified_at`, `is_temporary_password`, `password_change_required`, `created_by`, `profile_completed`, `last_password_change`) VALUES
 ('2311bd48-54ff-469e-8a7c-9ff89ee7fb78', 'Test User', 'test_1767631087306@test.com', '1234567890', '$2a$10$IFE7cN/VckZtwgbSnVMimOD9EgQrjyTm38mVumUfQ9xXVpIkuRSJi', 'active', '2026-01-05 16:38:07', NULL, NULL, NULL, NULL, 0, NULL, NULL, 0, NULL, NULL, 0, 0, NULL, 0, NULL),
+('244c2909-85ef-4d38-8a0a-2723ff145942', 'Test User', 'testuser@zevio.in', '9999999999', '$2a$10$xPefuZECysURprHDo7i6lOIKmTbVoEY.w7IFEcpFQ7K3p5unFze0m', 'active', '2026-02-21 14:05:13', NULL, NULL, NULL, NULL, 0, NULL, NULL, 0, NULL, NULL, 0, 0, NULL, 0, NULL),
 ('4df955f5-45e7-4844-a832-9ec9e5649f5c', 'Test User', 'test_1767630472022@test.com', '1234567890', '$2a$10$KXETuyYNN8uo1XUBxA9JQu03zPLX/gnEGGJZRqwidjQMGiiuaoQya', 'active', '2026-01-05 16:27:52', NULL, NULL, NULL, NULL, 0, NULL, NULL, 0, NULL, NULL, 0, 0, NULL, 0, NULL),
 ('ae1a695c-6724-4098-bd50-73a2cf569779', 'Test User', 'test_1767631229011@test.com', '1234567890', '$2a$10$mcTBWcR5QPiIMxXEWNCApeMchTQFiWI7qWlAkbif.COPYjv9EcXI6', 'active', '2026-01-05 16:40:29', NULL, NULL, NULL, NULL, 0, NULL, NULL, 0, NULL, NULL, 0, 0, NULL, 0, NULL),
 ('bb551978-e418-11f0-9f30-00410e2b5e6e', 'Amit Kumar', 'rajesh@example.com', '9876543210', '$2a$10$gui.vHTx6R8XjrdoznshdO9tv.Hqeu6lv6gY09s6q.P.iYv1.VfzS', 'active', '2025-12-28 18:12:12', NULL, NULL, NULL, NULL, 0, NULL, NULL, 0, NULL, NULL, 0, 0, NULL, 0, NULL),
@@ -1585,6 +1601,7 @@ CREATE TABLE `user_settings` (
 --
 
 INSERT INTO `user_settings` (`id`, `user_id`, `email_notifications`, `email_promotions`, `email_reminders`, `sms_notifications`, `sms_reminders`, `push_notifications`, `profile_visibility`, `show_wishlist`, `share_activity`, `newsletter_subscription`, `created_at`, `updated_at`) VALUES
+('af3aa059-8353-443b-b386-d164b6694b87', '244c2909-85ef-4d38-8a0a-2723ff145942', 1, 1, 1, 0, 0, 1, 'private', 0, 0, 1, '2026-02-22 05:29:10', '2026-02-22 05:29:10'),
 ('d4d8ac23-ee5e-11f0-8497-00410e2b5e6e', 'bb553a04-e418-11f0-9f30-00410e2b5e6e', 1, 1, 1, 0, 0, 1, 'private', 0, 0, 1, '2026-01-10 19:59:03', '2026-01-10 19:59:03'),
 ('d4d8acbb-ee5e-11f0-8497-00410e2b5e6e', 'user-test-004', 1, 1, 1, 0, 0, 1, 'private', 0, 0, 1, '2026-01-10 19:59:03', '2026-01-10 19:59:03'),
 ('d4d8acf9-ee5e-11f0-8497-00410e2b5e6e', 'user-test-007', 1, 1, 1, 0, 0, 1, 'private', 0, 0, 1, '2026-01-10 19:59:03', '2026-01-10 19:59:03'),
@@ -2099,7 +2116,7 @@ ALTER TABLE `guide_types`
 -- AUTO_INCREMENT for table `invoices`
 --
 ALTER TABLE `invoices`
-  MODIFY `invoice_number` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=100011;
+  MODIFY `invoice_number` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=100013;
 
 --
 -- AUTO_INCREMENT for table `location_types`

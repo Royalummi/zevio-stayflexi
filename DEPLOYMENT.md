@@ -2,11 +2,11 @@
 
 ## Architecture
 
-| App | Domain | Method | Port |
-|-----|--------|--------|------|
-| User Next.js | `zevio.cloud` | PM2 → Nginx proxy | 8000 |
-| Admin/Vendor React | `admin.zevio.cloud` | Nginx static files | — |
-| Backend API | `api.zevio.cloud` | PM2 → Nginx proxy | 5000 |
+| App                | Domain              | Method             | Port |
+| ------------------ | ------------------- | ------------------ | ---- |
+| User Next.js       | `zevio.cloud`       | PM2 → Nginx proxy  | 8000 |
+| Admin/Vendor React | `admin.zevio.cloud` | Nginx static files | —    |
+| Backend API        | `api.zevio.cloud`   | PM2 → Nginx proxy  | 5000 |
 
 **Auto-deploy:** Every push to `main` triggers GitHub Actions → SSH into VPS → pulls code → rebuilds → reloads.
 
@@ -20,9 +20,9 @@ Go to: **GitHub Repo → Settings → Secrets and variables → Actions → New 
 
 Add these 2 secrets:
 
-| Secret Name | Value |
-|-------------|-------|
-| `VPS_HOST` | `185.199.53.224` |
+| Secret Name    | Value              |
+| -------------- | ------------------ |
+| `VPS_HOST`     | `185.199.53.224`   |
 | `VPS_PASSWORD` | your root password |
 
 ---
@@ -62,6 +62,7 @@ bash /tmp/01-vps-setup.sh
 ```
 
 The script will:
+
 - Install Node.js 20, PM2, Nginx, Certbot
 - Ask for your GitHub PAT to clone the private repo
 - Create `.env` placeholder files
@@ -80,6 +81,7 @@ nano /var/www/zevio/backend/.env
 ```
 
 Fill in these values (replace placeholders):
+
 - `DB_PASSWORD` — your MySQL root password
 - `JWT_SECRET` — generate: `openssl rand -hex 32`
 - `JWT_REFRESH_SECRET` — generate: `openssl rand -hex 32`
@@ -106,6 +108,7 @@ mysql -u root -p
 ```
 
 Inside MySQL:
+
 ```sql
 CREATE DATABASE zevio;
 -- If using root user, just set the password:
@@ -115,6 +118,7 @@ EXIT;
 ```
 
 Import your schema:
+
 ```bash
 mysql -u root -p zevio < /var/www/zevio/Database.sql
 ```
@@ -193,11 +197,11 @@ ss -tlnp | grep -E '5000|8000|80|443'
 
 ## Troubleshooting
 
-| Problem | Solution |
-|---------|----------|
-| GitHub Action fails with "SSH key error" | Check VPS_PASSWORD secret matches exactly |
-| Site shows 502 Bad Gateway | App crashed → run `pm2 logs` to see error |
-| Site shows 404 | Nginx config issue → run `nginx -t` |
-| Build fails in GitHub Actions | Check if `.env` files exist on VPS |
-| Git pull fails (private repo) | Re-run: `git remote set-url origin https://PAT@github.com/Royalummi/zevio.git` |
-| Port already in use | `pm2 delete all && pm2 start ecosystem.config.cjs --env production` |
+| Problem                                  | Solution                                                                       |
+| ---------------------------------------- | ------------------------------------------------------------------------------ |
+| GitHub Action fails with "SSH key error" | Check VPS_PASSWORD secret matches exactly                                      |
+| Site shows 502 Bad Gateway               | App crashed → run `pm2 logs` to see error                                      |
+| Site shows 404                           | Nginx config issue → run `nginx -t`                                            |
+| Build fails in GitHub Actions            | Check if `.env` files exist on VPS                                             |
+| Git pull fails (private repo)            | Re-run: `git remote set-url origin https://PAT@github.com/Royalummi/zevio.git` |
+| Port already in use                      | `pm2 delete all && pm2 start ecosystem.config.cjs --env production`            |
