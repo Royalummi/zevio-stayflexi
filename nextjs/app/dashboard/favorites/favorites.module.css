@@ -249,3 +249,56 @@
         width: 100%;
     }
 }
+
+/* SESSION 72: Small mobile (480px) responsive improvements */
+@media (max-width: 480px) {
+    .container {
+        padding: 16px 12px;
+    }
+
+    .header {
+        margin-bottom: 24px;
+    }
+
+    .headerIcon {
+        width: 48px;
+        height: 48px;
+        font-size: 24px;
+        border-radius: 12px;
+    }
+
+    .title {
+        font-size: 20px;
+    }
+
+    .subtitle {
+        font-size: 13px;
+    }
+
+    .grid {
+        gap: 16px;
+    }
+
+    .emptyState {
+        padding: 32px 16px;
+    }
+
+    .emptyIcon {
+        width: 80px;
+        height: 80px;
+        font-size: 32px;
+    }
+
+    .emptyTitle {
+        font-size: 20px;
+    }
+
+    .emptyText {
+        font-size: 14px;
+    }
+
+    .exploreBtn {
+        padding: 12px 24px;
+        font-size: 15px;
+    }
+}

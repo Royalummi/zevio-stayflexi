@@ -16,6 +16,13 @@ import {
   Users,
   Bed,
   Bath,
+  SlidersHorizontal,
+  TrendingUp,
+  Star,
+  CheckCircle,
+  Clock,
+  XCircle,
+  Home,
 } from "lucide-react";
 import {
   Card,
@@ -43,8 +50,23 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "../../components/ui/alert-dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../../components/ui/table";
+import { Skeleton } from "../../components/ui/skeleton";
 import api from "../../lib/api";
 import { formatCurrency, formatDate } from "../../lib/utils";
+
+// Import Shared Components
+import StatsCard from "../../components/shared/StatsCard";
+import ViewModeToggle from "../../components/shared/ViewModeToggle";
+import AdvancedFiltersPanel from "../../components/shared/AdvancedFiltersPanel";
+import PropertyTypeModal from "../../components/shared/PropertyTypeModal";
 
 const VendorProperties = () => {
   const navigate = useNavigate();
@@ -53,10 +75,35 @@ const VendorProperties = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletingPropertyId, setDeletingPropertyId] = useState(null);
 
+  // Stats Dashboard
+  const [stats, setStats] = useState({
+    total: 0,
+    draft: 0,
+    pending_approval: 0,
+    approved: 0,
+    active_bookings: 0,
+    total_revenue: 0,
+    avg_rating: 0,
+  });
+  const [statsLoading, setStatsLoading] = useState(true);
+
   // Filters
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+
+  // Advanced Filters
+  const [cityFilter, setCityFilter] = useState("all");
+  const [bedroomsFilter, setBedroomsFilter] = useState("all");
+  const [priceRange, setPriceRange] = useState("");
+  const [cities, setCities] = useState([]);
+
+  // View Mode
+  const [viewMode, setViewMode] = useState("list"); // "list" or "grid"
+
+  // Property Type Modal
+  const [showPropertyTypeModal, setShowPropertyTypeModal] = useState(false);
 
   // Pagination
   const [pagination, setPagination] = useState({
@@ -67,8 +114,44 @@ const VendorProperties = () => {
   });
 
   useEffect(() => {
+    fetchStats();
+    fetchCities();
+  }, []);
+
+  useEffect(() => {
     fetchProperties();
-  }, [pagination.page, statusFilter, searchTerm, sortBy]);
+  }, [
+    pagination.page,
+    statusFilter,
+    searchTerm,
+    sortBy,
+    cityFilter,
+    bedroomsFilter,
+    priceRange,
+  ]);
+
+  const fetchStats = async () => {
+    try {
+      setStatsLoading(true);
+      const response = await api.get("/vendor/dashboard");
+      setStats(response.data.data);
+    } catch (error) {
+      console.error("Error fetching stats:", error);
+      toast.error("Failed to load dashboard stats");
+    } finally {
+      setStatsLoading(false);
+    }
+  };
+
+  const fetchCities = async () => {
+    try {
+      const response = await api.get("/public/cities");
+      const data = response.data.data;
+      setCities(Array.isArray(data) ? data : data?.cities || []);
+    } catch (error) {
+      console.error("Error fetching cities:", error);
+    }
+  };
 
   const fetchProperties = async () => {
     try {
@@ -83,13 +166,41 @@ const VendorProperties = () => {
       const { properties: fetchedProperties, pagination: paginationData } =
         response.data.data;
 
-      // Client-side filtering for search
+      // Client-side filtering for search and advanced filters
       let filteredProperties = fetchedProperties;
+
+      // Search filter
       if (searchTerm) {
-        filteredProperties = fetchedProperties.filter(
+        filteredProperties = filteredProperties.filter(
           (p) =>
             p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
             p.city_name?.toLowerCase().includes(searchTerm.toLowerCase()),
+        );
+      }
+
+      // City filter
+      if (cityFilter && cityFilter !== "all") {
+        filteredProperties = filteredProperties.filter(
+          (p) => p.city_id === cityFilter,
+        );
+      }
+
+      // Bedrooms filter
+      if (bedroomsFilter && bedroomsFilter !== "all") {
+        const bedroomsCount = parseInt(bedroomsFilter);
+        filteredProperties = filteredProperties.filter((p) => {
+          if (bedroomsCount === 5) {
+            return (p.bedrooms || 0) >= 5;
+          }
+          return (p.bedrooms || 0) === bedroomsCount;
+        });
+      }
+
+      // Price range filter
+      if (priceRange) {
+        const maxPrice = parseFloat(priceRange);
+        filteredProperties = filteredProperties.filter(
+          (p) => (p.price_per_night || 0) <= maxPrice,
         );
       }
 
@@ -121,7 +232,31 @@ const VendorProperties = () => {
   };
 
   const handleAddProperty = () => {
-    navigate("/vendor/properties/add");
+    setShowPropertyTypeModal(true);
+  };
+
+  const handleSelectPropertyType = (type) => {
+    if (type === "villa") {
+      navigate("/vendor/properties/add", {
+        state: { propertyTypeId: "pt-001", propertyTypeName: "Villa" },
+      });
+    } else if (type === "service_apartment") {
+      navigate("/vendor/service-apartments/add", {
+        state: {
+          propertyTypeId: "pt-002",
+          propertyTypeName: "Service Apartment",
+        },
+      });
+    }
+  };
+
+  const clearAllFilters = () => {
+    setSearchTerm("");
+    setStatusFilter("all");
+    setSortBy("newest");
+    setCityFilter("all");
+    setBedroomsFilter("all");
+    setPriceRange("");
   };
 
   const handleEditProperty = (propertyId) => {
@@ -182,8 +317,46 @@ const VendorProperties = () => {
 
   if (loading && pagination.page === 1) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="space-y-6 p-6">
+        {/* Header Skeleton */}
+        <div className="flex items-center justify-between">
+          <div>
+            <Skeleton className="h-10 w-64 mb-2" />
+            <Skeleton className="h-4 w-48" />
+          </div>
+          <Skeleton className="h-10 w-32" />
+        </div>
+
+        {/* Stats Skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[1, 2, 3, 4].map((i) => (
+            <Card key={i}>
+              <CardHeader>
+                <Skeleton className="h-6 w-32" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-8 w-16" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Filters Skeleton */}
+        <Card>
+          <CardContent className="p-6">
+            <Skeleton className="h-10 w-full" />
+          </CardContent>
+        </Card>
+
+        {/* Content Skeleton */}
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-6 w-48" />
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-96 w-full" />
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -191,13 +364,13 @@ const VendorProperties = () => {
   return (
     <div className="space-y-6 p-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
             My Properties
           </h1>
           <p className="text-gray-500 dark:text-gray-400 mt-1">
-            Manage your property listings
+            Manage your property listings and track performance
           </p>
         </div>
         <div className="flex gap-2">
@@ -209,67 +382,143 @@ const VendorProperties = () => {
             <Download className="h-4 w-4 mr-2" />
             Export CSV
           </Button>
-          <Button onClick={handleAddProperty}>
-            <Plus className="h-4 w-4 mr-2" />
+          <Button
+            onClick={handleAddProperty}
+            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+            size="lg"
+          >
+            <Plus className="h-5 w-5 mr-2" />
             Add Property
           </Button>
         </div>
       </div>
 
+      {/* Stats Dashboard */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatsCard
+          title="Total Properties"
+          value={statsLoading ? "..." : stats.total}
+          icon={Building2}
+          iconColor="text-blue-600"
+          valueColor="text-gray-900 dark:text-white"
+        />
+        <StatsCard
+          title="Active Bookings"
+          value={statsLoading ? "..." : stats.active_bookings}
+          icon={Calendar}
+          iconColor="text-green-600"
+          valueColor="text-green-600"
+        />
+        <StatsCard
+          title="Total Revenue"
+          value={statsLoading ? "..." : formatCurrency(stats.total_revenue)}
+          icon={TrendingUp}
+          iconColor="text-purple-600"
+          valueColor="text-purple-600"
+        />
+        <StatsCard
+          title="Average Rating"
+          value={statsLoading ? "..." : `${stats.avg_rating} ⭐`}
+          icon={Star}
+          iconColor="text-yellow-600"
+          valueColor="text-yellow-600"
+        />
+      </div>
+
       {/* Filters */}
       <Card>
-        <CardContent className="p-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Search properties..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9"
+        <CardContent className="pt-6">
+          <div className="space-y-4">
+            {/* Main Filter Row */}
+            <div className="flex flex-col md:flex-row gap-4">
+              {/* Status Filter */}
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-full md:w-48">
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="draft">Draft</SelectItem>
+                  <SelectItem value="pending_approval">
+                    Pending Approval
+                  </SelectItem>
+                  <SelectItem value="approved">Approved</SelectItem>
+                  <SelectItem value="inactive">Inactive</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {/* Search */}
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Search by property name or city..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+
+              {/* Sort By */}
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="w-full md:w-48">
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="newest">Newest First</SelectItem>
+                  <SelectItem value="oldest">Oldest First</SelectItem>
+                  <SelectItem value="revenue">Highest Revenue</SelectItem>
+                  <SelectItem value="bookings">Most Bookings</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {/* Advanced Filters Toggle */}
+              <Button
+                variant={showAdvancedFilters ? "default" : "outline"}
+                onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                className="w-full md:w-auto"
+              >
+                <SlidersHorizontal className="h-4 w-4 mr-2" />
+                {showAdvancedFilters ? "Hide" : "Show"} Filters
+              </Button>
+
+              {/* View Mode Toggle */}
+              <ViewModeToggle
+                viewMode={viewMode}
+                onViewModeChange={setViewMode}
               />
             </div>
 
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="draft">Draft</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="approved">Approved</SelectItem>
-                <SelectItem value="rejected">Rejected</SelectItem>
-              </SelectContent>
-            </Select>
+            {/* Advanced Filters Panel */}
+            {showAdvancedFilters && (
+              <AdvancedFiltersPanel
+                cities={cities}
+                cityFilter={cityFilter}
+                onCityFilterChange={setCityFilter}
+                bedroomsFilter={bedroomsFilter}
+                onBedroomsFilterChange={setBedroomsFilter}
+                priceRange={priceRange}
+                onPriceRangeChange={setPriceRange}
+                showVendorFilter={false}
+              />
+            )}
 
-            <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger>
-                <SelectValue placeholder="Sort by" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="newest">Newest First</SelectItem>
-                <SelectItem value="oldest">Oldest First</SelectItem>
-                <SelectItem value="revenue">Highest Revenue</SelectItem>
-                <SelectItem value="bookings">Most Bookings</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Button
-              variant="outline"
-              onClick={() => {
-                setSearchTerm("");
-                setStatusFilter("all");
-                setSortBy("newest");
-              }}
-            >
-              Clear Filters
-            </Button>
+            {/* Clear Filters Button */}
+            {(searchTerm ||
+              statusFilter !== "all" ||
+              cityFilter !== "all" ||
+              bedroomsFilter !== "all" ||
+              priceRange) && (
+              <div className="flex justify-end">
+                <Button variant="outline" size="sm" onClick={clearAllFilters}>
+                  Clear All Filters
+                </Button>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
 
-      {/* Properties List */}
+      {/* Properties List/Grid */}
       {properties.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
@@ -277,13 +526,20 @@ const VendorProperties = () => {
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
               No properties found
             </h3>
-            <p className="text-gray-500 dark:text-gray-400 mb-4">
-              {searchTerm || statusFilter !== "all"
-                ? "Try adjusting your filters"
-                : "Get started by adding your first property"}
+            <p className="text-gray-500 dark:text-gray-400 mb-4 text-center max-w-md">
+              {searchTerm ||
+              statusFilter !== "all" ||
+              cityFilter !== "all" ||
+              bedroomsFilter !== "all" ||
+              priceRange
+                ? "No properties match your current filters. Try adjusting your search criteria."
+                : "Get started by adding your first property to showcase your rental offerings"}
             </p>
-            {!searchTerm && statusFilter === "all" && (
-              <Button onClick={handleAddProperty}>
+            {!searchTerm && statusFilter === "all" && cityFilter === "all" && (
+              <Button
+                onClick={handleAddProperty}
+                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 Add Your First Property
               </Button>
@@ -291,78 +547,206 @@ const VendorProperties = () => {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 gap-4">
-          {properties.map((property) => (
-            <Card
-              key={property.id}
-              className="hover:shadow-md transition-shadow"
-            >
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between">
-                  {/* Property Info */}
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-                        {property.title}
-                      </h3>
-                      {getStatusBadge(property.status)}
-                    </div>
-
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-                      <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                        <MapPin className="h-4 w-4 mr-2" />
-                        {property.city_name || "Not specified"}
-                      </div>
-                      <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                        <IndianRupee className="h-4 w-4 mr-2" />
-                        {formatCurrency(property.price_per_night || 0)}/night
-                      </div>
-                      <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                        <Calendar className="h-4 w-4 mr-2" />
-                        {property.total_bookings || 0} bookings
-                      </div>
-                      <div className="flex items-center text-sm font-semibold text-green-600">
-                        <IndianRupee className="h-4 w-4 mr-1" />
-                        {formatCurrency(property.total_revenue || 0)} revenue
-                      </div>
-                    </div>
-
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                      Created on {formatDate(property.created_at)}
-                      {property.employee_name && (
-                        <span> • Managed by {property.employee_name}</span>
-                      )}
-                    </p>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex items-center gap-2 ml-4">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => handleEditProperty(property.id)}
-                      title="Edit property"
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => {
-                        setDeletingPropertyId(property.id);
-                        setDeleteDialogOpen(true);
-                      }}
-                      title="Delete property"
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+        <>
+          {/* List View (Table) */}
+          {viewMode === "list" && (
+            <Card>
+              <CardContent className="p-0">
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Property</TableHead>
+                        <TableHead>Location</TableHead>
+                        <TableHead>Price/Night</TableHead>
+                        <TableHead>Bookings</TableHead>
+                        <TableHead>Revenue</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {properties.map((property) => (
+                        <TableRow
+                          key={property.id}
+                          className="hover:bg-gray-50 dark:hover:bg-gray-800"
+                        >
+                          <TableCell>
+                            <div className="flex items-center space-x-3">
+                              <div className="h-12 w-12 bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900 dark:to-indigo-900 rounded-lg flex items-center justify-center overflow-hidden">
+                                {property.thumbnail ? (
+                                  <img
+                                    src={property.thumbnail}
+                                    alt={property.title}
+                                    className="h-full w-full object-cover"
+                                  />
+                                ) : (
+                                  <Building2 className="h-6 w-6 text-blue-600" />
+                                )}
+                              </div>
+                              <div className="max-w-xs">
+                                <div className="font-medium text-gray-900 dark:text-white truncate">
+                                  {property.title}
+                                </div>
+                                <div className="text-xs text-gray-500 dark:text-gray-400">
+                                  Created {formatDate(property.created_at)}
+                                </div>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center text-sm">
+                              <MapPin className="h-4 w-4 mr-1 text-gray-400" />
+                              {property.city_name || "Not specified"}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center font-medium text-gray-900 dark:text-white">
+                              <IndianRupee className="h-4 w-4 mr-1" />
+                              {formatCurrency(property.price_per_night || 0)}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center text-sm">
+                              <Calendar className="h-4 w-4 mr-1 text-gray-400" />
+                              {property.total_bookings || 0}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center font-semibold text-green-600">
+                              <IndianRupee className="h-4 w-4 mr-1" />
+                              {formatCurrency(property.total_revenue || 0)}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {getStatusBadge(property.status)}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleEditProperty(property.id)}
+                                title="Edit property"
+                                className="hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => {
+                                  setDeletingPropertyId(property.id);
+                                  setDeleteDialogOpen(true);
+                                }}
+                                title="Delete property"
+                                className="hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
                 </div>
               </CardContent>
             </Card>
-          ))}
-        </div>
+          )}
+
+          {/* Grid View (Cards) */}
+          {viewMode === "grid" && (
+            <div className="grid grid-cols-1 gap-4">
+              {properties.map((property) => (
+                <Card
+                  key={property.id}
+                  className="hover:shadow-lg transition-shadow duration-200 border-gray-200 dark:border-gray-700"
+                >
+                  <CardContent className="p-6">
+                    <div className="flex items-start justify-between">
+                      {/* Property Info */}
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className="h-10 w-10 bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900 dark:to-indigo-900 rounded-lg flex items-center justify-center">
+                            {property.thumbnail ? (
+                              <img
+                                src={property.thumbnail}
+                                alt={property.title}
+                                className="h-full w-full object-cover rounded-lg"
+                              />
+                            ) : (
+                              <Building2 className="h-5 w-5 text-blue-600" />
+                            )}
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                              {property.title}
+                            </h3>
+                          </div>
+                          {getStatusBadge(property.status)}
+                        </div>
+
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                          <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                            <MapPin className="h-4 w-4 mr-2 flex-shrink-0" />
+                            {property.city_name || "Not specified"}
+                          </div>
+                          <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                            <IndianRupee className="h-4 w-4 mr-2 flex-shrink-0" />
+                            {formatCurrency(property.price_per_night || 0)}
+                            /night
+                          </div>
+                          <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                            <Calendar className="h-4 w-4 mr-2 flex-shrink-0" />
+                            {property.total_bookings || 0} bookings
+                          </div>
+                          <div className="flex items-center text-sm font-semibold text-green-600">
+                            <IndianRupee className="h-4 w-4 mr-1 flex-shrink-0" />
+                            {formatCurrency(property.total_revenue || 0)}{" "}
+                            revenue
+                          </div>
+                        </div>
+
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-3">
+                          Created on {formatDate(property.created_at)}
+                          {property.employee_name && (
+                            <span> • Managed by {property.employee_name}</span>
+                          )}
+                        </p>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex items-center gap-2 ml-4">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleEditProperty(property.id)}
+                          title="Edit property"
+                          className="hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => {
+                            setDeletingPropertyId(property.id);
+                            setDeleteDialogOpen(true);
+                          }}
+                          title="Delete property"
+                          className="hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </>
       )}
 
       {/* Pagination */}
@@ -421,6 +805,13 @@ const VendorProperties = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Property Type Modal */}
+      <PropertyTypeModal
+        open={showPropertyTypeModal}
+        onClose={() => setShowPropertyTypeModal(false)}
+        onSelectType={handleSelectPropertyType}
+      />
     </div>
   );
 };

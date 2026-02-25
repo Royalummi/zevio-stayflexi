@@ -73,18 +73,71 @@
     gap: 12px;
 }
 
-/* Mobile: Show dropdown below on small screens */
+/* Tablet & Mobile: Fixed overlay, centered in viewport */
 @media (max-width: 1024px) {
     .dropdownContent {
         position: fixed;
-        top: auto;
-        right: auto;
+        top: 50%;
         left: 50%;
-        transform: translateX(-50%);
+        transform: translate(-50%, -50%);
+        right: auto;
         bottom: auto;
         width: 90vw;
         max-width: 400px;
-        margin-top: 8px;
+        max-height: 85vh;
+        overflow-y: auto;
+        z-index: 9999;
+        margin-top: 0;
+        box-shadow:
+            0 20px 60px rgba(0, 0, 0, 0.25),
+            0 0 0 1px rgba(31, 58, 95, 0.08);
+    }
+}
+
+/* Small mobile */
+@media (max-width: 480px) {
+    .dropdownContent {
+        width: calc(100vw - 24px);
+        max-width: calc(100vw - 24px);
+        padding: 12px;
+        border-radius: 12px;
+    }
+
+    .day {
+        min-height: 36px;
+        padding: 4px 2px;
+        border-radius: 4px;
+    }
+
+    .day.hasPricing {
+        min-height: 46px;
+    }
+
+    .dayNumber {
+        font-size: 11px;
+    }
+
+    .dayPrice {
+        font-size: 9px;
+    }
+
+    .dayHeader {
+        font-size: 10px;
+        padding: 4px 0;
+    }
+
+    .daysGrid,
+    .daysOfWeek {
+        gap: 2px;
+    }
+
+    .quickBtn {
+        padding: 6px 10px;
+        font-size: 11px;
+    }
+
+    .monthYear {
+        font-size: 13px;
     }
 }
 
@@ -160,7 +213,7 @@
 
 .day {
     min-height: 36px;
-    padding: 8px;
+    padding: 6px 2px;
     border: 1px solid #E6E9EE;
     border-radius: 6px;
     background: white;
@@ -170,13 +223,50 @@
     cursor: pointer;
     transition: all 0.2s ease;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: 1px;
+}
+
+/* Taller cell when price is shown */
+.day.hasPricing {
+    min-height: 52px;
+}
+
+.emptyDay.hasPricing {
+    min-height: 52px;
+}
+
+/* Day number */
+.dayNumber {
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1;
+}
+
+/* Base price label (muted) */
+.dayPrice {
+    font-size: 10px;
+    line-height: 1.1;
+    color: #9ca3af;
+    white-space: nowrap;
+    font-weight: 400;
+}
+
+/* Custom/special price (teal accent) */
+.dayPriceCustom {
+    color: #2FA4A9;
+    font-weight: 600;
 }
 
 .day:not(.disabled):hover {
     border-color: #2FA4A9;
     background-color: #D0E8EA;
+    color: #248d92;
+}
+
+.day:not(.disabled):hover .dayPrice {
     color: #248d92;
 }
 
@@ -187,10 +277,23 @@
     font-weight: 600;
 }
 
+.day.selected .dayNumber {
+    color: white;
+}
+
+.day.selected .dayPrice,
+.day.selected .dayPriceCustom {
+    color: rgba(255, 255, 255, 0.85);
+}
+
 .day.inRange {
     background-color: #D0E8EA;
     color: #248d92;
     border-color: #B0D8DE;
+}
+
+.day.inRange .dayPrice {
+    color: #248d92;
 }
 
 .day.disabled {
@@ -226,4 +329,24 @@
     background-color: #D0E8EA;
     color: #248d92;
     border-color: #2FA4A9;
+}
+
+/* When rendered inside SearchBar (calendarOnly mode)
+   Force static flow — parent container handles positioning */
+.calendarOnlyContent {
+    position: static !important;
+    top: auto !important;
+    left: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    transform: none !important;
+    width: 100%;
+    max-width: 100%;
+    box-shadow: none;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    padding: 0;
+    max-height: none;
+    overflow: visible;
 }

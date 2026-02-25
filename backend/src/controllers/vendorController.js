@@ -10,10 +10,14 @@ import { sanitizeRichText } from "../utils/sanitize.js";
 const getDashboardStats = asyncHandler(async (req, res) => {
   const vendorId = req.user.id;
 
-  // Get total properties
+  // Get properties count by status
   const [propertiesCount] = await db.query(
-    `SELECT COUNT(*) as total_properties,
-      SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) as active_properties
+    `SELECT 
+      COUNT(*) as total,
+      SUM(CASE WHEN status = 'draft' THEN 1 ELSE 0 END) as draft,
+      SUM(CASE WHEN status = 'pending_approval' THEN 1 ELSE 0 END) as pending_approval,
+      SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) as approved,
+      SUM(CASE WHEN status = 'inactive' THEN 1 ELSE 0 END) as inactive
     FROM properties
     WHERE vendor_id = ? AND deleted_at IS NULL`,
     [vendorId],
@@ -30,6 +34,17 @@ const getDashboardStats = asyncHandler(async (req, res) => {
     [vendorId],
   );
 
+  // Get average rating from reviews
+  const [ratingData] = await db.query(
+    `SELECT 
+      COALESCE(AVG(r.rating), 0) as avg_rating,
+      COUNT(r.id) as total_reviews
+    FROM reviews r
+    INNER JOIN properties p ON r.property_id = p.id
+    WHERE p.vendor_id = ? AND r.status = 'approved'`,
+    [vendorId],
+  );
+
   // Get pending settlements
   const [settlementsData] = await db.query(
     `SELECT COALESCE(SUM(amount), 0) as pending_settlements
@@ -39,10 +54,22 @@ const getDashboardStats = asyncHandler(async (req, res) => {
   );
 
   const stats = {
-    total_properties: propertiesCount[0].total_properties,
-    active_properties: propertiesCount[0].active_properties,
+    // Property counts by status
+    total: propertiesCount[0].total,
+    draft: propertiesCount[0].draft,
+    pending_approval: propertiesCount[0].pending_approval,
+    approved: propertiesCount[0].approved,
+    inactive: propertiesCount[0].inactive,
+
+    // Bookings & Revenue
     active_bookings: bookingsData[0].active_bookings,
     total_revenue: parseFloat(bookingsData[0].total_revenue),
+
+    // Reviews
+    avg_rating: parseFloat(ratingData[0].avg_rating).toFixed(1),
+    total_reviews: ratingData[0].total_reviews,
+
+    // Settlements
     pending_settlements: parseFloat(settlementsData[0].pending_settlements),
   };
 

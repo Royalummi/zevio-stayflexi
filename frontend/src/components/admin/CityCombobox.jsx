@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Check, ChevronsUpDown, MapPin, Plus } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { Button } from "../ui/button";
@@ -15,10 +15,16 @@ import api from "../../lib/api";
 import { toast } from "sonner";
 import AddCityDialog from "./AddCityDialog";
 
-const CityCombobox = ({ value, onChange, error, required = false }) => {
+const CityCombobox = ({
+  value,
+  onChange,
+  error,
+  required = false,
+  externalCities = null,
+}) => {
   const [open, setOpen] = useState(false);
-  const [cities, setCities] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [cities, setCities] = useState(externalCities || []);
+  const [loading, setLoading] = useState(!externalCities);
   const [searchValue, setSearchValue] = useState("");
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [suggestedCity, setSuggestedCity] = useState("");
@@ -26,15 +32,46 @@ const CityCombobox = ({ value, onChange, error, required = false }) => {
   const [detectedLocation, setDetectedLocation] = useState(null);
   const [showLocationSuggestion, setShowLocationSuggestion] = useState(false);
 
+  // Keep a stable ref to onChange so the location-detection effect doesn't
+  // re-run every time the parent re-renders (inline arrow functions change each render)
+  const onChangeRef = useRef(onChange);
   useEffect(() => {
-    fetchCities();
+    onChangeRef.current = onChange;
+  }, [onChange]);
+
+  useEffect(() => {
+    if (!externalCities) {
+      fetchCities();
+    }
     detectLocation();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Sync if externalCities prop updates
+  useEffect(() => {
+    if (externalCities) {
+      setCities(externalCities);
+      setLoading(false);
+    }
+  }, [externalCities]);
 
   const fetchCities = async () => {
     try {
-      const response = await api.get("/admin/cities");
-      setCities(response.data.data || []);
+      // Try admin endpoint first; fall back to public endpoint for non-admin users
+      let response;
+      try {
+        response = await api.get("/admin/cities");
+      } catch (adminErr) {
+        if (
+          adminErr.response?.status === 401 ||
+          adminErr.response?.status === 403
+        ) {
+          response = await api.get("/public/cities");
+        } else {
+          throw adminErr;
+        }
+      }
+      const data = response.data.data;
+      setCities(Array.isArray(data) ? data : data?.cities || data || []);
     } catch (error) {
       console.error("Error fetching cities:", error);
       toast.error("Failed to load cities");
@@ -99,15 +136,17 @@ const CityCombobox = ({ value, onChange, error, required = false }) => {
       );
 
       if (matchingCity) {
-        // Auto-select the matching city
+        // Auto-select the matching city — defer to avoid "setState during render" warning
         console.log(
           "[CityCombobox] Auto-selecting detected location:",
           matchingCity,
         );
-        onChange(matchingCity.id, matchingCity);
-        toast.success(
-          `Location detected: ${matchingCity.name}, ${matchingCity.state}`,
-        );
+        setTimeout(() => {
+          onChangeRef.current(matchingCity.id, matchingCity);
+          toast.success(
+            `Location detected: ${matchingCity.name}, ${matchingCity.state}`,
+          );
+        }, 0);
       } else if (
         detectedLocation.country === "India" ||
         detectedLocation.country === "IN"
@@ -119,7 +158,7 @@ const CityCombobox = ({ value, onChange, error, required = false }) => {
         setShowLocationSuggestion(true);
       }
     }
-  }, [detectedLocation, cities, value, onChange]);
+  }, [detectedLocation, cities, value]); // onChange intentionally omitted — accessed via stable ref
 
   const selectedCity = cities.find((city) => city.id === value);
 

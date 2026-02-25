@@ -2,7 +2,8 @@
 
 import { useState, useEffect, Suspense, useRef } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import axios, { AxiosError } from "axios";
+import { AxiosError } from "axios";
+import { api } from "@/lib/axios";
 import styles from "./property-detail.module.css";
 import {
   FiMapPin,
@@ -18,6 +19,18 @@ import {
   FiShare2,
   FiHeart,
   FiArrowLeft,
+  FiCheck,
+  FiShield,
+  FiPhone,
+  FiAlertCircle,
+  FiInfo,
+  FiHome,
+  FiCheckCircle,
+  FiX,
+  FiTv,
+  FiWind,
+  FiDroplet,
+  FiZap,
 } from "react-icons/fi";
 import { MdOutlineElevator } from "react-icons/md";
 import { useCorporateUser } from "@/hooks/useCorporateUser";
@@ -29,6 +42,52 @@ import { useToast } from "@/hooks/useToast";
 import ToastContainer from "@/components/ui/ToastContainer";
 import { useAuthModals } from "@/contexts/AuthModalContext";
 import { getImageUrl, getPropertyImages } from "@/lib/imageUtils";
+import ServiceDetailsCard from "@/components/properties/ServiceDetailsCard";
+import FeaturedPropertyBadge from "@/components/properties/FeaturedPropertyBadge";
+
+const getAmenityIcon = (amenity: string) => {
+  const lower = amenity.toLowerCase();
+  if (lower.includes("wifi") || lower.includes("internet")) return <FiWifi />;
+  if (lower.includes("tv") || lower.includes("television")) return <FiTv />;
+  if (
+    lower.includes("coffee") ||
+    lower.includes("kitchen") ||
+    lower.includes("dining")
+  )
+    return <FiCoffee />;
+  if (
+    lower.includes("ac") ||
+    lower.includes("air") ||
+    lower.includes("cooling")
+  )
+    return <FiWind />;
+  if (
+    lower.includes("water") ||
+    lower.includes("pool") ||
+    lower.includes("laundry")
+  )
+    return <FiDroplet />;
+  if (
+    lower.includes("power") ||
+    lower.includes("backup") ||
+    lower.includes("generator")
+  )
+    return <FiZap />;
+  if (lower.includes("gym") || lower.includes("fitness")) return <FiBox />;
+  if (
+    lower.includes("park") ||
+    lower.includes("car") ||
+    lower.includes("vehicle")
+  )
+    return <FiTruck />;
+  if (
+    lower.includes("workspace") ||
+    lower.includes("desk") ||
+    lower.includes("office")
+  )
+    return <FiBriefcase />;
+  return <FiCheck />;
+};
 
 interface PriceBreakdown {
   nights: number;
@@ -56,6 +115,7 @@ interface Property {
   state: string;
   address: string;
   area?: string;
+  pincode?: string;
   maps_location?: string;
   bedrooms: number;
   bathrooms?: number;
@@ -63,6 +123,10 @@ interface Property {
   max_occupancy?: number;
   base_occupancy?: number;
   price_per_night: number;
+  gst_percentage?: number;
+  min_guests?: number;
+  min_children?: number;
+  max_children?: number;
   extra_guest_charge?: number;
   extra_child_charge?: number;
   weekly_discount_percent?: number;
@@ -78,8 +142,12 @@ interface Property {
   max_stay_days?: number;
   min_stay_nights?: number;
   max_stay_nights?: number;
+  deposit_amount?: number | string;
+  maintenance_charges?: number | string;
+  notice_period_days?: number;
   // Features returned as array from backend
   features?: string[];
+  features_list?: string;
   // Computed boolean flags from features array
   has_workspace: boolean;
   has_housekeeping: boolean;
@@ -92,6 +160,34 @@ interface Property {
   total_reviews?: number;
   photos: string[];
   amenities: string[];
+  // Phase 2: Service apartment specific fields
+  housekeeping_frequency?: string;
+  wifi_speed_mbps?: number;
+  wifi_provider?: string;
+  furnishing_type?: string;
+  parking_slots?: number;
+  floor_number?: number;
+  utilities_included?: boolean;
+  // Phase 1: Policy fields
+  house_rules?: object | string;
+  cancellation_policy?: object | string;
+  house_rules_text?: string;
+  emergency_contacts?: string;
+  safety_information?: string;
+  check_in_guidelines?: string;
+  local_area_info?: string;
+  amenities_guide?: string;
+  check_in_time?: string;
+  check_out_time?: string;
+  // Phase 3: Property info
+  property_type?: string;
+  vendor_name?: string;
+  employee_name?: string;
+  // Phase 4: Booking flexibility
+  same_day_booking_allowed?: boolean | number;
+  max_booking_days?: number | null;
+  is_recommended?: boolean | number;
+  recommended_priority?: number;
 }
 
 // Utility function to parse features array into boolean flags
@@ -153,9 +249,7 @@ function ServiceApartmentDetailContent() {
       if (!token) return;
 
       try {
-        const response = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/wishlist/check/${params.id}`,
-        );
+        const response = await api.get(`/wishlist/check/${params.id}`);
         if (response.data.success) {
           setIsSaved(response.data.data.isSaved || false);
         }
@@ -191,44 +285,28 @@ function ServiceApartmentDetailContent() {
 
       try {
         setLoading(true);
-        console.log("[Fetch Property] Fetching property with ID:", params.id);
 
-        const response = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/service-apartments`,
-          { signal: abortController.signal },
-        );
+        // Use dedicated single-property endpoint instead of fetching the full list
+        const response = await api.get(`/service-apartments/${params.id}`, {
+          signal: abortController.signal,
+        });
 
         if (!isMounted) return;
 
-        console.log("[Fetch Property] Response received:", {
-          success: response.data.success,
-          propertyCount: response.data.data?.properties?.length || 0,
-        });
-
-        if (response.data.success) {
-          const properties = response.data.data.properties;
-          console.log(
-            "[Fetch Property] Available property IDs:",
-            properties.map((p: Property) => p.id),
-          );
-
-          const found = properties.find((p: Property) => p.id === params.id);
-
-          if (found) {
-            console.log("[Fetch Property] Property found:", {
-              id: found.id,
-              title: found.title,
-              price_per_night: found.price_per_night,
-            });
-            // Parse features array into boolean flags
-            const parsedProperty = parseFeatures(found);
-            setProperty(parsedProperty);
-          } else {
-            console.error(
-              "[Fetch Property] Property not found with ID:",
-              params.id,
-            );
-          }
+        if (response.data.success && response.data.data) {
+          const found = response.data.data;
+          // Parse features array into boolean flags
+          const parsedProperty = parseFeatures({
+            ...found,
+            features: Array.isArray(found.features)
+              ? found.features
+              : found.features_list
+                ? found.features_list
+                    .split(", ")
+                    .filter((f: string) => f.trim())
+                : [],
+          });
+          setProperty(parsedProperty);
         }
       } catch (error: unknown) {
         if (
@@ -320,8 +398,8 @@ function ServiceApartmentDetailContent() {
 
       console.log("[Calculate Price] Payload:", payload, `(${nights} nights)`);
 
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/service-apartments/calculate-price`,
+      const response = await api.post(
+        `/service-apartments/calculate-price`,
         payload,
       );
 
@@ -438,22 +516,11 @@ function ServiceApartmentDetailContent() {
 
     try {
       if (isSaved) {
-        await axios.delete(
-          `${process.env.NEXT_PUBLIC_API_URL}/wishlist/${property!.id}`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          },
-        );
+        await api.delete(`/wishlist/${property!.id}`);
         setIsSaved(false);
         toast.success("Removed from wishlist", 3000);
       } else {
-        await axios.post(
-          `${process.env.NEXT_PUBLIC_API_URL}/wishlist`,
-          { property_id: property!.id },
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          },
-        );
+        await api.post(`/wishlist`, { property_id: property!.id });
         setIsSaved(true);
         toast.success("Added to wishlist", 3000);
       }
@@ -588,6 +655,7 @@ function ServiceApartmentDetailContent() {
                   {property.area
                     ? `${property.area}, ${property.city}`
                     : `${property.city}, ${property.state}`}
+                  {property.pincode && ` - ${property.pincode}`}
                 </span>
               </p>
             </div>
@@ -637,6 +705,12 @@ function ServiceApartmentDetailContent() {
       <div className={styles.mainContent}>
         {/* Property Info */}
         <div className={styles.propertyInfo}>
+          {/* Phase 4: Featured Property Badge */}
+          <FeaturedPropertyBadge
+            isRecommended={property.is_recommended}
+            recommendedPriority={property.recommended_priority}
+          />
+
           {/* Property Overview Header */}
           <div className={styles.overviewHeader}>
             <div className={styles.propertyStats}>
@@ -695,9 +769,14 @@ function ServiceApartmentDetailContent() {
                 <p>
                   Save up to{" "}
                   <strong>
-                    {property.long_term_discount_percent ||
-                      property.long_term_discount_percentage ||
-                      35}
+                    {Math.max(
+                      property.long_term_discount_percent || 0,
+                      property.long_term_discount_percentage || 0,
+                      property.quarterly_discount_percent || 0,
+                      property.quarterly_discount_percentage || 0,
+                      property.monthly_discount_percent || 0,
+                      property.monthly_discount_percentage || 0,
+                    ) || "up to 35"}
                     %
                   </strong>{" "}
                   on extended stays · Unlock bigger savings with longer bookings
@@ -756,49 +835,329 @@ function ServiceApartmentDetailContent() {
               )}
               {property.amenities?.map((amenity, index) => (
                 <div key={index} className={styles.amenity}>
-                  <FiWifi />
+                  {getAmenityIcon(amenity)}
                   <span>{amenity}</span>
                 </div>
               ))}
+              {property.features_list &&
+                property.features_list
+                  .split(", ")
+                  .filter((f) => f.trim())
+                  .map((feature, index) => (
+                    <div key={`feature-${index}`} className={styles.amenity}>
+                      <FiCheck />
+                      <span>{feature}</span>
+                    </div>
+                  ))}
             </div>
           </div>
 
-          {/* Stay Requirements */}
-          <div className={styles.section}>
-            <div className={styles.sectionHeader}>
-              <h2>Booking Information</h2>
-              <div className={styles.sectionDivider}></div>
+          {/* Phase 2: Service Apartment Specific Details */}
+          <ServiceDetailsCard
+            housekeepingFrequency={property.housekeeping_frequency}
+            wifiSpeedMbps={property.wifi_speed_mbps}
+            wifiProvider={property.wifi_provider}
+            furnishingType={property.furnishing_type}
+            parkingSlots={property.parking_slots}
+            floorNumber={property.floor_number}
+            utilitiesIncluded={property.utilities_included}
+          />
+
+          {/* Property Information - Accordion with infoList */}
+          <details className={styles.accordionCard}>
+            <summary className={styles.accordionHeader}>
+              <span className={styles.accordionHeaderInner}>
+                <FiInfo />
+                Property Information
+              </span>
+              <span className={styles.accordionChevron}>&#8250;</span>
+            </summary>
+            <div className={styles.accordionBody}>
+              <div className={styles.infoList}>
+                {/* Check-in & Check-out */}
+                {(property.check_in_time || property.check_out_time) && (
+                  <div className={styles.infoItem}>
+                    <div className={styles.infoIcon}>
+                      <FiClock />
+                    </div>
+                    <div className={styles.infoContent}>
+                      <div className={styles.infoLabel}>
+                        Check-in &amp; Check-out
+                      </div>
+                      <div className={styles.infoValue}>
+                        {property.check_in_time || "3:00 PM"} —{" "}
+                        {property.check_out_time || "11:00 AM"}
+                      </div>
+                      <div className={styles.infoNote}>
+                        Standard check-in and check-out times
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Stay Requirements */}
+                <div className={styles.infoItem}>
+                  <div className={styles.infoIcon}>
+                    <FiCalendar />
+                  </div>
+                  <div className={styles.infoContent}>
+                    <div className={styles.infoLabel}>Stay Requirements</div>
+                    <div className={styles.infoValue}>
+                      Min:{" "}
+                      {property.min_stay_days || property.min_stay_nights || 1}{" "}
+                      nights
+                      {(property.max_stay_days || property.max_stay_nights) &&
+                        ` • Max: ${property.max_stay_days || property.max_stay_nights} nights`}
+                    </div>
+                    {Boolean(property.same_day_booking_allowed) && (
+                      <div className={styles.infoNote}>
+                        ✓ Same-day booking available
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Base Occupancy */}
+                <div className={styles.infoItem}>
+                  <div className={styles.infoIcon}>
+                    <FiUsers />
+                  </div>
+                  <div className={styles.infoContent}>
+                    <div className={styles.infoLabel}>Base Occupancy</div>
+                    <div className={styles.infoValue}>
+                      Up to {property.base_occupancy || 2} guests included
+                    </div>
+                    <div className={styles.infoNote}>
+                      Base price covers all included guests
+                    </div>
+                  </div>
+                </div>
+
+                {/* Security Deposit */}
+                {property.deposit_amount &&
+                  parseFloat(property.deposit_amount.toString()) > 0 && (
+                    <div className={styles.infoItem}>
+                      <div className={styles.infoIcon}>
+                        <FiShield />
+                      </div>
+                      <div className={styles.infoContent}>
+                        <div className={styles.infoLabel}>Security Deposit</div>
+                        <div className={styles.infoValue}>
+                          ₹
+                          {parseFloat(
+                            property.deposit_amount.toString(),
+                          ).toLocaleString()}
+                        </div>
+                        <div className={styles.infoNote}>
+                          Fully refundable at check-out
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                {/* Maintenance Charges */}
+                {property.maintenance_charges &&
+                  parseFloat(property.maintenance_charges.toString()) > 0 && (
+                    <div className={styles.infoItem}>
+                      <div className={styles.infoIcon}>
+                        <FiHome />
+                      </div>
+                      <div className={styles.infoContent}>
+                        <div className={styles.infoLabel}>Maintenance Fee</div>
+                        <div className={styles.infoValue}>
+                          ₹
+                          {parseFloat(
+                            property.maintenance_charges.toString(),
+                          ).toLocaleString()}
+                        </div>
+                        <div className={styles.infoNote}>
+                          One-time maintenance charge
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                {/* Cancellation Policy */}
+                {property.notice_period_days && (
+                  <div className={styles.infoItem}>
+                    <div className={styles.infoIcon}>
+                      <FiAlertCircle />
+                    </div>
+                    <div className={styles.infoContent}>
+                      <div className={styles.infoLabel}>
+                        Cancellation Policy
+                      </div>
+                      <div className={styles.infoValue}>
+                        {property.notice_period_days}{" "}
+                        {property.notice_period_days === 1 ? "day" : "days"}{" "}
+                        notice required
+                      </div>
+                      <div className={styles.infoNote}>
+                        Free cancellation before notice period
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Emergency Contacts */}
+                {property.emergency_contacts && (
+                  <div className={styles.infoItem}>
+                    <div className={styles.infoIcon}>
+                      <FiPhone />
+                    </div>
+                    <div className={styles.infoContent}>
+                      <div className={styles.infoLabel}>Emergency Contact</div>
+                      <div className={styles.infoValue}>
+                        24/7 Support Available
+                      </div>
+                      <div className={styles.infoNote}>
+                        Contact details provided after booking
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Corporate Bookings */}
+                {Boolean(property.allow_corporate_booking) && (
+                  <div className={styles.infoItem}>
+                    <div className={styles.infoIcon}>
+                      <FiCheckCircle />
+                    </div>
+                    <div className={styles.infoContent}>
+                      <div className={styles.infoLabel}>Corporate Bookings</div>
+                      <div className={styles.infoValue}>
+                        Available
+                        {(property.corporate_discount_percent ||
+                          property.corporate_discount_percentage) &&
+                          parseFloat(
+                            (
+                              property.corporate_discount_percent ||
+                              property.corporate_discount_percentage ||
+                              0
+                            ).toString(),
+                          ) > 0 &&
+                          ` • ${parseFloat((property.corporate_discount_percent || property.corporate_discount_percentage || 0).toString())}% corporate discount`}
+                      </div>
+                      <div className={styles.infoNote}>
+                        Special rates for corporate clients
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* House Rules */}
+                {property.house_rules_text && (
+                  <div className={styles.infoItem}>
+                    <div className={styles.infoIcon}>
+                      <FiInfo />
+                    </div>
+                    <div className={styles.infoContent}>
+                      <div className={styles.infoLabel}>House Rules</div>
+                      <div className={styles.infoValue}>
+                        Please review before booking
+                      </div>
+                      <div className={styles.infoNote}>
+                        {property.house_rules_text
+                          .replace(/<[^>]+>/g, " ")
+                          .replace(/\s+/g, " ")
+                          .trim()
+                          .substring(0, 80)}
+                        ...
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Children Policy */}
+                {property.max_children !== undefined &&
+                  property.max_children > 0 && (
+                    <div className={styles.infoItem}>
+                      <div className={styles.infoIcon}>
+                        <FiUsers />
+                      </div>
+                      <div className={styles.infoContent}>
+                        <div className={styles.infoLabel}>Children Policy</div>
+                        <div className={styles.infoValue}>
+                          {property.min_children || 0} – {property.max_children}{" "}
+                          children allowed
+                        </div>
+                        {property.extra_child_charge &&
+                        parseFloat(property.extra_child_charge.toString()) >
+                          0 ? (
+                          <div className={styles.infoNote}>
+                            Extra charge: ₹
+                            {parseFloat(
+                              property.extra_child_charge.toString(),
+                            ).toLocaleString()}{" "}
+                            per child per night
+                          </div>
+                        ) : (
+                          <div className={styles.infoNote}>
+                            No additional charges for children
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                {/* GST */}
+                {property.gst_percentage && (
+                  <div className={styles.infoItem}>
+                    <div className={styles.infoIcon}>
+                      <FiPercent />
+                    </div>
+                    <div className={styles.infoContent}>
+                      <div className={styles.infoLabel}>GST Included</div>
+                      <div className={styles.infoValue}>
+                        {parseFloat(property.gst_percentage.toString())}% GST
+                      </div>
+                      <div className={styles.infoNote}>
+                        All prices include applicable taxes
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Maximum Booking Period */}
+                {property.max_booking_days && (
+                  <div className={styles.infoItem}>
+                    <div className={styles.infoIcon}>
+                      <FiCalendar />
+                    </div>
+                    <div className={styles.infoContent}>
+                      <div className={styles.infoLabel}>
+                        Maximum Booking Period
+                      </div>
+                      <div className={styles.infoValue}>
+                        {property.max_booking_days}{" "}
+                        {property.max_booking_days === 1 ? "day" : "days"}{" "}
+                        maximum
+                      </div>
+                      <div className={styles.infoNote}>
+                        Maximum booking duration allowed
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Daily Housekeeping */}
+                {property.housekeeping_frequency === "daily" && (
+                  <div className={styles.infoItem}>
+                    <div className={styles.infoIcon}>
+                      <FiHome />
+                    </div>
+                    <div className={styles.infoContent}>
+                      <div className={styles.infoLabel}>Daily Housekeeping</div>
+                      <div className={styles.infoValue}>Included</div>
+                      <div className={styles.infoNote}>
+                        Daily cleaning and housekeeping service
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
-            <div className={styles.requirements}>
-              <div className={styles.requirement}>
-                <FiClock />
-                <div>
-                  <strong>Minimum Stay</strong>
-                  <p>
-                    {property.min_stay_days || property.min_stay_nights || 1}{" "}
-                    nights
-                  </p>
-                </div>
-              </div>
-              <div className={styles.requirement}>
-                <FiCalendar />
-                <div>
-                  <strong>Maximum Stay</strong>
-                  <p>
-                    {property.max_stay_days || property.max_stay_nights || 365}{" "}
-                    nights
-                  </p>
-                </div>
-              </div>
-              <div className={styles.requirement}>
-                <FiUsers />
-                <div>
-                  <strong>Base Occupancy</strong>
-                  <p>{property.base_occupancy || 2} guests included</p>
-                </div>
-              </div>
-            </div>
-          </div>
+          </details>
 
           {/* Discount Tiers */}
           <div className={styles.section}>
@@ -819,7 +1178,11 @@ function ServiceApartmentDetailContent() {
                   >
                     7-29 nights
                   </span>
-                  <span className={styles.tierDiscount}>15% OFF</span>
+                  <span className={styles.tierDiscount}>
+                    {property.weekly_discount_percent
+                      ? `${property.weekly_discount_percent}% OFF`
+                      : "Discount applies"}
+                  </span>
                 </div>
                 <p>Weekly Discount</p>
               </div>
@@ -876,10 +1239,241 @@ function ServiceApartmentDetailContent() {
               </div>
             </div>
           </div>
+
+          {/* House Rules - Structured display */}
+          {property.house_rules && typeof property.house_rules === "object" && (
+            <div className={styles.section}>
+              <div className={styles.sectionHeader}>
+                <h2>
+                  <FiShield
+                    style={{ display: "inline-block", marginRight: "0.5rem" }}
+                  />
+                  House Rules
+                </h2>
+                <div className={styles.sectionDivider}></div>
+              </div>
+              <div className={styles.houseRulesGrid}>
+                {(property.house_rules as Record<string, unknown>)
+                  .no_smoking === true && (
+                  <div className={styles.houseRuleItem}>
+                    <FiX className={styles.ruleDenyIcon} />
+                    <span>No Smoking</span>
+                  </div>
+                )}
+                {(property.house_rules as Record<string, unknown>)
+                  .no_parties === true && (
+                  <div className={styles.houseRuleItem}>
+                    <FiX className={styles.ruleDenyIcon} />
+                    <span>No Parties or Events</span>
+                  </div>
+                )}
+                {(property.house_rules as Record<string, unknown>)
+                  .no_outsiders === true && (
+                  <div className={styles.houseRuleItem}>
+                    <FiX className={styles.ruleDenyIcon} />
+                    <span>No Outside Visitors</span>
+                  </div>
+                )}
+                {(property.house_rules as Record<string, unknown>)
+                  .pet_friendly === true ? (
+                  <div className={styles.houseRuleItem}>
+                    <FiCheck className={styles.ruleAllowIcon} />
+                    <span>Pets Allowed</span>
+                  </div>
+                ) : (property.house_rules as Record<string, unknown>)
+                    .pet_friendly === false ? (
+                  <div className={styles.houseRuleItem}>
+                    <FiX className={styles.ruleDenyIcon} />
+                    <span>No Pets</span>
+                  </div>
+                ) : null}
+                {Boolean(
+                  (property.house_rules as Record<string, unknown>).quiet_hours,
+                ) && (
+                  <div className={styles.houseRuleItem}>
+                    <FiClock className={styles.ruleInfoIcon} />
+                    <span>
+                      Quiet hours after{" "}
+                      {String(
+                        (property.house_rules as Record<string, unknown>)
+                          .quiet_hours,
+                      )}
+                    </span>
+                  </div>
+                )}
+              </div>
+              {Array.isArray(
+                (property.house_rules as Record<string, unknown>)
+                  .additional_rules,
+              ) &&
+                (
+                  (property.house_rules as Record<string, unknown>)
+                    .additional_rules as string[]
+                ).length > 0 && (
+                  <ul className={styles.additionalRulesList}>
+                    {(
+                      (property.house_rules as Record<string, unknown>)
+                        .additional_rules as string[]
+                    ).map((rule: string, i: number) => (
+                      <li key={i} className={styles.additionalRuleItem}>
+                        <FiAlertCircle className={styles.ruleInfoIcon} />
+                        {rule}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+            </div>
+          )}
+
+          {/* Cancellation Policy - Structured tiers display */}
+          {(property.cancellation_policy || property.notice_period_days) && (
+            <div className={styles.section}>
+              <div className={styles.sectionHeader}>
+                <h2>
+                  <FiAlertCircle
+                    style={{ display: "inline-block", marginRight: "0.5rem" }}
+                  />
+                  Cancellation Policy
+                </h2>
+                <div className={styles.sectionDivider}></div>
+              </div>
+              {property.notice_period_days && (
+                <div className={styles.cancelPolicySummary}>
+                  <FiCheckCircle className={styles.ruleAllowIcon} />
+                  <span>
+                    Free cancellation if cancelled{" "}
+                    <strong>{property.notice_period_days}</strong>{" "}
+                    {property.notice_period_days === 1 ? "day" : "days"} before
+                    check-in
+                  </span>
+                </div>
+              )}
+              {property.cancellation_policy &&
+                Array.isArray(
+                  (property.cancellation_policy as Record<string, unknown>)
+                    .tiers,
+                ) && (
+                  <div className={styles.cancelTiersList}>
+                    {(
+                      (property.cancellation_policy as Record<string, unknown>)
+                        .tiers as Array<{
+                        label: string;
+                        days_before_checkin: number;
+                        refund_percent: number;
+                      }>
+                    ).map((tier, i) => (
+                      <div key={i} className={styles.cancelTierItem}>
+                        <div className={styles.cancelTierLabel}>
+                          {tier.label}
+                        </div>
+                        <div className={styles.cancelTierDetails}>
+                          <span className={styles.cancelTierDays}>
+                            {tier.days_before_checkin > 0
+                              ? `${tier.days_before_checkin}+ days before`
+                              : "At check-in"}
+                          </span>
+                          <span
+                            className={`${styles.cancelTierRefund} ${
+                              tier.refund_percent === 100
+                                ? styles.refundFull
+                                : tier.refund_percent > 0
+                                  ? styles.refundPartial
+                                  : styles.refundNone
+                            }`}
+                          >
+                            {tier.refund_percent}% Refund
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+            </div>
+          )}
+
+          {/* Local Area Information - Accordion */}
+          {property.local_area_info && (
+            <details className={styles.accordionCard}>
+              <summary className={styles.accordionHeader}>
+                <span className={styles.accordionHeaderInner}>
+                  <FiMapPin />
+                  Local Area & Nearby Facilities
+                </span>
+                <span className={styles.accordionChevron}>&#8250;</span>
+              </summary>
+              <div className={styles.accordionBody}>
+                <div
+                  className={styles.sectionContent}
+                  dangerouslySetInnerHTML={{ __html: property.local_area_info }}
+                />
+              </div>
+            </details>
+          )}
+
+          {/* Safety & Security Measures - Accordion */}
+          {property.safety_information && (
+            <details className={styles.accordionCard}>
+              <summary className={styles.accordionHeader}>
+                <span className={styles.accordionHeaderInner}>
+                  <FiShield />
+                  Safety & Security Measures
+                </span>
+                <span className={styles.accordionChevron}>&#8250;</span>
+              </summary>
+              <div className={styles.accordionBody}>
+                <div
+                  className={styles.sectionContent}
+                  dangerouslySetInnerHTML={{
+                    __html: property.safety_information,
+                  }}
+                />
+              </div>
+            </details>
+          )}
+
+          {/* Amenities Usage Guide - Accordion */}
+          {property.amenities_guide && (
+            <details className={styles.accordionCard}>
+              <summary className={styles.accordionHeader}>
+                <span className={styles.accordionHeaderInner}>
+                  <FiInfo />
+                  Amenities Usage Guide
+                </span>
+                <span className={styles.accordionChevron}>&#8250;</span>
+              </summary>
+              <div className={styles.accordionBody}>
+                <div
+                  className={styles.sectionContent}
+                  dangerouslySetInnerHTML={{ __html: property.amenities_guide }}
+                />
+              </div>
+            </details>
+          )}
+
+          {/* Check-in Guidelines - Accordion */}
+          {property.check_in_guidelines && (
+            <details className={styles.accordionCard}>
+              <summary className={styles.accordionHeader}>
+                <span className={styles.accordionHeaderInner}>
+                  <FiClock />
+                  Check-in Guidelines
+                </span>
+                <span className={styles.accordionChevron}>&#8250;</span>
+              </summary>
+              <div className={styles.accordionBody}>
+                <div
+                  className={styles.sectionContent}
+                  dangerouslySetInnerHTML={{
+                    __html: property.check_in_guidelines,
+                  }}
+                />
+              </div>
+            </details>
+          )}
         </div>
 
         {/* Booking Card */}
-        <div className={styles.bookingCard}>
+        <div id="booking" className={styles.bookingCard}>
           <div className={styles.priceHeader}>
             <div>
               <span className={styles.price}>
@@ -898,6 +1492,8 @@ function ServiceApartmentDetailContent() {
               onCheckOutChange={setCheckOut}
               minDate={new Date()}
               label="Select check-in date"
+              propertyId={property.id}
+              basePrice={property.price_per_night}
             />
 
             {/* Guest Selection */}
@@ -1085,6 +1681,65 @@ function ServiceApartmentDetailContent() {
           </button>
 
           <p className={styles.disclaimer}>You wont be charged yet</p>
+        </div>
+      </div>
+      {/* Mobile Floating Booking Bar */}
+      <div className={styles.mobileBookingFloat}>
+        <div className={styles.mobileBookingContent}>
+          <div className={styles.mobileBookingPrice}>
+            {checkIn && checkOut ? (
+              <>
+                <div className={styles.mobilePriceAmount}>
+                  {Math.ceil(
+                    (checkOut.getTime() - checkIn.getTime()) /
+                      (1000 * 60 * 60 * 24),
+                  )}{" "}
+                  nights · ₹
+                  {priceBreakdown
+                    ? priceBreakdown.total_amount.toLocaleString("en-IN")
+                    : (
+                        property.price_per_night *
+                        Math.ceil(
+                          (checkOut.getTime() - checkIn.getTime()) /
+                            (1000 * 60 * 60 * 24),
+                        )
+                      ).toLocaleString("en-IN")}
+                </div>
+                <div className={styles.mobilePriceLabel}>
+                  {checkIn.toLocaleDateString("en-IN", {
+                    day: "numeric",
+                    month: "short",
+                  })}{" "}
+                  –{" "}
+                  {checkOut.toLocaleDateString("en-IN", {
+                    day: "numeric",
+                    month: "short",
+                  })}
+                </div>
+              </>
+            ) : (
+              <>
+                <div className={styles.mobilePriceAmount}>
+                  ₹{(property.price_per_night || 0).toLocaleString("en-IN")}
+                </div>
+                <div className={styles.mobilePriceLabel}>per night</div>
+              </>
+            )}
+          </div>
+          <button
+            onClick={() => {
+              if (checkIn && checkOut) {
+                handleReserve();
+              } else {
+                const el = document.getElementById("booking");
+                if (el)
+                  el.scrollIntoView({ behavior: "smooth", block: "start" });
+              }
+            }}
+            className={styles.mobileReserveBtn}
+          >
+            {checkIn && checkOut ? "Reserve Now" : "Select Dates"}
+          </button>
         </div>
       </div>
       <ToastContainer toasts={toast.toasts} removeToast={toast.removeToast} />

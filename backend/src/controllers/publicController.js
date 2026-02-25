@@ -230,14 +230,29 @@ export const getPropertyDetails = asyncHandler(async (req, res) => {
       ${featuresService.getFeaturesSelectClause("p", "pf", "f")},
       p.house_rules,
       p.cancellation_policy,
+      p.emergency_contacts,
+      p.local_area_info,
+      p.safety_information,
+      p.amenities_guide,
+      p.house_rules_text,
+      p.check_in_guidelines,
       p.photos,
       p.rating,
       p.reviews_count,
       ${getPricingSelectClause("pr")},
+      pr.discount_3_5_days,
+      pr.discount_6_14_days,
+      pr.discount_15_plus_days,
       p.status,
       c.id as city_id,
       v.name as vendor_name,
-      e.name as employee_name
+      e.name as employee_name,
+      p.min_stay_days,
+      p.max_stay_days,
+      p.same_day_booking_allowed,
+      p.max_booking_days,
+      p.is_recommended,
+      p.recommended_priority
     FROM properties p
     INNER JOIN cities c ON p.city_id = c.id
     LEFT JOIN property_types pt ON p.property_type_id = pt.id

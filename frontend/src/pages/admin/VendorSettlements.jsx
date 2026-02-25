@@ -71,7 +71,7 @@ export default function VendorSettlements() {
       }
     } catch (error) {
       toast.error(
-        error.response?.data?.message || "Failed to fetch settlements"
+        error.response?.data?.message || "Failed to fetch settlements",
       );
     } finally {
       setLoading(false);
@@ -105,7 +105,7 @@ export default function VendorSettlements() {
       }
     } catch (error) {
       toast.error(
-        error.response?.data?.message || "Failed to mark settlement as paid"
+        error.response?.data?.message || "Failed to mark settlement as paid",
       );
     } finally {
       setProcessingPayment(false);
@@ -114,11 +114,22 @@ export default function VendorSettlements() {
 
   const getStatusBadge = (status) => {
     const variants = {
-      pending: { className: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400", label: "Pending", icon: Clock },
-      paid: { className: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400", label: "Paid", icon: CheckCircle },
+      pending: {
+        className:
+          "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
+        label: "Pending",
+        icon: Clock,
+      },
+      paid: {
+        className:
+          "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
+        label: "Paid",
+        icon: CheckCircle,
+      },
     };
     const config = variants[status] || {
-      className: "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300",
+      className:
+        "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300",
       label: status,
       icon: Clock,
     };
@@ -224,7 +235,7 @@ export default function VendorSettlements() {
           <CardContent>
             <div className="text-2xl font-bold">
               {formatCurrency(
-                settlements.reduce((sum, s) => sum + s.amount, 0)
+                settlements.reduce((sum, s) => sum + s.amount, 0),
               )}
             </div>
             <p className="text-xs text-gray-500 mt-1">
@@ -424,9 +435,7 @@ export default function VendorSettlements() {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Bank:</span>
-                      <span>
-                        {selectedSettlement.bank_name || "N/A"}
-                      </span>
+                      <span>{selectedSettlement.bank_name || "N/A"}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Account:</span>

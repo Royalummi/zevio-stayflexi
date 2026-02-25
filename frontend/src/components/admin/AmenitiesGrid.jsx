@@ -24,7 +24,6 @@ import {
   Check,
 } from "lucide-react";
 import api from "../../lib/api";
-import { toast } from "sonner";
 
 // Icon mapping
 const iconMap = {
@@ -69,20 +68,32 @@ const categoryLabels = {
 const AmenitiesGrid = ({ selectedAmenities = [], onChange }) => {
   const [amenities, setAmenities] = useState({ all: [], grouped: {} });
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
     fetchAmenities();
   }, []);
 
-  const fetchAmenities = async () => {
+  const fetchAmenities = async (retryCount = 0) => {
+    const MAX_RETRIES = 3;
+    const RETRY_DELAY_MS = 1500;
     try {
-      const response = await api.get("/admin/amenities");
+      setLoadError(false);
+      const response = await api.get("/public/amenities");
       setAmenities(response.data.data || { all: [], grouped: {} });
-    } catch (error) {
-      console.error("Error fetching amenities:", error);
-      toast.error("Failed to load amenities");
-    } finally {
       setLoading(false);
+    } catch (error) {
+      if (retryCount < MAX_RETRIES) {
+        // Auto-retry with increasing delay
+        setTimeout(
+          () => fetchAmenities(retryCount + 1),
+          RETRY_DELAY_MS * (retryCount + 1),
+        );
+      } else {
+        console.error("Error fetching amenities after retries:", error);
+        setLoadError(true);
+        setLoading(false);
+      }
     }
   };
 
@@ -115,6 +126,26 @@ const AmenitiesGrid = ({ selectedAmenities = [], onChange }) => {
     return (
       <div className="flex items-center justify-center py-8">
         <div className="text-muted-foreground">Loading amenities...</div>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="flex flex-col items-center justify-center py-8 gap-3">
+        <p className="text-sm text-muted-foreground">
+          Failed to load amenities. Check that the server is running.
+        </p>
+        <button
+          type="button"
+          onClick={() => {
+            setLoading(true);
+            fetchAmenities();
+          }}
+          className="px-4 py-2 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+        >
+          Retry
+        </button>
       </div>
     );
   }

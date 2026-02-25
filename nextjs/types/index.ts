@@ -63,6 +63,42 @@ export interface Property {
   corporate_discount_percentage?: number; // Corporate discount percentage
   created_at?: string;
   updated_at?: string;
+  // Phase 1: Policy & Safety fields
+  house_rules?: object | string; // JSON object or string
+  cancellation_policy?: object | string; // JSON object or string
+  emergency_contacts?: string; // HTML longtext
+  local_area_info?: string; // HTML longtext
+  safety_information?: string; // HTML longtext
+  amenities_guide?: string; // HTML longtext
+  house_rules_text?: string; // HTML longtext
+  check_in_guidelines?: string; // HTML longtext
+  check_in_time?: string;
+  check_out_time?: string;
+  property_type?: string;
+  vendor_name?: string;
+  employee_name?: string;
+  // Phase 4: Booking flexibility and featured property fields
+  min_stay_days?: number;
+  max_stay_days?: number;
+  same_day_booking_allowed?: boolean | number;
+  max_booking_days?: number | null;
+  is_recommended?: boolean | number;
+  recommended_priority?: number;
+  // Additional pricing and booking fields
+  gst_percentage?: number | string;
+  weekly_discount_percent?: number | string;
+  monthly_discount_percent?: number | string;
+  quarterly_discount_percent?: number | string;
+  long_term_discount_percent?: number | string;
+  discount_3_5_days?: number | string;
+  discount_6_14_days?: number | string;
+  discount_15_plus_days?: number | string;
+  deposit_amount?: number | string;
+  maintenance_charges?: number | string;
+  allow_corporate_booking?: boolean | number;
+  corporate_discount_percent?: number | string;
+  notice_period_days?: number;
+  features_list?: string;
 }
 
 export interface PropertyFilters {

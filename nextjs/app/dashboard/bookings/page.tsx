@@ -767,6 +767,12 @@ export default function BookingsEnhanced() {
                             {calculateTimeLeft(booking.expires_at)}
                           </span>
                         )}
+                      {/* SESSION 47: Check-In Today badge */}
+                      {canUserCheckIn(booking) && (
+                        <span className={styles.checkInTodayBadge}>
+                          🏠 Check-In Today!
+                        </span>
+                      )}
                     </div>
                   </div>
 

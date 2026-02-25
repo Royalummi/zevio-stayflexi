@@ -4,6 +4,11 @@ import React, { useState, useRef, useEffect } from "react";
 import { FiChevronLeft, FiChevronRight, FiCalendar } from "react-icons/fi";
 import styles from "./DateRangeSelector.module.css";
 
+interface PriceEntry {
+  price_date: string;
+  price: number;
+}
+
 interface DateRangeSelectorProps {
   checkIn: Date | null;
   checkOut: Date | null;
@@ -15,6 +20,15 @@ interface DateRangeSelectorProps {
   calendarOnly?: boolean;
   isOpen?: boolean;
   onOpenChange?: (isOpen: boolean) => void;
+  /** Pass a property ID to show per-day pricing inside the calendar */
+  propertyId?: string;
+  /** Base price per night — shown on days without a custom rate */
+  basePrice?: number;
+}
+
+function formatDayPrice(amount: number): string {
+  if (amount >= 1000) return `₹${(amount / 1000).toFixed(1)}k`;
+  return `₹${amount}`;
 }
 
 export default function DateRangeSelector({
@@ -28,14 +42,47 @@ export default function DateRangeSelector({
   calendarOnly = false,
   isOpen: externalIsOpen,
   onOpenChange,
+  propertyId,
+  basePrice,
 }: DateRangeSelectorProps) {
   const [internalShowDropdown, setInternalShowDropdown] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const dropdownRef = useRef<HTMLDivElement>(null);
+  // Pricing state — keyed by "YYYY-MM-DD"
+  const [priceMap, setPriceMap] = useState<Record<string, number>>({});
+  const [fetchedYears, setFetchedYears] = useState<Set<number>>(new Set());
 
   // Use external isOpen if provided (for controlled mode), otherwise use internal state
   const showDropdown =
     externalIsOpen !== undefined ? externalIsOpen : internalShowDropdown;
+
+  // Fetch per-day pricing from public API when calendar opens or year changes
+  useEffect(() => {
+    if (!propertyId || !showDropdown) return;
+    const yr = currentMonth.getFullYear();
+    if (fetchedYears.has(yr)) return;
+    const load = async () => {
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/public/properties/${propertyId}/calendar-pricing?year=${yr}`,
+        );
+        const json = await res.json();
+        if (json.success && Array.isArray(json.data)) {
+          setPriceMap((prev) => {
+            const next = { ...prev };
+            (json.data as PriceEntry[]).forEach((e) => {
+              next[e.price_date] = e.price;
+            });
+            return next;
+          });
+          setFetchedYears((prev) => new Set(prev).add(yr));
+        }
+      } catch {
+        // calendar still works without pricing overlay
+      }
+    };
+    load();
+  }, [showDropdown, currentMonth, propertyId, fetchedYears]);
 
   const handleOpenChange = (newState: boolean) => {
     if (externalIsOpen === undefined) {
@@ -162,7 +209,9 @@ export default function DateRangeSelector({
       <>
         {/* Calendar Dropdown */}
         {showDropdown && (
-          <div className={styles.dropdownContent}>
+          <div
+            className={`${styles.dropdownContent} ${styles.calendarOnlyContent}`}
+          >
             {/* Calendar Header */}
             <div className={styles.calendarHeader}>
               <button
@@ -220,6 +269,9 @@ export default function DateRangeSelector({
                 const disabled = isDisabled(date);
                 const selected = isSelected(date);
                 const inRange = isInRange(date);
+                const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+                const customPx = priceMap[dateKey];
+                const displayPx = customPx ?? basePrice;
 
                 return (
                   <button
@@ -229,11 +281,18 @@ export default function DateRangeSelector({
                       disabled ? styles.disabled : ""
                     } ${selected ? styles.selected : ""} ${
                       inRange ? styles.inRange : ""
-                    }`}
+                    }${displayPx !== undefined ? ` ${styles.hasPricing}` : ""}`}
                     disabled={disabled}
-                    aria-label={`Select ${day}`}
+                    aria-label={`${day}${displayPx !== undefined ? " \u2014 " + formatDayPrice(displayPx) : ""}`}
                   >
-                    {day}
+                    <span className={styles.dayNumber}>{day}</span>
+                    {!disabled && displayPx !== undefined && (
+                      <span
+                        className={`${styles.dayPrice}${customPx !== undefined ? ` ${styles.dayPriceCustom}` : ""}`}
+                      >
+                        {formatDayPrice(displayPx)}
+                      </span>
+                    )}
                   </button>
                 );
               })}
@@ -354,6 +413,9 @@ export default function DateRangeSelector({
               const disabled = isDisabled(date);
               const selected = isSelected(date);
               const inRange = isInRange(date);
+              const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+              const customPx = priceMap[dateKey];
+              const displayPx = customPx ?? basePrice;
 
               return (
                 <button
@@ -363,11 +425,18 @@ export default function DateRangeSelector({
                     disabled ? styles.disabled : ""
                   } ${selected ? styles.selected : ""} ${
                     inRange ? styles.inRange : ""
-                  }`}
+                  }${displayPx !== undefined ? ` ${styles.hasPricing}` : ""}`}
                   disabled={disabled}
-                  aria-label={`Select ${day}`}
+                  aria-label={`${day}${displayPx !== undefined ? " \u2014 " + formatDayPrice(displayPx) : ""}`}
                 >
-                  {day}
+                  <span className={styles.dayNumber}>{day}</span>
+                  {!disabled && displayPx !== undefined && (
+                    <span
+                      className={`${styles.dayPrice}${customPx !== undefined ? ` ${styles.dayPriceCustom}` : ""}`}
+                    >
+                      {formatDayPrice(displayPx)}
+                    </span>
+                  )}
                 </button>
               );
             })}

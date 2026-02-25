@@ -7,10 +7,17 @@
 .luxuryVillaLayout {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 2rem;
+    gap: 0;            /* mobile: sidebar is hidden, no gap needed */
     margin-bottom: 4rem;
     /* Ensure no overflow constraints */
     overflow: visible;
+}
+
+/* Tablet: small gap between gallery+content and booking card */
+@media (min-width: 768px) and (max-width: 1023px) {
+    .luxuryVillaLayout {
+        gap: 1.5rem;
+    }
 }
 
 @media (min-width: 1024px) {
@@ -28,6 +35,10 @@
 .sidebarColumn {
     /* This div is the direct grid child - apply sticky here to match service apartments */
     width: 100%;
+    /* CRITICAL: min-width:0 prevents CSS Grid blowout on this column too.
+       Do NOT add overflow:hidden here — it would clip the absolute-positioned
+       guests dropdown and break dropdown visibility. */
+    min-width: 0;
 }
 
 @media (min-width: 1024px) {
@@ -40,10 +51,9 @@
         /* Match service apartments navbar height */
         align-self: flex-start;
         /* Important: allows sticky to work properly */
-        /* Performance optimizations */
-        will-change: transform;
-        -webkit-transform: translateZ(0);
-        transform: translateZ(0);
+        /* NOTE: Do NOT add transform/will-change here — transform creates a
+           containing block for position:fixed children (the date calendar),
+           causing it to render relative to this element instead of the viewport */
         z-index: 20;
     }
 }
@@ -55,9 +65,9 @@
 
 /* ===== BOOKING CARD - NO STICKY, JUST STYLING ===== */
 .bookingCard {
-    background: white;
+    background: var(--brand-white);
     border-radius: 24px;
-    box-shadow: 0 8px 32px rgba(31, 58, 95, 0.12);
+    box-shadow: var(--shadow-lg);
     padding: 0;
     overflow: visible;
     /* CRITICAL: Allow dropdowns to escape */
@@ -65,7 +75,7 @@
 }
 
 .bookingCard:hover {
-    box-shadow: 0 12px 48px rgba(31, 58, 95, 0.18);
+    box-shadow: var(--shadow-xl);
 }
 
 .bookingCardContent {
@@ -81,10 +91,34 @@
 /* ===== PHOTO GALLERY SECTION ===== */
 .gallerySection {
     width: 100%;
+    /* CRITICAL: min-width:0 prevents CSS Grid blowout.
+       Grid items default to min-width:auto (size-to-content).
+       Without this, a single wide child forces the whole grid wider
+       than the viewport, making every section appear to overflow. */
+    min-width: 0;
+    overflow-x: hidden;
 }
 
 .propertyDetailsLeft {
     margin-top: 3rem;
+    /* Contain all child sections within the grid column */
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+    /* Prevent box model from making this wider than its parent */
+    box-sizing: border-box;
+}
+
+@media (max-width: 767px) {
+    .propertyDetailsLeft {
+        margin-top: 1.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .propertyDetailsLeft {
+        margin-top: 1rem;
+    }
 }
 
 .mainPhotoWrapper {
@@ -93,7 +127,7 @@
     height: 350px;
     border-radius: 1rem;
     overflow: hidden;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    box-shadow: var(--shadow-lg);
     margin-bottom: 1rem;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -127,7 +161,7 @@
 }
 
 .mainPhotoWrapper:hover {
-    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--shadow-xl);
     transform: translateY(-2px);
 }
 
@@ -151,15 +185,15 @@
     align-items: center;
     gap: 0.5rem;
     padding: 0.75rem 1.25rem;
-    background: linear-gradient(135deg, rgba(31, 58, 95, 0.9), rgba(31, 58, 95, 0.85));
+    background: rgba(31, 58, 95, 0.88);
     backdrop-filter: blur(16px);
     border-radius: 100px;
-    color: white;
+    color: var(--brand-white);
     font-size: 0.9375rem;
     font-weight: 600;
     letter-spacing: 0.02em;
-    box-shadow: 0 4px 16px rgba(31, 58, 95, 0.3);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: var(--shadow-md);
+    border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .photoCounterBadge .separator {
@@ -208,7 +242,7 @@
     overflow: hidden;
     cursor: pointer;
     border: 2px solid transparent;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    box-shadow: var(--shadow-sm);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -234,7 +268,7 @@
 
 .luxuryThumbnail:hover {
     transform: translateY(-6px);
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--shadow-lg);
     border-color: var(--brand-teal);
 }
 
@@ -244,7 +278,7 @@
 
 .luxuryThumbnail.active {
     border-color: var(--brand-navy);
-    box-shadow: 0 8px 24px rgba(31, 58, 95, 0.3);
+    box-shadow: var(--shadow-lg);
 }
 
 .luxuryThumbnail.active::before {
@@ -261,18 +295,18 @@
     right: 0.5rem;
     width: 2rem;
     height: 2rem;
-    background: linear-gradient(135deg, var(--brand-navy), var(--brand-teal-dark));
+    background: var(--brand-teal);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    box-shadow: var(--shadow-sm);
     z-index: 2;
 }
 
 .activeIndicator::after {
     content: '✓';
-    color: white;
+    color: var(--brand-white);
     font-size: 1rem;
     font-weight: 700;
 }
@@ -284,9 +318,9 @@
 .propertyHeaderSidebar {
     margin-bottom: 1.5rem;
     padding: 1.5rem;
-    background: linear-gradient(135deg, #f8f6f3 0%, #ffffff 100%);
+    background: var(--brand-grey-lightest);
     border-radius: 1rem;
-    border: 1px solid rgba(0, 0, 0, 0.06);
+    border: 1px solid var(--brand-border-light);
 }
 
 .propertyNameSidebar {
@@ -313,7 +347,7 @@
     display: flex;
     align-items: flex-start;
     gap: 0.5rem;
-    color: #666;
+    color: var(--brand-text-dark);
     font-size: 0.875rem;
     line-height: 1.5;
 }
@@ -348,22 +382,22 @@
 
 .propertyMetaSidebar .ratingBox span {
     font-weight: 700;
-    color: #1a1a1a;
+    color: var(--brand-navy);
 }
 
 .propertyMetaSidebar .reviewsCount {
-    color: #666;
+    color: var(--brand-text-dark);
     font-size: 0.875rem;
 }
 
 /* Removed duplicate @media .bookingSidebar - using the cleaner version at the top of the file */
 
 .bookingCard {
-    background: white;
+    background: var(--brand-white);
     border-radius: 1.5rem;
     padding: 0;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
-    border: 1px solid rgba(0, 0, 0, 0.06);
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--brand-border-light);
     transition: all 0.3s ease;
     display: flex;
     flex-direction: column;
@@ -371,7 +405,7 @@
 }
 
 .bookingCard:hover {
-    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.12);
+    box-shadow: var(--shadow-xl);
 }
 
 .bookingCardContent {
@@ -430,9 +464,42 @@
 /* Booking Form */
 .bookingForm {
     display: flex;
-    /* flex-direction: column; */
     gap: 16px;
-    /* margin-bottom: 24px; */
+}
+
+/* ─── Standalone rating classes used in bookingHeader ─── */
+.metaRating {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.ratingBox {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.375rem 0.75rem;
+    background: var(--brand-teal-lighter, rgba(47, 164, 169, 0.12));
+    border-radius: 0.5rem;
+}
+
+.ratingBox svg {
+    width: 1rem;
+    height: 1rem;
+    color: var(--brand-teal);
+    fill: var(--brand-teal);
+}
+
+.ratingBox span {
+    font-size: 0.9375rem;
+    font-weight: 700;
+    color: var(--brand-navy);
+}
+
+.reviewsCount {
+    font-size: 0.875rem;
+    color: var(--brand-text-dark);
 }
 
 /* Date Selection Grid - Row 1: Check-in and Check-out side by side */
@@ -550,7 +617,7 @@
     height: 32px;
     border-radius: 50%;
     border: 1.5px solid var(--brand-border);
-    background: white;
+    background: var(--brand-white);
     color: var(--brand-navy);
     font-size: 1.125rem;
     font-weight: 600;
@@ -566,9 +633,9 @@
 .guestBtn:hover:not(:disabled) {
     background: var(--brand-teal);
     border-color: var(--brand-teal);
-    color: white;
+    color: var(--brand-white);
     transform: scale(1.08);
-    box-shadow: 0 4px 12px rgba(47, 164, 169, 0.3);
+    box-shadow: var(--shadow-md);
 }
 
 .guestBtn:active:not(:disabled) {
@@ -611,12 +678,23 @@
 .breakdownItem {
     display: flex;
     justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.75rem;
     font-size: 16px;
     color: var(--brand-navy);
 }
 
 .breakdownItem span:first-child {
-    color: #717171;
+    color: var(--brand-text-dark);
+    flex: 1;
+    min-width: 0;
+    word-break: break-word;
+}
+
+.breakdownItem span:last-child {
+    flex-shrink: 0;
+    text-align: right;
+    font-weight: 600;
 }
 
 .breakdownTotal {
@@ -627,13 +705,13 @@
     color: var(--brand-navy);
     padding-top: 16px;
     margin-top: 8px;
-    border-top: 1px solid #ebebeb;
+    border-top: 1px solid var(--brand-border-light);
 }
 
 .bookingCardFooter {
     padding: 1.5rem 2rem;
-    background: linear-gradient(to top, #ffffff, #f8f9fa);
-    border-top: 1px solid rgba(0, 0, 0, 0.06);
+    background: var(--brand-grey-lightest);
+    border-top: 1px solid var(--brand-border-light);
     position: sticky;
     bottom: 0;
     z-index: 10;
@@ -642,43 +720,23 @@
 .reserveBtnLuxury {
     width: 100%;
     padding: 1.25rem 2rem;
-    background: linear-gradient(135deg, var(--brand-teal) 0%, var(--brand-teal-dark) 100%);
-    color: white;
+    background: var(--brand-teal);
+    color: var(--brand-white);
     border: none;
     border-radius: 0.875rem;
     font-weight: 600;
     font-size: 1.125rem;
     letter-spacing: 0.02em;
     cursor: pointer;
-    box-shadow: 0 6px 20px rgba(0, 158, 158, 0.3);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
-    overflow: hidden;
+    box-shadow: 0 4px 14px rgba(47, 164, 169, 0.28);
+    transition: all 0.25s ease;
     margin-top: 1.5rem;
 }
 
-.reserveBtnLuxury span {
-    position: relative;
-    z-index: 2;
-}
-
-.reserveBtnLuxury::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, var(--brand-navy) 0%, var(--brand-teal-dark) 100%);
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    z-index: 1;
-}
-
 .reserveBtnLuxury:hover {
+    background: var(--brand-navy);
     transform: translateY(-2px);
-    box-shadow: 0 8px 28px rgba(0, 158, 158, 0.4);
-}
-
-.reserveBtnLuxury:hover::before {
-    opacity: 1;
+    box-shadow: 0 6px 20px rgba(31, 58, 95, 0.3);
 }
 
 .reserveBtnLuxury:active {
@@ -691,35 +749,20 @@
     margin: 0 auto;
 }
 
-/* Section Titles - Luxury Typography */
-.sectionTitleLuxury {
-    font-size: 2rem;
-    font-weight: 700;
-    color: var(--brand-navy);
-    margin-bottom: 2rem;
-    letter-spacing: -0.02em;
-    position: relative;
-    padding-bottom: 1rem;
-}
-
-.sectionTitleLuxury::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 4rem;
-    height: 0.25rem;
-    background: linear-gradient(90deg, var(--brand-teal), var(--brand-navy));
-    border-radius: 100px;
-}
+/* Section Titles - Canonical definition is in the HTML Content Sections block below.
+   This placeholder exists only to prevent old ::after pseudo-element from rendering. */
 
 /* Property Overview Section */
 .overviewSectionLuxury {
-    margin-bottom: 4rem;
-    padding: 3rem;
-    background: linear-gradient(135deg, #f8f6f3 0%, #ffffff 100%);
+    margin-bottom: 2.5rem;
+    padding: 2rem;
+    background: var(--brand-grey-lightest);
     border-radius: 1.5rem;
-    border: 1px solid rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--brand-border-light);
+    /* Prevent section from exceeding column width */
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow-x: hidden;
 }
 
 .statsGridLuxury {
@@ -740,12 +783,12 @@
     flex-direction: column;
     align-items: center;
     text-align: center;
-    padding: 2rem 1.5rem;
-    background: white;
-    border-radius: 1.25rem;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
-    border: 1px solid rgba(0, 0, 0, 0.04);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 1.75rem 1.25rem;
+    background: var(--brand-white);
+    border-radius: 1rem;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--brand-border-light);
+    transition: all 0.25s ease;
     position: relative;
     overflow: hidden;
 }
@@ -756,15 +799,16 @@
     top: 0;
     left: 0;
     right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, var(--brand-navy), var(--brand-teal));
+    height: 3px;
+    background: var(--brand-teal);
     opacity: 0;
     transition: opacity 0.3s ease;
 }
 
 .statCardLuxury:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-md);
+    border-color: rgba(47, 164, 169, 0.3);
 }
 
 .statCardLuxury:hover::before {
@@ -777,18 +821,18 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, var(--brand-bg-light), var(--brand-border-light));
+    background: rgba(47, 164, 169, 0.1);
     border-radius: 1rem;
     margin-bottom: 1rem;
-    color: var(--brand-navy);
+    color: var(--brand-teal);
     font-size: 1.75rem;
     transition: all 0.3s ease;
 }
 
 .statCardLuxury:hover .statIconLuxury {
-    background: linear-gradient(135deg, var(--brand-teal), var(--brand-teal-dark));
-    color: white;
-    transform: scale(1.1);
+    background: var(--brand-teal);
+    color: var(--brand-white);
+    transform: scale(1.08);
 }
 
 .statContentLuxury {
@@ -812,30 +856,18 @@
     letter-spacing: 0.08em;
 }
 
-/* About This Place Section */
-.aboutSectionLuxury {
-    margin-bottom: 4rem;
-    padding: 3rem;
-    background: white;
-    border-radius: 1.5rem;
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
-    border: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.descriptionTextLuxury {
-    font-size: 1.125rem;
-    line-height: 1.8;
-    color: #444;
-    letter-spacing: 0.01em;
-}
+/* About / Description - canonical definitions in HTML Content Sections block below */
 
 /* Amenities Section */
 .amenitiesSectionLuxury {
-    margin-bottom: 4rem;
-    padding: 3rem;
-    background: linear-gradient(135deg, #ffffff 0%, #f8f6f3 100%);
+    margin-bottom: 2.5rem;
+    padding: 2.5rem;
+    background: var(--brand-grey-lightest);
     border-radius: 1.5rem;
-    border: 1px solid rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--brand-border-light);
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow-x: hidden;
 }
 
 .amenitiesGridLuxury {
@@ -862,17 +894,17 @@
     align-items: center;
     gap: 1rem;
     padding: 1.25rem;
-    background: white;
+    background: var(--brand-white);
     border-radius: 1rem;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
-    border: 1px solid rgba(0, 0, 0, 0.04);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--brand-border-light);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
 }
 
 .amenityItemLuxury:hover {
     transform: translateX(6px);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-md);
     border-color: var(--brand-teal);
 }
 
@@ -882,24 +914,24 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, var(--brand-bg-light), var(--brand-border-light));
+    background: rgba(47, 164, 169, 0.1);
     border-radius: 0.75rem;
-    color: var(--brand-navy);
+    color: var(--brand-teal);
     font-size: 1.25rem;
     flex-shrink: 0;
     transition: all 0.3s ease;
 }
 
 .amenityItemLuxury:hover .amenityIconLuxury {
-    background: linear-gradient(135deg, var(--brand-teal), var(--brand-teal-dark));
-    color: white;
-    transform: rotate(5deg) scale(1.1);
+    background: var(--brand-teal);
+    color: var(--brand-white);
+    transform: scale(1.08);
 }
 
 .amenityTextLuxury {
     font-size: 0.9375rem;
     font-weight: 500;
-    color: #333;
+    color: var(--brand-navy);
 }
 
 /* Mobile Floating Booking Button */
@@ -909,14 +941,15 @@
     bottom: 0;
     left: 0;
     right: 0;
-    background: white;
+    background: var(--brand-white);
     padding: 1rem 1.5rem;
-    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-lg);
     z-index: 1000;
-    border-top: 1px solid rgba(0, 0, 0, 0.06);
+    border-top: 1px solid var(--brand-border-light);
 }
 
-@media (min-width: 1024px) {
+/* Hide floating bar on tablet + desktop: full booking card is visible there */
+@media (min-width: 768px) {
     .mobileBookingFloat {
         display: none;
     }
@@ -927,48 +960,128 @@
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
-    max-width: 1200px;
+    max-width: 600px;
     margin: 0 auto;
 }
 
 .mobileBookingPrice {
     display: flex;
     flex-direction: column;
+    gap: 2px;
 }
 
 .mobilePriceAmount {
-    font-size: 1.25rem;
+    font-size: 1.1875rem;
     font-weight: 700;
-    color: #1a1a1a;
+    color: var(--brand-navy);
+    line-height: 1.2;
 }
 
 .mobilePriceLabel {
-    font-size: 0.875rem;
-    color: #666;
+    font-size: 0.8125rem;
+    color: var(--brand-text-dark);
 }
 
 .mobileReserveBtn {
-    padding: 0.875rem 2rem;
-    background: linear-gradient(135deg, var(--brand-teal) 0%, var(--brand-teal-dark) 100%);
-    color: white;
+    padding: 0.875rem 1.75rem;
+    background: linear-gradient(135deg, var(--brand-teal) 0%, var(--brand-teal-dark, #269ea3) 100%);
+    color: var(--brand-white);
     border: none;
-    border-radius: 0.75rem;
-    font-weight: 600;
+    border-radius: 0.875rem;
+    font-weight: 700;
     font-size: 1rem;
     cursor: pointer;
     white-space: nowrap;
-    box-shadow: 0 4px 12px rgba(0, 158, 158, 0.3);
-    transition: all 0.3s ease;
+    box-shadow: 0 4px 16px rgba(47, 164, 169, 0.35);
+    transition: all 0.25s ease;
+    letter-spacing: 0.01em;
+}
+
+.mobileReserveBtn:hover {
+    background: linear-gradient(135deg, var(--brand-teal-dark, #269ea3) 0%, var(--brand-navy) 100%);
+    box-shadow: 0 6px 20px rgba(31, 58, 95, 0.3);
+    transform: translateY(-1px);
 }
 
 .mobileReserveBtn:active {
-    transform: scale(0.98);
+    transform: scale(0.97) translateY(0);
+    box-shadow: none;
 }
 
-/* Hide desktop booking on mobile */
+/* ============================================================================
+   MOBILE / TABLET BOOKING CARD LAYOUT
+   - Mobile (<768px): hide full booking card — floating bar handles booking
+   - Tablet (768–1023px): show card AFTER gallery content (natural order)
+   - Desktop (≥1024px): two-column sticky layout (see top of file)
+   ============================================================================ */
+
+/* Shared adjustments for all sub-desktop widths */
 @media (max-width: 1023px) {
     .bookingSidebar {
+        display: block;
+    }
+
+    /* IMPORTANT: sidebarColumn order is NOT overridden here.
+       On mobile → hidden entirely (see 767px rule below).
+       On tablet → natural document order = appears after gallerySection (gallery first). */
+
+    .bookingCard {
+        border-radius: 1rem;
+        box-shadow: var(--shadow-md);
+        margin-bottom: 0;
+    }
+
+    .bookingCardContent {
+        padding: 1.25rem;
+    }
+
+    /* Make booking card footer non-sticky on tablet/mobile */
+    .bookingCardFooter {
+        position: static;
+        padding: 1rem 1.25rem;
+    }
+
+    .reserveBtnLuxury {
+        margin-top: 0.75rem;
+        padding: 1rem 1.5rem;
+        font-size: 1rem;
+    }
+
+    /* Bottom padding so content isn't hidden behind the floating bar */
+    .propertyDetailsLeft {
+        padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+    }
+}
+
+/* ─── Mobile: hide full booking card ─────────────────────────────────────── */
+/* The mobileBookingFloat (fixed bottom bar) handles price display + booking  */
+@media (max-width: 767px) {
+    .sidebarColumn {
         display: none;
+    }
+}
+
+/* ─── Tablet: booking card below all content, centred ─────────────────────── */
+@media (min-width: 768px) and (max-width: 1023px) {
+    .sidebarColumn {
+        order: unset;          /* natural order — AFTER gallerySection */
+        padding-bottom: 2rem;
+        width: 100%;
+    }
+
+    /* On tablet the floating bar is hidden, so remove extra bottom padding */
+    .propertyDetailsLeft {
+        padding-bottom: 2rem;
+    }
+
+    .bookingCard {
+        max-width: 680px;
+        margin: 0 auto;
+        border-radius: 1.25rem;
+    }
+
+    .bookingCardContent {
+        padding: 2rem;
     }
 }
 
@@ -976,27 +1089,33 @@
 @media (max-width: 767px) {
     .sectionTitleLuxury {
         font-size: 1.5rem;
+        margin-bottom: 1.25rem;
+        padding-bottom: 0.75rem;
     }
 
     .overviewSectionLuxury,
-    .aboutSectionLuxury,
     .amenitiesSectionLuxury {
-        padding: 2rem 1.5rem;
-        margin-bottom: 2rem;
+        padding: 1.5rem 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .aboutSectionLuxury {
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
     }
 
     .statCardLuxury {
-        padding: 1.5rem 1rem;
+        padding: 1.25rem 0.875rem;
     }
 
     .statIconLuxury {
-        width: 3rem;
-        height: 3rem;
-        font-size: 1.5rem;
+        width: 2.75rem;
+        height: 2.75rem;
+        font-size: 1.375rem;
     }
 
     .statValueLuxury {
-        font-size: 1.875rem;
+        font-size: 1.75rem;
     }
 
     .descriptionTextLuxury {
@@ -1010,8 +1129,196 @@
         font-size: 0.875rem;
     }
 
-    .propertyDetailsLeft {
-        padding-bottom: 6rem;
+    /* Accordion headers */
+    .accordionHeader {
+        padding: 1.25rem 1.25rem;
+    }
+
+    .accordionHeaderInner {
+        font-size: 1rem;
+    }
+
+    /* Booking card date/guests grids: stack on small screens */
+    .dateSelectionGrid,
+    .guestsSelectionGrid {
+        grid-template-columns: 1fr;
+    }
+
+    /* mobileBookingFloat: adjust padding for content */
+    .mobileBookingContent {
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+
+    .mobilePriceAmount {
+        font-size: 1.0625rem;
+    }
+}
+
+/* Tablet & small tablet: compact padding */
+@media (max-width: 640px) {
+
+    .overviewSectionLuxury,
+    .amenitiesSectionLuxury {
+        padding: 1.25rem 0.875rem;
+        border-radius: 1rem;
+    }
+
+    .aboutSectionLuxury {
+        padding: 1.25rem 0.875rem;
+        border-radius: 1rem;
+    }
+
+    .discountTiersSection {
+        padding: 1.25rem 0.875rem;
+    }
+
+    .bookingInfoSection {
+        padding: 1.25rem 0.875rem;
+    }
+
+    .houseRulesSection,
+    .cancellationSection,
+    .hostSection {
+        padding: 1.25rem 0.875rem;
+    }
+
+    .sectionTitleLuxury {
+        font-size: 1.25rem;
+        gap: 0.5rem;
+    }
+
+    .sectionTitleLuxury svg {
+        font-size: 1.375rem;
+    }
+
+    .statsGridLuxury {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+    }
+
+    .statCardLuxury {
+        padding: 1rem 0.75rem;
+    }
+
+    .statValueLuxury {
+        font-size: 1.5rem;
+    }
+
+    .statLabelLuxury {
+        font-size: 0.75rem;
+    }
+
+    .amenitiesGridLuxury {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+
+    .amenityItemLuxury {
+        padding: 0.875rem;
+    }
+
+    .discountGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .bookingCardContent {
+        padding: 1rem;
+    }
+
+    .bookingCardFooter {
+        padding: 0.875rem 1rem;
+    }
+
+    /* mobileBookingFloat adjustments */
+    .mobileBookingFloat {
+        padding: 0.75rem 1rem;
+    }
+
+    .mobileReserveBtn {
+        padding: 0.75rem 1.25rem;
+        font-size: 0.9375rem;
+    }
+}
+
+/* Extra-small mobile: even more compact */
+@media (max-width: 480px) {
+    .sectionTitleLuxury {
+        font-size: 1.125rem;
+    }
+
+    .statValueLuxury {
+        font-size: 1.25rem;
+    }
+
+    .statIconLuxury {
+        width: 2.25rem;
+        height: 2.25rem;
+        font-size: 1.125rem;
+        border-radius: 0.625rem;
+    }
+
+    .accordionHeader {
+        padding: 1rem;
+    }
+
+    .accordionHeaderInner {
+        font-size: 0.9375rem;
+        gap: 0.5rem;
+    }
+
+    .infoItem {
+        padding: 0.875rem 0.75rem;
+        gap: 0.75rem;
+    }
+
+    .infoIcon {
+        width: 32px;
+        height: 32px;
+    }
+
+    .infoValue {
+        font-size: 0.875rem;
+    }
+
+    .infoNote {
+        font-size: 0.75rem;
+    }
+
+    .houseRulesGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .hostHeader {
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+
+    .hostStats {
+        grid-template-columns: 1fr;
+    }
+
+    .pendingBookingBanner {
+        padding: 1rem;
+    }
+
+    .pendingBookingActions {
+        grid-template-columns: 1fr;
+    }
+
+    .bookingPrice {
+        font-size: 1.375rem;
+    }
+
+    .bookingHeader {
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        padding-bottom: 1rem;
+    }
+
+    /* Float bar safe area on iOS */
+    .mobileBookingFloat {
+        padding-bottom: calc(0.875rem + env(safe-area-inset-bottom, 0px));
     }
 }
 
@@ -1021,12 +1328,12 @@
 
 /* House Rules Section */
 .houseRulesSection {
-    background: #ffffff;
+    background: var(--brand-white);
     border-radius: 1.5rem;
     padding: 2.5rem;
     margin-bottom: 2rem;
-    border: 1px solid rgba(0, 0, 0, 0.06);
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+    border: 1px solid var(--brand-border-light);
+    box-shadow: var(--shadow-sm);
 }
 
 .rulesGrid {
@@ -1048,13 +1355,13 @@
     align-items: flex-start;
     gap: 1rem;
     padding: 1rem;
-    background: #f8f9fa;
+    background: var(--brand-grey-lighter);
     border-radius: 0.75rem;
     transition: all 0.2s;
 }
 
 .ruleItem:hover {
-    background: #f1f3f5;
+    background: var(--brand-grey-light);
     transform: translateX(4px);
 }
 
@@ -1078,30 +1385,30 @@
     flex: 1;
     font-size: 0.9375rem;
     line-height: 1.6;
-    color: #333;
+    color: var(--brand-navy);
 }
 
 .ruleContent strong {
     font-weight: 600;
-    color: #1a1a1a;
+    color: var(--brand-navy);
 }
 
 /* Cancellation Policy Section */
 .cancellationSection {
-    background: #ffffff;
+    background: var(--brand-white);
     border-radius: 1.5rem;
     padding: 2.5rem;
     margin-bottom: 2rem;
-    border: 1px solid rgba(0, 0, 0, 0.06);
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+    border: 1px solid var(--brand-border-light);
+    box-shadow: var(--shadow-sm);
 }
 
 .policyCard {
     margin-top: 1.5rem;
-    background: linear-gradient(135deg, #f8f6f3 0%, #ffffff 100%);
+    background: var(--brand-grey-lightest);
     border-radius: 1rem;
     padding: 2rem;
-    border: 1px solid rgba(0, 0, 0, 0.06);
+    border: 1px solid var(--brand-border-light);
 }
 
 .policyHeader {
@@ -1120,7 +1427,7 @@
 .policyTitle {
     font-size: 1.25rem;
     font-weight: 600;
-    color: #1a1a1a;
+    color: var(--brand-navy);
     margin: 0;
 }
 
@@ -1133,13 +1440,13 @@
 .policyText {
     font-size: 0.9375rem;
     line-height: 1.6;
-    color: #333;
+    color: var(--brand-navy);
     margin: 0;
 }
 
 .policyText strong {
     font-weight: 600;
-    color: #1a1a1a;
+    color: var(--brand-navy);
 }
 
 .policyNote {
@@ -1165,12 +1472,12 @@
 
 /* Host Section */
 .hostSection {
-    background: #ffffff;
+    background: var(--brand-white);
     border-radius: 1.5rem;
     padding: 2.5rem;
     margin-bottom: 2rem;
-    border: 1px solid rgba(0, 0, 0, 0.06);
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+    border: 1px solid var(--brand-border-light);
+    box-shadow: var(--shadow-sm);
 }
 
 .hostCard {
@@ -1188,11 +1495,11 @@
     width: 64px;
     height: 64px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: var(--brand-navy);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
+    color: var(--brand-white);
     font-size: 1.75rem;
     flex-shrink: 0;
 }
@@ -1210,7 +1517,7 @@
 
 .hostJoined {
     font-size: 0.875rem;
-    color: #666;
+    color: var(--brand-text-dark);
     margin: 0;
 }
 
@@ -1218,19 +1525,19 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+    padding: 0.375rem 0.875rem;
+    background: #FFF3CD;
+    border: 1px solid #E6B800;
     border-radius: 2rem;
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
     font-weight: 600;
-    color: #1a1a1a;
-    box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
+    color: var(--brand-navy);
 }
 
 .superhostBadge svg {
     width: 14px;
     height: 14px;
-    fill: #1a1a1a;
+    fill: var(--brand-navy);
 }
 
 .hostStats {
@@ -1251,7 +1558,7 @@
     align-items: center;
     gap: 0.75rem;
     padding: 1rem;
-    background: #f8f9fa;
+    background: var(--brand-grey-lighter);
     border-radius: 0.75rem;
 }
 
@@ -1315,12 +1622,12 @@
 
 /* ===== SESSION 33: PENDING BOOKING BANNER ===== */
 .pendingBookingBanner {
-    background: linear-gradient(135deg, #FFF4E6 0%, #FFE4CC 100%);
-    border: 2px solid #FF9800;
+    background: #FFF8F0;
+    border: 1.5px solid #FF9800;
     border-radius: 1rem;
     padding: 1.5rem;
     margin-bottom: 1.5rem;
-    box-shadow: 0 4px 16px rgba(255, 152, 0, 0.15);
+    box-shadow: 0 2px 10px rgba(255, 152, 0, 0.1);
 }
 
 .pendingBookingHeader {
@@ -1419,14 +1726,15 @@
 }
 
 .pendingBookingContinue {
-    background: linear-gradient(135deg, #4CAF50 0%, #45A049 100%);
+    background: #43A047;
     color: white;
-    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+    box-shadow: 0 2px 8px rgba(67, 160, 71, 0.25);
 }
 
 .pendingBookingContinue:hover {
+    background: #388E3C;
     transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(76, 175, 80, 0.4);
+    box-shadow: 0 4px 12px rgba(67, 160, 71, 0.3);
 }
 
 .pendingBookingCancel {
@@ -1515,7 +1823,10 @@
     position: absolute;
     top: calc(100% + 12px);
     right: 0;
-    width: 100%;
+    /* width: auto sizes to content on desktop, but is clamped to viewport */
+    width: auto;
+    min-width: 280px;
+    max-width: calc(100vw - 2rem);
     background: #ffffff;
     border-radius: 24px;
     box-shadow:
@@ -1527,7 +1838,17 @@
     max-height: 500px;
     overflow-y: auto;
     overflow-x: hidden;
-    width: auto;
+}
+
+/* On mobile: fill the full card width, no min-width constraint */
+@media (max-width: 1023px) {
+    .dropdownModern {
+        width: 100%;
+        min-width: unset;
+        max-width: 100%;
+        right: 0;
+        left: 0;
+    }
 }
 
 @media (min-width: 1024px) {
@@ -1555,7 +1876,7 @@
     flex-direction: column;
     gap: 6px;
     margin-bottom: 12px;
-    background: linear-gradient(135deg, rgba(47, 164, 169, 0.08) 0%, rgba(31, 58, 95, 0.05) 100%);
+    background: rgba(47, 164, 169, 0.07);
     border-radius: 12px;
     padding: 10px 8px;
 }
@@ -1649,10 +1970,7 @@
 
 .guestsDivider {
     height: 1px;
-    background: linear-gradient(90deg,
-            rgba(31, 58, 95, 0.05) 0%,
-            rgba(31, 58, 95, 0.1) 50%,
-            rgba(31, 58, 95, 0.05) 100%);
+    background: rgba(31, 58, 95, 0.08);
     margin: 0 20px;
 }
 
@@ -1687,7 +2005,7 @@
     height: 32px;
     border-radius: 50%;
     border: 1.5px solid var(--brand-teal, #2FA4A9);
-    background: white;
+    background: var(--brand-white);
     color: var(--brand-teal, #2FA4A9);
     font-size: 18px;
     font-weight: 600;
@@ -1700,9 +2018,9 @@
 
 .counterBtn:hover:not(:disabled) {
     background: var(--brand-teal, #2FA4A9);
-    color: white;
+    color: var(--brand-white);
     transform: scale(1.08);
-    box-shadow: 0 4px 12px rgba(47, 164, 169, 0.3);
+    box-shadow: var(--shadow-md);
 }
 
 .counterBtn:active:not(:disabled) {
@@ -1712,8 +2030,8 @@
 .counterBtn:disabled {
     opacity: 0.3;
     cursor: not-allowed;
-    border-color: #cbd5e1;
-    color: #94a3b8;
+    border-color: var(--brand-border);
+    color: var(--brand-text-dark);
 }
 
 .counterValue {
@@ -1728,35 +2046,22 @@
 .locationSectionLuxury {
     margin: 2.5rem 0;
     padding: 2rem 0;
-    border-top: 1px solid #e5e7eb;
+    border-top: 1px solid var(--brand-border-light);
 }
 
-.sectionTitleLuxury {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--brand-navy);
-    margin-bottom: 1.5rem;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-}
-
-.sectionTitleLuxury svg {
-    width: 24px;
-    height: 24px;
-    color: var(--brand-teal);
-}
+/* sectionTitleLuxury for location section - deferred to canonical definition below */
 
 .locationCard {
-    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-    border: 1px solid #bae6fd;
+    background: var(--brand-grey-lighter);
+    border: 1px solid var(--brand-border-light);
     border-radius: 1rem;
     padding: 1.5rem;
     transition: all 0.3s ease;
 }
 
 .locationCard:hover {
-    box-shadow: 0 8px 24px rgba(14, 165, 233, 0.15);
+    box-shadow: var(--shadow-md);
+    border-color: var(--brand-teal);
     transform: translateY(-2px);
 }
 
@@ -1773,9 +2078,9 @@
 }
 
 .locationAddress strong {
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
     font-weight: 600;
-    color: #0369a1;
+    color: var(--brand-teal);
     text-transform: uppercase;
     letter-spacing: 0.05em;
 }
@@ -1791,23 +2096,23 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 0.75rem;
-    padding: 0.875rem 1.75rem;
-    background: linear-gradient(135deg, var(--brand-teal) 0%, #0891b2 100%);
-    color: white;
+    gap: 0.625rem;
+    padding: 0.75rem 1.5rem;
+    background: var(--brand-teal);
+    color: var(--brand-white);
     border: none;
     border-radius: 0.75rem;
-    font-size: 1rem;
+    font-size: 0.9375rem;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 16px rgba(0, 158, 158, 0.2);
+    transition: all 0.25s ease;
+    box-shadow: 0 2px 10px rgba(47, 164, 169, 0.2);
 }
 
 .viewMapButton:hover {
-    background: linear-gradient(135deg, #0891b2 0%, var(--brand-teal) 100%);
+    background: var(--brand-navy);
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 158, 158, 0.3);
+    box-shadow: 0 4px 14px rgba(31, 58, 95, 0.2);
 }
 
 .viewMapButton:active {
@@ -1828,5 +2133,971 @@
 
     .viewMapButton {
         align-self: flex-start;
+    }
+}
+
+/* ============================================================================
+   LONG-STAY DISCOUNT TIERS SECTION
+   ============================================================================ */
+.discountTiersSection {
+    background: var(--brand-white);
+    border-radius: 1.5rem;
+    padding: 2.5rem;
+    margin-bottom: 2rem;
+    border: 1px solid var(--brand-border-light);
+    box-shadow: var(--shadow-sm);
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow-x: hidden;
+}
+
+.discountSubtitle {
+    font-size: 0.9375rem;
+    color: var(--brand-text-dark);
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+}
+
+.discountGrid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+}
+
+@media (min-width: 768px) {
+    .discountGrid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+    }
+}
+
+.discountCard {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem;
+    background: var(--brand-grey-lighter);
+    border-radius: 0.75rem;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+}
+
+.discountCard:hover {
+    background: var(--brand-grey-light);
+    transform: translateX(4px);
+    border-color: var(--brand-teal);
+}
+
+.discountIcon {
+    width: 44px;
+    height: 44px;
+    background: rgba(47, 164, 169, 0.12);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--brand-teal);
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.discountContent {
+    flex: 1;
+}
+
+.discountPercent {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--brand-navy);
+    line-height: 1;
+    margin-bottom: 0.25rem;
+}
+
+.discountLabel {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--brand-navy);
+    margin-bottom: 0.125rem;
+}
+
+.discountDuration {
+    font-size: 0.875rem;
+    color: var(--brand-text-dark);
+}
+
+/* ============================================================================
+   ADDITIONAL BOOKING INFORMATION SECTION
+   ============================================================================ */
+.bookingInfoSection {
+    background: var(--brand-white);
+    border-radius: 1.5rem;
+    padding: 2rem 2.5rem;
+    margin-bottom: 2rem;
+    border: 1px solid var(--brand-border-light);
+    box-shadow: var(--shadow-sm);
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow-x: hidden;
+}
+
+.infoList {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    border: 1px solid var(--brand-border-light);
+    border-radius: 0.875rem;
+    overflow: hidden;
+}
+
+.infoItem {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    background: var(--brand-white);
+    border-bottom: 1px solid var(--brand-border-light);
+    border-left: 3px solid transparent;
+    transition: all 0.18s ease;
+}
+
+.infoItem:last-child {
+    border-bottom: none;
+}
+
+.infoItem:hover {
+    background: rgba(47, 164, 169, 0.04);
+    border-left-color: var(--brand-teal);
+}
+
+.infoIcon {
+    width: 38px;
+    height: 38px;
+    background: rgba(47, 164, 169, 0.1);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--brand-teal);
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.infoContent {
+    flex: 1;
+    min-width: 0;
+    /* CRITICAL: Allow flex child to shrink below content size */
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+.infoLabel {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: var(--brand-text-dark);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.infoValue {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--brand-navy);
+    word-break: break-word;
+    overflow-wrap: anywhere;
+}
+
+.infoNote {
+    font-size: 0.8125rem;
+    color: var(--brand-text-dark);
+    line-height: 1.4;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+}
+
+.corporateDiscount {
+    font-size: 0.875rem;
+    color: var(--brand-teal);
+    font-weight: 600;
+}
+
+/* ============================================================================
+   RESPONSIVE ADJUSTMENTS FOR NEW SECTIONS
+   ============================================================================ */
+@media (max-width: 767px) {
+    .discountGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .discountCard {
+        padding: 1rem;
+    }
+
+    .discountPercent {
+        font-size: 1.125rem;
+    }
+
+    .infoItem {
+        gap: 0.875rem;
+    }
+
+    .infoValue {
+        font-size: 1rem;
+    }
+
+    .discountTiersSection,
+    .bookingInfoSection {
+        padding: 2rem 1.5rem;
+        margin-bottom: 2rem;
+    }
+}
+
+/* ============================================================================
+   EXPANDABLE SECTIONS - SESSION 66
+   ============================================================================ */
+.expandableSection {
+    background: var(--brand-grey-lighter);
+    border-radius: 0.75rem;
+    border: 1px solid var(--brand-border);
+    padding: 1.5rem;
+    margin-top: 1rem;
+    transition: all 0.3s;
+}
+
+.expandableSection:hover {
+    border-color: var(--brand-teal);
+    box-shadow: var(--shadow-sm);
+}
+
+.expandableSection[open] {
+    background: var(--brand-white);
+    box-shadow: var(--shadow-md);
+}
+
+.expandableSummary {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--brand-navy);
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    transition: all 0.2s;
+}
+
+.expandableSummary:hover {
+    background: var(--brand-grey-light);
+    transform: translateX(4px);
+}
+
+.expandableSummary::-webkit-details-marker {
+    display: none;
+}
+
+.expandableSummary svg {
+    color: var(--brand-teal);
+    font-size: 1.25rem;
+}
+
+.expandableSection[open] .expandableSummary {
+    margin-bottom: 1.5rem;
+    border-bottom: 2px solid var(--brand-border);
+    padding-bottom: 1rem;
+}
+
+/* ===== ACCORDION CARD — Amenities Guide & Check-in Guidelines ===== */
+.accordionCard {
+    background: var(--brand-white);
+    border-radius: 1.5rem;
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 2rem;
+    border: 1px solid var(--brand-border-light);
+    overflow: hidden;
+    max-width: 100%;
+    box-sizing: border-box;
+    transition: box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.accordionCard:hover {
+    box-shadow: var(--shadow-md);
+    border-color: rgba(47, 164, 169, 0.35);
+}
+
+.accordionCard[open] {
+    box-shadow: var(--shadow-md);
+    border-color: rgba(47, 164, 169, 0.35);
+}
+
+.accordionHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.75rem 2.5rem;
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+    transition: background 0.2s ease;
+}
+
+.accordionHeader::-webkit-details-marker {
+    display: none;
+}
+
+.accordionHeader:hover {
+    background: rgba(47, 164, 169, 0.04);
+}
+
+.accordionHeaderInner {
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--brand-navy);
+    letter-spacing: -0.01em;
+}
+
+.accordionHeaderInner svg {
+    color: var(--brand-teal);
+    font-size: 1.375rem;
+    flex-shrink: 0;
+}
+
+.accordionChevron {
+    font-size: 1.5rem;
+    font-weight: 300;
+    color: var(--brand-teal);
+    line-height: 1;
+    transition: transform 0.25s ease;
+    transform: rotate(0deg);
+    flex-shrink: 0;
+}
+
+.accordionCard[open] .accordionChevron {
+    transform: rotate(90deg);
+}
+
+.accordionCard .descriptionTextLuxury {
+    padding: 0 2.5rem 2rem;
+    border-top: 1px solid var(--brand-border-light);
+    padding-top: 1.5rem;
+}
+
+/* ============================================================================
+   HTML CONTENT SECTIONS - SESSION 66
+   ============================================================================ */
+.aboutSectionLuxury {
+    padding: 2.5rem;
+    background: var(--brand-white);
+    border-radius: 1.5rem;
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 2rem;
+    border: 1px solid var(--brand-border);
+    transition: all 0.3s;
+    overflow: hidden;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.aboutSectionLuxury:hover {
+    box-shadow: var(--shadow-md);
+}
+
+/* ===== CANONICAL sectionTitleLuxury — single source of truth ===== */
+.sectionTitleLuxury {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--brand-navy);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+    letter-spacing: -0.02em;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--brand-border);
+    position: static;
+    /* Explicitly prevent any position:relative leftover from old definitions */
+}
+
+.sectionTitleLuxury svg {
+    color: var(--brand-teal);
+    font-size: 1.875rem;
+    flex-shrink: 0;
+}
+
+.descriptionTextLuxury {
+    font-size: 1rem;
+    line-height: 1.75;
+    color: var(--brand-text-dark);
+    letter-spacing: 0.01em;
+    /* Prevent any text/content from overflowing on mobile */
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    overflow-x: hidden;
+}
+
+/* Responsive media inside HTML content (dangerouslySetInnerHTML) */
+.descriptionTextLuxury img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 0.5rem;
+}
+
+.descriptionTextLuxury table {
+    max-width: 100%;
+    overflow-x: auto;
+    display: block;
+    border-collapse: collapse;
+}
+
+.descriptionTextLuxury pre {
+    max-width: 100%;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.descriptionTextLuxury h1,
+.descriptionTextLuxury h2,
+.descriptionTextLuxury h3,
+.descriptionTextLuxury h4 {
+    color: var(--brand-navy);
+    font-weight: 700;
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.descriptionTextLuxury h1 {
+    font-size: 1.875rem;
+}
+
+.descriptionTextLuxury h2 {
+    font-size: 1.5rem;
+}
+
+.descriptionTextLuxury h3 {
+    font-size: 1.25rem;
+}
+
+.descriptionTextLuxury h4 {
+    font-size: 1.125rem;
+}
+
+.descriptionTextLuxury p {
+    margin-bottom: 1rem;
+}
+
+.descriptionTextLuxury ul,
+.descriptionTextLuxury ol {
+    margin-left: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.descriptionTextLuxury li {
+    margin-bottom: 0.5rem;
+    line-height: 1.75;
+}
+
+.descriptionTextLuxury strong {
+    font-weight: 600;
+    color: var(--brand-navy);
+}
+
+.descriptionTextLuxury a {
+    color: var(--brand-teal);
+    text-decoration: underline;
+    transition: color 0.2s;
+}
+
+.descriptionTextLuxury a:hover {
+    color: var(--brand-teal-dark);
+}
+
+@media (max-width: 768px) {
+    .aboutSectionLuxury {
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .sectionTitleLuxury {
+        font-size: 1.375rem;
+        gap: 0.625rem;
+    }
+
+    .sectionTitleLuxury svg {
+        font-size: 1.5rem;
+    }
+
+    .descriptionTextLuxury {
+        font-size: 0.9375rem;
+    }
+}
+
+/* ===== HOUSE RULES SECTION ===== */
+.houseRulesGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.houseRuleItem {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-left: 3px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    color: #334155;
+    font-weight: 500;
+    transition: box-shadow 0.18s ease;
+}
+
+.houseRuleItem:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.houseRuleDeny {
+    border-left-color: #ef4444;
+    background: #fff8f8;
+}
+
+.houseRuleAllow {
+    border-left-color: #10b981;
+    background: #f0fdf4;
+}
+
+.houseRuleInfo {
+    border-left-color: #f59e0b;
+    background: #fffbeb;
+}
+
+.ruleIconBadge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.05);
+    flex-shrink: 0;
+}
+
+.houseRuleDeny .ruleIconBadge {
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.houseRuleAllow .ruleIconBadge {
+    background: rgba(16, 185, 129, 0.1);
+}
+
+.houseRuleInfo .ruleIconBadge {
+    background: rgba(245, 158, 11, 0.1);
+}
+
+.ruleDenyIcon {
+    color: #ef4444;
+    flex-shrink: 0;
+    font-size: 1rem;
+}
+
+.ruleAllowIcon {
+    color: #10b981;
+    flex-shrink: 0;
+    font-size: 1rem;
+}
+
+.ruleInfoIcon {
+    color: #f59e0b;
+    flex-shrink: 0;
+    font-size: 1rem;
+}
+
+.additionalRulesList {
+    list-style: none;
+    padding: 0;
+    margin: 0.5rem 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.additionalRuleItem {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.625rem;
+    padding: 0.5rem 0.875rem;
+    background: #fffbeb;
+    border-left: 3px solid #f59e0b;
+    border-radius: 0 8px 8px 0;
+    font-size: 0.875rem;
+    color: #64748b;
+}
+
+/* ===== CANCELLATION POLICY SECTION ===== */
+.cancelPolicySummary {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    padding: 0.875rem 1.25rem;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 10px;
+    font-size: 0.9375rem;
+    color: #166534;
+    margin-bottom: 1rem;
+}
+
+.cancelTiersList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+}
+
+.cancelTierItem {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.875rem 1.25rem;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    gap: 1rem;
+}
+
+.cancelTierLabel {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.cancelTierDetails {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-shrink: 0;
+}
+
+.cancelTierDays {
+    font-size: 0.875rem;
+    color: #64748b;
+}
+
+.cancelTierRefund {
+    font-size: 0.875rem;
+    font-weight: 700;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+}
+
+.refundFull {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.refundPartial {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.refundNone {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+/* Pricing Calendar Section - Session 75 */
+.pricingCalendarSection {
+    margin-top: 2.5rem;
+    padding-top: 2rem;
+    border-top: 1px solid #e5e7eb;
+}
+
+.sectionSubtitle {
+    font-size: 0.9375rem;
+    color: #6b7280;
+    margin: -0.5rem 0 1.25rem;
+    line-height: 1.5;
+}
+
+/* ============================================================================
+   COMPREHENSIVE RESPONSIVE OVERHAUL — Session 76
+   Fixes crammed layouts, missing breakpoints, and padding gaps
+   ============================================================================ */
+
+/* ─── Booking form: stack Date picker + Guests vertically on mobile ────────── */
+@media (max-width: 1023px) {
+    .bookingForm {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+}
+
+/* ─── Section padding intermediate at 641-768px (tablet portrait) ───────────
+   Base is 2.5rem, drops at ≤640px. This fills the gap for tablets.           */
+@media (min-width: 641px) and (max-width: 768px) {
+
+    .overviewSectionLuxury,
+    .amenitiesSectionLuxury,
+    .aboutSectionLuxury,
+    .discountTiersSection,
+    .bookingInfoSection,
+    .houseRulesSection,
+    .cancellationSection,
+    .hostSection {
+        padding: 1.75rem 1.5rem;
+    }
+
+    .sectionTitleLuxury {
+        font-size: 1.375rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .statsGridLuxury {
+        gap: 0.875rem;
+    }
+
+    .amenitiesGridLuxury {
+        gap: 1rem;
+    }
+}
+
+/* ─── Modern field touch-friendly sizing on small phones ──────────────────── */
+@media (max-width: 640px) {
+
+    .modernField {
+        padding: 14px 16px;
+        border-radius: 14px;
+    }
+
+    .fieldIcon {
+        font-size: 20px;
+    }
+
+    .fieldLabel {
+        font-size: 11px;
+    }
+
+    .fieldValue {
+        font-size: 15px;
+    }
+
+    .guestsControlModern {
+        padding: 14px 16px;
+        gap: 12px;
+    }
+
+    .guestsLabelModern {
+        font-size: 14px;
+    }
+
+    .guestsSublabelModern {
+        font-size: 11px;
+    }
+
+    .counterBtn {
+        width: 30px;
+        height: 30px;
+        font-size: 16px;
+    }
+
+    .counterValue {
+        font-size: 15px;
+        min-width: 26px;
+    }
+
+    /* Accordion body padding reduction */
+    .accordionCard .descriptionTextLuxury {
+        padding: 0 1.25rem 1.5rem;
+        padding-top: 1.25rem;
+    }
+
+    /* Discount card tighter padding */
+    .discountCard {
+        padding: 0.875rem;
+        gap: 0.75rem;
+    }
+
+    .discountIcon {
+        width: 36px;
+        height: 36px;
+        font-size: 1.125rem;
+        border-radius: 8px;
+    }
+
+    .discountPercent {
+        font-size: 1.0625rem;
+    }
+
+    .discountLabel {
+        font-size: 0.875rem;
+    }
+
+    .discountDuration {
+        font-size: 0.8125rem;
+    }
+
+    /* Cancel policy items on small screens */
+    .cancelTierItem {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+        padding: 0.75rem 1rem;
+    }
+
+    .cancelTierDetails {
+        gap: 0.75rem;
+    }
+
+    /* Host section grid tight */
+    .hostStats {
+        gap: 0.5rem;
+    }
+
+    .hostStatValue {
+        font-size: 1.25rem;
+    }
+}
+
+/* ─── Ultra-small screens ≤360px (iPhone SE first gen, small Androids) ──────  */
+@media (max-width: 360px) {
+
+    /* Header / gallery */
+    .galleryGrid {
+        height: 240px;
+    }
+
+    /* Stats row */
+    .statsGridLuxury {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.5rem;
+    }
+
+    .statCardLuxury {
+        padding: 0.75rem 0.5rem;
+    }
+
+    .statValueLuxury {
+        font-size: 1.125rem;
+    }
+
+    .statLabelLuxury {
+        font-size: 0.6875rem;
+    }
+
+    .statIconLuxury {
+        width: 2rem;
+        height: 2rem;
+        font-size: 1rem;
+    }
+
+    /* Section titles */
+    .sectionTitleLuxury {
+        font-size: 1rem;
+        gap: 0.375rem;
+        margin-bottom: 1rem;
+    }
+
+    .sectionTitleLuxury svg {
+        font-size: 1.125rem;
+    }
+
+    /* All content sections */
+    .overviewSectionLuxury,
+    .amenitiesSectionLuxury,
+    .aboutSectionLuxury,
+    .discountTiersSection,
+    .bookingInfoSection,
+    .houseRulesSection,
+    .cancellationSection,
+    .hostSection {
+        padding: 1rem 0.75rem;
+        border-radius: 0.875rem;
+    }
+
+    /* Booking card */
+    .bookingCardContent {
+        padding: 0.75rem;
+    }
+
+    /* Modern fields ultra-compact */
+    .modernField {
+        padding: 12px 14px;
+        border-radius: 12px;
+    }
+
+    .fieldValue {
+        font-size: 14px;
+    }
+
+    .fieldLabel {
+        font-size: 10px;
+    }
+
+    .guestsControlModern {
+        padding: 12px 14px;
+    }
+
+    .counterBtn {
+        width: 28px;
+        height: 28px;
+        font-size: 15px;
+    }
+
+    /* Mobile float bar */
+    .mobileBookingFloat {
+        padding: 0.625rem 0.875rem;
+    }
+
+    .mobileBookingContent {
+        gap: 0.375rem;
+    }
+
+    .mobilePriceLabel {
+        font-size: 0.6875rem;
+    }
+
+    .mobilePriceAmount {
+        font-size: 0.9375rem;
+    }
+
+    .mobileReserveBtn {
+        padding: 0.625rem 1rem;
+        font-size: 0.875rem;
+        border-radius: 0.625rem;
+    }
+
+    /* Accordion */
+    .accordionHeaderInner {
+        font-size: 0.875rem;
+    }
+
+    .accordionHeader {
+        padding: 0.875rem;
+    }
+
+    /* Info items */
+    .infoItem {
+        padding: 0.75rem 0.625rem;
+        gap: 0.625rem;
+    }
+
+    .infoIcon {
+        width: 28px;
+        height: 28px;
+        font-size: 0.875rem;
+    }
+
+    .infoValue {
+        font-size: 0.8125rem;
+    }
+
+    .infoNote {
+        font-size: 0.6875rem;
     }
 }

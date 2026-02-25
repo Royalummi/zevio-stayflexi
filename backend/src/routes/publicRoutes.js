@@ -12,6 +12,11 @@ import {
   getAllAmenities,
   getAllPropertyTypes,
 } from "../controllers/adminController.js";
+import {
+  getActivePoliciesByType,
+  getAllCancellationPolicies,
+} from "../controllers/cancellationPoliciesController.js";
+import { getPublicCalendarPricing } from "../controllers/calendarPricingController.js";
 
 const router = express.Router();
 
@@ -24,5 +29,11 @@ router.get("/properties", validatePagination, getProperties); // CRITICAL: Pagin
 router.get("/property/:id", getPropertyDetails);
 router.get("/availability", checkAvailability);
 router.get("/recommended-properties", getRecommendedProperties); // Get admin-curated recommended properties
+router.get("/cancellation-policies", getAllCancellationPolicies); // All policies (optionally filter by type)
+router.get("/cancellation-policies/active", getActivePoliciesByType); // Active policy per type
+router.get(
+  "/properties/:propertyId/calendar-pricing",
+  getPublicCalendarPricing,
+); // Public price calendar for detail pages
 
 export default router;

@@ -404,7 +404,7 @@ export const getInvoice = asyncHandler(async (req, res) => {
       u.full_name as user_name,
       u.email as user_email,
       prop.title as property_title,
-      prop.location as property_location
+      CONCAT(COALESCE(prop.area,''), ', ', COALESCE(prop.state,'')) as property_location
     FROM invoices i
     INNER JOIN bookings b ON i.booking_id = b.id
     INNER JOIN users u ON i.user_id = u.id

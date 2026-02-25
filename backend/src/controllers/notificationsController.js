@@ -10,7 +10,7 @@ export const getNotifications = asyncHandler(async (req, res) => {
   const { id: userId } = req.user;
   const { filter } = req.query; // 'all' or 'unread'
 
-  let query = "SELECT * FROM notifications WHERE user_id = ?";
+  let query = "SELECT * FROM notifications WHERE recipient_id = ?";
   const params = [userId];
 
   if (filter === "unread") {
@@ -25,7 +25,7 @@ export const getNotifications = asyncHandler(async (req, res) => {
     res,
     { notifications, total: notifications.length },
     "Notifications fetched successfully",
-    200
+    200,
   );
 });
 
@@ -40,8 +40,8 @@ export const markAsRead = asyncHandler(async (req, res) => {
 
   // Check if notification belongs to user
   const [notification] = await db.query(
-    "SELECT * FROM notifications WHERE id = ? AND user_id = ?",
-    [id, userId]
+    "SELECT * FROM notifications WHERE id = ? AND recipient_id = ?",
+    [id, userId],
   );
 
   if (notification.length === 0) {
@@ -50,8 +50,8 @@ export const markAsRead = asyncHandler(async (req, res) => {
 
   // Mark as read
   await db.query(
-    "UPDATE notifications SET is_read = true WHERE id = ? AND user_id = ?",
-    [id, userId]
+    "UPDATE notifications SET is_read = true WHERE id = ? AND recipient_id = ?",
+    [id, userId],
   );
 
   sendSuccess(res, null, "Notification marked as read", 200);
@@ -65,9 +65,10 @@ export const markAsRead = asyncHandler(async (req, res) => {
 export const markAllAsRead = asyncHandler(async (req, res) => {
   const { id: userId } = req.user;
 
-  await db.query("UPDATE notifications SET is_read = true WHERE user_id = ?", [
-    userId,
-  ]);
+  await db.query(
+    "UPDATE notifications SET is_read = true WHERE recipient_id = ?",
+    [userId],
+  );
 
   sendSuccess(res, null, "All notifications marked as read", 200);
 });
@@ -83,8 +84,8 @@ export const deleteNotification = asyncHandler(async (req, res) => {
 
   // Check if notification belongs to user
   const [notification] = await db.query(
-    "SELECT * FROM notifications WHERE id = ? AND user_id = ?",
-    [id, userId]
+    "SELECT * FROM notifications WHERE id = ? AND recipient_id = ?",
+    [id, userId],
   );
 
   if (notification.length === 0) {
@@ -92,10 +93,10 @@ export const deleteNotification = asyncHandler(async (req, res) => {
   }
 
   // Delete notification
-  await db.query("DELETE FROM notifications WHERE id = ? AND user_id = ?", [
-    id,
-    userId,
-  ]);
+  await db.query(
+    "DELETE FROM notifications WHERE id = ? AND recipient_id = ?",
+    [id, userId],
+  );
 
   sendSuccess(res, null, "Notification deleted successfully", 200);
 });
@@ -109,14 +110,14 @@ export const getUnreadCount = asyncHandler(async (req, res) => {
   const { id: userId } = req.user;
 
   const [result] = await db.query(
-    "SELECT COUNT(*) as count FROM notifications WHERE user_id = ? AND is_read = false",
-    [userId]
+    "SELECT COUNT(*) as count FROM notifications WHERE recipient_id = ? AND is_read = false",
+    [userId],
   );
 
   sendSuccess(
     res,
     { unreadCount: result[0].count },
     "Unread count fetched successfully",
-    200
+    200,
   );
 });

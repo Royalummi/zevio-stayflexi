@@ -1,0 +1,187 @@
+/**
+ * Safety Section Component Styles
+ * Phase 1: Critical Safety & Policies
+ * Brand Colors: Navy (#1F3A5F) + Teal (#2FA4A9)
+ */
+
+.safetySection {
+    background: var(--brand-white);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--brand-border-light);
+}
+
+.sectionTitle {
+    font-size: var(--text-2xl);
+    font-weight: var(--font-bold);
+    color: var(--brand-navy);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.titleIcon {
+    color: var(--brand-teal);
+    font-size: 24px;
+}
+
+.accordionList {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* Emergency Contacts Accordion */
+.emergencyAccordion {
+    border: 1px solid var(--brand-teal-lighter);
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--brand-grey-lightest);
+}
+
+.emergencyButton {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.emergencyButton:hover {
+    background: var(--brand-grey-light);
+}
+
+/* Safety Guidelines Accordion */
+.safetyAccordion {
+    border: 1px solid var(--brand-border-light);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.safetyButton {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px;
+    background: var(--brand-grey-lighter);
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.safetyButton:hover {
+    background: var(--brand-grey-light);
+}
+
+.accordionTitle {
+    font-weight: var(--font-semibold);
+    color: var(--brand-navy);
+    font-size: var(--text-base);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.phoneIcon {
+    color: var(--brand-teal-dark);
+}
+
+.alertIcon {
+    color: var(--brand-teal);
+}
+
+.chevronIcon {
+    color: var(--brand-text-dark);
+    font-size: 18px;
+}
+
+.accordionContent {
+    padding: 16px;
+    background: var(--brand-white);
+    border-top: 1px solid var(--brand-border-light);
+}
+
+.emergencyAccordion .accordionContent {
+    border-top-color: var(--brand-teal-lighter);
+}
+
+/* Content Prose Styling */
+.proseContent {
+    color: var(--brand-text-dark);
+    line-height: var(--leading-normal);
+}
+
+.proseContent h3,
+.proseContent h4 {
+    font-weight: var(--font-semibold);
+    color: var(--brand-navy);
+    margin-top: 1em;
+    margin-bottom: 0.5em;
+}
+
+.proseContent p {
+    margin-bottom: 0.75em;
+}
+
+.proseContent ul,
+.proseContent ol {
+    margin-left: 1.5em;
+    margin-bottom: 0.75em;
+}
+
+.proseContent li {
+    margin-bottom: 0.25em;
+}
+
+.proseContent strong {
+    font-weight: var(--font-semibold);
+    color: var(--brand-navy);
+}
+
+/* Note Box */
+.noteBox {
+    margin-top: 16px;
+    background: var(--brand-grey-lightest);
+    border: 1px solid var(--brand-teal-lighter);
+    border-radius: 8px;
+    padding: 12px;
+}
+
+.noteText {
+    font-size: var(--text-sm);
+    color: var(--brand-navy);
+    margin: 0;
+}
+
+.noteText strong {
+    font-weight: var(--font-bold);
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .safetySection {
+        padding: 20px 16px;
+        margin-bottom: 20px;
+    }
+
+    .sectionTitle {
+        font-size: 20px;
+    }
+
+    .emergencyButton,
+    .safetyButton {
+        padding: 14px;
+    }
+
+    .accordionContent {
+        padding: 14px;
+    }
+}

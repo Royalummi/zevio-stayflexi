@@ -56,6 +56,10 @@ export const createProperty = asyncHandler(async (req, res) => {
     extra_child_charge,
     weekly_discount_percent,
     monthly_discount_percent,
+    // Session 70: Villa duration discount slabs
+    discount_3_5_days,
+    discount_6_14_days,
+    discount_15_plus_days,
     primary_incharge_name,
     primary_incharge_phone,
     primary_incharge_email,
@@ -162,8 +166,9 @@ export const createProperty = asyncHandler(async (req, res) => {
       INSERT INTO property_pricing (
         id, property_id, price_per_night, gst_percentage,
         min_guests, extra_guest_charge, min_children, max_children, extra_child_charge,
-        weekly_discount_percent, monthly_discount_percent
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        weekly_discount_percent, monthly_discount_percent,
+        discount_3_5_days, discount_6_14_days, discount_15_plus_days
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const pricingValues = [
@@ -178,6 +183,9 @@ export const createProperty = asyncHandler(async (req, res) => {
       extra_child_charge || 0,
       weekly_discount_percent || 0,
       monthly_discount_percent || 0,
+      parseFloat(discount_3_5_days) || 0,
+      parseFloat(discount_6_14_days) || 0,
+      parseFloat(discount_15_plus_days) || 0,
     ];
 
     await db.query(pricingQuery, pricingValues);
@@ -240,7 +248,8 @@ export const getPropertyById = asyncHandler(async (req, res) => {
       pr.weekly_discount_percent, pr.monthly_discount_percent,
       pr.quarterly_discount_percent, pr.long_term_discount_percent,
       pr.allow_corporate_booking, pr.corporate_discount_percent,
-      pr.deposit_amount, pr.maintenance_charges, pr.notice_period_days
+      pr.deposit_amount, pr.maintenance_charges, pr.notice_period_days,
+      pr.discount_3_5_days, pr.discount_6_14_days, pr.discount_15_plus_days
     FROM properties p
     LEFT JOIN cities c ON p.city_id = c.id
     LEFT JOIN property_types pt ON p.property_type_id = pt.id
@@ -514,6 +523,30 @@ export const updateProperty = asyncHandler(async (req, res) => {
   const updateFields = [];
   const params = [];
 
+  // Fields that belong to property_pricing table (not properties table)
+  const PRICING_FIELDS = new Set([
+    "price_per_night",
+    "gst_percentage",
+    "min_guests",
+    "extra_guest_charge",
+    "min_children",
+    "max_children",
+    "extra_child_charge",
+    "weekly_discount_percent",
+    "monthly_discount_percent",
+    "quarterly_discount_percent",
+    "long_term_discount_percent",
+    "allow_corporate_booking",
+    "corporate_discount_percent",
+    "deposit_amount",
+    "maintenance_charges",
+    "notice_period_days",
+    // Session 70: Villa duration discount slabs
+    "discount_3_5_days",
+    "discount_6_14_days",
+    "discount_15_plus_days",
+  ]);
+
   // Sanitize rich text fields
   const richTextFields = [
     "check_in_guidelines",
@@ -524,9 +557,18 @@ export const updateProperty = asyncHandler(async (req, res) => {
     "emergency_contacts",
   ];
 
+  // Collect top-level pricing fields for property_pricing update
+  const topLevelPricingUpdates = {};
+
   Object.keys(updates).forEach((field) => {
     if (field === "amenities" || field === "pricing") {
       // Skip - handle separately
+      return;
+    }
+
+    // Route pricing fields to property_pricing table
+    if (PRICING_FIELDS.has(field)) {
+      topLevelPricingUpdates[field] = updates[field];
       return;
     }
 
@@ -557,23 +599,46 @@ export const updateProperty = asyncHandler(async (req, res) => {
     );
   }
 
-  // Update pricing if provided
-  if (updates.pricing) {
-    const pricingUpdates = updates.pricing;
+  // Merge top-level pricing fields with nested pricing object
+  const allPricingUpdates = {
+    ...topLevelPricingUpdates,
+    ...(updates.pricing || {}),
+  };
+
+  // Update pricing if any pricing data provided
+  if (Object.keys(allPricingUpdates).length > 0) {
     const pricingFields = [];
     const pricingParams = [];
 
-    Object.keys(pricingUpdates).forEach((field) => {
+    Object.keys(allPricingUpdates).forEach((field) => {
       pricingFields.push(`${field} = ?`);
-      pricingParams.push(pricingUpdates[field]);
+      pricingParams.push(allPricingUpdates[field]);
     });
 
     if (pricingFields.length > 0) {
-      pricingParams.push(id);
-      await db.query(
-        `UPDATE property_pricing SET ${pricingFields.join(", ")} WHERE property_id = ?`,
-        pricingParams,
+      // Check if pricing row exists; if not, insert it
+      const [existingPricing] = await db.query(
+        `SELECT id FROM property_pricing WHERE property_id = ?`,
+        [id],
       );
+      if (existingPricing.length > 0) {
+        pricingParams.push(id);
+        await db.query(
+          `UPDATE property_pricing SET ${pricingFields.join(", ")} WHERE property_id = ?`,
+          pricingParams,
+        );
+      } else if (allPricingUpdates.price_per_night) {
+        // Insert new pricing row
+        const pricingId = generateUUID();
+        await db.query(
+          `INSERT INTO property_pricing (id, property_id, ${Object.keys(allPricingUpdates).join(", ")}) VALUES (?, ?, ${Object.keys(
+            allPricingUpdates,
+          )
+            .map(() => "?")
+            .join(", ")})`,
+          [pricingId, id, ...Object.values(allPricingUpdates)],
+        );
+      }
     }
   }
 

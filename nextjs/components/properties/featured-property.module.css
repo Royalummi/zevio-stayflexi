@@ -1,0 +1,229 @@
+/**
+ * Featured Property Badge Component Styles
+ * Phase 4: Booking Flexibility & Features
+ */
+
+.featuredBadge {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    border: 2px solid;
+}
+
+.featuredBadge:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.featuredBadge::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0) 100%);
+    pointer-events: none;
+}
+
+.badgeIcon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    font-size: 24px;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 1;
+}
+
+.badgeContent {
+    flex: 1;
+    position: relative;
+    z-index: 1;
+}
+
+.badgeTitle {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.badgeSubtitle {
+    font-size: 13px;
+    opacity: 0.9;
+    font-weight: 500;
+}
+
+.starDecoration {
+    display: flex;
+    gap: 4px;
+    font-size: 16px;
+    opacity: 0.6;
+    position: relative;
+    z-index: 1;
+}
+
+/* Gold Badge (Top Pick - Priority 9-12) */
+.badge-gold {
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+    color: #78350f;
+    border-color: #f59e0b;
+    box-shadow: 0 4px 16px rgba(251, 191, 36, 0.4);
+}
+
+.badge-gold .badgeIcon {
+    color: #92400e;
+    background: rgba(255, 255, 255, 0.4);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.badge-gold .starDecoration {
+    color: #92400e;
+}
+
+/* Blue Badge (Highly Recommended - Priority 6-8) */
+.badge-blue {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    border-color: #1d4ed8;
+    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4);
+}
+
+.badge-blue .badgeIcon {
+    color: white;
+    background: rgba(255, 255, 255, 0.25);
+}
+
+.badge-blue .starDecoration {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* Purple Badge (Staff Pick - Priority 3-5) */
+.badge-purple {
+    background: linear-gradient(135deg, #a855f7 0%, #9333ea 100%);
+    color: white;
+    border-color: #7e22ce;
+    box-shadow: 0 4px 16px rgba(168, 85, 247, 0.4);
+}
+
+.badge-purple .badgeIcon {
+    color: white;
+    background: rgba(255, 255, 255, 0.25);
+}
+
+.badge-purple .starDecoration {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* Green Badge (Recommended - Priority 0-2) */
+.badge-green {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    border-color: #047857;
+    box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4);
+}
+
+.badge-green .badgeIcon {
+    color: white;
+    background: rgba(255, 255, 255, 0.25);
+}
+
+.badge-green .starDecoration {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* Animations */
+@keyframes shimmer {
+    0% {
+        background-position: -200% center;
+    }
+
+    100% {
+        background-position: 200% center;
+    }
+}
+
+.featuredBadge::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg,
+            rgba(255, 255, 255, 0) 0%,
+            rgba(255, 255, 255, 0.3) 50%,
+            rgba(255, 255, 255, 0) 100%);
+    background-size: 200% 100%;
+    animation: shimmer 3s infinite;
+    pointer-events: none;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .featuredBadge {
+        padding: 16px 20px;
+        gap: 12px;
+    }
+
+    .badgeIcon {
+        width: 40px;
+        height: 40px;
+        font-size: 20px;
+    }
+
+    .badgeTitle {
+        font-size: 16px;
+    }
+
+    .badgeSubtitle {
+        font-size: 12px;
+    }
+
+    .starDecoration {
+        font-size: 14px;
+        gap: 3px;
+    }
+}
+
+/* Small Mobile */
+@media (max-width: 480px) {
+    .featuredBadge {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 16px;
+        gap: 12px;
+    }
+
+    .badgeIcon {
+        width: 36px;
+        height: 36px;
+        font-size: 18px;
+    }
+
+    .badgeTitle {
+        font-size: 14px;
+    }
+
+    .badgeSubtitle {
+        font-size: 11px;
+    }
+
+    .starDecoration {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+    }
+}

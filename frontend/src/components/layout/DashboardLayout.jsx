@@ -27,6 +27,7 @@ import {
   GitPullRequest,
   Ticket,
   Star,
+  Shield,
 } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
 import { useThemeStore } from "../../store/themeStore";
@@ -70,7 +71,6 @@ const DashboardLayout = () => {
         { name: "Bookings", icon: Calendar, path: "/admin/bookings" },
         { name: "Refunds", icon: CreditCard, path: "/admin/refunds" },
         { name: "Settlements", icon: Wallet, path: "/admin/settlements" },
-        // { name: "Employee Claims", icon: Award, path: "/admin/claims" },
         { name: "Properties", icon: Building2, path: "/admin/properties" },
         {
           name: "Change Requests",

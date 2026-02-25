@@ -10,6 +10,7 @@
 import express from "express";
 import {
   listServiceApartments,
+  getServiceApartmentDetails,
   getCalendarAvailability,
   calculatePrice,
   getCorporateOffers,
@@ -56,5 +57,13 @@ router.get("/locations", getServiceApartmentLocations);
  * @note    Dynamic route - MUST be after specific routes like /calculate-price
  */
 router.get("/:id/calendar", getCalendarAvailability);
+
+/**
+ * @route   GET /api/service-apartments/:id
+ * @desc    Get full details for a single service apartment by ID
+ * @access  Public
+ * @note    MUST be after /:id/calendar to avoid routing conflict
+ */
+router.get("/:id", getServiceApartmentDetails);
 
 export default router;

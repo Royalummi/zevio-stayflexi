@@ -125,12 +125,12 @@ export const sendBookingConfirmationEmail = async (bookingId) => {
                 
                 <div class="detail-row">
                   <span><strong>Base Amount:</strong></span>
-                  <span>₹${booking.base_amount.toFixed(2)}</span>
+                  <span>₹${parseFloat(booking.base_amount || 0).toFixed(2)}</span>
                 </div>
                 
                 <div class="detail-row">
                   <span><strong>GST:</strong></span>
-                  <span>₹${booking.gst_amount.toFixed(2)}</span>
+                  <span>₹${parseFloat(booking.gst_amount || 0).toFixed(2)}</span>
                 </div>
                 
                 ${
@@ -138,7 +138,7 @@ export const sendBookingConfirmationEmail = async (bookingId) => {
                     ? `
                 <div class="detail-row">
                   <span><strong>Discount:</strong></span>
-                  <span>-₹${booking.discount_amount.toFixed(2)}</span>
+                  <span>-₹${parseFloat(booking.discount_amount || 0).toFixed(2)}</span>
                 </div>
                 `
                     : ""
@@ -146,9 +146,7 @@ export const sendBookingConfirmationEmail = async (bookingId) => {
                 
                 <div class="detail-row" style="border-bottom: none; font-size: 18px; color: #4F46E5;">
                   <span><strong>Total Amount:</strong></span>
-                  <span><strong>₹${booking.total_amount.toFixed(
-                    2,
-                  )}</strong></span>
+                  <span><strong>₹${parseFloat(booking.total_amount || 0).toFixed(2)}</strong></span>
                 </div>
               </div>
               
@@ -954,7 +952,7 @@ export const sendBookingExpiryEmail = async (bookingId) => {
               <div style="background: #fef3c7; border-left: 4px solid #fbbf24; padding: 15px; margin: 20px 0; border-radius: 4px;">
                 <p style="margin: 0; color: #92400e;">
                   <strong>Property:</strong> ${booking.property_name}<br>
-                  <strong>Booking Amount:</strong> ₹${booking.total_amount.toLocaleString()}<br>
+                  <strong>Booking Amount:</strong> ₹${parseFloat(booking.total_amount || 0).toLocaleString()}<br>
                   <strong>Status:</strong> <span style="color: #dc2626;">Expired</span>
                 </p>
               </div>

@@ -6,6 +6,9 @@
 .propertyDetailPage {
     min-height: 100vh;
     background: var(--brand-grey-lightest);
+    /* overflow-x: clip clips horizontal overflow WITHOUT creating a scroll
+       container — unlike overflow-x:hidden which would break position:sticky */
+    overflow-x: clip;
 }
 
 /* Navigation Bar */

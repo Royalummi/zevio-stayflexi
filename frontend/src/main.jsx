@@ -17,8 +17,11 @@ console.error = (...args) => {
     typeof args[0] === "string" &&
     (args[0].includes("findDOMNode") ||
       args[0].includes("ReactQuill") ||
+      // Sonner v1.x known bug: Toaster calls dismiss() during its own render cycle
+      // in React StrictMode / concurrent mode. This is cosmetic only — does not
+      // affect functionality. See: https://github.com/emilkowalski/sonner/issues
       (args[0].includes("Cannot update a component") &&
-        args[0].includes("ForwardRef")) ||
+        args[0].includes("while rendering a different")) ||
       args[0].includes("Failed to load image") ||
       args[0].includes("CORS issue"))
   ) {

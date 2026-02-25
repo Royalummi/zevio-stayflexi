@@ -22,6 +22,7 @@ import AdminReports from "./pages/admin/AdminReports";
 import PropertyChangeRequests from "./pages/admin/PropertyChangeRequests";
 import CouponManagement from "./pages/admin/CouponManagement";
 import ReviewManagement from "./pages/admin/ReviewManagement";
+import CancellationPolicies from "./pages/admin/CancellationPolicies";
 
 // Vendor Pages
 import VendorDashboard from "./pages/vendor/VendorDashboard";
@@ -79,6 +80,10 @@ function App() {
           <Route path="users" element={<AdminUsers />} />
           <Route path="coupons" element={<CouponManagement />} />
           <Route path="reviews" element={<ReviewManagement />} />
+          <Route
+            path="cancellation-policies"
+            element={<CancellationPolicies />}
+          />
           <Route path="reports" element={<AdminReports />} />
         </Route>
 
@@ -96,6 +101,15 @@ function App() {
           <Route path="properties/add" element={<AddEditVendorProperty />} />
           <Route
             path="properties/:id/edit"
+            element={<AddEditVendorProperty />}
+          />
+          {/* Service Apartment routes (alias) */}
+          <Route
+            path="service-apartments/add"
+            element={<AddEditVendorProperty />}
+          />
+          <Route
+            path="service-apartments/:id/edit"
             element={<AddEditVendorProperty />}
           />
           <Route path="bookings" element={<VendorBookings />} />

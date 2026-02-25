@@ -1,0 +1,196 @@
+/**
+ * Check-in Section Component Styles
+ * Phase 1: Critical Safety & Policies
+ * Brand Colors: Navy (#1F3A5F) + Teal (#2FA4A9)
+ */
+
+.checkInSection {
+    background: var(--brand-white);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--brand-border-light);
+}
+
+.sectionTitle {
+    font-size: var(--text-2xl);
+    font-weight: var(--font-bold);
+    color: var(--brand-navy);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.titleIcon {
+    color: var(--brand-teal);
+    font-size: 24px;
+}
+
+/* Check-in Time Display */
+.timesBox {
+    margin-bottom: 16px;
+    background: var(--brand-grey-lightest);
+    border: 1px solid var(--brand-teal-lighter);
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.timesGrid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+}
+
+@media (min-width: 768px) {
+    .timesGrid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.timeItem {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.timeLabel {
+    font-size: var(--text-sm);
+    color: var(--brand-text-dark);
+}
+
+.timeValue {
+    font-weight: var(--font-semibold);
+    color: var(--brand-navy);
+}
+
+/* Accordion List */
+.accordionList {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.accordionItem {
+    border: 1px solid var(--brand-border-light);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.accordionButton {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px;
+    background: var(--brand-grey-lighter);
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.accordionButton:hover {
+    background: var(--brand-grey-light);
+}
+
+.accordionTitle {
+    font-weight: var(--font-semibold);
+    color: var(--brand-navy);
+    font-size: var(--text-base);
+}
+
+.chevronIcon {
+    color: var(--brand-text-dark);
+    font-size: 18px;
+}
+
+.mapIcon {
+    color: var(--brand-teal);
+}
+
+.infoIcon {
+    color: var(--brand-teal-dark);
+}
+
+.accordionContent {
+    padding: 16px;
+    background: var(--brand-white);
+    border-top: 1px solid var(--brand-border-light);
+}
+
+/* Content Prose Styling */
+.proseContent {
+    color: var(--brand-text-dark);
+    line-height: var(--leading-normal);
+}
+
+.proseContent h3,
+.proseContent h4 {
+    font-weight: var(--font-semibold);
+    color: var(--brand-navy);
+    margin-top: 1em;
+    margin-bottom: 0.5em;
+}
+
+.proseContent p {
+    margin-bottom: 0.75em;
+}
+
+.proseContent ul,
+.proseContent ol {
+    margin-left: 1.5em;
+    margin-bottom: 0.75em;
+}
+
+.proseContent li {
+    margin-bottom: 0.25em;
+}
+
+.proseContent strong {
+    font-weight: var(--font-semibold);
+    color: var(--brand-navy);
+}
+
+/* Verification Note */
+.verificationNote {
+    margin-top: 16px;
+    background: var(--brand-grey-lightest);
+    border: 1px solid var(--brand-teal-lighter);
+    border-radius: 8px;
+    padding: 12px;
+}
+
+.noteText {
+    font-size: var(--text-sm);
+    color: var(--brand-navy);
+    margin: 0;
+}
+
+.noteText strong {
+    font-weight: var(--font-bold);
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .checkInSection {
+        padding: 20px 16px;
+        margin-bottom: 20px;
+    }
+
+    .sectionTitle {
+        font-size: 20px;
+    }
+
+    .timesBox {
+        padding: 14px;
+    }
+
+    .accordionButton {
+        padding: 14px;
+    }
+
+    .accordionContent {
+        padding: 14px;
+    }
+}

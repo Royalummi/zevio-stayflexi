@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Image from "next/image";
 import Lightbox from "yet-another-react-lightbox";
 import Zoom from "yet-another-react-lightbox/plugins/zoom";
@@ -20,6 +20,26 @@ export default function PropertyGallery({
   const [selectedPhoto, setSelectedPhoto] = useState(0);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [thumbnailScrollPosition, setThumbnailScrollPosition] = useState(0);
+  const touchStartX = useRef<number | null>(null);
+
+  // Touch swipe handlers for main image (mobile)
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    const delta = e.changedTouches[0].clientX - touchStartX.current;
+    touchStartX.current = null;
+    if (Math.abs(delta) < 40) return; // too short — ignore
+    if (delta < 0 && selectedPhoto < photos.length - 1) {
+      // swipe left → next photo
+      handleThumbnailClick(selectedPhoto + 1);
+    } else if (delta > 0 && selectedPhoto > 0) {
+      // swipe right → previous photo
+      handleThumbnailClick(selectedPhoto - 1);
+    }
+  };
 
   const THUMBNAIL_HEIGHT = 100; // Height of each thumbnail + gap
   const VISIBLE_THUMBNAILS = 5; // Number of thumbnails visible at once
@@ -79,8 +99,8 @@ export default function PropertyGallery({
                 <Image
                   src={photo}
                   alt={`${propertyName} - Photo ${index + 1}`}
-                  width={50}
-                  height={30}
+                  fill
+                  sizes="120px"
                   style={{ objectFit: "cover" }}
                   unoptimized
                 />
@@ -107,7 +127,11 @@ export default function PropertyGallery({
       </div>
 
       {/* Main Image - RIGHT */}
-      <div className={styles.mainImageContainer}>
+      <div
+        className={styles.mainImageContainer}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
         <button
           onClick={() => setIsLightboxOpen(true)}
           className={styles.mainImageWrapper}

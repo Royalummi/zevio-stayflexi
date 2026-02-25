@@ -27,9 +27,17 @@ import {
   FiClock,
   FiX,
   FiShield,
-  FiInfo,
   FiUser,
   FiCheckCircle,
+  FiAlertCircle,
+  FiInfo,
+  FiPhone,
+  FiPercent,
+  FiDroplet,
+  FiZap,
+  FiMoon,
+  FiMusic,
+  FiUserMinus,
 } from "react-icons/fi";
 import { IoBed } from "react-icons/io5";
 import propertyStyles from "./property-detail.module.css";
@@ -37,14 +45,44 @@ import luxuryStyles from "./luxury-property.module.css";
 import PropertyGallery from "./PropertyGallery";
 import DateRangeSelector from "@/components/DateRangeSelector";
 import { getImageUrl } from "@/lib/imageUtils";
+import FeaturedPropertyBadge from "@/components/properties/FeaturedPropertyBadge";
 
 const getAmenityIcon = (amenity: string) => {
   const lower = amenity.toLowerCase();
   if (lower.includes("wifi") || lower.includes("internet")) return <FiWifi />;
   if (lower.includes("tv") || lower.includes("television")) return <FiTv />;
-  if (lower.includes("coffee") || lower.includes("kitchen"))
+  if (
+    lower.includes("coffee") ||
+    lower.includes("kitchen") ||
+    lower.includes("dining")
+  )
     return <FiCoffee />;
-  if (lower.includes("ac") || lower.includes("air")) return <FiWind />;
+  if (
+    lower.includes("ac") ||
+    lower.includes("air") ||
+    lower.includes("cooling")
+  )
+    return <FiWind />;
+  if (
+    lower.includes("water") ||
+    lower.includes("pool") ||
+    lower.includes("laundry")
+  )
+    return <FiDroplet />;
+  if (
+    lower.includes("power") ||
+    lower.includes("backup") ||
+    lower.includes("generator")
+  )
+    return <FiZap />;
+  if (lower.includes("gym") || lower.includes("fitness"))
+    return <FiCheckCircle />;
+  if (
+    lower.includes("park") ||
+    lower.includes("car") ||
+    lower.includes("vehicle")
+  )
+    return <FiHome />;
   return <FiCheck />;
 };
 
@@ -230,6 +268,40 @@ function PropertyDetailContent() {
           rating: data.rating || 0,
           reviews_count: data.reviews_count || 0,
           status: data.status,
+          // Phase 1 fields
+          house_rules: data.house_rules,
+          cancellation_policy: data.cancellation_policy,
+          emergency_contacts: data.emergency_contacts,
+          safety_information: data.safety_information,
+          check_in_guidelines: data.check_in_guidelines,
+          local_area_info: data.local_area_info,
+          amenities_guide: data.amenities_guide,
+          house_rules_text: data.house_rules_text,
+          check_in_time: data.check_in_time,
+          check_out_time: data.check_out_time,
+          // Phase 3 fields
+          property_type: data.property_type,
+          vendor_name: data.vendor_name,
+          employee_name: data.employee_name,
+          // Phase 4 fields
+          min_stay_days: data.min_stay_days,
+          max_stay_days: data.max_stay_days,
+          same_day_booking_allowed: data.same_day_booking_allowed,
+          max_booking_days: data.max_booking_days,
+          is_recommended: data.is_recommended,
+          recommended_priority: data.recommended_priority,
+          // Additional pricing fields
+          gst_percentage: data.gst_percentage,
+          weekly_discount_percent: data.weekly_discount_percent,
+          monthly_discount_percent: data.monthly_discount_percent,
+          quarterly_discount_percent: data.quarterly_discount_percent,
+          long_term_discount_percent: data.long_term_discount_percent,
+          deposit_amount: data.deposit_amount,
+          maintenance_charges: data.maintenance_charges,
+          allow_corporate_booking: data.allow_corporate_booking,
+          corporate_discount_percent: data.corporate_discount_percent,
+          notice_period_days: data.notice_period_days,
+          features_list: data.features_list,
         };
 
         setProperty(mappedProperty);
@@ -300,8 +372,11 @@ function PropertyDetailContent() {
         // Subtotal before GST
         const subtotal = baseAmount + extraGuestCharges + extraChildrenCharges;
 
-        // Calculate GST (18%)
-        const gstAmount = subtotal * 0.18;
+        // Calculate GST (use dynamic percentage from property or default to 18%)
+        const gstPercentage = property.gst_percentage
+          ? parseFloat(property.gst_percentage.toString()) / 100
+          : 0.18;
+        const gstAmount = subtotal * gstPercentage;
 
         // Total amount
         const totalAmount = subtotal + gstAmount;
@@ -566,6 +641,14 @@ function PropertyDetailContent() {
       ? [property.amenities]
       : [];
 
+  // Combine features with amenities for display
+  const allFeatures = [
+    ...amenities,
+    ...(property.features_list
+      ? property.features_list.split(", ").filter((f) => f.trim())
+      : []),
+  ];
+
   return (
     <div className={propertyStyles.propertyDetailPage}>
       {/* Navigation Bar */}
@@ -653,6 +736,12 @@ function PropertyDetailContent() {
 
             {/* Property Details - Inside LEFT Column */}
             <div className={luxuryStyles.propertyDetailsLeft}>
+              {/* Phase 4: Featured Property Badge */}
+              <FeaturedPropertyBadge
+                isRecommended={property.is_recommended}
+                recommendedPriority={property.recommended_priority}
+              />
+
               {/* Property Overview */}
               <section className={luxuryStyles.overviewSectionLuxury}>
                 <h2 className={luxuryStyles.sectionTitleLuxury}>
@@ -732,7 +821,10 @@ function PropertyDetailContent() {
                         <strong>Address:</strong>
                         <p>
                           {property.area && <span>{property.area}, </span>}
-                          {property.city}, {property.state} - {property.pincode}
+                          {property.city}, {property.state}
+                          {property.pincode && (
+                            <span> - {property.pincode}</span>
+                          )}
                         </p>
                       </div>
                       {property.maps_location && (
@@ -751,14 +843,14 @@ function PropertyDetailContent() {
                 </section>
               )}
 
-              {/* Amenities */}
-              {amenities.length > 0 && (
+              {/* Amenities & Features */}
+              {allFeatures.length > 0 && (
                 <section className={luxuryStyles.amenitiesSectionLuxury}>
                   <h2 className={luxuryStyles.sectionTitleLuxury}>
                     Amenities & Features
                   </h2>
                   <div className={luxuryStyles.amenitiesGridLuxury}>
-                    {amenities.map((amenity: string, index: number) => (
+                    {allFeatures.map((amenity: string, index: number) => (
                       <div
                         key={index}
                         className={luxuryStyles.amenityItemLuxury}
@@ -775,90 +867,654 @@ function PropertyDetailContent() {
                 </section>
               )}
 
-              {/* House Rules - Industry Standard */}
-              <section className={luxuryStyles.houseRulesSection}>
-                <h2 className={luxuryStyles.sectionTitleLuxury}>House Rules</h2>
-                <div className={luxuryStyles.rulesGrid}>
-                  <div className={luxuryStyles.ruleItem}>
-                    <FiClock className={luxuryStyles.ruleIcon} />
-                    <div className={luxuryStyles.ruleContent}>
-                      <strong>Check-in:</strong> After 2:00 PM
-                    </div>
-                  </div>
-                  <div className={luxuryStyles.ruleItem}>
-                    <FiClock className={luxuryStyles.ruleIcon} />
-                    <div className={luxuryStyles.ruleContent}>
-                      <strong>Check-out:</strong> Before 11:00 AM
-                    </div>
-                  </div>
-                  <div className={luxuryStyles.ruleItem}>
-                    <FiUsers className={luxuryStyles.ruleIcon} />
-                    <div className={luxuryStyles.ruleContent}>
-                      <strong>Max guests:</strong> {property.max_guests} guests
-                    </div>
-                  </div>
-                  <div className={luxuryStyles.ruleItem}>
-                    <FiX
-                      className={`${luxuryStyles.ruleIcon} ${luxuryStyles.ruleIconDanger}`}
-                    />
-                    <div className={luxuryStyles.ruleContent}>
-                      <strong>No smoking</strong> inside the property
-                    </div>
-                  </div>
-                  <div className={luxuryStyles.ruleItem}>
-                    <FiX
-                      className={`${luxuryStyles.ruleIcon} ${luxuryStyles.ruleIconDanger}`}
-                    />
-                    <div className={luxuryStyles.ruleContent}>
-                      <strong>No parties or events</strong> without permission
-                    </div>
-                  </div>
-                  <div className={luxuryStyles.ruleItem}>
-                    <FiCheck
-                      className={`${luxuryStyles.ruleIcon} ${luxuryStyles.ruleIconSuccess}`}
-                    />
-                    <div className={luxuryStyles.ruleContent}>
-                      <strong>Pets allowed</strong> with prior approval
-                    </div>
-                  </div>
-                </div>
-              </section>
-
-              {/* Cancellation Policy - Industry Standard */}
-              <section className={luxuryStyles.cancellationSection}>
+              {/* Comprehensive Property Information - Unified UI */}
+              <section className={luxuryStyles.bookingInfoSection}>
                 <h2 className={luxuryStyles.sectionTitleLuxury}>
-                  Cancellation Policy
+                  Property Information
                 </h2>
-                <div className={luxuryStyles.policyCard}>
-                  <div className={luxuryStyles.policyHeader}>
-                    <FiShield className={luxuryStyles.policyIcon} />
-                    <h3 className={luxuryStyles.policyTitle}>
-                      Flexible Cancellation
-                    </h3>
-                  </div>
-                  <div className={luxuryStyles.policyContent}>
-                    <p className={luxuryStyles.policyText}>
-                      <strong>Free cancellation for 48 hours</strong> after
-                      booking.
-                    </p>
-                    <p className={luxuryStyles.policyText}>
-                      Cancel up to <strong>7 days before check-in</strong> for a
-                      50% refund of the nightly rate.
-                    </p>
-                    <p className={luxuryStyles.policyText}>
-                      Cancellations within 7 days are{" "}
-                      <strong>non-refundable</strong>.
-                    </p>
-                    <p className={luxuryStyles.policyNote}>
-                      <FiInfo /> Cleaning fees are always refundable. Service
-                      fees are refundable if cancelled within 48 hours of
-                      booking.
-                    </p>
-                  </div>
+                <div className={luxuryStyles.infoList}>
+                  {/* Check-in & Check-out Times */}
+                  {(property.check_in_time || property.check_out_time) && (
+                    <div className={luxuryStyles.infoItem}>
+                      <div className={luxuryStyles.infoIcon}>
+                        <FiClock />
+                      </div>
+                      <div className={luxuryStyles.infoContent}>
+                        <div className={luxuryStyles.infoLabel}>
+                          Check-in & Check-out
+                        </div>
+                        <div className={luxuryStyles.infoValue}>
+                          {property.check_in_time || "3:00 PM"} -{" "}
+                          {property.check_out_time || "11:00 AM"}
+                        </div>
+                        <div className={luxuryStyles.infoNote}>
+                          Standard check-in and check-out times
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Minimum & Maximum Stay */}
+                  {(property.min_stay_days || property.max_stay_days) && (
+                    <div className={luxuryStyles.infoItem}>
+                      <div className={luxuryStyles.infoIcon}>
+                        <FiCalendar />
+                      </div>
+                      <div className={luxuryStyles.infoContent}>
+                        <div className={luxuryStyles.infoLabel}>
+                          Stay Requirements
+                        </div>
+                        <div className={luxuryStyles.infoValue}>
+                          {property.min_stay_days &&
+                            `Min: ${property.min_stay_days} ${property.min_stay_days === 1 ? "night" : "nights"}`}
+                          {property.min_stay_days &&
+                            property.max_stay_days &&
+                            " • "}
+                          {property.max_stay_days &&
+                            `Max: ${property.max_stay_days} ${property.max_stay_days === 1 ? "night" : "nights"}`}
+                        </div>
+                        {Boolean(property.same_day_booking_allowed) && (
+                          <div className={luxuryStyles.infoNote}>
+                            ✓ Same-day booking available
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Security Deposit */}
+                  {property.deposit_amount &&
+                    parseFloat(property.deposit_amount.toString()) > 0 && (
+                      <div className={luxuryStyles.infoItem}>
+                        <div className={luxuryStyles.infoIcon}>
+                          <FiShield />
+                        </div>
+                        <div className={luxuryStyles.infoContent}>
+                          <div className={luxuryStyles.infoLabel}>
+                            Security Deposit
+                          </div>
+                          <div className={luxuryStyles.infoValue}>
+                            ₹
+                            {parseFloat(
+                              property.deposit_amount.toString(),
+                            ).toLocaleString()}
+                          </div>
+                          <div className={luxuryStyles.infoNote}>
+                            Refundable deposit collected at check-in
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                  {/* Maintenance Charges */}
+                  {property.maintenance_charges &&
+                    parseFloat(property.maintenance_charges.toString()) > 0 && (
+                      <div className={luxuryStyles.infoItem}>
+                        <div className={luxuryStyles.infoIcon}>
+                          <FiHome />
+                        </div>
+                        <div className={luxuryStyles.infoContent}>
+                          <div className={luxuryStyles.infoLabel}>
+                            Maintenance Fee
+                          </div>
+                          <div className={luxuryStyles.infoValue}>
+                            ₹
+                            {parseFloat(
+                              property.maintenance_charges.toString(),
+                            ).toLocaleString()}
+                          </div>
+                          <div className={luxuryStyles.infoNote}>
+                            One-time maintenance charge
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                  {/* Cancellation Policy */}
+                  {property.notice_period_days && (
+                    <div className={luxuryStyles.infoItem}>
+                      <div className={luxuryStyles.infoIcon}>
+                        <FiAlertCircle />
+                      </div>
+                      <div className={luxuryStyles.infoContent}>
+                        <div className={luxuryStyles.infoLabel}>
+                          Cancellation Policy
+                        </div>
+                        <div className={luxuryStyles.infoValue}>
+                          {property.notice_period_days}{" "}
+                          {property.notice_period_days === 1 ? "day" : "days"}{" "}
+                          notice required
+                        </div>
+                        <div className={luxuryStyles.infoNote}>
+                          Free cancellation before notice period
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Emergency Contacts */}
+                  {property.emergency_contacts && (
+                    <div className={luxuryStyles.infoItem}>
+                      <div className={luxuryStyles.infoIcon}>
+                        <FiPhone />
+                      </div>
+                      <div className={luxuryStyles.infoContent}>
+                        <div className={luxuryStyles.infoLabel}>
+                          Emergency Contact
+                        </div>
+                        <div className={luxuryStyles.infoValue}>
+                          24/7 Support Available
+                        </div>
+                        <div className={luxuryStyles.infoNote}>
+                          Contact details provided after booking
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Corporate Bookings */}
+                  {Boolean(property.allow_corporate_booking) && (
+                    <div className={luxuryStyles.infoItem}>
+                      <div className={luxuryStyles.infoIcon}>
+                        <FiCheckCircle />
+                      </div>
+                      <div className={luxuryStyles.infoContent}>
+                        <div className={luxuryStyles.infoLabel}>
+                          Corporate Bookings
+                        </div>
+                        <div className={luxuryStyles.infoValue}>
+                          Available
+                          {property.corporate_discount_percent &&
+                            parseFloat(
+                              property.corporate_discount_percent.toString(),
+                            ) > 0 && (
+                              <span className={luxuryStyles.corporateDiscount}>
+                                {" "}
+                                (
+                                {parseFloat(
+                                  property.corporate_discount_percent.toString(),
+                                )}
+                                % discount)
+                              </span>
+                            )}
+                        </div>
+                        <div className={luxuryStyles.infoNote}>
+                          Special rates for corporate clients
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* House Rules Highlight */}
+                  {property.house_rules_text && (
+                    <div className={luxuryStyles.infoItem}>
+                      <div className={luxuryStyles.infoIcon}>
+                        <FiInfo />
+                      </div>
+                      <div className={luxuryStyles.infoContent}>
+                        <div className={luxuryStyles.infoLabel}>
+                          House Rules
+                        </div>
+                        <div className={luxuryStyles.infoValue}>
+                          Please review before booking
+                        </div>
+                        <div className={luxuryStyles.infoNote}>
+                          {property.house_rules_text
+                            .replace(/<[^>]+>/g, " ")
+                            .replace(/\s+/g, " ")
+                            .trim()
+                            .substring(0, 80)}
+                          ...
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Base Occupancy */}
+                  {propertyPricing.min_guests && (
+                    <div className={luxuryStyles.infoItem}>
+                      <div className={luxuryStyles.infoIcon}>
+                        <FiUsers />
+                      </div>
+                      <div className={luxuryStyles.infoContent}>
+                        <div className={luxuryStyles.infoLabel}>
+                          Base Occupancy
+                        </div>
+                        <div className={luxuryStyles.infoValue}>
+                          Up to {propertyPricing.min_guests}{" "}
+                          {propertyPricing.min_guests === 1
+                            ? "guest"
+                            : "guests"}{" "}
+                          included
+                        </div>
+                        <div className={luxuryStyles.infoNote}>
+                          Additional guests charged ₹
+                          {propertyPricing.extra_guest_charge?.toLocaleString() ||
+                            0}{" "}
+                          per night
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Children Policy */}
+                  {propertyPricing.max_children !== undefined &&
+                    propertyPricing.max_children > 0 && (
+                      <div className={luxuryStyles.infoItem}>
+                        <div className={luxuryStyles.infoIcon}>
+                          <FiUsers />
+                        </div>
+                        <div className={luxuryStyles.infoContent}>
+                          <div className={luxuryStyles.infoLabel}>
+                            Children Policy
+                          </div>
+                          <div className={luxuryStyles.infoValue}>
+                            {propertyPricing.min_children || 0} -{" "}
+                            {propertyPricing.max_children} children allowed
+                          </div>
+                          <div className={luxuryStyles.infoNote}>
+                            {propertyPricing.extra_child_charge &&
+                            propertyPricing.extra_child_charge > 0
+                              ? `Extra charge: ₹${propertyPricing.extra_child_charge.toLocaleString()} per child per night`
+                              : "No additional charges for children"}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                  {/* GST Information */}
+                  {property.gst_percentage && (
+                    <div className={luxuryStyles.infoItem}>
+                      <div className={luxuryStyles.infoIcon}>
+                        <FiPercent />
+                      </div>
+                      <div className={luxuryStyles.infoContent}>
+                        <div className={luxuryStyles.infoLabel}>
+                          GST Included
+                        </div>
+                        <div className={luxuryStyles.infoValue}>
+                          {parseFloat(property.gst_percentage.toString())}% GST
+                        </div>
+                        <div className={luxuryStyles.infoNote}>
+                          All prices include applicable taxes
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Maximum Booking Period */}
+                  {property.max_booking_days && (
+                    <div className={luxuryStyles.infoItem}>
+                      <div className={luxuryStyles.infoIcon}>
+                        <FiCalendar />
+                      </div>
+                      <div className={luxuryStyles.infoContent}>
+                        <div className={luxuryStyles.infoLabel}>
+                          Maximum Booking Period
+                        </div>
+                        <div className={luxuryStyles.infoValue}>
+                          {property.max_booking_days}{" "}
+                          {property.max_booking_days === 1 ? "day" : "days"}{" "}
+                          maximum
+                        </div>
+                        <div className={luxuryStyles.infoNote}>
+                          Maximum booking duration allowed
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </section>
 
-              {/* Host Information - Industry Standard */}
+              {/* Local Area Information - Accordion */}
+              {property.local_area_info && (
+                <details className={luxuryStyles.accordionCard}>
+                  <summary className={luxuryStyles.accordionHeader}>
+                    <span className={luxuryStyles.accordionHeaderInner}>
+                      <FiMapPin />
+                      Local Area & Nearby Facilities
+                    </span>
+                    <span className={luxuryStyles.accordionChevron}>
+                      &#8250;
+                    </span>
+                  </summary>
+                  <div
+                    className={luxuryStyles.descriptionTextLuxury}
+                    dangerouslySetInnerHTML={{
+                      __html: property.local_area_info,
+                    }}
+                  />
+                </details>
+              )}
+
+              {/* Safety & Security - Accordion */}
+              {property.safety_information && (
+                <details className={luxuryStyles.accordionCard}>
+                  <summary className={luxuryStyles.accordionHeader}>
+                    <span className={luxuryStyles.accordionHeaderInner}>
+                      <FiShield />
+                      Safety & Security Measures
+                    </span>
+                    <span className={luxuryStyles.accordionChevron}>
+                      &#8250;
+                    </span>
+                  </summary>
+                  <div
+                    className={luxuryStyles.descriptionTextLuxury}
+                    dangerouslySetInnerHTML={{
+                      __html: property.safety_information,
+                    }}
+                  />
+                </details>
+              )}
+
+              {/* Amenities Guide - Accordion */}
+              {property.amenities_guide && (
+                <details className={luxuryStyles.accordionCard}>
+                  <summary className={luxuryStyles.accordionHeader}>
+                    <span className={luxuryStyles.accordionHeaderInner}>
+                      <FiInfo />
+                      Amenities Usage Guide
+                    </span>
+                    <span className={luxuryStyles.accordionChevron}>
+                      &#8250;
+                    </span>
+                  </summary>
+                  <div
+                    className={luxuryStyles.descriptionTextLuxury}
+                    dangerouslySetInnerHTML={{
+                      __html: property.amenities_guide,
+                    }}
+                  />
+                </details>
+              )}
+
+              {/* Check-in Guidelines - Accordion */}
+              {property.check_in_guidelines && (
+                <details className={luxuryStyles.accordionCard}>
+                  <summary className={luxuryStyles.accordionHeader}>
+                    <span className={luxuryStyles.accordionHeaderInner}>
+                      <FiClock />
+                      Check-in Guidelines
+                    </span>
+                    <span className={luxuryStyles.accordionChevron}>
+                      &#8250;
+                    </span>
+                  </summary>
+                  <div
+                    className={luxuryStyles.descriptionTextLuxury}
+                    dangerouslySetInnerHTML={{
+                      __html: property.check_in_guidelines,
+                    }}
+                  />
+                </details>
+              )}
+
+              {/* Long-Stay Discount Tiers - Villa 3-slab */}
+              {(property.discount_3_5_days ||
+                property.discount_6_14_days ||
+                property.discount_15_plus_days) && (
+                <section className={luxuryStyles.discountTiersSection}>
+                  <h2 className={luxuryStyles.sectionTitleLuxury}>
+                    Duration Discounts
+                  </h2>
+                  <p className={luxuryStyles.discountSubtitle}>
+                    Enjoy special rates for extended stays — the longer you
+                    stay, the more you save!
+                  </p>
+                  <div className={luxuryStyles.discountGrid}>
+                    {property.discount_3_5_days &&
+                      parseFloat(property.discount_3_5_days.toString()) > 0 && (
+                        <div className={luxuryStyles.discountCard}>
+                          <div className={luxuryStyles.discountIcon}>
+                            <FiCalendar />
+                          </div>
+                          <div className={luxuryStyles.discountContent}>
+                            <div className={luxuryStyles.discountPercent}>
+                              {parseFloat(
+                                property.discount_3_5_days.toString(),
+                              )}
+                              % OFF
+                            </div>
+                            <div className={luxuryStyles.discountLabel}>
+                              Short Stay
+                            </div>
+                            <div className={luxuryStyles.discountDuration}>
+                              3–5 nights
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    {property.discount_6_14_days &&
+                      parseFloat(property.discount_6_14_days.toString()) >
+                        0 && (
+                        <div className={luxuryStyles.discountCard}>
+                          <div className={luxuryStyles.discountIcon}>
+                            <FiCalendar />
+                          </div>
+                          <div className={luxuryStyles.discountContent}>
+                            <div className={luxuryStyles.discountPercent}>
+                              {parseFloat(
+                                property.discount_6_14_days.toString(),
+                              )}
+                              % OFF
+                            </div>
+                            <div className={luxuryStyles.discountLabel}>
+                              Extended Stay
+                            </div>
+                            <div className={luxuryStyles.discountDuration}>
+                              6–14 nights
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    {property.discount_15_plus_days &&
+                      parseFloat(property.discount_15_plus_days.toString()) >
+                        0 && (
+                        <div className={luxuryStyles.discountCard}>
+                          <div className={luxuryStyles.discountIcon}>
+                            <FiCalendar />
+                          </div>
+                          <div className={luxuryStyles.discountContent}>
+                            <div className={luxuryStyles.discountPercent}>
+                              {parseFloat(
+                                property.discount_15_plus_days.toString(),
+                              )}
+                              % OFF
+                            </div>
+                            <div className={luxuryStyles.discountLabel}>
+                              Long Stay
+                            </div>
+                            <div className={luxuryStyles.discountDuration}>
+                              15+ nights
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                  </div>
+                </section>
+              )}
+
+              {/* House Rules */}
+              {property.house_rules &&
+                typeof property.house_rules === "object" && (
+                  <section className={luxuryStyles.aboutSectionLuxury}>
+                    <h2 className={luxuryStyles.sectionTitleLuxury}>
+                      <FiShield /> House Rules
+                    </h2>
+                    <div className={luxuryStyles.houseRulesGrid}>
+                      {(property.house_rules as Record<string, unknown>)
+                        .no_smoking === true && (
+                        <div
+                          className={`${luxuryStyles.houseRuleItem} ${luxuryStyles.houseRuleDeny}`}
+                        >
+                          <span className={luxuryStyles.ruleIconBadge}>
+                            <FiAlertCircle
+                              className={luxuryStyles.ruleDenyIcon}
+                            />
+                          </span>
+                          <span>No Smoking</span>
+                        </div>
+                      )}
+                      {(property.house_rules as Record<string, unknown>)
+                        .no_parties === true && (
+                        <div
+                          className={`${luxuryStyles.houseRuleItem} ${luxuryStyles.houseRuleDeny}`}
+                        >
+                          <span className={luxuryStyles.ruleIconBadge}>
+                            <FiMusic className={luxuryStyles.ruleDenyIcon} />
+                          </span>
+                          <span>No Parties or Events</span>
+                        </div>
+                      )}
+                      {(property.house_rules as Record<string, unknown>)
+                        .no_outsiders === true && (
+                        <div
+                          className={`${luxuryStyles.houseRuleItem} ${luxuryStyles.houseRuleDeny}`}
+                        >
+                          <span className={luxuryStyles.ruleIconBadge}>
+                            <FiUserMinus
+                              className={luxuryStyles.ruleDenyIcon}
+                            />
+                          </span>
+                          <span>No Outside Visitors</span>
+                        </div>
+                      )}
+                      {(property.house_rules as Record<string, unknown>)
+                        .pet_friendly === true ? (
+                        <div
+                          className={`${luxuryStyles.houseRuleItem} ${luxuryStyles.houseRuleAllow}`}
+                        >
+                          <span className={luxuryStyles.ruleIconBadge}>
+                            <FiHeart className={luxuryStyles.ruleAllowIcon} />
+                          </span>
+                          <span>Pets Allowed</span>
+                        </div>
+                      ) : (property.house_rules as Record<string, unknown>)
+                          .pet_friendly === false ? (
+                        <div
+                          className={`${luxuryStyles.houseRuleItem} ${luxuryStyles.houseRuleDeny}`}
+                        >
+                          <span className={luxuryStyles.ruleIconBadge}>
+                            <FiX className={luxuryStyles.ruleDenyIcon} />
+                          </span>
+                          <span>No Pets</span>
+                        </div>
+                      ) : null}
+                      {Boolean(
+                        (property.house_rules as Record<string, unknown>)
+                          .quiet_hours,
+                      ) && (
+                        <div
+                          className={`${luxuryStyles.houseRuleItem} ${luxuryStyles.houseRuleInfo}`}
+                        >
+                          <span className={luxuryStyles.ruleIconBadge}>
+                            <FiMoon className={luxuryStyles.ruleInfoIcon} />
+                          </span>
+                          <span>
+                            Quiet Hours after{" "}
+                            {String(
+                              (property.house_rules as Record<string, unknown>)
+                                .quiet_hours,
+                            )}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    {Array.isArray(
+                      (property.house_rules as Record<string, unknown>)
+                        .additional_rules,
+                    ) &&
+                      (
+                        (property.house_rules as Record<string, unknown>)
+                          .additional_rules as string[]
+                      ).length > 0 && (
+                        <ul className={luxuryStyles.additionalRulesList}>
+                          {(
+                            (property.house_rules as Record<string, unknown>)
+                              .additional_rules as string[]
+                          ).map((rule: string, i: number) => (
+                            <li
+                              key={i}
+                              className={luxuryStyles.additionalRuleItem}
+                            >
+                              <FiAlertCircle
+                                className={luxuryStyles.ruleInfoIcon}
+                              />
+                              {rule}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                  </section>
+                )}
+
+              {/* Cancellation Policy */}
+              {(property.cancellation_policy ||
+                property.notice_period_days) && (
+                <section className={luxuryStyles.aboutSectionLuxury}>
+                  <h2 className={luxuryStyles.sectionTitleLuxury}>
+                    <FiAlertCircle /> Cancellation Policy
+                  </h2>
+                  {property.notice_period_days && (
+                    <div className={luxuryStyles.cancelPolicySummary}>
+                      <FiCheckCircle className={luxuryStyles.ruleAllowIcon} />
+                      <span>
+                        Free cancellation if cancelled{" "}
+                        <strong>{property.notice_period_days}</strong>{" "}
+                        {property.notice_period_days === 1 ? "day" : "days"}{" "}
+                        before check-in
+                      </span>
+                    </div>
+                  )}
+                  {property.cancellation_policy &&
+                    Array.isArray(
+                      (property.cancellation_policy as Record<string, unknown>)
+                        .tiers,
+                    ) && (
+                      <div className={luxuryStyles.cancelTiersList}>
+                        {(
+                          (
+                            property.cancellation_policy as Record<
+                              string,
+                              unknown
+                            >
+                          ).tiers as Array<{
+                            label: string;
+                            days_before_checkin: number;
+                            refund_percent: number;
+                          }>
+                        ).map((tier, i) => (
+                          <div key={i} className={luxuryStyles.cancelTierItem}>
+                            <div className={luxuryStyles.cancelTierLabel}>
+                              {tier.label}
+                            </div>
+                            <div className={luxuryStyles.cancelTierDetails}>
+                              <span className={luxuryStyles.cancelTierDays}>
+                                {tier.days_before_checkin > 0
+                                  ? `${tier.days_before_checkin}+ days before`
+                                  : "At check-in"}
+                              </span>
+                              <span
+                                className={`${luxuryStyles.cancelTierRefund} ${
+                                  tier.refund_percent === 100
+                                    ? luxuryStyles.refundFull
+                                    : tier.refund_percent > 0
+                                      ? luxuryStyles.refundPartial
+                                      : luxuryStyles.refundNone
+                                }`}
+                              >
+                                {tier.refund_percent}% Refund
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                </section>
+              )}
+
+              {/* Host Information - Industry Standard with Dynamic Data */}
               <section className={luxuryStyles.hostSection}>
                 <h2 className={luxuryStyles.sectionTitleLuxury}>Hosted By</h2>
                 <div className={luxuryStyles.hostCard}>
@@ -867,8 +1523,14 @@ function PropertyDetailContent() {
                       <FiUser />
                     </div>
                     <div className={luxuryStyles.hostInfo}>
-                      <h3 className={luxuryStyles.hostName}>Zevio Villas</h3>
-                      <p className={luxuryStyles.hostJoined}>Joined in 2024</p>
+                      <h3 className={luxuryStyles.hostName}>
+                        {property.vendor_name || "Zevio Villas"}
+                      </h3>
+                      <p className={luxuryStyles.hostJoined}>
+                        {property.employee_name
+                          ? `Managed by ${property.employee_name}`
+                          : "Joined in 2024"}
+                      </p>
                     </div>
                     {property.rating >= 4.8 && (
                       <div className={luxuryStyles.superhostBadge}>
@@ -897,10 +1559,10 @@ function PropertyDetailContent() {
                     </div>
                   </div>
                   <p className={luxuryStyles.hostDescription}>
-                    Zevio Villas specializes in luxury property rentals across
-                    India&apos;s most beautiful destinations. We ensure every
-                    stay is memorable with premium amenities and exceptional
-                    service.
+                    {property.property_type || "Luxury Property"} managed by
+                    professional hospitality experts. We specialize in premium
+                    rentals across India&apos;s most beautiful destinations,
+                    ensuring every stay is memorable with exceptional service.
                   </p>
                 </div>
               </section>
@@ -908,7 +1570,7 @@ function PropertyDetailContent() {
           </div>
 
           {/* RIGHT SIDE - Property Header + Booking Card (Sticky) */}
-          <div className={luxuryStyles.sidebarColumn}>
+          <div id="booking" className={luxuryStyles.sidebarColumn}>
             <aside className={luxuryStyles.bookingSidebar}>
               {/* Booking Card */}
               <div className={luxuryStyles.bookingCard}>
@@ -1042,6 +1704,8 @@ function PropertyDetailContent() {
                         minDate={new Date()}
                         label="Check-in date"
                         luxuryStyles={luxuryStyles}
+                        propertyId={property.id}
+                        basePrice={property.price_per_night}
                       />
 
                       {/* Modern Guests Field */}
@@ -1071,7 +1735,7 @@ function PropertyDetailContent() {
                           </div>
                         </div>
 
-                        {/* Guests Dropdown */}
+                        {/* Guests dropdown trigger */}
                         {showGuestsDropdown && (
                           <div className={luxuryStyles.dropdownModern}>
                             {/* Adults Counter */}
@@ -1208,7 +1872,13 @@ function PropertyDetailContent() {
                           </div>
                         )}
                         <div className={luxuryStyles.breakdownItem}>
-                          <span>GST (18%)</span>
+                          <span>
+                            GST (
+                            {property.gst_percentage
+                              ? parseFloat(property.gst_percentage.toString())
+                              : 18}
+                            %)
+                          </span>
                           <span>
                             ₹{priceBreakdown.gstAmount.toLocaleString()}
                           </span>
@@ -1240,16 +1910,48 @@ function PropertyDetailContent() {
         <div className={luxuryStyles.mobileBookingFloat}>
           <div className={luxuryStyles.mobileBookingContent}>
             <div className={luxuryStyles.mobileBookingPrice}>
-              <div className={luxuryStyles.mobilePriceAmount}>
-                ₹{property.price_per_night.toLocaleString()}
-              </div>
-              <div className={luxuryStyles.mobilePriceLabel}>per night</div>
+              {checkIn && checkOut && nights > 0 ? (
+                <>
+                  <div className={luxuryStyles.mobilePriceAmount}>
+                    {nights} {nights === 1 ? "night" : "nights"} · ₹
+                    {priceBreakdown.totalAmount > 0
+                      ? priceBreakdown.totalAmount.toLocaleString()
+                      : (property.price_per_night * nights).toLocaleString()}
+                  </div>
+                  <div className={luxuryStyles.mobilePriceLabel}>
+                    {checkIn.toLocaleDateString("en-IN", {
+                      day: "numeric",
+                      month: "short",
+                    })}{" "}
+                    –{" "}
+                    {checkOut.toLocaleDateString("en-IN", {
+                      day: "numeric",
+                      month: "short",
+                    })}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className={luxuryStyles.mobilePriceAmount}>
+                    ₹{property.price_per_night.toLocaleString()}
+                  </div>
+                  <div className={luxuryStyles.mobilePriceLabel}>per night</div>
+                </>
+              )}
             </div>
             <button
-              onClick={handleBooking}
+              onClick={() => {
+                if (checkIn && checkOut) {
+                  handleBooking();
+                } else {
+                  const el = document.getElementById("booking");
+                  if (el)
+                    el.scrollIntoView({ behavior: "smooth", block: "start" });
+                }
+              }}
               className={luxuryStyles.mobileReserveBtn}
             >
-              Reserve
+              {checkIn && checkOut ? "Reserve Now" : "Select Dates"}
             </button>
           </div>
         </div>

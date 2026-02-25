@@ -71,6 +71,75 @@
     .settingsGrid {
         grid-template-columns: 1fr;
     }
+
+    .settingsContainer {
+        padding: var(--space-4) var(--space-3);
+    }
+
+    .settingsTitle {
+        font-size: var(--text-2xl);
+    }
+
+    .settingsCardHeader {
+        padding: var(--space-4);
+    }
+
+    .settingsCardBody {
+        padding: var(--space-4);
+    }
+
+    .dangerContent {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .btnDanger {
+        width: 100%;
+        text-align: center;
+        justify-content: center;
+    }
+}
+
+/* SESSION 72: Small mobile (480px) responsive improvements */
+@media (max-width: 480px) {
+    .settingsContainer {
+        padding: var(--space-3) var(--space-2);
+    }
+
+    .settingsTitle {
+        font-size: var(--text-xl);
+    }
+
+    .settingsSubtitle {
+        font-size: var(--text-sm);
+    }
+
+    .settingsCardHeader {
+        padding: var(--space-3);
+        gap: var(--space-3);
+    }
+
+    .settingsIcon {
+        width: 40px;
+        height: 40px;
+    }
+
+    .settingsCardTitle {
+        font-size: var(--text-base);
+    }
+
+    .settingsCardBody {
+        padding: var(--space-3);
+        gap: var(--space-3);
+    }
+
+    .settingItem {
+        padding: var(--space-3);
+    }
+
+    .dangerZone {
+        padding: var(--space-4);
+    }
 }
 
 /* Settings Card */

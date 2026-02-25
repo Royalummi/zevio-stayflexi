@@ -1,0 +1,60 @@
+name: Deploy to Zevio VPS
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: # Allow manual trigger from GitHub UI
+
+jobs:
+  deploy:
+    name: Deploy to Hostinger VPS
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Deploy to VPS via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: root
+          password: ${{ secrets.VPS_PASSWORD }}
+          port: 22
+          command_timeout: 10m
+          script: |
+            set -e
+            echo "======================================"
+            echo " Zevio Auto-Deploy Started"
+            echo " Triggered by push to main"
+            echo "======================================"
+
+            cd /var/www/zevio
+
+            echo ">>> Pulling latest code from GitHub..."
+            git pull origin main
+
+            # ── Backend (Express API) ──────────────────
+            echo ">>> Deploying Backend (api.zevio.cloud)..."
+            cd /var/www/zevio/backend
+            npm ci --omit=dev
+            pm2 reload backend --update-env \
+              || pm2 start /var/www/zevio/ecosystem.config.cjs --only backend --env production
+
+            # ── Next.js (User Frontend) ────────────────
+            echo ">>> Building & Deploying Next.js (zevio.cloud)..."
+            cd /var/www/zevio/nextjs
+            npm ci
+            npm run build
+            pm2 reload nextjs --update-env \
+              || pm2 start /var/www/zevio/ecosystem.config.cjs --only nextjs --env production
+
+            # ── Frontend Admin/Vendor (Vite → static) ──
+            echo ">>> Building Frontend (admin.zevio.cloud)..."
+            cd /var/www/zevio/frontend
+            npm ci
+            npm run build
+            # Nginx serves frontend/dist directly – no restart needed
+
+            pm2 save
+            echo "======================================"
+            echo " Deploy Complete! All services live."
+            echo "======================================"

@@ -1,8 +1,34 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
+import { useLocation } from "react-router-dom";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
+import "../admin/AdminPropertyFormQuill.css";
 import DOMPurify from "dompurify";
-import "./VendorPropertyForm.css";
+import { toast } from "sonner";
+import {
+  Loader2,
+  Info,
+  MapPin,
+  DollarSign,
+  Calendar,
+  Home,
+  Image as ImageIcon,
+  Shield,
+  FileText,
+  Phone,
+  Star,
+  Building,
+  UserCircle,
+  Users,
+} from "lucide-react";
+import api from "../../lib/api";
+import PropertyImageUpload from "../admin/PropertyImageUpload";
+import CityCombobox from "../admin/CityCombobox";
+import AmenitiesGrid from "../admin/AmenitiesGrid";
+import FormSection from "../admin/FormSection";
+import FormProgressBar from "../admin/FormProgressBar";
+import PropertyCalendarPricing from "../shared/PropertyCalendarPricing";
+import CancellationPolicyInfoCard from "../shared/CancellationPolicyInfoCard";
 
 const VendorPropertyForm = ({
   propertyId = null,
@@ -11,26 +37,36 @@ const VendorPropertyForm = ({
   propertyStatus = "draft", // draft, pending_approval, approved, inactive
   hasPendingChangeRequest = false,
 }) => {
+  const location = useLocation();
   const [loading, setLoading] = useState(false);
   const [cities, setCities] = useState([]);
+  const [propertyTypes, setPropertyTypes] = useState([]);
+  const [templatesLoaded, setTemplatesLoaded] = useState(false);
+  const [dropdownLoadError, setDropdownLoadError] = useState(false);
+
+  // Get property type from navigation state (passed from property type modal)
+  const preSelectedPropertyType = location.state?.propertyTypeId || null;
+  const preSelectedPropertyTypeName = location.state?.propertyTypeName || null;
 
   // Basic Information
   const [formData, setFormData] = useState({
     city_id: "",
+    property_type_id: "",
     title: "",
-    property_type: "Villa",
     description: "",
     address: "",
+    area: "",
     city: "",
     state: "",
     pincode: "",
+    maps_location: "",
     bedrooms: 1,
     bathrooms: 1,
     max_guests: 2,
     check_in_time: "2:00 PM",
     check_out_time: "11:00 AM",
     price_per_night: "",
-    gst_percentage: 18,
+    // GST is auto-calculated by backend: 5% if booking ≤₹7,500 | 18% if booking >₹7,500
     status: "draft",
 
     // Advanced Pricing
@@ -39,6 +75,33 @@ const VendorPropertyForm = ({
     min_children: 0,
     max_children: 5,
     extra_child_charge: 0,
+
+    // Long-term Stay Discounts
+    weekly_discount_percent: 15,
+    monthly_discount_percent: 25,
+    quarterly_discount_percent: 30,
+    long_term_discount_percent: 35,
+    allow_corporate_booking: false,
+    corporate_discount_percent: 20,
+    deposit_amount: 0,
+    maintenance_charges: 0,
+    notice_period_days: 30,
+    // Session 70: Villa duration discount slabs (read-only view for vendor)
+    discount_3_5_days: 0,
+    discount_6_14_days: 0,
+    discount_15_plus_days: 0,
+
+    // Service Apartment Fields
+    min_stay_days: 1,
+    max_stay_days: null,
+    housekeeping_frequency: "weekly",
+    laundry_frequency: "weekly",
+    utilities_included: false,
+    parking_slots: 0,
+    floor_number: null,
+    wifi_speed_mbps: null,
+    wifi_provider: "",
+    furnishing_type: "fully_furnished",
 
     // Primary Incharge
     primary_incharge_name: "",
@@ -104,9 +167,98 @@ const VendorPropertyForm = ({
   });
 
   const [additionalRule, setAdditionalRule] = useState("");
-  const [newAmenity, setNewAmenity] = useState("");
-  const [photoUrls, setPhotoUrls] = useState("");
+  const [photoUrls, setPhotoUrls] = useState([]);
   const [errors, setErrors] = useState({});
+  const [pendingImageUpload, setPendingImageUpload] = useState(null);
+  const [pendingCalendarPrices, setPendingCalendarPrices] = useState([]);
+  const [hasSelectedImages, setHasSelectedImages] = useState(false);
+  const [selectedImageCount, setSelectedImageCount] = useState(0);
+
+  // Default guideline templates by property type (same as admin)
+  const guidelineTemplates = {
+    "pt-001": {
+      // Villa
+      check_in_guidelines: `<h3>Check-In Guidelines</h3><ul><li><strong>Check-in Time:</strong> 2:00 PM onwards</li><li><strong>Check-out Time:</strong> 11:00 AM</li><li><strong>Key Collection:</strong> Keys will be handed over by our property manager at the villa</li><li><strong>ID Proof:</strong> Please carry a valid government-issued ID</li><li><strong>Security Deposit:</strong> Refundable deposit will be collected at check-in</li><li><strong>Parking:</strong> Designated parking available on premises</li></ul>`,
+      house_rules_text: `<h3>House Rules</h3><ul><li>No smoking inside the villa</li><li>Parties and events require prior approval</li><li>Quiet hours: 10:00 PM - 8:00 AM</li><li>Please respect the neighbors</li><li>Maximum occupancy must be maintained</li><li>Pets allowed with prior approval</li></ul>`,
+      amenities_guide: `<h3>Amenities Guide</h3><ul><li><strong>WiFi:</strong> Network name and password will be provided at check-in</li><li><strong>Air Conditioning:</strong> Remote controls available in all bedrooms</li><li><strong>Kitchen:</strong> Fully equipped with basic utensils, gas stove, microwave, and refrigerator</li><li><strong>Swimming Pool:</strong> Pool usage hours 7:00 AM - 8:00 PM. Children must be supervised</li><li><strong>TV:</strong> Smart TV with streaming services access</li><li><strong>Washing Machine:</strong> Available in utility area</li></ul>`,
+      safety_information: `<h3>Safety Information</h3><ul><li><strong>Fire Safety:</strong> Fire extinguisher located in the kitchen</li><li><strong>First Aid:</strong> Basic first aid kit available</li><li><strong>Emergency Exits:</strong> Clearly marked exit routes</li><li><strong>Swimming Pool:</strong> No lifeguard on duty - swim at your own risk</li><li><strong>Security:</strong> 24/7 CCTV surveillance for your safety</li></ul>`,
+      local_area_info: `<h3>Local Area Information</h3><ul><li><strong>Restaurants:</strong> Several dining options within 2 km</li><li><strong>Grocery:</strong> Supermarket 1.5 km away</li><li><strong>ATM:</strong> Nearest ATM 1 km from the property</li><li><strong>Hospital:</strong> Multi-specialty hospital 5 km away</li><li><strong>Beach/Attractions:</strong> Popular tourist spots nearby</li></ul>`,
+      emergency_contacts: `<h3>Emergency Contacts</h3><ul><li><strong>Property Manager:</strong> +91 XXXXX XXXXX</li><li><strong>Local Police:</strong> 100</li><li><strong>Ambulance:</strong> 102 / 108</li><li><strong>Fire Department:</strong> 101</li><li><strong>Nearest Hospital:</strong> +91 XXXXX XXXXX</li></ul>`,
+    },
+    "pt-002": {
+      // Service Apartment
+      check_in_guidelines: `<h3>Check-In Guidelines</h3><ul><li><strong>Check-in Time:</strong> 2:00 PM onwards</li><li><strong>Check-out Time:</strong> 11:00 AM</li><li><strong>Key Collection:</strong> Collect keys from reception desk with valid ID</li><li><strong>ID Proof:</strong> Government-issued photo ID mandatory</li><li><strong>Rent Agreement:</strong> Will be provided for long-term stays</li><li><strong>Security Deposit:</strong> One month rent as refundable deposit</li><li><strong>Parking:</strong> Designated parking slot will be assigned</li></ul>`,
+      house_rules_text: `<h3>House Rules</h3><ul><li>No smoking inside the apartment</li><li>No loud music or parties</li><li>Visitor hours: 8:00 AM - 10:00 PM (register at reception)</li><li>Monthly rent due on 1st of every month</li><li>30 days notice required for vacating</li><li>Pets not allowed</li><li>No alterations to the property without permission</li></ul>`,
+      amenities_guide: `<h3>Amenities Guide</h3><ul><li><strong>WiFi:</strong> High-speed WiFi credentials at reception</li><li><strong>Air Conditioning:</strong> Available in all rooms</li><li><strong>Kitchen:</strong> Fully equipped with modular fittings</li><li><strong>Housekeeping:</strong> Weekly cleaning service included</li><li><strong>Laundry:</strong> Common laundry facilities available</li><li><strong>Gym:</strong> Access card required (obtain from reception)</li><li><strong>Power Backup:</strong> 100% power backup for essential appliances</li></ul>`,
+      safety_information: `<h3>Safety Information</h3><ul><li><strong>Fire Safety:</strong> Fire extinguishers on every floor</li><li><strong>First Aid:</strong> First aid available at reception</li><li><strong>Emergency Exits:</strong> Marked on each floor</li><li><strong>Security:</strong> 24/7 security personnel and CCTV</li><li><strong>Elevator:</strong> Regular maintenance schedule followed</li></ul>`,
+      local_area_info: `<h3>Local Area Information</h3><ul><li><strong>Public Transport:</strong> Bus stop/Metro within 500m</li><li><strong>Restaurants:</strong> Multiple dining options nearby</li><li><strong>Shopping:</strong> Supermarkets and malls within 2 km</li><li><strong>ATM/Banks:</strong> Within walking distance</li><li><strong>Hospital:</strong> 24/7 emergency care available nearby</li></ul>`,
+      emergency_contacts: `<h3>Emergency Contacts</h3><ul><li><strong>Reception:</strong> +91 XXXXX XXXXX (24/7)</li><li><strong>Security:</strong> Extension 100</li><li><strong>Maintenance:</strong> Extension 200</li><li><strong>Police:</strong> 100</li><li><strong>Ambulance:</strong> 102 / 108</li><li><strong>Fire:</strong> 101</li></ul>`,
+    },
+  };
+
+  // Helper: determine property type
+  const isVilla = useMemo(
+    () => formData.property_type_id === "pt-001",
+    [formData.property_type_id],
+  );
+  const isServiceApartment = useMemo(
+    () => formData.property_type_id === "pt-002",
+    [formData.property_type_id],
+  );
+
+  // Calculate form completion progress
+  const formProgress = useMemo(() => {
+    const sections = [
+      {
+        name: "Basic Info",
+        complete: !!(
+          formData.city_id &&
+          formData.title &&
+          formData.description
+        ),
+      },
+      {
+        name: "Location",
+        complete: !!(
+          formData.address &&
+          formData.city &&
+          formData.state &&
+          formData.pincode
+        ),
+      },
+      {
+        name: "Property Details",
+        complete: !!(
+          formData.bedrooms &&
+          formData.bathrooms &&
+          formData.max_guests
+        ),
+      },
+      {
+        name: "Pricing",
+        complete: !!formData.price_per_night,
+      },
+      {
+        name: "Amenities",
+        complete: formData.amenities && formData.amenities.length > 0,
+      },
+      {
+        name: "Contact",
+        complete: !!(
+          formData.primary_incharge_name && formData.primary_incharge_phone
+        ),
+      },
+      {
+        name: "Policies",
+        complete: !!(formData.house_rules && formData.cancellation_policy),
+      },
+    ];
+
+    const completedCount = sections.filter((s) => s.complete).length;
+    const percentage = Math.round((completedCount / sections.length) * 100);
+
+    return { sections, percentage };
+  }, [formData]);
 
   const quillModules = {
     toolbar: [
@@ -128,92 +280,201 @@ const VendorPropertyForm = ({
     "link",
   ];
 
-  useEffect(() => {
-    fetchCities();
-    if (propertyId) {
-      fetchPropertyData();
-    }
-  }, [propertyId]);
-
-  const fetchCities = async () => {
+  // Define fetch functions BEFORE the useEffects that call them
+  const fetchDropdownData = async (retryCount = 0) => {
+    const MAX_RETRIES = 3;
+    const RETRY_DELAY_MS = 1500;
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch("/api/public/cities", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await response.json();
-      if (data.success) setCities(data.data.cities || data.data);
+      setDropdownLoadError(false);
+      // Fetch cities and property types in parallel
+      const [citiesRes, typesRes] = await Promise.all([
+        api.get("/public/cities"),
+        api.get("/public/property-types"),
+      ]);
+      if (citiesRes.data.success) {
+        const cityData = citiesRes.data.data;
+        setCities(Array.isArray(cityData) ? cityData : cityData.cities || []);
+      }
+      if (typesRes.data.success) setPropertyTypes(typesRes.data.data || []);
     } catch (error) {
-      console.error("Error fetching cities:", error);
+      if (retryCount < MAX_RETRIES) {
+        // Auto-retry with increasing delay (1.5s, 3s, 4.5s)
+        setTimeout(
+          () => fetchDropdownData(retryCount + 1),
+          RETRY_DELAY_MS * (retryCount + 1),
+        );
+      } else {
+        console.error("Error fetching dropdown data after retries:", error);
+        setDropdownLoadError(true);
+      }
     }
   };
 
   const fetchPropertyData = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem("token");
-      // Use vendor endpoint
-      const response = await fetch(`/api/vendor/properties/${propertyId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await response.json();
+      const response = await api.get(`/vendor/properties/${propertyId}`);
 
-      if (data.success) {
-        const property = data.data.property;
-        const pendingChangeRequest = data.data.pendingChangeRequest;
+      if (response.data.success) {
+        const property = response.data.data.property || response.data.data;
+        const pendingChangeRequest = response.data.data.pendingChangeRequest;
 
-        // Show warning if there's a pending change request
         if (pendingChangeRequest) {
-          alert(
-            `Note: This property has a pending change request. Your changes will create a new request once the current one is processed.`,
+          toast.warning(
+            "This property has a pending change request. Your changes will create a new request once processed.",
           );
         }
 
-        setFormData({
+        // Safe JSON parsing helper
+        const safeJsonParse = (value, fallback) => {
+          if (!value) return fallback;
+          if (typeof value === "object") return value;
+          try {
+            return JSON.parse(value);
+          } catch (e) {
+            return fallback;
+          }
+        };
+
+        // Extract pricing data if nested
+        const pricing = property.pricing || {};
+
+        const loadedFormData = {
           ...formData,
           ...property,
-          city_id: property.city_id || "",
-          property_type_id: property.property_type_id || "",
-          amenities:
-            typeof property.amenities === "string"
-              ? JSON.parse(property.amenities || "[]")
-              : data.data.amenities?.map((a) => a.id) || [],
-          house_rules:
-            typeof property.house_rules === "string"
-              ? JSON.parse(property.house_rules || "{}")
-              : property.house_rules || {},
-          cancellation_policy:
-            typeof property.cancellation_policy === "string"
-              ? JSON.parse(property.cancellation_policy || "{}")
-              : property.cancellation_policy || {},
-          photos:
-            typeof property.photos === "string"
-              ? JSON.parse(property.photos || "[]")
-              : property.photos || [],
-        });
+          // Map API field names to form field names
+          city: property.city_name || property.city || "",
+          state: property.city_state || property.state || "",
+          // Extract pricing from nested object
+          price_per_night:
+            pricing.price_per_night || property.price_per_night || "",
+          min_guests: pricing.min_guests || property.min_guests || 1,
+          extra_guest_charge:
+            pricing.extra_guest_charge || property.extra_guest_charge || 0,
+          min_children: pricing.min_children || property.min_children || 0,
+          max_children: pricing.max_children || property.max_children || 5,
+          extra_child_charge:
+            pricing.extra_child_charge || property.extra_child_charge || 0,
+          weekly_discount_percent:
+            pricing.weekly_discount_percent ||
+            property.weekly_discount_percent ||
+            15,
+          monthly_discount_percent:
+            pricing.monthly_discount_percent ||
+            property.monthly_discount_percent ||
+            25,
+          quarterly_discount_percent:
+            pricing.quarterly_discount_percent ||
+            property.quarterly_discount_percent ||
+            30,
+          long_term_discount_percent:
+            pricing.long_term_discount_percent ||
+            property.long_term_discount_percent ||
+            35,
+          allow_corporate_booking:
+            pricing.allow_corporate_booking ||
+            property.allow_corporate_booking ||
+            false,
+          corporate_discount_percent:
+            pricing.corporate_discount_percent ||
+            property.corporate_discount_percent ||
+            20,
+          deposit_amount:
+            pricing.deposit_amount || property.deposit_amount || 0,
+          maintenance_charges:
+            pricing.maintenance_charges || property.maintenance_charges || 0,
+          notice_period_days:
+            pricing.notice_period_days || property.notice_period_days || 30,
+          // Session 70: Villa duration discount slabs (set by admin, read-only for vendor)
+          discount_3_5_days:
+            parseFloat(
+              pricing.discount_3_5_days || property.discount_3_5_days,
+            ) || 0,
+          discount_6_14_days:
+            parseFloat(
+              pricing.discount_6_14_days || property.discount_6_14_days,
+            ) || 0,
+          discount_15_plus_days:
+            parseFloat(
+              pricing.discount_15_plus_days || property.discount_15_plus_days,
+            ) || 0,
+          // Parse JSON fields — amenities from API are objects {id,name,...}, extract IDs only
+          amenities: Array.isArray(property.amenities)
+            ? property.amenities
+                .map((a) =>
+                  typeof a === "object" && a !== null && a.id ? a.id : a,
+                )
+                .filter(Boolean)
+            : safeJsonParse(property.amenities, []),
+          house_rules: (() => {
+            const parsed = safeJsonParse(property.house_rules, {});
+            return {
+              ...formData.house_rules,
+              ...parsed,
+              additional_rules: Array.isArray(parsed?.additional_rules)
+                ? parsed.additional_rules
+                : [],
+            };
+          })(),
+          cancellation_policy: safeJsonParse(
+            property.cancellation_policy,
+            formData.cancellation_policy,
+          ),
+          photos: safeJsonParse(property.photos, []),
+        };
 
-        setGuidelines({
+        setFormData(loadedFormData);
+
+        const loadedGuidelines = {
           check_in_guidelines: property.check_in_guidelines || "",
           house_rules_text: property.house_rules_text || "",
           amenities_guide: property.amenities_guide || "",
           safety_information: property.safety_information || "",
           local_area_info: property.local_area_info || "",
           emergency_contacts: property.emergency_contacts || "",
-        });
+        };
+        setGuidelines(loadedGuidelines);
 
-        const photoArray =
-          typeof property.photos === "string"
-            ? JSON.parse(property.photos || "[]")
-            : property.photos || [];
-        setPhotoUrls(photoArray.join("\n"));
+        // Set photo URLs as array
+        const parsedPhotos = safeJsonParse(property.photos, []);
+        setPhotoUrls(Array.isArray(parsedPhotos) ? parsedPhotos : []);
       }
     } catch (error) {
       console.error("Error fetching property:", error);
-      alert("Failed to load property data: " + error.message);
+      toast.error("Failed to load property data. Please try again.");
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchDropdownData();
+    if (propertyId) {
+      fetchPropertyData();
+    } else if (preSelectedPropertyType) {
+      // Set property type from modal selection
+      setFormData((prev) => ({
+        ...prev,
+        property_type_id: preSelectedPropertyType,
+      }));
+    }
+  }, [propertyId, preSelectedPropertyType]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Auto-load guideline templates when property type is selected (only for new properties)
+  useEffect(() => {
+    if (!propertyId && formData.property_type_id && !templatesLoaded) {
+      const templates = guidelineTemplates[formData.property_type_id];
+      if (templates) {
+        setGuidelines(templates);
+        setTemplatesLoaded(true);
+        setTimeout(() => {
+          toast.success(
+            "Default guidelines loaded! You can customize them as needed.",
+          );
+        }, 0);
+      }
+    }
+  }, [formData.property_type_id, propertyId, templatesLoaded]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -252,23 +513,6 @@ const VendorPropertyForm = ({
       ALLOWED_ATTR: ["href", "target"],
     });
     setGuidelines((prev) => ({ ...prev, [field]: sanitized }));
-  };
-
-  const addAmenity = () => {
-    if (newAmenity.trim()) {
-      setFormData((prev) => ({
-        ...prev,
-        amenities: [...prev.amenities, newAmenity.trim()],
-      }));
-      setNewAmenity("");
-    }
-  };
-
-  const removeAmenity = (index) => {
-    setFormData((prev) => ({
-      ...prev,
-      amenities: prev.amenities.filter((_, i) => i !== index),
-    }));
   };
 
   const addAdditionalRule = () => {
@@ -341,127 +585,189 @@ const VendorPropertyForm = ({
     e?.preventDefault();
 
     if (!validateForm()) {
-      alert("Please fix validation errors");
+      toast.error("Please fix validation errors before submitting");
       return;
     }
 
     try {
       setLoading(true);
 
-      // Process photo URLs
-      const photosArray = photoUrls
-        .split("\n")
-        .map((url) => url.trim())
-        .filter((url) => url.length > 0);
-
       // Prepare payload
+      const { city, ...restFormData } = formData;
       const payload = {
-        ...formData,
+        ...restFormData,
         ...guidelines,
-        // amenities should be array of IDs, not stringified
         amenities: Array.isArray(formData.amenities) ? formData.amenities : [],
-        house_rules: formData.house_rules,
-        cancellation_policy: formData.cancellation_policy,
-        photos: photosArray,
+        house_rules: JSON.stringify(formData.house_rules),
+        cancellation_policy: JSON.stringify(formData.cancellation_policy),
+        photos: JSON.stringify([]),
+        // Numeric conversions
+        price_per_night: parseFloat(formData.price_per_night) || 0,
+        bedrooms: parseInt(formData.bedrooms) || 0,
+        bathrooms: parseInt(formData.bathrooms) || 0,
+        max_guests: parseInt(formData.max_guests) || 2,
+        weekly_discount_percent:
+          parseFloat(formData.weekly_discount_percent) || 0,
+        monthly_discount_percent:
+          parseFloat(formData.monthly_discount_percent) || 0,
+        quarterly_discount_percent:
+          parseFloat(formData.quarterly_discount_percent) || 0,
+        long_term_discount_percent:
+          parseFloat(formData.long_term_discount_percent) || 0,
+        corporate_discount_percent:
+          parseFloat(formData.corporate_discount_percent) || 0,
+        deposit_amount: parseFloat(formData.deposit_amount) || 0,
+        maintenance_charges: parseFloat(formData.maintenance_charges) || 0,
+        notice_period_days: parseInt(formData.notice_period_days) || 30,
+        min_stay_days: parseInt(formData.min_stay_days) || 1,
+        max_stay_days: formData.max_stay_days
+          ? parseInt(formData.max_stay_days)
+          : null,
+        parking_slots: parseInt(formData.parking_slots) || 0,
+        floor_number: formData.floor_number
+          ? parseInt(formData.floor_number)
+          : null,
+        wifi_speed_mbps: formData.wifi_speed_mbps
+          ? parseInt(formData.wifi_speed_mbps)
+          : null,
       };
 
-      const token = localStorage.getItem("token");
-
       if (propertyId) {
-        // EDITING EXISTING PROPERTY
-        // Update property (will create change request if approved)
-        const response = await fetch(`/api/vendor/properties/${propertyId}`, {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(payload),
-        });
+        // EDITING EXISTING PROPERTY (change request if approved)
+        const response = await api.patch(
+          `/vendor/properties/${propertyId}`,
+          payload,
+        );
 
-        const data = await response.json();
-
-        if (data.success) {
-          if (data.data.changeRequestId) {
-            alert(
-              "Change request submitted for admin approval! Your property will remain live with current data until approved.",
+        if (response.data.success) {
+          if (response.data.data?.changeRequestId) {
+            toast.success("Change request submitted for admin approval!");
+            toast.info(
+              "Property will remain live with current data until approved.",
             );
           } else {
-            // Draft or pending_approval property updated directly
-            alert("Property updated successfully!");
+            toast.success("Property updated successfully!");
           }
-          if (onSuccess) onSuccess();
+          if (onSuccess) onSuccess(response.data);
         } else {
-          alert("Error: " + data.message);
+          toast.error(response.data.message || "Failed to update property");
         }
       } else {
         // CREATING NEW PROPERTY
-        // Step 1: Create as draft
-        const createResponse = await fetch("/api/vendor/properties", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(payload),
-        });
+        const createResponse = await api.post("/vendor/properties", payload);
 
-        const createData = await createResponse.json();
-
-        if (createData.success) {
-          const newPropertyId = createData.data.id;
+        if (createResponse.data.success) {
+          const newPropertyId = createResponse.data.data.id;
 
           if (submitForApproval) {
-            // Step 2: Submit for approval
-            const submitResponse = await fetch(
-              `/api/vendor/properties/${newPropertyId}/submit`,
-              {
-                method: "PATCH",
-                headers: {
-                  "Content-Type": "application/json",
-                  Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify({}),
-              },
-            );
-
-            const submitData = await submitResponse.json();
-
-            if (submitData.success) {
-              alert("Property created and submitted for approval!");
-              if (onSuccess) onSuccess();
-            } else {
-              alert(
-                "Property created but submission failed: " + submitData.message,
+            // Submit for approval
+            try {
+              await api.patch(`/vendor/properties/${newPropertyId}/submit`, {});
+              toast.success("Property created and submitted for approval! 🎉");
+            } catch {
+              toast.warning(
+                "Property created but submission failed. You can submit from your properties list.",
               );
-              if (onSuccess) onSuccess(); // Still call success to refresh
             }
           } else {
-            alert("Property saved as draft!");
-            if (onSuccess) onSuccess();
+            toast.success("Property saved as draft!");
           }
+
+          // Upload pending images if any
+          if (hasSelectedImages && pendingImageUpload) {
+            try {
+              await pendingImageUpload(String(newPropertyId));
+            } catch {
+              toast.warning(
+                "Property saved but image upload failed. You can upload them later.",
+              );
+            }
+          }
+
+          // Flush pending calendar prices if any were staged pre-creation
+          if (pendingCalendarPrices.length > 0) {
+            try {
+              await api.post(
+                `/vendor/properties/${newPropertyId}/calendar-pricing`,
+                {
+                  dates: pendingCalendarPrices,
+                },
+              );
+            } catch {
+              toast.warning(
+                "Property saved but calendar pricing could not be saved. You can set it later.",
+              );
+            }
+          }
+
+          if (onSuccess) onSuccess(createResponse.data);
         } else {
-          alert("Error creating property: " + createData.message);
+          toast.error(
+            createResponse.data.message || "Failed to create property",
+          );
         }
       }
     } catch (error) {
       console.error("Error submitting form:", error);
-      alert("Error submitting form: " + error.message);
+      if (error.response?.data?.message) {
+        toast.error(error.response.data.message);
+      } else if (error.response?.status === 401) {
+        toast.error("Session expired. Please login again.");
+      } else if (error.response?.status === 403) {
+        toast.error("You don't have permission to perform this action.");
+      } else {
+        toast.error("Failed to save property. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
   };
 
   if (loading && propertyId) {
-    return <div className="loading">Loading property data...</div>;
+    return (
+      <div className="flex items-center justify-center p-10">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-3 text-lg">Loading property data...</span>
+      </div>
+    );
   }
 
   return (
-    <div className="vendor-property-form">
-      <div className="form-header">
-        <h2>{propertyId ? "Edit Property" : "Add New Property"}</h2>
+    <div className="max-w-6xl mx-auto p-6">
+      {/* Form Progress Bar */}
+      <FormProgressBar
+        completionPercentage={formProgress.percentage}
+        sections={formProgress.sections}
+      />
+
+      {/* Backend connection error banner */}
+      {dropdownLoadError && (
+        <div className="mb-4 flex items-center justify-between gap-4 rounded-lg border border-destructive/40 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+          <span>
+            ⚠️ Could not connect to the server. Cities and property types may
+            not load.
+          </span>
+          <button
+            type="button"
+            onClick={() => fetchDropdownData()}
+            className="shrink-0 rounded-md bg-destructive px-3 py-1 text-xs font-medium text-white hover:bg-destructive/90 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
+      {/* Form Header */}
+      <div className="flex justify-between items-center mb-8 pb-5 border-b-2 border-border">
+        <h2 className="text-3xl font-bold text-foreground">
+          {propertyId ? "Edit Property" : "Add New Property"}
+        </h2>
         {onCancel && (
-          <button type="button" onClick={onCancel} className="btn-cancel">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="px-6 py-3 bg-muted text-foreground border border-border rounded-lg font-semibold hover:bg-muted/80 transition-all"
+          >
             Cancel
           </button>
         )}
@@ -469,204 +775,296 @@ const VendorPropertyForm = ({
 
       <form onSubmit={handleSubmit}>
         {/* Section 1: Basic Information */}
-        <section className="form-section">
-          <h3>Basic Information</h3>
-
-          <div className="form-row">
-            <div className="form-group full-width">
-              <label>Property Title *</label>
-              <input
-                type="text"
-                name="title"
-                value={formData.title}
-                onChange={handleInputChange}
-                placeholder="e.g., Luxury Beach Villa - Goa"
-                required
-              />
-              {errors.title && <span className="error">{errors.title}</span>}
-            </div>
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label>Property Type</label>
-              <select
-                name="property_type"
-                value={formData.property_type}
-                onChange={handleInputChange}
-              >
-                <option value="Villa">Villa</option>
-                <option value="Premium Villa">Premium Villa</option>
-                <option value="Apartment">Apartment</option>
-                <option value="Cottage">Cottage</option>
-                <option value="Farmhouse">Farmhouse</option>
-                <option value="Bungalow">Bungalow</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="form-row">
-            <div className="form-group full-width">
-              <label>Description</label>
-              <textarea
-                name="description"
-                value={formData.description}
-                onChange={handleInputChange}
-                rows="4"
-                placeholder="Describe the property..."
-              />
-            </div>
-          </div>
-        </section>
-
-        {/* Section 2: Location */}
-        <section className="form-section">
-          <h3>Location Details</h3>
-
-          <div className="form-row">
-            <div className="form-group full-width">
-              <label>Address *</label>
-              <input
-                type="text"
-                name="address"
-                value={formData.address}
-                onChange={handleInputChange}
-                placeholder="Street address"
-                required
-              />
-            </div>
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label>City (Dropdown) *</label>
-              <select
-                name="city_id"
+        <FormSection
+          title="Basic Information"
+          icon={Building}
+          required={true}
+          defaultOpen={true}
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            {/* City Selection - Using CityCombobox */}
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                City <span className="text-destructive">*</span>
+              </label>
+              <CityCombobox
                 value={formData.city_id}
-                onChange={handleInputChange}
-                required
-              >
-                <option value="">Select City</option>
-                {cities.map((city) => (
-                  <option key={city.id} value={city.id}>
-                    {city.name}, {city.state}
-                  </option>
-                ))}
-              </select>
+                onChange={(cityId, cityData) => {
+                  setFormData((prev) => ({
+                    ...prev,
+                    city_id: cityId,
+                    city: cityData?.name || "",
+                    state: cityData?.state || "",
+                  }));
+                  if (errors.city_id)
+                    setErrors((prev) => ({ ...prev, city_id: "" }));
+                }}
+                error={errors.city_id}
+                required={true}
+                externalCities={cities}
+              />
               {errors.city_id && (
-                <span className="error">{errors.city_id}</span>
+                <span className="text-sm text-destructive mt-1">
+                  {errors.city_id}
+                </span>
+              )}
+              {formData.city && formData.state && (
+                <small className="text-xs text-primary font-medium mt-1">
+                  Selected: {formData.city}, {formData.state}
+                </small>
               )}
             </div>
 
-            <div className="form-group">
-              <label>City (Text)</label>
-              <input
-                type="text"
-                name="city"
-                value={formData.city}
+            {/* Property Type - from DB, locked once selected */}
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2 flex items-center gap-2">
+                Property Type <span className="text-destructive">*</span>
+                {(propertyId || preSelectedPropertyType) && (
+                  <span className="text-xs text-yellow-600 dark:text-yellow-400 font-normal">
+                    (Cannot be changed)
+                  </span>
+                )}
+              </label>
+              <select
+                name="property_type_id"
+                value={formData.property_type_id || ""}
                 onChange={handleInputChange}
-                placeholder="City name"
-              />
+                required
+                disabled={!!(propertyId || preSelectedPropertyType)}
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <option value="">Select Property Type</option>
+                {propertyTypes.map((type) => (
+                  <option key={type.id} value={type.id}>
+                    {type.name}
+                    {type.stay_type === "short_term"
+                      ? " — Short Term"
+                      : type.stay_type === "long_term"
+                        ? " — Long Term"
+                        : ""}
+                  </option>
+                ))}
+              </select>
+              {errors.property_type_id && (
+                <span className="text-sm text-destructive mt-1">
+                  {errors.property_type_id}
+                </span>
+              )}
+              {preSelectedPropertyTypeName && !propertyId && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Selected: {preSelectedPropertyTypeName}
+                </p>
+              )}
             </div>
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label>State</label>
+          {/* Property Title */}
+          <div className="mb-6">
+            <label className="text-sm font-medium text-foreground mb-2 block">
+              Property Title <span className="text-destructive">*</span>
+            </label>
+            <input
+              type="text"
+              name="title"
+              value={formData.title}
+              onChange={handleInputChange}
+              placeholder="e.g., Luxury Beach Villa - Goa"
+              required
+              className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+            />
+            {errors.title && (
+              <span className="text-sm text-destructive mt-1">
+                {errors.title}
+              </span>
+            )}
+          </div>
+
+          {/* Description */}
+          <div className="mb-6">
+            <label className="text-sm font-medium text-foreground mb-2 block">
+              Description <span className="text-destructive">*</span>
+            </label>
+            <textarea
+              name="description"
+              value={formData.description}
+              onChange={handleInputChange}
+              rows="5"
+              placeholder="Describe your property in detail..."
+              required
+              className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-vertical transition-all"
+            />
+          </div>
+        </FormSection>
+
+        {/* Section 2: Location Details */}
+        <FormSection title="Location Details" icon={MapPin} required={true}>
+          <div className="mb-6">
+            <label className="text-sm font-medium text-foreground mb-2 block">
+              Street Address <span className="text-destructive">*</span>
+            </label>
+            <input
+              type="text"
+              name="address"
+              value={formData.address}
+              onChange={handleInputChange}
+              placeholder="Full street address"
+              required
+              className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            {/* Area / Locality */}
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Area / Locality
+              </label>
               <input
                 type="text"
-                name="state"
-                value={formData.state}
+                name="area"
+                value={formData.area || ""}
                 onChange={handleInputChange}
-                placeholder="State"
+                placeholder="e.g., Koramangala, Candolim Beach"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
+              <small className="text-xs text-muted-foreground mt-1">
+                Specific neighborhood or locality within the city
+              </small>
             </div>
 
-            <div className="form-group">
-              <label>Pincode</label>
+            {/* Pincode */}
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Pincode
+              </label>
               <input
                 type="text"
                 name="pincode"
                 value={formData.pincode}
                 onChange={handleInputChange}
-                placeholder="Pincode"
+                placeholder="6-digit pincode"
                 maxLength="10"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
             </div>
           </div>
-        </section>
+
+          {/* Google Maps URL */}
+          <div className="mb-6">
+            <label className="text-sm font-medium text-foreground mb-2 block">
+              Google Maps Location
+            </label>
+            <input
+              type="text"
+              name="maps_location"
+              value={formData.maps_location || ""}
+              onChange={handleInputChange}
+              placeholder="https://www.google.com/maps?q=12.9352,77.6245"
+              className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+            />
+            <small className="text-xs text-muted-foreground mt-1">
+              Google Maps URL or coordinates for easy guest navigation
+            </small>
+          </div>
+        </FormSection>
 
         {/* Section 3: Property Specifications */}
-        <section className="form-section">
-          <h3>Property Specifications</h3>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label>Bedrooms</label>
+        <FormSection
+          title="Property Specifications"
+          icon={Home}
+          required={true}
+        >
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            {/* Bedrooms */}
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Bedrooms <span className="text-destructive">*</span>
+              </label>
               <input
                 type="number"
                 name="bedrooms"
                 value={formData.bedrooms}
                 onChange={handleInputChange}
-                min="0"
+                min="1"
+                required
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
             </div>
 
-            <div className="form-group">
-              <label>Bathrooms</label>
+            {/* Bathrooms */}
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Bathrooms <span className="text-destructive">*</span>
+              </label>
               <input
                 type="number"
                 name="bathrooms"
                 value={formData.bathrooms}
                 onChange={handleInputChange}
-                min="0"
+                min="1"
+                required
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
             </div>
 
-            <div className="form-group">
-              <label>Max Guests</label>
+            {/* Max Guests */}
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Max Guests <span className="text-destructive">*</span>
+              </label>
               <input
                 type="number"
                 name="max_guests"
                 value={formData.max_guests}
                 onChange={handleInputChange}
                 min="1"
+                required
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
             </div>
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label>Check-in Time</label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Check-in Time */}
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Check-in Time
+              </label>
               <input
                 type="text"
                 name="check_in_time"
                 value={formData.check_in_time}
                 onChange={handleInputChange}
                 placeholder="e.g., 2:00 PM"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
             </div>
 
-            <div className="form-group">
-              <label>Check-out Time</label>
+            {/* Check-out Time */}
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Check-out Time
+              </label>
               <input
                 type="text"
                 name="check_out_time"
                 value={formData.check_out_time}
                 onChange={handleInputChange}
                 placeholder="e.g., 11:00 AM"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
             </div>
           </div>
-        </section>
+        </FormSection>
 
         {/* Section 4: Pricing */}
-        <section className="form-section">
-          <h3>Pricing & GST</h3>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label>Price Per Night (₹) *</label>
+        <FormSection title="Pricing" icon={DollarSign} required={true}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            {/* Price Per Night */}
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Price Per Night (₹) <span className="text-destructive">*</span>
+              </label>
               <input
                 type="number"
                 name="price_per_night"
@@ -675,305 +1073,754 @@ const VendorPropertyForm = ({
                 min="0"
                 step="0.01"
                 required
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
               {errors.price_per_night && (
-                <span className="error">{errors.price_per_night}</span>
+                <span className="text-sm text-destructive mt-1">
+                  {errors.price_per_night}
+                </span>
               )}
             </div>
 
-            <div className="form-group">
-              <label>GST Percentage (%)</label>
-              <input
-                type="number"
-                name="gst_percentage"
-                value={formData.gst_percentage}
-                onChange={handleInputChange}
-                min="0"
-                max="100"
-                step="0.01"
-              />
+            {/* GST Info Banner */}
+            <div className="flex flex-col">
+              <div className="flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-800 px-4 py-3 h-full">
+                <svg
+                  className="h-4 w-4 text-blue-600 mt-0.5 shrink-0"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                <div>
+                  <p className="text-xs font-semibold text-blue-900 dark:text-blue-200">
+                    GST Auto-Calculated
+                  </p>
+                  <p className="text-xs text-blue-800 dark:text-blue-300 mt-0.5">
+                    <strong>5%</strong> GST for bookings ≤ ₹7,500
+                    <br />
+                    <strong>18%</strong> GST for bookings &gt; ₹7,500
+                    <br />
+                    Applied on total booking amount at checkout.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
 
-          <h4 style={{ marginTop: "20px" }}>Advanced Pricing</h4>
+          {/* Advanced Pricing */}
+          <div className="p-4 bg-muted/30 border border-border rounded-lg">
+            <h4 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              Guest & Children Pricing
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Min Guests */}
+              <div className="flex flex-col">
+                <label className="text-sm font-medium text-foreground mb-2">
+                  Minimum Guests
+                </label>
+                <input
+                  type="number"
+                  name="min_guests"
+                  value={formData.min_guests}
+                  onChange={handleInputChange}
+                  min="1"
+                  className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                />
+              </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label>Min Guests (Included in Base Price)</label>
-              <input
-                type="number"
-                name="min_guests"
-                value={formData.min_guests}
-                onChange={handleInputChange}
-                min="1"
-              />
-            </div>
+              {/* Extra Guest Charge */}
+              <div className="flex flex-col">
+                <label className="text-sm font-medium text-foreground mb-2">
+                  Extra Guest Charge (₹)
+                </label>
+                <input
+                  type="number"
+                  name="extra_guest_charge"
+                  value={formData.extra_guest_charge}
+                  onChange={handleInputChange}
+                  min="0"
+                  step="0.01"
+                  className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                />
+              </div>
 
-            <div className="form-group">
-              <label>Extra Guest Charge (₹ per night)</label>
-              <input
-                type="number"
-                name="extra_guest_charge"
-                value={formData.extra_guest_charge}
-                onChange={handleInputChange}
-                min="0"
-                step="0.01"
-              />
+              {/* Min Children */}
+              <div className="flex flex-col">
+                <label className="text-sm font-medium text-foreground mb-2">
+                  Min Children
+                </label>
+                <input
+                  type="number"
+                  name="min_children"
+                  value={formData.min_children}
+                  onChange={handleInputChange}
+                  min="0"
+                  className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                />
+              </div>
+
+              {/* Max Children */}
+              <div className="flex flex-col">
+                <label className="text-sm font-medium text-foreground mb-2">
+                  Max Children
+                </label>
+                <input
+                  type="number"
+                  name="max_children"
+                  value={formData.max_children}
+                  onChange={handleInputChange}
+                  min="0"
+                  className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                />
+              </div>
+
+              {/* Extra Child Charge */}
+              <div className="flex flex-col md:col-span-2">
+                <label className="text-sm font-medium text-foreground mb-2">
+                  Extra Child Charge (₹)
+                </label>
+                <input
+                  type="number"
+                  name="extra_child_charge"
+                  value={formData.extra_child_charge}
+                  onChange={handleInputChange}
+                  min="0"
+                  step="0.01"
+                  className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                />
+              </div>
             </div>
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label>Min Children (Included in Base Price)</label>
-              <input
-                type="number"
-                name="min_children"
-                value={formData.min_children}
-                onChange={handleInputChange}
-                min="0"
-              />
+          {/* Long-term Stay Discounts – only for Service Apartments */}
+          {!isVilla && (
+            <div className="mt-6">
+              <h4 className="text-lg font-semibold text-foreground mb-4">
+                Long-term Stay Discounts
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium text-foreground mb-2">
+                    Weekly Discount (%)
+                  </label>
+                  <input
+                    type="number"
+                    name="weekly_discount_percent"
+                    value={formData.weekly_discount_percent}
+                    onChange={handleInputChange}
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                  />
+                  <small className="text-xs text-muted-foreground mt-1">
+                    7+ days stays
+                  </small>
+                </div>
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium text-foreground mb-2">
+                    Monthly Discount (%)
+                  </label>
+                  <input
+                    type="number"
+                    name="monthly_discount_percent"
+                    value={formData.monthly_discount_percent}
+                    onChange={handleInputChange}
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                  />
+                  <small className="text-xs text-muted-foreground mt-1">
+                    30+ days stays
+                  </small>
+                </div>
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium text-foreground mb-2">
+                    Quarterly Discount (%)
+                  </label>
+                  <input
+                    type="number"
+                    name="quarterly_discount_percent"
+                    value={formData.quarterly_discount_percent}
+                    onChange={handleInputChange}
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                  />
+                  <small className="text-xs text-muted-foreground mt-1">
+                    90+ days stays
+                  </small>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium text-foreground mb-2">
+                    Long-term Discount (%)
+                  </label>
+                  <input
+                    type="number"
+                    name="long_term_discount_percent"
+                    value={formData.long_term_discount_percent}
+                    onChange={handleInputChange}
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                  />
+                  <small className="text-xs text-muted-foreground mt-1">
+                    180+ days stays
+                  </small>
+                </div>
+              </div>
             </div>
+          )}
 
-            <div className="form-group">
-              <label>Max Children Allowed</label>
-              <input
-                type="number"
-                name="max_children"
-                value={formData.max_children}
-                onChange={handleInputChange}
-                min="0"
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Extra Child Charge (₹ per night)</label>
-              <input
-                type="number"
-                name="extra_child_charge"
-                value={formData.extra_child_charge}
-                onChange={handleInputChange}
-                min="0"
-                step="0.01"
-              />
+          {/* Corporate & Deposit */}
+          <div>
+            <h4 className="text-lg font-semibold text-foreground mb-4">
+              Security Deposit
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="flex flex-col">
+                <label className="text-sm font-medium text-foreground mb-2">
+                  Security Deposit (₹)
+                </label>
+                <input
+                  type="number"
+                  name="deposit_amount"
+                  value={formData.deposit_amount}
+                  onChange={handleInputChange}
+                  min="0"
+                  step="0.01"
+                  className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                />
+              </div>
+              <div className="flex flex-col">
+                <label className="text-sm font-medium text-foreground mb-2">
+                  Notice Period (Days)
+                </label>
+                <input
+                  type="number"
+                  name="notice_period_days"
+                  value={formData.notice_period_days}
+                  onChange={handleInputChange}
+                  min="0"
+                  className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                />
+                <small className="text-xs text-muted-foreground mt-1">
+                  Required notice for cancellation/checkout
+                </small>
+              </div>
             </div>
           </div>
 
-          <p className="info-text">
-            <strong>Note:</strong> Infants (0-2 years) are always FREE and
-            unlimited
-          </p>
-        </section>
+          {/* Villa Duration Discount Slabs – read-only for vendor */}
+          {isVilla &&
+            (formData.discount_3_5_days > 0 ||
+              formData.discount_6_14_days > 0 ||
+              formData.discount_15_plus_days > 0) && (
+              <div className="mt-6">
+                <h4 className="text-lg font-semibold text-foreground mb-1">
+                  Villa Duration Discounts
+                </h4>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Discounts set by admin — automatically applied at checkout.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {[
+                    { label: "3–5 Nights", val: formData.discount_3_5_days },
+                    { label: "6–14 Nights", val: formData.discount_6_14_days },
+                    {
+                      label: "15+ Nights",
+                      val: formData.discount_15_plus_days,
+                    },
+                  ].map(
+                    ({ label, val }) =>
+                      val > 0 && (
+                        <div
+                          key={label}
+                          className="flex items-center justify-between rounded-lg border border-border bg-green-50 dark:bg-green-950/20 px-4 py-3"
+                        >
+                          <span className="text-sm font-medium text-foreground">
+                            {label}
+                          </span>
+                          <span className="text-sm font-bold text-green-700 dark:text-green-400">
+                            {val}% off
+                          </span>
+                        </div>
+                      ),
+                  )}
+                </div>
+              </div>
+            )}
+        </FormSection>
 
-        {/* Section 5: Primary Incharge */}
-        <section className="form-section">
-          <h3>Primary Property Incharge</h3>
+        {/* Section 4.6: Calendar Day-wise Pricing */}
+        <FormSection
+          title="📅 Calendar Pricing"
+          icon={Calendar}
+          defaultOpen={false}
+        >
+          <div className="mb-4">
+            <p className="text-sm text-muted-foreground">
+              Override the base nightly rate for specific dates or ranges —
+              useful for weekends, holidays, or seasonal peaks. Custom prices
+              take precedence over the base rate at checkout.
+            </p>
+          </div>
+          <PropertyCalendarPricing
+            propertyId={propertyId || null}
+            basePrice={parseFloat(formData.price_per_night) || 0}
+            canEdit={true}
+            role="vendor"
+            onPendingChange={setPendingCalendarPrices}
+          />
+        </FormSection>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label>Name</label>
+        {/* Section 4.5: Service Apartment Details - Only for Service Apartments */}
+        {isServiceApartment && (
+          <FormSection
+            title="Service Apartment Details"
+            icon={Building}
+            defaultOpen={true}
+          >
+            <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
+              <p className="text-sm text-blue-900 dark:text-blue-200">
+                <strong className="font-semibold">
+                  Service Apartment Specific:
+                </strong>{" "}
+                These fields are tailored for long-term stays (30+ days).
+              </p>
+            </div>
+
+            <h4 className="text-lg font-semibold text-foreground mb-4">
+              Stay Duration
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div className="flex flex-col">
+                <label className="text-sm font-medium text-foreground mb-2">
+                  Minimum Stay (Days)
+                </label>
+                <input
+                  type="number"
+                  name="min_stay_days"
+                  value={formData.min_stay_days}
+                  onChange={handleInputChange}
+                  min="1"
+                  className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                />
+                <small className="text-xs text-muted-foreground mt-1">
+                  Required minimum booking duration
+                </small>
+              </div>
+              <div className="flex flex-col">
+                <label className="text-sm font-medium text-foreground mb-2">
+                  Maximum Stay (Days)
+                </label>
+                <input
+                  type="number"
+                  name="max_stay_days"
+                  value={formData.max_stay_days || ""}
+                  onChange={handleInputChange}
+                  min="1"
+                  placeholder="Unlimited"
+                  className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                />
+                <small className="text-xs text-muted-foreground mt-1">
+                  Leave empty for unlimited
+                </small>
+              </div>
+            </div>
+
+            <h4 className="text-lg font-semibold text-foreground mt-6 mb-4">
+              Services & Facilities
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+              <div className="flex flex-col">
+                <label className="text-sm font-medium text-foreground mb-2">
+                  Housekeeping Frequency
+                </label>
+                <select
+                  name="housekeeping_frequency"
+                  value={formData.housekeeping_frequency}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                >
+                  <option value="daily">Daily</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="biweekly">Bi-weekly</option>
+                  <option value="monthly">Monthly</option>
+                  <option value="on_request">On Request</option>
+                </select>
+              </div>
+              <div className="flex flex-col">
+                <label className="text-sm font-medium text-foreground mb-2">
+                  Laundry Frequency
+                </label>
+                <select
+                  name="laundry_frequency"
+                  value={formData.laundry_frequency}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                >
+                  <option value="daily">Daily</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="biweekly">Bi-weekly</option>
+                  <option value="on_request">On Request</option>
+                  <option value="not_available">Not Available</option>
+                </select>
+              </div>
+              <div className="flex flex-col">
+                <label className="text-sm font-medium text-foreground mb-2">
+                  Furnishing Type
+                </label>
+                <select
+                  name="furnishing_type"
+                  value={formData.furnishing_type}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                >
+                  <option value="fully_furnished">Fully Furnished</option>
+                  <option value="semi_furnished">Semi Furnished</option>
+                  <option value="unfurnished">Unfurnished</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+              <div className="flex flex-col">
+                <label className="text-sm font-medium text-foreground mb-2">
+                  Parking Slots
+                </label>
+                <input
+                  type="number"
+                  name="parking_slots"
+                  value={formData.parking_slots}
+                  onChange={handleInputChange}
+                  min="0"
+                  className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                />
+              </div>
+              <div className="flex flex-col">
+                <label className="text-sm font-medium text-foreground mb-2">
+                  Floor Number
+                </label>
+                <input
+                  type="number"
+                  name="floor_number"
+                  value={formData.floor_number || ""}
+                  onChange={handleInputChange}
+                  min="0"
+                  placeholder="Ground = 0"
+                  className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                />
+              </div>
+              <div className="flex flex-col">
+                <label className="text-sm font-medium text-foreground mb-2">
+                  WiFi Speed (Mbps)
+                </label>
+                <input
+                  type="number"
+                  name="wifi_speed_mbps"
+                  value={formData.wifi_speed_mbps || ""}
+                  onChange={handleInputChange}
+                  min="0"
+                  placeholder="e.g., 100"
+                  className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="flex flex-col">
+                <label className="text-sm font-medium text-foreground mb-2">
+                  WiFi Provider
+                </label>
+                <input
+                  type="text"
+                  name="wifi_provider"
+                  value={formData.wifi_provider || ""}
+                  onChange={handleInputChange}
+                  placeholder="e.g., Airtel Fiber, Jio"
+                  className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                />
+              </div>
+              <div className="flex items-center gap-3 mt-6">
+                <input
+                  type="checkbox"
+                  name="utilities_included"
+                  checked={formData.utilities_included}
+                  onChange={handleInputChange}
+                  className="h-5 w-5 rounded border-border text-primary focus:ring-2 focus:ring-primary focus:ring-offset-0"
+                  id="utilities_included"
+                />
+                <label
+                  htmlFor="utilities_included"
+                  className="text-sm font-medium text-foreground cursor-pointer"
+                >
+                  Utilities Included (Electricity, Water, Gas)
+                </label>
+              </div>
+            </div>
+          </FormSection>
+        )}
+
+        {/* Section 5: Primary Property Incharge */}
+        <FormSection
+          title="Primary Property Incharge"
+          icon={Phone}
+          required={true}
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Name */}
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Full Name <span className="text-destructive">*</span>
+              </label>
               <input
                 type="text"
                 name="primary_incharge_name"
                 value={formData.primary_incharge_name}
                 onChange={handleInputChange}
                 placeholder="Full name"
+                required
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
             </div>
 
-            <div className="form-group">
-              <label>Phone</label>
+            {/* Phone */}
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Phone Number <span className="text-destructive">*</span>
+              </label>
               <input
                 type="text"
                 name="primary_incharge_phone"
                 value={formData.primary_incharge_phone}
                 onChange={handleInputChange}
-                placeholder="+919876543210"
+                placeholder="+91XXXXXXXXXX"
+                required
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
               {errors.primary_incharge_phone && (
-                <span className="error">{errors.primary_incharge_phone}</span>
+                <span className="text-sm text-destructive mt-1">
+                  {errors.primary_incharge_phone}
+                </span>
               )}
             </div>
-          </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label>Email</label>
+            {/* Email */}
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Email Address
+              </label>
               <input
                 type="email"
                 name="primary_incharge_email"
                 value={formData.primary_incharge_email}
                 onChange={handleInputChange}
                 placeholder="email@example.com"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
               {errors.primary_incharge_email && (
-                <span className="error">{errors.primary_incharge_email}</span>
+                <span className="text-sm text-destructive mt-1">
+                  {errors.primary_incharge_email}
+                </span>
               )}
             </div>
 
-            <div className="form-group">
-              <label>WhatsApp</label>
+            {/* WhatsApp */}
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                WhatsApp Number
+              </label>
               <input
                 type="text"
                 name="primary_incharge_whatsapp"
                 value={formData.primary_incharge_whatsapp}
                 onChange={handleInputChange}
-                placeholder="+919876543210"
+                placeholder="+91XXXXXXXXXX"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
             </div>
 
-            <div className="form-group">
-              <label>Alternative Contact</label>
+            {/* Alternative Contact */}
+            <div className="flex flex-col md:col-span-2">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Alternative Contact
+              </label>
               <input
                 type="text"
                 name="primary_incharge_alt_contact"
                 value={formData.primary_incharge_alt_contact}
                 onChange={handleInputChange}
-                placeholder="+918765432109"
+                placeholder="Alternative phone number"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
             </div>
           </div>
-        </section>
+        </FormSection>
 
-        {/* Section 6: Secondary Incharge */}
-        <section className="form-section">
-          <h3>Secondary Property Incharge (Optional)</h3>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label>Name</label>
+        {/* Section 6: Secondary Property Incharge */}
+        <FormSection
+          title="Secondary Property Incharge (Optional)"
+          icon={UserCircle}
+          defaultOpen={false}
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Name */}
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Full Name
+              </label>
               <input
                 type="text"
                 name="secondary_incharge_name"
                 value={formData.secondary_incharge_name}
                 onChange={handleInputChange}
                 placeholder="Full name"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
             </div>
 
-            <div className="form-group">
-              <label>Phone</label>
+            {/* Phone */}
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Phone Number
+              </label>
               <input
                 type="text"
                 name="secondary_incharge_phone"
                 value={formData.secondary_incharge_phone}
                 onChange={handleInputChange}
-                placeholder="+919988776655"
+                placeholder="+91XXXXXXXXXX"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
             </div>
-          </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label>Email</label>
+            {/* Email */}
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Email Address
+              </label>
               <input
                 type="email"
                 name="secondary_incharge_email"
                 value={formData.secondary_incharge_email}
                 onChange={handleInputChange}
                 placeholder="email@example.com"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
               {errors.secondary_incharge_email && (
-                <span className="error">{errors.secondary_incharge_email}</span>
+                <span className="text-sm text-destructive mt-1">
+                  {errors.secondary_incharge_email}
+                </span>
               )}
             </div>
 
-            <div className="form-group">
-              <label>WhatsApp</label>
+            {/* WhatsApp */}
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                WhatsApp Number
+              </label>
               <input
                 type="text"
                 name="secondary_incharge_whatsapp"
                 value={formData.secondary_incharge_whatsapp}
                 onChange={handleInputChange}
-                placeholder="+919988776655"
+                placeholder="+91XXXXXXXXXX"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
             </div>
 
-            <div className="form-group">
-              <label>Alternative Contact</label>
+            {/* Alternative Contact */}
+            <div className="flex flex-col md:col-span-2">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Alternative Contact
+              </label>
               <input
                 type="text"
                 name="secondary_incharge_alt_contact"
                 value={formData.secondary_incharge_alt_contact}
                 onChange={handleInputChange}
-                placeholder="+918877665544"
+                placeholder="Alternative phone number"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
             </div>
           </div>
-        </section>
+        </FormSection>
 
         {/* Section 7: Booking Rules */}
-        <section className="form-section">
-          <h3>Booking Rules</h3>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label className="checkbox-label">
-                <input
-                  type="checkbox"
-                  name="same_day_booking_allowed"
-                  checked={formData.same_day_booking_allowed}
-                  onChange={handleInputChange}
-                />
-                <span>Allow Same-Day Bookings</span>
+        <FormSection title="Booking Rules" icon={Calendar} defaultOpen={false}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Same Day Booking */}
+            <div className="flex items-center space-x-3 p-4 bg-muted/30 border border-border rounded-lg">
+              <input
+                type="checkbox"
+                name="same_day_booking_allowed"
+                checked={formData.same_day_booking_allowed}
+                onChange={handleInputChange}
+                className="h-5 w-5 text-primary border-border rounded focus:ring-2 focus:ring-primary"
+              />
+              <label className="text-sm font-medium text-foreground cursor-pointer">
+                Allow Same-Day Bookings
               </label>
             </div>
 
-            <div className="form-group">
-              <label>Max Booking Days (Leave empty for unlimited)</label>
+            {/* Max Booking Days */}
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Maximum Booking Days
+              </label>
               <input
                 type="number"
                 name="max_booking_days"
                 value={formData.max_booking_days || ""}
                 onChange={handleInputChange}
                 min="1"
-                placeholder="e.g., 30"
+                placeholder="Leave empty for unlimited"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
+              <span className="text-xs text-muted-foreground mt-1">
+                Leave empty for unlimited booking duration
+              </span>
             </div>
           </div>
-        </section>
+        </FormSection>
 
         {/* Section 8: Amenities */}
-        <section className="form-section">
-          <h3>Amenities</h3>
-
-          <div className="amenities-input">
-            <input
-              type="text"
-              value={newAmenity}
-              onChange={(e) => setNewAmenity(e.target.value)}
-              placeholder="Enter amenity (e.g., WiFi, Pool, AC)"
-              onKeyPress={(e) =>
-                e.key === "Enter" && (e.preventDefault(), addAmenity())
+        <FormSection title="Amenities" icon={Star} required={true}>
+          <div className="mb-4">
+            <p className="text-sm text-muted-foreground mb-4">
+              Select all amenities available at your property
+            </p>
+            <AmenitiesGrid
+              selectedAmenities={formData.amenities}
+              onChange={(selected) =>
+                setFormData({ ...formData, amenities: selected })
               }
             />
-            <button type="button" onClick={addAmenity} className="btn-add">
-              Add Amenity
-            </button>
           </div>
+        </FormSection>
 
-          <div className="tags-list">
-            {formData.amenities.map((amenity, index) => (
-              <div key={index} className="tag">
-                {amenity}
-                <button
-                  type="button"
-                  onClick={() => removeAmenity(index)}
-                  className="tag-remove"
-                >
-                  ×
-                </button>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Section 9: House Rules (JSON) */}
-        <section className="form-section">
-          <h3>House Rules (JSON Format)</h3>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label>Check-in After</label>
+        {/* Section 9: House Rules */}
+        <FormSection title="House Rules" icon={Shield} defaultOpen={false}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            {/* Check-in After */}
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Check-in After
+              </label>
               <input
                 type="text"
                 value={formData.house_rules.check_in_after}
@@ -985,11 +1832,15 @@ const VendorPropertyForm = ({
                   )
                 }
                 placeholder="2:00 PM"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
             </div>
 
-            <div className="form-group">
-              <label>Check-out Before</label>
+            {/* Check-out Before */}
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Check-out Before
+              </label>
               <input
                 type="text"
                 value={formData.house_rules.check_out_before}
@@ -1001,28 +1852,14 @@ const VendorPropertyForm = ({
                   )
                 }
                 placeholder="11:00 AM"
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Quiet Hours</label>
-              <input
-                type="text"
-                value={formData.house_rules.quiet_hours}
-                onChange={(e) =>
-                  handleNestedChange(
-                    "house_rules",
-                    "quiet_hours",
-                    e.target.value,
-                  )
-                }
-                placeholder="10:00 PM - 8:00 AM"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
             </div>
           </div>
 
-          <div className="form-row checkboxes">
-            <label className="checkbox-label">
+          {/* Rule Checkboxes */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div className="flex items-center space-x-3 p-4 bg-muted/30 border border-border rounded-lg">
               <input
                 type="checkbox"
                 checked={formData.house_rules.no_smoking}
@@ -1033,11 +1870,14 @@ const VendorPropertyForm = ({
                     e.target.checked,
                   )
                 }
+                className="h-5 w-5 text-primary border-border rounded focus:ring-2 focus:ring-primary"
               />
-              <span>No Smoking</span>
-            </label>
+              <label className="text-sm font-medium text-foreground">
+                No Smoking
+              </label>
+            </div>
 
-            <label className="checkbox-label">
+            <div className="flex items-center space-x-3 p-4 bg-muted/30 border border-border rounded-lg">
               <input
                 type="checkbox"
                 checked={formData.house_rules.no_parties}
@@ -1048,11 +1888,14 @@ const VendorPropertyForm = ({
                     e.target.checked,
                   )
                 }
+                className="h-5 w-5 text-primary border-border rounded focus:ring-2 focus:ring-primary"
               />
-              <span>No Parties</span>
-            </label>
+              <label className="text-sm font-medium text-foreground">
+                No Parties/Events
+              </label>
+            </div>
 
-            <label className="checkbox-label">
+            <div className="flex items-center space-x-3 p-4 bg-muted/30 border border-border rounded-lg">
               <input
                 type="checkbox"
                 checked={formData.house_rules.no_events}
@@ -1063,11 +1906,14 @@ const VendorPropertyForm = ({
                     e.target.checked,
                   )
                 }
+                className="h-5 w-5 text-primary border-border rounded focus:ring-2 focus:ring-primary"
               />
-              <span>No Events</span>
-            </label>
+              <label className="text-sm font-medium text-foreground">
+                No Commercial Events
+              </label>
+            </div>
 
-            <label className="checkbox-label">
+            <div className="flex items-center space-x-3 p-4 bg-muted/30 border border-border rounded-lg">
               <input
                 type="checkbox"
                 checked={formData.house_rules.pets_allowed}
@@ -1078,31 +1924,55 @@ const VendorPropertyForm = ({
                     e.target.checked,
                   )
                 }
+                className="h-5 w-5 text-primary border-border rounded focus:ring-2 focus:ring-primary"
               />
-              <span>Pets Allowed</span>
-            </label>
-
-            {formData.house_rules.pets_allowed && (
-              <label className="checkbox-label">
-                <input
-                  type="checkbox"
-                  checked={formData.house_rules.pets_approval_required}
-                  onChange={(e) =>
-                    handleNestedChange(
-                      "house_rules",
-                      "pets_approval_required",
-                      e.target.checked,
-                    )
-                  }
-                />
-                <span>Pets Approval Required</span>
+              <label className="text-sm font-medium text-foreground">
+                Pets Allowed
               </label>
-            )}
+            </div>
+
+            <div className="flex items-center space-x-3 p-4 bg-muted/30 border border-border rounded-lg">
+              <input
+                type="checkbox"
+                checked={formData.house_rules.pets_approval_required}
+                onChange={(e) =>
+                  handleNestedChange(
+                    "house_rules",
+                    "pets_approval_required",
+                    e.target.checked,
+                  )
+                }
+                disabled={!formData.house_rules.pets_allowed}
+                className="h-5 w-5 text-primary border-border rounded focus:ring-2 focus:ring-primary disabled:opacity-50"
+              />
+              <label className="text-sm font-medium text-foreground">
+                Pets Require Approval
+              </label>
+            </div>
           </div>
 
-          <div className="additional-rules">
-            <label>Additional Rules</label>
-            <div className="amenities-input">
+          {/* Quiet Hours */}
+          <div className="mb-6">
+            <label className="text-sm font-medium text-foreground mb-2 block">
+              Quiet Hours
+            </label>
+            <input
+              type="text"
+              value={formData.house_rules.quiet_hours}
+              onChange={(e) =>
+                handleNestedChange("house_rules", "quiet_hours", e.target.value)
+              }
+              placeholder="10:00 PM - 8:00 AM"
+              className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+            />
+          </div>
+
+          {/* Additional Rules */}
+          <div>
+            <label className="text-sm font-medium text-foreground mb-2 block">
+              Additional Rules
+            </label>
+            <div className="flex gap-2 mb-3">
               <input
                 type="text"
                 value={additionalRule}
@@ -1111,24 +1981,27 @@ const VendorPropertyForm = ({
                 onKeyPress={(e) =>
                   e.key === "Enter" && (e.preventDefault(), addAdditionalRule())
                 }
+                className="flex-1 px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
               <button
                 type="button"
                 onClick={addAdditionalRule}
-                className="btn-add"
+                className="px-6 py-3 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 transition-all"
               >
-                Add Rule
+                Add
               </button>
             </div>
-
-            <div className="tags-list">
-              {formData.house_rules.additional_rules.map((rule, index) => (
-                <div key={index} className="tag">
-                  {rule}
+            <div className="flex flex-wrap gap-2">
+              {formData.house_rules.additional_rules?.map((rule, index) => (
+                <div
+                  key={index}
+                  className="flex items-center gap-2 px-3 py-2 bg-muted border border-border rounded-lg"
+                >
+                  <span className="text-sm text-foreground">{rule}</span>
                   <button
                     type="button"
                     onClick={() => removeAdditionalRule(index)}
-                    className="tag-remove"
+                    className="text-muted-foreground hover:text-destructive transition-colors"
                   >
                     ×
                   </button>
@@ -1136,152 +2009,201 @@ const VendorPropertyForm = ({
               ))}
             </div>
           </div>
-        </section>
+        </FormSection>
 
-        {/* Section 10: Cancellation Policy (JSON) - ADMIN ONLY - Hidden from vendors */}
-        {/* Cancellation policy is managed by admins. Default policy applies automatically. */}
+        {/* Section 10: Property Images */}
+        <FormSection title="Property Images" icon={ImageIcon}>
+          <PropertyImageUpload
+            propertyId={propertyId}
+            onImagesChange={(uploadFn) => setPendingImageUpload(() => uploadFn)}
+            allowPreUpload={!propertyId}
+          />
+        </FormSection>
 
         {/* Section 11: Rich Text Guidelines */}
-        <section className="form-section">
-          <h3>Property Guidelines (Rich Text)</h3>
-          <p className="info-text">
-            These guidelines will be sent to guests 24 hours before check-in
+        <FormSection
+          title="Property Guidelines & Information"
+          icon={FileText}
+          defaultOpen={false}
+        >
+          <div className="space-y-6">
+            {/* Check-in Guidelines */}
+            <div>
+              <label className="text-sm font-medium text-foreground mb-2 block">
+                Check-in Guidelines
+              </label>
+              <ReactQuill
+                value={guidelines.check_in_guidelines}
+                onChange={(value) =>
+                  handleGuidelineChange("check_in_guidelines", value)
+                }
+                modules={quillModules}
+                formats={quillFormats}
+                placeholder="Provide detailed check-in instructions..."
+                className="bg-background border border-border rounded-lg"
+              />
+            </div>
+
+            {/* House Rules Text */}
+            <div>
+              <label className="text-sm font-medium text-foreground mb-2 block">
+                House Rules (Detailed)
+              </label>
+              <ReactQuill
+                value={guidelines.house_rules_text}
+                onChange={(value) =>
+                  handleGuidelineChange("house_rules_text", value)
+                }
+                modules={quillModules}
+                formats={quillFormats}
+                placeholder="Write detailed house rules..."
+                className="bg-background border border-border rounded-lg"
+              />
+            </div>
+
+            {/* Amenities Guide */}
+            <div>
+              <label className="text-sm font-medium text-foreground mb-2 block">
+                Amenities Guide
+              </label>
+              <ReactQuill
+                value={guidelines.amenities_guide}
+                onChange={(value) =>
+                  handleGuidelineChange("amenities_guide", value)
+                }
+                modules={quillModules}
+                formats={quillFormats}
+                placeholder="Describe how to use amenities..."
+                className="bg-background border border-border rounded-lg"
+              />
+            </div>
+
+            {/* Safety Information */}
+            <div>
+              <label className="text-sm font-medium text-foreground mb-2 block">
+                Safety Information
+              </label>
+              <ReactQuill
+                value={guidelines.safety_information}
+                onChange={(value) =>
+                  handleGuidelineChange("safety_information", value)
+                }
+                modules={quillModules}
+                formats={quillFormats}
+                placeholder="Fire safety, emergency exits, first aid..."
+                className="bg-background border border-border rounded-lg"
+              />
+            </div>
+
+            {/* Local Area Information */}
+            <div>
+              <label className="text-sm font-medium text-foreground mb-2 block">
+                Local Area Information
+              </label>
+              <ReactQuill
+                value={guidelines.local_area_info}
+                onChange={(value) =>
+                  handleGuidelineChange("local_area_info", value)
+                }
+                modules={quillModules}
+                formats={quillFormats}
+                placeholder="Nearby restaurants, ATMs, hospitals..."
+                className="bg-background border border-border rounded-lg"
+              />
+            </div>
+
+            {/* Emergency Contacts */}
+            <div>
+              <label className="text-sm font-medium text-foreground mb-2 block">
+                Emergency Contacts
+              </label>
+              <ReactQuill
+                value={guidelines.emergency_contacts}
+                onChange={(value) =>
+                  handleGuidelineChange("emergency_contacts", value)
+                }
+                modules={quillModules}
+                formats={quillFormats}
+                placeholder="Police, ambulance, fire, property manager..."
+                className="bg-background border border-border rounded-lg"
+              />
+            </div>
+          </div>
+        </FormSection>
+
+        {/* Cancellation Policy Info */}
+        <FormSection
+          title="Cancellation Policy"
+          icon={Shield}
+          defaultOpen={true}
+        >
+          <p className="text-sm text-muted-foreground mb-4">
+            The active cancellation policy for this property type is set by the
+            admin and shown to guests at the time of booking.
           </p>
-
-          <div className="guideline-editor">
-            <label>Check-In Guidelines</label>
-            <ReactQuill
-              value={guidelines.check_in_guidelines}
-              onChange={(value) =>
-                handleGuidelineChange("check_in_guidelines", value)
-              }
-              modules={quillModules}
-              formats={quillFormats}
-              placeholder="Describe check-in process, timing, key collection, parking..."
-            />
-          </div>
-
-          <div className="guideline-editor">
-            <label>House Rules Text</label>
-            <ReactQuill
-              value={guidelines.house_rules_text}
-              onChange={(value) =>
-                handleGuidelineChange("house_rules_text", value)
-              }
-              modules={quillModules}
-              formats={quillFormats}
-              placeholder="No smoking, parties, quiet hours..."
-            />
-          </div>
-
-          <div className="guideline-editor">
-            <label>Amenities Guide</label>
-            <ReactQuill
-              value={guidelines.amenities_guide}
-              onChange={(value) =>
-                handleGuidelineChange("amenities_guide", value)
-              }
-              modules={quillModules}
-              formats={quillFormats}
-              placeholder="WiFi details, AC usage, kitchen appliances..."
-            />
-          </div>
-
-          <div className="guideline-editor">
-            <label>Safety Information</label>
-            <ReactQuill
-              value={guidelines.safety_information}
-              onChange={(value) =>
-                handleGuidelineChange("safety_information", value)
-              }
-              modules={quillModules}
-              formats={quillFormats}
-              placeholder="Fire extinguisher, first aid, emergency exits..."
-            />
-          </div>
-
-          <div className="guideline-editor">
-            <label>Local Area Information</label>
-            <ReactQuill
-              value={guidelines.local_area_info}
-              onChange={(value) =>
-                handleGuidelineChange("local_area_info", value)
-              }
-              modules={quillModules}
-              formats={quillFormats}
-              placeholder="Nearby restaurants, ATMs, hospitals, attractions..."
-            />
-          </div>
-
-          <div className="guideline-editor">
-            <label>Emergency Contacts</label>
-            <ReactQuill
-              value={guidelines.emergency_contacts}
-              onChange={(value) =>
-                handleGuidelineChange("emergency_contacts", value)
-              }
-              modules={quillModules}
-              formats={quillFormats}
-              placeholder="Police, ambulance, fire, property manager..."
-            />
-          </div>
-        </section>
-
-        {/* Section 12: Photos */}
-        <section className="form-section">
-          <h3>Property Photos</h3>
-          <p className="info-text">Enter one image URL per line</p>
-
-          <textarea
-            value={photoUrls}
-            onChange={(e) => setPhotoUrls(e.target.value)}
-            rows="6"
-            placeholder="https://example.com/photo1.jpg&#10;https://example.com/photo2.jpg&#10;https://example.com/photo3.jpg"
-            className="photos-textarea"
+          <CancellationPolicyInfoCard
+            propertyTypeId={formData.property_type_id}
+            isAdmin={false}
           />
+        </FormSection>
 
-          <p className="info-text">
-            Total photos:{" "}
-            {photoUrls.split("\n").filter((url) => url.trim()).length}
-          </p>
-        </section>
-
-        {/* Submit Button(s) */}
-        <div className="form-actions">
-          {/* Show status-dependent buttons based on property state */}
+        {/* Form Actions */}
+        <div className="flex flex-col sm:flex-row gap-4 mt-8 p-6 bg-card border border-border rounded-lg">
           {propertyStatus === "draft" || !propertyId ? (
-            // For DRAFT properties or NEW properties: Show TWO buttons
             <>
               <button
                 type="button"
                 onClick={(e) => handleSubmit(e, false)}
                 disabled={loading || hasPendingChangeRequest}
-                className="btn-secondary"
+                className="flex-1 px-6 py-3 bg-muted text-foreground border border-border rounded-lg font-semibold hover:bg-muted/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
-                {loading ? "Saving..." : "Save as Draft"}
+                {loading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Saving...
+                  </span>
+                ) : (
+                  "Save as Draft"
+                )}
               </button>
               <button
                 type="button"
                 onClick={(e) => handleSubmit(e, true)}
                 disabled={loading || hasPendingChangeRequest}
-                className="btn-submit"
+                className="flex-1 px-6 py-3 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
-                {loading ? "Submitting..." : "Submit for Approval"}
+                {loading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Submitting...
+                  </span>
+                ) : (
+                  "Submit for Approval"
+                )}
               </button>
             </>
           ) : propertyStatus === "approved" ? (
-            // For APPROVED properties: Single button that creates change request
             <button
               type="button"
               onClick={(e) => handleSubmit(e, true)}
               disabled={loading || hasPendingChangeRequest}
-              className="btn-submit"
+              className="flex-1 px-6 py-3 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
-              {loading ? "Submitting..." : "Submit Change Request"}
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Submitting...
+                </span>
+              ) : (
+                "Submit Change Request"
+              )}
             </button>
           ) : (
-            // For PENDING_APPROVAL or INACTIVE: Show disabled button
-            <button type="button" disabled={true} className="btn-submit">
+            <button
+              type="button"
+              disabled={true}
+              className="flex-1 px-6 py-3 bg-muted text-muted-foreground border border-border rounded-lg font-semibold cursor-not-allowed"
+            >
               {propertyStatus === "pending_approval"
                 ? "Pending Admin Approval"
                 : "Property Inactive"}
@@ -1289,18 +2211,27 @@ const VendorPropertyForm = ({
           )}
 
           {onCancel && (
-            <button type="button" onClick={onCancel} className="btn-cancel">
+            <button
+              type="button"
+              onClick={onCancel}
+              className="px-6 py-3 bg-muted text-foreground border border-border rounded-lg font-semibold hover:bg-muted/80 transition-all"
+            >
               Cancel
             </button>
           )}
-
-          {hasPendingChangeRequest && (
-            <p className="info-text" style={{ color: "#d97706" }}>
-              ⚠️ This property has a pending change request. Please wait for
-              admin review before making new changes.
-            </p>
-          )}
         </div>
+
+        {hasPendingChangeRequest && (
+          <div className="mt-4 p-4 bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+            <div className="flex items-start gap-3">
+              <Info className="h-5 w-5 text-yellow-600 mt-0.5 flex-shrink-0" />
+              <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                ⚠️ This property has a pending change request. Please wait for
+                admin review before making new changes.
+              </p>
+            </div>
+          </div>
+        )}
       </form>
     </div>
   );

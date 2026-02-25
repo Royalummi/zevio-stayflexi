@@ -41,6 +41,18 @@ import {
   deletePropertyImage,
   clearCache,
 } from "../controllers/adminController.js";
+import {
+  getCalendarPricing,
+  setCalendarPricing,
+  deleteCalendarPricing,
+  clearCalendarPricingRange,
+} from "../controllers/calendarPricingController.js";
+import {
+  getAllCancellationPolicies,
+  createCancellationPolicy,
+  updateCancellationPolicy,
+  deleteCancellationPolicy,
+} from "../controllers/cancellationPoliciesController.js";
 
 const router = express.Router();
 
@@ -218,5 +230,23 @@ router.put(
   ],
   reorderRecommendedProperties,
 );
+
+// ── Session 70: Calendar Pricing (admin can manage any property) ──
+router.get("/properties/:propertyId/calendar-pricing", getCalendarPricing);
+router.post("/properties/:propertyId/calendar-pricing", setCalendarPricing);
+router.delete(
+  "/properties/:propertyId/calendar-pricing",
+  clearCalendarPricingRange,
+);
+router.delete(
+  "/properties/:propertyId/calendar-pricing/:priceDate",
+  deleteCalendarPricing,
+);
+
+// ── Session 70: Cancellation Policies (admin CRUD) ──
+router.get("/cancellation-policies", getAllCancellationPolicies);
+router.post("/cancellation-policies", createCancellationPolicy);
+router.put("/cancellation-policies/:id", updateCancellationPolicy);
+router.delete("/cancellation-policies/:id", deleteCancellationPolicy);
 
 export default router;

@@ -704,7 +704,10 @@ export const getAllProperties = asyncHandler(async (req, res) => {
         pr.corporate_discount_percent,
         pr.deposit_amount,
         pr.maintenance_charges,
-        pr.notice_period_days
+        pr.notice_period_days,
+        pr.discount_3_5_days,
+        pr.discount_6_14_days,
+        pr.discount_15_plus_days
       FROM properties p
       LEFT JOIN cities c ON p.city_id = c.id
       LEFT JOIN vendors v ON p.vendor_id = v.id
@@ -2183,6 +2186,10 @@ export const createProperty = asyncHandler(async (req, res) => {
     deposit_amount,
     maintenance_charges,
     notice_period_days,
+    // Session 70: Villa Duration Discount Slabs
+    discount_3_5_days,
+    discount_6_14_days,
+    discount_15_plus_days,
     // Service Apartment Fields
     min_stay_days,
     max_stay_days,
@@ -2335,8 +2342,9 @@ export const createProperty = asyncHandler(async (req, res) => {
         weekly_discount_percent, monthly_discount_percent,
         quarterly_discount_percent, long_term_discount_percent,
         allow_corporate_booking, corporate_discount_percent,
-        deposit_amount, maintenance_charges, notice_period_days
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        deposit_amount, maintenance_charges, notice_period_days,
+        discount_3_5_days, discount_6_14_days, discount_15_plus_days
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const pricingValues = [
@@ -2358,6 +2366,9 @@ export const createProperty = asyncHandler(async (req, res) => {
       deposit_amount || 0,
       maintenance_charges || 0,
       notice_period_days || 30,
+      parseFloat(discount_3_5_days) || 0,
+      parseFloat(discount_6_14_days) || 0,
+      parseFloat(discount_15_plus_days) || 0,
     ];
 
     await db.query(pricingQuery, pricingValues);
@@ -2518,6 +2529,10 @@ export const updateProperty = asyncHandler(async (req, res) => {
     deposit_amount,
     maintenance_charges,
     notice_period_days,
+    // Session 70: Villa Duration Discount Slabs
+    discount_3_5_days,
+    discount_6_14_days,
+    discount_15_plus_days,
     // NEW: Service Apartment Fields (10 fields)
     min_stay_days,
     max_stay_days,
@@ -2771,7 +2786,10 @@ export const updateProperty = asyncHandler(async (req, res) => {
           corporate_discount_percent = ?,
           deposit_amount = ?,
           maintenance_charges = ?,
-          notice_period_days = ?
+          notice_period_days = ?,
+          discount_3_5_days = ?,
+          discount_6_14_days = ?,
+          discount_15_plus_days = ?
         WHERE property_id = ?
       `;
 
@@ -2792,6 +2810,9 @@ export const updateProperty = asyncHandler(async (req, res) => {
         deposit_amount || 0,
         maintenance_charges || 0,
         notice_period_days || 30,
+        parseFloat(discount_3_5_days) || 0,
+        parseFloat(discount_6_14_days) || 0,
+        parseFloat(discount_15_plus_days) || 0,
         id,
       ];
 
@@ -2807,8 +2828,9 @@ export const updateProperty = asyncHandler(async (req, res) => {
           weekly_discount_percent, monthly_discount_percent,
           quarterly_discount_percent, long_term_discount_percent,
           allow_corporate_booking, corporate_discount_percent,
-          deposit_amount, maintenance_charges, notice_period_days
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          deposit_amount, maintenance_charges, notice_period_days,
+          discount_3_5_days, discount_6_14_days, discount_15_plus_days
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `;
 
       const pricingValues = [
@@ -2830,6 +2852,9 @@ export const updateProperty = asyncHandler(async (req, res) => {
         deposit_amount || 0,
         maintenance_charges || 0,
         notice_period_days || 30,
+        parseFloat(discount_3_5_days) || 0,
+        parseFloat(discount_6_14_days) || 0,
+        parseFloat(discount_15_plus_days) || 0,
       ];
 
       await db.query(pricingInsertQuery, pricingValues);

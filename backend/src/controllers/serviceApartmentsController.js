@@ -137,6 +137,7 @@ export const listServiceApartments = async (req, res) => {
         p.id,
         p.title,
         p.description,
+        pt.name as property_type,
         p.address,
         p.area,
         p.maps_location,
@@ -161,12 +162,21 @@ export const listServiceApartments = async (req, res) => {
         p.wifi_speed_mbps,
         p.wifi_provider,
         p.furnishing_type,
+        v.name as vendor_name,
+        e.name as employee_name,
+        p.same_day_booking_allowed,
+        p.max_booking_days,
+        p.is_recommended,
+        p.recommended_priority,
         p.created_at
       FROM properties p
       ${getPricingJoinClause("p", "pr")}
       ${getAmenitiesJoinClause("p", "pa", "a")}
       ${featuresService.getFeaturesJoinClause("p", "pf", "f")}
       LEFT JOIN cities c ON p.city_id = c.id
+      LEFT JOIN property_types pt ON p.property_type_id = pt.id
+      LEFT JOIN vendors v ON p.vendor_id = v.id
+      LEFT JOIN employees e ON p.employee_id = e.id
       WHERE ${whereClause}
       GROUP BY p.id, c.name, c.state
       ORDER BY ${
@@ -668,6 +678,154 @@ export const getCorporateOffers = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to fetch corporate offers",
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * GET /api/service-apartments/:id
+ * Get complete service apartment details by ID
+ * Returns all property fields, pricing, policy, and images
+ */
+export const getServiceApartmentDetails = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const [properties] = await db.query(
+      `SELECT
+        p.id,
+        p.title,
+        pt.name as property_type,
+        p.description,
+        p.address,
+        p.area,
+        p.maps_location,
+        c.name as city,
+        c.state as state,
+        p.pincode,
+        p.bedrooms,
+        p.bathrooms,
+        p.max_guests,
+        p.check_in_time,
+        p.check_out_time,
+        p.house_rules,
+        p.cancellation_policy,
+        p.emergency_contacts,
+        p.local_area_info,
+        p.safety_information,
+        p.amenities_guide,
+        p.house_rules_text,
+        p.check_in_guidelines,
+        p.photos,
+        p.rating,
+        p.reviews_count,
+        p.min_stay_days,
+        p.max_stay_days,
+        p.same_day_booking_allowed,
+        p.max_booking_days,
+        p.is_recommended,
+        p.recommended_priority,
+        p.housekeeping_frequency,
+        p.utilities_included,
+        p.parking_slots,
+        p.floor_number,
+        p.wifi_speed_mbps,
+        p.wifi_provider,
+        p.furnishing_type,
+        p.status,
+        c.id as city_id,
+        v.name as vendor_name,
+        e.name as employee_name,
+        ${getPricingSelectClause("pr")},
+        ${getAmenitiesSelectClause("p", "pa", "a")},
+        ${featuresService.getFeaturesSelectClause("p", "pf", "f")}
+      FROM properties p
+      INNER JOIN cities c ON p.city_id = c.id
+      LEFT JOIN property_types pt ON p.property_type_id = pt.id
+      LEFT JOIN vendors v ON p.vendor_id = v.id
+      LEFT JOIN employees e ON p.employee_id = e.id
+      ${getPricingJoinClause("p", "pr")}
+      ${getAmenitiesJoinClause("p", "pa", "a")}
+      ${featuresService.getFeaturesJoinClause("p", "pf", "f")}
+      WHERE p.id = ?
+        AND p.property_type_id = 'pt-002'
+        AND p.status = 'approved'
+        AND p.deleted_at IS NULL
+      GROUP BY p.id`,
+      [id],
+    );
+
+    if (properties.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Service apartment not found",
+      });
+    }
+
+    const property = properties[0];
+
+    // Parse JSON fields
+    try {
+      property.amenities = property.amenities
+        ? property.amenities.split(", ").filter((a) => a.trim())
+        : [];
+      property.features = property.features_list
+        ? property.features_list.split(", ").filter((f) => f.trim())
+        : [];
+      property.photos =
+        typeof property.photos === "string"
+          ? JSON.parse(property.photos)
+          : property.photos || [];
+      property.house_rules = property.house_rules
+        ? typeof property.house_rules === "string"
+          ? JSON.parse(property.house_rules)
+          : property.house_rules
+        : null;
+      property.cancellation_policy = property.cancellation_policy
+        ? typeof property.cancellation_policy === "string"
+          ? JSON.parse(property.cancellation_policy)
+          : property.cancellation_policy
+        : null;
+      property.utilities_included = Boolean(property.utilities_included);
+      property.allow_corporate_booking = Boolean(
+        property.allow_corporate_booking,
+      );
+    } catch {
+      property.amenities = [];
+      property.features = [];
+      property.photos = [];
+    }
+
+    // Get property images from property_images table as fallback
+    const [images] = await db.query(
+      `SELECT id, image_url, sort_order
+       FROM property_images
+       WHERE property_id = ?
+       ORDER BY sort_order ASC`,
+      [id],
+    );
+
+    if (images.length > 0) {
+      property.images = images;
+    } else {
+      property.images = property.photos.map((url, index) => ({
+        id: `${property.id}-${index}`,
+        image_url: url,
+        sort_order: index,
+      }));
+    }
+
+    res.json({
+      success: true,
+      data: property,
+      message: "Service apartment details fetched successfully",
+    });
+  } catch (error) {
+    console.error("Error fetching service apartment details:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch service apartment details",
       error: error.message,
     });
   }

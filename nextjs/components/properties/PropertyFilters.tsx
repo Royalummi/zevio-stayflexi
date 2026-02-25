@@ -218,6 +218,13 @@ export default function PropertyFilters({
 
   return (
     <div className={styles.container}>
+      {/* Mobile overlay backdrop for bottom-sheet dropdowns */}
+      {openDropdown && (
+        <div
+          className={styles.mobileOverlay}
+          onClick={() => setOpenDropdown(null)}
+        />
+      )}
       {/* Filters Top Bar */}
       <div className={styles.filtersTop}>
         <div className={styles.filtersActions}>
@@ -350,20 +357,16 @@ export default function PropertyFilters({
             </button>
 
             {openDropdown === "dates" && (
-              <div
-                className={styles.dropdown}
-                style={{ width: "auto", minWidth: "320px" }}
-              >
+              <div className={`${styles.dropdown} ${styles.datesDropdown}`}>
+                {/* Calendar renders inline — one-tap, no nested popup */}
                 <DateRangeSelector
                   checkIn={checkinDate}
                   checkOut={checkoutDate}
                   onCheckInChange={(date) => {
                     setCheckinDate(date);
-                    // Keep dropdown open to select checkout date
                   }}
                   onCheckOutChange={(date) => {
                     setCheckoutDate(date);
-                    // Apply filter only when BOTH dates are selected
                     if (checkinDate && date) {
                       onFilterChange(
                         "checkin",
@@ -376,7 +379,11 @@ export default function PropertyFilters({
                     }
                   }}
                   minDate={new Date()}
-                  label="Select dates"
+                  calendarOnly={true}
+                  isOpen={true}
+                  onOpenChange={(open) => {
+                    if (!open) setOpenDropdown(null);
+                  }}
                 />
                 {(checkinDate || checkoutDate) && (
                   <div className={styles.dateFooter}>

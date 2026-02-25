@@ -27,6 +27,8 @@ import CityCombobox from "./CityCombobox";
 import AmenitiesGrid from "./AmenitiesGrid";
 import FormSection from "./FormSection";
 import FormProgressBar from "./FormProgressBar";
+import PropertyCalendarPricing from "../shared/PropertyCalendarPricing";
+import CancellationPolicyInfoCard from "../shared/CancellationPolicyInfoCard";
 
 const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
   // Ensure propertyId is either null or a string
@@ -38,6 +40,7 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
   const [vendors, setVendors] = useState([]);
   const [propertyTypes, setPropertyTypes] = useState([]);
   const [pendingImageUpload, setPendingImageUpload] = useState(null);
+  const [pendingCalendarPrices, setPendingCalendarPrices] = useState([]);
   const [hasSelectedImages, setHasSelectedImages] = useState(false);
   const [selectedImageCount, setSelectedImageCount] = useState(0);
 
@@ -63,7 +66,7 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
     check_in_time: "2:00 PM",
     check_out_time: "11:00 AM",
     price_per_night: "",
-    gst_percentage: 18,
+    // GST is auto-calculated by backend: 5% if booking ≤₹7,500 | 18% if booking >₹7,500
     status: "draft",
 
     // Location
@@ -86,6 +89,10 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
     deposit_amount: 0,
     maintenance_charges: 0,
     notice_period_days: 30,
+    // Session 70: Villa Duration Discount Slabs (admin-only)
+    discount_3_5_days: 0,
+    discount_6_14_days: 0,
+    discount_15_plus_days: 0,
 
     // Service Apartment Fields
     min_stay_days: 1,
@@ -248,7 +255,7 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
       },
       {
         name: "Pricing",
-        complete: !!(formData.price_per_night && formData.gst_percentage),
+        complete: !!formData.price_per_night,
       },
       {
         name: "Amenities",
@@ -324,16 +331,16 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
     try {
       // Fetch cities
       const citiesRes = await api.get("/admin/cities");
-      if (citiesRes.data.success) setCities(citiesRes.data.data);
+      if (citiesRes.data.success) setCities(citiesRes.data.data || []);
 
       // Fetch vendors
       const vendorsRes = await api.get("/admin/vendors");
-      if (vendorsRes.data.success) setVendors(vendorsRes.data.data);
+      if (vendorsRes.data.success) setVendors(vendorsRes.data.data || []);
 
       // Fetch property types
       const propertyTypesRes = await api.get("/admin/property-types");
       if (propertyTypesRes.data.success)
-        setPropertyTypes(propertyTypesRes.data.data);
+        setPropertyTypes(propertyTypesRes.data.data || []);
     } catch (error) {
       console.error("Error fetching dropdown data:", error);
     }
@@ -373,8 +380,6 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
           // FIX: Extract pricing fields from nested pricing object
           price_per_night:
             pricing.price_per_night || property.price_per_night || "",
-          gst_percentage:
-            pricing.gst_percentage || property.gst_percentage || 18,
           min_guests: pricing.min_guests || property.min_guests || 1,
           extra_guest_charge:
             pricing.extra_guest_charge || property.extra_guest_charge || 0,
@@ -412,12 +417,38 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
             pricing.maintenance_charges || property.maintenance_charges || 0,
           notice_period_days:
             pricing.notice_period_days || property.notice_period_days || 30,
+          // Session 70: Villa duration discount slabs
+          discount_3_5_days:
+            parseFloat(
+              pricing.discount_3_5_days || property.discount_3_5_days,
+            ) || 0,
+          discount_6_14_days:
+            parseFloat(
+              pricing.discount_6_14_days || property.discount_6_14_days,
+            ) || 0,
+          discount_15_plus_days:
+            parseFloat(
+              pricing.discount_15_plus_days || property.discount_15_plus_days,
+            ) || 0,
           // Parse JSON fields safely
-          amenities: safeJsonParse(property.amenities, []),
-          house_rules: safeJsonParse(
-            property.house_rules,
-            formData.house_rules,
-          ),
+          // API returns amenities as array of objects {id, name, ...} — extract IDs only
+          amenities: Array.isArray(property.amenities)
+            ? property.amenities
+                .map((a) =>
+                  typeof a === "object" && a !== null && a.id ? a.id : a,
+                )
+                .filter(Boolean)
+            : safeJsonParse(property.amenities, []),
+          house_rules: (() => {
+            const parsed = safeJsonParse(property.house_rules, {});
+            return {
+              ...formData.house_rules,
+              ...parsed,
+              additional_rules: Array.isArray(parsed?.additional_rules)
+                ? parsed.additional_rules
+                : [],
+            };
+          })(),
           cancellation_policy: safeJsonParse(
             property.cancellation_policy,
             formData.cancellation_policy,
@@ -648,13 +679,6 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
       newErrors.price_per_night = "Valid price (minimum ₹0.01) is required";
     }
 
-    // GST validation - Indian GST rates only
-    const validGSTRates = [0, 5, 12, 18, 28];
-    const gst = parseFloat(formData.gst_percentage);
-    if (isNaN(gst) || !validGSTRates.includes(gst)) {
-      newErrors.gst_percentage = "GST must be 0%, 5%, 12%, 18%, or 28%";
-    }
-
     // Discount validation - each discount must be <= 100%
     const discounts = [
       {
@@ -771,57 +795,37 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
       let payload;
 
       if (sanitizedPropertyId && originalFormData) {
-        // UPDATE: Only send dirty fields (optimized)
-        payload = {};
-
-        // Add changed form fields
-        Object.keys(dirtyFields).forEach((field) => {
-          if (formData.hasOwnProperty(field)) {
-            payload[field] = formData[field];
-          }
-          if (guidelines.hasOwnProperty(field)) {
-            payload[field] = guidelines[field];
-          }
-        });
-
-        // Always include amenities if it was changed or exists
-        if (dirtyFields.amenities || formData.amenities) {
-          payload.amenities = formData.amenities || [];
-        }
-
-        // Always include incharge contacts (they're separate table operations)
-        payload.primary_incharge_name = formData.primary_incharge_name || "";
-        payload.primary_incharge_phone = formData.primary_incharge_phone || "";
-        payload.primary_incharge_email = formData.primary_incharge_email || "";
-        payload.primary_incharge_whatsapp =
-          formData.primary_incharge_whatsapp || "";
-        payload.primary_incharge_alt_contact =
-          formData.primary_incharge_alt_contact || "";
-        payload.secondary_incharge_name =
-          formData.secondary_incharge_name || "";
-        payload.secondary_incharge_phone =
-          formData.secondary_incharge_phone || "";
-        payload.secondary_incharge_email =
-          formData.secondary_incharge_email || "";
-        payload.secondary_incharge_whatsapp =
-          formData.secondary_incharge_whatsapp || "";
-        payload.secondary_incharge_alt_contact =
-          formData.secondary_incharge_alt_contact || "";
-
-        // JSON fields - stringify if changed
-        if (dirtyFields.house_rules) {
-          payload.house_rules = JSON.stringify(formData.house_rules);
-        }
-        if (dirtyFields.cancellation_policy) {
-          payload.cancellation_policy = JSON.stringify(
-            formData.cancellation_policy,
-          );
-        }
+        // UPDATE: Always send the full payload.
+        // The backend uses a full UPDATE...SET query with all columns — sending only
+        // dirty fields would leave the rest as undefined → NULL, wiping out data.
+        // dirtyFields is kept for the UI display count only.
+        const { city, ...restFormData } = formData;
+        payload = {
+          ...restFormData,
+          ...guidelines,
+          amenities: formData.amenities || [],
+          primary_incharge_name: formData.primary_incharge_name || "",
+          primary_incharge_phone: formData.primary_incharge_phone || "",
+          primary_incharge_email: formData.primary_incharge_email || "",
+          primary_incharge_whatsapp: formData.primary_incharge_whatsapp || "",
+          primary_incharge_alt_contact:
+            formData.primary_incharge_alt_contact || "",
+          secondary_incharge_name: formData.secondary_incharge_name || "",
+          secondary_incharge_phone: formData.secondary_incharge_phone || "",
+          secondary_incharge_email: formData.secondary_incharge_email || "",
+          secondary_incharge_whatsapp:
+            formData.secondary_incharge_whatsapp || "",
+          secondary_incharge_alt_contact:
+            formData.secondary_incharge_alt_contact || "",
+          house_rules: JSON.stringify(formData.house_rules),
+          cancellation_policy: JSON.stringify(formData.cancellation_policy),
+        };
 
         console.log(
-          "🎯 Optimized UPDATE - Sending only changed fields:",
+          "🎯 UPDATE - Sending full payload:",
           Object.keys(payload).length,
           "fields",
+          `(${Object.keys(dirtyFields).length} changed)`,
         );
       } else {
         // CREATE: Send all fields
@@ -861,9 +865,6 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
       // Convert numeric fields (for both create and update)
       if (payload.price_per_night !== undefined) {
         payload.price_per_night = parseFloat(payload.price_per_night) || 0;
-      }
-      if (payload.gst_percentage !== undefined) {
-        payload.gst_percentage = parseFloat(payload.gst_percentage) || 18;
       }
       if (payload.weekly_discount_percent !== undefined) {
         payload.weekly_discount_percent =
@@ -945,9 +946,11 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
         const savedProperty = response.data.data;
         const isNewProperty = !sanitizedPropertyId;
 
-        // Clear unsaved changes flag
+        // Clear unsaved changes flag and reset baseline for future dirty tracking
         setHasUnsavedChanges(false);
         setDirtyFields({});
+        setOriginalFormData(JSON.parse(JSON.stringify(formData)));
+        setOriginalGuidelines(JSON.parse(JSON.stringify(guidelines)));
 
         // If creating new property and has pending images, upload them
         if (isNewProperty && hasSelectedImages && pendingImageUpload) {
@@ -975,6 +978,23 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
               ? "Property updated successfully! 🎉"
               : "Property created successfully! 🎉",
           );
+        }
+
+        // Flush staged calendar prices (set before property existed)
+        if (isNewProperty && pendingCalendarPrices.length > 0) {
+          try {
+            const newPropertyId = savedProperty?.id || savedProperty;
+            await api.post(
+              `/admin/properties/${newPropertyId}/calendar-pricing`,
+              {
+                dates: pendingCalendarPrices,
+              },
+            );
+          } catch {
+            toast.warning(
+              "Property saved but calendar pricing could not be saved. Set it in the property edit form.",
+            );
+          }
         }
 
         if (onSuccess) onSuccess();
@@ -1054,7 +1074,7 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
                 className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               >
                 <option value="">Select Vendor</option>
-                {vendors.map((vendor) => (
+                {(vendors || []).map((vendor) => (
                   <option key={vendor.id} value={vendor.id}>
                     {vendor.name}
                   </option>
@@ -1085,7 +1105,7 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
                 className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
               <span className="text-xs text-muted-foreground mt-1">
-                {formData.title.length}/200 characters
+                {(formData.title || "").length}/200 characters
               </span>
               {errors.title && (
                 <span className="text-sm text-destructive mt-1" role="alert">
@@ -1114,7 +1134,7 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
                 className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <option value="">Select Property Type</option>
-                {propertyTypes.map((type) => (
+                {(propertyTypes || []).map((type) => (
                   <option key={type.id} value={type.id}>
                     {type.name} -{" "}
                     {type.stay_type === "short_term"
@@ -1418,7 +1438,7 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
 
         {/* Section 4: Pricing */}
         <FormSection
-          title="Pricing & GST"
+          title="Pricing"
           icon={DollarSign}
           required={true}
           defaultOpen={false}
@@ -1450,29 +1470,33 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
             </div>
 
             <div className="flex flex-col">
-              <label className="text-sm font-medium text-foreground mb-2">
-                GST Percentage (%)
-              </label>
-              <select
-                name="gst_percentage"
-                value={formData.gst_percentage || "18"}
-                onChange={handleInputChange}
-                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-              >
-                <option value="0">0% - Exempt</option>
-                <option value="5">5% - Essential goods</option>
-                <option value="12">12% - Standard rate</option>
-                <option value="18">18% - Services</option>
-                <option value="28">28% - Luxury items</option>
-              </select>
-              <span className="text-xs text-muted-foreground mt-1">
-                Select applicable Indian GST rate
-              </span>
-              {errors.gst_percentage && (
-                <span className="text-sm text-destructive mt-1" role="alert">
-                  {errors.gst_percentage}
-                </span>
-              )}
+              <div className="flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-800 px-4 py-3 h-full">
+                <svg
+                  className="h-4 w-4 text-blue-600 mt-0.5 shrink-0"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                <div>
+                  <p className="text-xs font-semibold text-blue-900 dark:text-blue-200">
+                    GST Auto-Calculated
+                  </p>
+                  <p className="text-xs text-blue-800 dark:text-blue-300 mt-0.5">
+                    <strong>5%</strong> GST for bookings ≤ ₹7,500
+                    <br />
+                    <strong>18%</strong> GST for bookings &gt; ₹7,500
+                    <br />
+                    Applied on total booking amount at checkout.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -1563,89 +1587,93 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
             </p>
           </div>
 
-          <h4 className="text-lg font-semibold text-foreground mt-6 mb-4">
-            Long-term Stay Discounts
-          </h4>
+          {!isVilla && (
+            <>
+              <h4 className="text-lg font-semibold text-foreground mt-6 mb-4">
+                Long-term Stay Discounts
+              </h4>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            <div className="flex flex-col">
-              <label className="text-sm font-medium text-foreground mb-2">
-                Weekly Discount (%)
-              </label>
-              <input
-                type="number"
-                name="weekly_discount_percent"
-                value={formData.weekly_discount_percent}
-                onChange={handleInputChange}
-                min="0"
-                max="100"
-                step="0.01"
-                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-              />
-              <small className="text-xs text-muted-foreground mt-1">
-                7+ days stays
-              </small>
-            </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium text-foreground mb-2">
+                    Weekly Discount (%)
+                  </label>
+                  <input
+                    type="number"
+                    name="weekly_discount_percent"
+                    value={formData.weekly_discount_percent}
+                    onChange={handleInputChange}
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                  />
+                  <small className="text-xs text-muted-foreground mt-1">
+                    7+ days stays
+                  </small>
+                </div>
 
-            <div className="flex flex-col">
-              <label className="text-sm font-medium text-foreground mb-2">
-                Monthly Discount (%)
-              </label>
-              <input
-                type="number"
-                name="monthly_discount_percent"
-                value={formData.monthly_discount_percent}
-                onChange={handleInputChange}
-                min="0"
-                max="100"
-                step="0.01"
-                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-              />
-              <small className="text-xs text-muted-foreground mt-1">
-                30+ days stays
-              </small>
-            </div>
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium text-foreground mb-2">
+                    Monthly Discount (%)
+                  </label>
+                  <input
+                    type="number"
+                    name="monthly_discount_percent"
+                    value={formData.monthly_discount_percent}
+                    onChange={handleInputChange}
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                  />
+                  <small className="text-xs text-muted-foreground mt-1">
+                    30+ days stays
+                  </small>
+                </div>
 
-            <div className="flex flex-col">
-              <label className="text-sm font-medium text-foreground mb-2">
-                Quarterly Discount (%)
-              </label>
-              <input
-                type="number"
-                name="quarterly_discount_percent"
-                value={formData.quarterly_discount_percent}
-                onChange={handleInputChange}
-                min="0"
-                max="100"
-                step="0.01"
-                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-              />
-              <small className="text-xs text-muted-foreground mt-1">
-                90+ days stays
-              </small>
-            </div>
-          </div>
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium text-foreground mb-2">
+                    Quarterly Discount (%)
+                  </label>
+                  <input
+                    type="number"
+                    name="quarterly_discount_percent"
+                    value={formData.quarterly_discount_percent}
+                    onChange={handleInputChange}
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                  />
+                  <small className="text-xs text-muted-foreground mt-1">
+                    90+ days stays
+                  </small>
+                </div>
+              </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div className="flex flex-col">
-              <label className="text-sm font-medium text-foreground mb-2">
-                Long-term Discount (%)
-              </label>
-              <input
-                type="number"
-                name="long_term_discount_percent"
-                value={formData.long_term_discount_percent}
-                onChange={handleInputChange}
-                min="0"
-                max="100"
-                step="0.01"
-                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-              />
-              <small className="text-xs text-muted-foreground mt-1">
-                180+ days stays
-              </small>
-            </div>
-          </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium text-foreground mb-2">
+                    Long-term Discount (%)
+                  </label>
+                  <input
+                    type="number"
+                    name="long_term_discount_percent"
+                    value={formData.long_term_discount_percent}
+                    onChange={handleInputChange}
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                  />
+                  <small className="text-xs text-muted-foreground mt-1">
+                    180+ days stays
+                  </small>
+                </div>
+              </div>
+            </>
+          )}
 
           <h4 className="text-lg font-semibold text-foreground mt-6 mb-4">
             Corporate & Deposits
@@ -1735,6 +1763,97 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
               </small>
             </div>
           </div>
+
+          {/* Villa Duration Discount Slabs – admin only */}
+          {isVilla && (
+            <div className="mt-6">
+              <h4 className="text-lg font-semibold text-foreground mb-1">
+                Villa Duration Discount Slabs
+              </h4>
+              <p className="text-sm text-muted-foreground mb-4">
+                Automatically applied based on total nights booked. Set to 0 to
+                disable a slab.
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-2">
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium text-foreground mb-2">
+                    3–5 Nights Discount (%)
+                  </label>
+                  <input
+                    type="number"
+                    name="discount_3_5_days"
+                    value={formData.discount_3_5_days}
+                    onChange={handleInputChange}
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                  />
+                  <small className="text-xs text-muted-foreground mt-1">
+                    Applied for stays of 3 to 5 nights
+                  </small>
+                </div>
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium text-foreground mb-2">
+                    6–14 Nights Discount (%)
+                  </label>
+                  <input
+                    type="number"
+                    name="discount_6_14_days"
+                    value={formData.discount_6_14_days}
+                    onChange={handleInputChange}
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                  />
+                  <small className="text-xs text-muted-foreground mt-1">
+                    Applied for stays of 6 to 14 nights
+                  </small>
+                </div>
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium text-foreground mb-2">
+                    15+ Nights Discount (%)
+                  </label>
+                  <input
+                    type="number"
+                    name="discount_15_plus_days"
+                    value={formData.discount_15_plus_days}
+                    onChange={handleInputChange}
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                  />
+                  <small className="text-xs text-muted-foreground mt-1">
+                    Applied for stays of 15 nights or more
+                  </small>
+                </div>
+              </div>
+            </div>
+          )}
+        </FormSection>
+
+        {/* Section 4.6: Calendar Day-wise Pricing */}
+        <FormSection
+          title="📅 Calendar Pricing"
+          icon={Calendar}
+          defaultOpen={false}
+        >
+          <div className="mb-4">
+            <p className="text-sm text-muted-foreground">
+              Override the base nightly rate for specific dates or ranges —
+              useful for weekends, holidays, events, or seasonal peaks. Custom
+              prices take precedence over the base rate at checkout.
+            </p>
+          </div>
+          <PropertyCalendarPricing
+            propertyId={sanitizedPropertyId}
+            basePrice={parseFloat(formData.price_per_night) || 0}
+            canEdit={true}
+            role="admin"
+            onPendingChange={setPendingCalendarPrices}
+          />
         </FormSection>
 
         {/* Section 4.5: Service Apartment Details - Only for Service Apartments */}
@@ -2537,29 +2656,31 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
             </div>
 
             <div className="flex flex-wrap gap-3">
-              {formData.house_rules.additional_rules.map((rule, index) => (
-                <div
-                  key={index}
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-full border border-border shadow-sm hover:shadow transition-shadow"
-                >
-                  <span className="text-sm font-medium">{rule}</span>
-                  <button
-                    type="button"
-                    onClick={() => removeAdditionalRule(index)}
-                    className="text-destructive hover:text-destructive/80 font-bold text-lg leading-none transition-colors"
-                    aria-label="Remove rule"
+              {(formData.house_rules?.additional_rules || []).map(
+                (rule, index) => (
+                  <div
+                    key={index}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-full border border-border shadow-sm hover:shadow transition-shadow"
                   >
-                    ×
-                  </button>
-                </div>
-              ))}
+                    <span className="text-sm font-medium">{rule}</span>
+                    <button
+                      type="button"
+                      onClick={() => removeAdditionalRule(index)}
+                      className="text-destructive hover:text-destructive/80 font-bold text-lg leading-none transition-colors"
+                      aria-label="Remove rule"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ),
+              )}
             </div>
           </div>
         </FormSection>
 
-        {/* Section 10: Cancellation Policy (JSON) */}
+        {/* Section 10: Per-Property Cancellation Settings */}
         <FormSection
-          title="Cancellation Policy"
+          title="Per-Property Cancellation Settings"
           icon={FileText}
           defaultOpen={true}
           required
@@ -2836,6 +2957,22 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
               )}
             </div>
           )}
+        </FormSection>
+
+        {/* Cancellation Policy Info */}
+        <FormSection
+          title="Cancellation Policy"
+          icon={Shield}
+          defaultOpen={true}
+        >
+          <p className="text-sm text-muted-foreground mb-4">
+            The active cancellation policy for this property type will be shown
+            to guests at the time of booking.
+          </p>
+          <CancellationPolicyInfoCard
+            propertyTypeId={formData.property_type_id}
+            isAdmin={true}
+          />
         </FormSection>
 
         {/* Submit Button */}

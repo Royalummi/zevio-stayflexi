@@ -35,6 +35,7 @@ import {
   Car,
   CalendarDays,
   Sparkles,
+  Shield,
 } from "lucide-react";
 import {
   Card,
@@ -110,6 +111,16 @@ const AdminProperties = () => {
   const [showPropertyTypeModal, setShowPropertyTypeModal] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
+
+  // Villa duration discount modal states
+  const [showDiscountModal, setShowDiscountModal] = useState(false);
+  const [discountProperty, setDiscountProperty] = useState(null);
+  const [discountForm, setDiscountForm] = useState({
+    discount_3_5_days: 0,
+    discount_6_14_days: 0,
+    discount_15_plus_days: 0,
+  });
+  const [discountSaving, setDiscountSaving] = useState(false);
 
   // Fetch properties and stats with staggered delays to avoid rate limiting
   useEffect(() => {
@@ -437,6 +448,39 @@ const AdminProperties = () => {
     }
   };
 
+  // ── Villa Duration Discounts ──
+  const handleEditDiscounts = (property) => {
+    setDiscountProperty(property);
+    setDiscountForm({
+      discount_3_5_days: parseFloat(property.discount_3_5_days) || 0,
+      discount_6_14_days: parseFloat(property.discount_6_14_days) || 0,
+      discount_15_plus_days: parseFloat(property.discount_15_plus_days) || 0,
+    });
+    setShowDiscountModal(true);
+  };
+
+  const handleSaveDiscounts = async () => {
+    if (!discountProperty) return;
+    try {
+      setDiscountSaving(true);
+      await api.patch(`/admin/properties/${discountProperty.id}/pricing`, {
+        discount_3_5_days: parseFloat(discountForm.discount_3_5_days) || 0,
+        discount_6_14_days: parseFloat(discountForm.discount_6_14_days) || 0,
+        discount_15_plus_days:
+          parseFloat(discountForm.discount_15_plus_days) || 0,
+      });
+      toast.success("Villa duration discounts updated!");
+      setShowDiscountModal(false);
+      fetchProperties();
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message || "Failed to update discounts",
+      );
+    } finally {
+      setDiscountSaving(false);
+    }
+  };
+
   // Pagination logic
   const totalPages = Math.ceil(filteredProperties.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -520,14 +564,25 @@ const AdminProperties = () => {
             Manage all properties, approve submissions, and monitor performance
           </p>
         </div>
-        <Button
-          onClick={handleAddProperty}
-          className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
-          size="lg"
-        >
-          <Plus className="h-5 w-5 mr-2" />
-          Add Property
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <Button
+            variant="outline"
+            onClick={() => navigate("/admin/cancellation-policies")}
+            className="border-purple-300 text-purple-700 hover:bg-purple-50 hover:border-purple-400 dark:border-purple-700 dark:text-purple-400 dark:hover:bg-purple-950/30"
+            size="lg"
+          >
+            <Shield className="h-5 w-5 mr-2" />
+            Cancellation Policies
+          </Button>
+          <Button
+            onClick={handleAddProperty}
+            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+            size="lg"
+          >
+            <Plus className="h-5 w-5 mr-2" />
+            Add Property
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -911,6 +966,27 @@ const AdminProperties = () => {
                               ? `+${property.gst_percentage}% GST`
                               : "No GST"}
                           </div>
+                          {(property.discount_3_5_days > 0 ||
+                            property.discount_6_14_days > 0 ||
+                            property.discount_15_plus_days > 0) && (
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {property.discount_3_5_days > 0 && (
+                                <span className="text-xs bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 px-1.5 py-0.5 rounded font-medium">
+                                  3-5N: {property.discount_3_5_days}%
+                                </span>
+                              )}
+                              {property.discount_6_14_days > 0 && (
+                                <span className="text-xs bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 px-1.5 py-0.5 rounded font-medium">
+                                  6-14N: {property.discount_6_14_days}%
+                                </span>
+                              )}
+                              {property.discount_15_plus_days > 0 && (
+                                <span className="text-xs bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 px-1.5 py-0.5 rounded font-medium">
+                                  15+N: {property.discount_15_plus_days}%
+                                </span>
+                              )}
+                            </div>
+                          )}
                         </TableCell>
                         <TableCell>
                           <Badge className={getStatusColor(property.status)}>
@@ -940,6 +1016,17 @@ const AdminProperties = () => {
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
+                            {property.property_type_id === "pt-001" && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleEditDiscounts(property)}
+                                title="Edit Villa Duration Discounts"
+                                className="hover:bg-amber-50 hover:text-amber-600 hover:border-amber-300"
+                              >
+                                <TrendingUp className="h-4 w-4" />
+                              </Button>
+                            )}
                             {property.status === "pending_approval" && (
                               <>
                                 <Button
@@ -1085,6 +1172,27 @@ const AdminProperties = () => {
                             ? `+${property.gst_percentage}% GST`
                             : "per night"}
                         </div>
+                        {(property.discount_3_5_days > 0 ||
+                          property.discount_6_14_days > 0 ||
+                          property.discount_15_plus_days > 0) && (
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {property.discount_3_5_days > 0 && (
+                              <span className="text-xs bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 px-1.5 py-0.5 rounded font-medium">
+                                3-5N: {property.discount_3_5_days}%
+                              </span>
+                            )}
+                            {property.discount_6_14_days > 0 && (
+                              <span className="text-xs bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 px-1.5 py-0.5 rounded font-medium">
+                                6-14N: {property.discount_6_14_days}%
+                              </span>
+                            )}
+                            {property.discount_15_plus_days > 0 && (
+                              <span className="text-xs bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 px-1.5 py-0.5 rounded font-medium">
+                                15+N: {property.discount_15_plus_days}%
+                              </span>
+                            )}
+                          </div>
+                        )}
                       </div>
 
                       {/* Actions */}
@@ -1108,6 +1216,19 @@ const AdminProperties = () => {
                           Edit
                         </Button>
                       </div>
+
+                      {/* Villa Duration Discounts Button */}
+                      {property.property_type_id === "pt-001" && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleEditDiscounts(property)}
+                          className="w-full mt-2 hover:bg-amber-50 hover:text-amber-700 hover:border-amber-300 dark:hover:bg-amber-950/20"
+                        >
+                          <TrendingUp className="h-4 w-4 mr-1" />
+                          Edit Duration Discounts
+                        </Button>
+                      )}
 
                       {/* Additional Actions for Pending */}
                       {property.status === "pending_approval" && (
@@ -1322,6 +1443,129 @@ const AdminProperties = () => {
         open={showPropertyTypeModal}
         onClose={() => setShowPropertyTypeModal(false)}
       />
+
+      {/* Villa Duration Discount Edit Modal */}
+      <Dialog open={showDiscountModal} onOpenChange={setShowDiscountModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-amber-600" />
+              Villa Duration Discounts
+            </DialogTitle>
+            <DialogDescription>
+              Set automatic percentage discounts applied at checkout based on
+              booking length for <strong>{discountProperty?.title}</strong>.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                3–5 Nights Discount (%)
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.5"
+                  value={discountForm.discount_3_5_days}
+                  onChange={(e) =>
+                    setDiscountForm((p) => ({
+                      ...p,
+                      discount_3_5_days: e.target.value,
+                    }))
+                  }
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+                />
+                <span className="text-sm text-muted-foreground whitespace-nowrap">
+                  % off
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Applied when booking duration is 3 to 5 nights
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                6–14 Nights Discount (%)
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.5"
+                  value={discountForm.discount_6_14_days}
+                  onChange={(e) =>
+                    setDiscountForm((p) => ({
+                      ...p,
+                      discount_6_14_days: e.target.value,
+                    }))
+                  }
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+                />
+                <span className="text-sm text-muted-foreground whitespace-nowrap">
+                  % off
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Applied when booking duration is 6 to 14 nights
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                15+ Nights Discount (%)
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.5"
+                  value={discountForm.discount_15_plus_days}
+                  onChange={(e) =>
+                    setDiscountForm((p) => ({
+                      ...p,
+                      discount_15_plus_days: e.target.value,
+                    }))
+                  }
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+                />
+                <span className="text-sm text-muted-foreground whitespace-nowrap">
+                  % off
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Applied when booking duration is 15 or more nights
+              </p>
+            </div>
+
+            <div className="rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800 p-3 text-xs text-amber-800 dark:text-amber-300">
+              <strong>Note:</strong> Discounts are applied to the base nightly
+              rate subtotal before GST. Set to 0 to disable a tier.
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowDiscountModal(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSaveDiscounts}
+              disabled={discountSaving}
+              className="bg-amber-600 hover:bg-amber-700 text-white"
+            >
+              {discountSaving ? "Saving..." : "Save Discounts"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

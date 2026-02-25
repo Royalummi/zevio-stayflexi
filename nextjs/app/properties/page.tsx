@@ -33,7 +33,7 @@ function PropertiesContent() {
       "URL Params - guests:",
       guestsParam,
       "children:",
-      childrenParam
+      childrenParam,
     );
 
     // Capitalize first letter of city for display
@@ -94,33 +94,33 @@ function PropertiesContent() {
     // Filter by city
     if (filters.city) {
       filtered = filtered.filter(
-        (p) => p.city.toLowerCase() === filters.city.toLowerCase()
+        (p) => p.city.toLowerCase() === filters.city.toLowerCase(),
       );
     }
 
     // Filter by price range
     if (filters.minPrice) {
       filtered = filtered.filter(
-        (p) => p.price_per_night >= parseFloat(filters.minPrice)
+        (p) => p.price_per_night >= parseFloat(filters.minPrice),
       );
     }
     if (filters.maxPrice) {
       filtered = filtered.filter(
-        (p) => p.price_per_night <= parseFloat(filters.maxPrice)
+        (p) => p.price_per_night <= parseFloat(filters.maxPrice),
       );
     }
 
     // Filter by guests
     if (filters.guests) {
       filtered = filtered.filter(
-        (p) => p.max_guests >= parseInt(filters.guests)
+        (p) => p.max_guests >= parseInt(filters.guests),
       );
     }
 
     // Filter by bedrooms
     if (filters.bedrooms) {
       filtered = filtered.filter(
-        (p) => p.bedrooms >= parseInt(filters.bedrooms)
+        (p) => p.bedrooms >= parseInt(filters.bedrooms),
       );
     }
 
@@ -138,7 +138,7 @@ function PropertiesContent() {
 
   const handleFilterChange = (
     key: keyof PropertyFiltersState,
-    value: string
+    value: string,
   ) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
   };
@@ -159,7 +159,7 @@ function PropertiesContent() {
 
   const handleWishlistToggle = async (
     propertyId: string,
-    isWishlisted: boolean
+    isWishlisted: boolean,
   ) => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -240,14 +240,16 @@ function PropertiesContent() {
 
 export default function PropertiesPage() {
   return (
-    <Suspense fallback={
-      <div className={styles.pageContainer}>
-        <div className={styles.loadingContainer}>
-          <div className={styles.spinner}></div>
-          <p>Loading properties...</p>
+    <Suspense
+      fallback={
+        <div className={styles.pageContainer}>
+          <div className={styles.loadingContainer}>
+            <div className={styles.spinner}></div>
+            <p>Loading properties...</p>
+          </div>
         </div>
-      </div>
-    }>
+      }
+    >
       <PropertiesContent />
     </Suspense>
   );
