@@ -46,6 +46,9 @@ export const listServiceApartments = async (req, res) => {
       has_gym,
       has_parking,
       allow_corporate_booking,
+      guests,
+      checkin,
+      checkout,
       page = 1,
       limit = 10,
       sort_by = "price_per_night",
@@ -63,7 +66,7 @@ export const listServiceApartments = async (req, res) => {
 
     // Filters for properties table columns
     if (city) {
-      whereConditions.push("c.name = ?");
+      whereConditions.push("LOWER(c.name) = LOWER(?)");
       queryParams.push(city);
     }
     if (area) {
@@ -96,7 +99,28 @@ export const listServiceApartments = async (req, res) => {
       whereConditions.push("pr.allow_corporate_booking = TRUE");
     }
 
-    // Feature filters - temporarily disabled for testing
+    // Filter by guest capacity
+    const guestsNum = parseInt(guests);
+    if (guests && !isNaN(guestsNum) && guestsNum > 0) {
+      whereConditions.push("p.max_guests >= ?");
+      queryParams.push(guestsNum);
+    }
+
+    // Availability filter — exclude properties with overlapping confirmed bookings
+    // or blackout dates during the requested stay period.
+    if (checkin && checkout) {
+      whereConditions.push(`p.id NOT IN (
+        SELECT b.property_id FROM bookings b
+        WHERE b.status IN ('confirmed', 'completed')
+          AND b.check_in < ? AND b.check_out > ?
+      )`);
+      queryParams.push(checkout, checkin);
+      whereConditions.push(`p.id NOT IN (
+        SELECT pbd.property_id FROM property_blackout_dates pbd
+        WHERE pbd.start_date <= ? AND pbd.end_date >= ?
+      )`);
+      queryParams.push(checkout, checkin);
+    }
     // TODO: Re-enable feature filters after basic query works
     // const featureFilters = [];
     // if (has_workspace === "true") featureFilters.push("workspace");
@@ -609,7 +633,7 @@ export const getCorporateOffers = async (req, res) => {
     const queryParams = [];
 
     if (city) {
-      whereConditions.push("c.name = ?");
+      whereConditions.push("LOWER(c.name) = LOWER(?)");
       queryParams.push(city);
     }
 

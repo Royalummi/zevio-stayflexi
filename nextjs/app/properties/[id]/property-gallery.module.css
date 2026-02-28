@@ -141,7 +141,8 @@
 }
 
 .mainImageWrapper {
-    display: block;         /* ensure button renders as block — needed for height:100% */
+    display: block;
+    /* ensure button renders as block — needed for height:100% */
     position: relative;
     width: 100%;
     height: 100%;
@@ -233,7 +234,8 @@
     .thumbnailsSidebar {
         width: 100%;
         flex-direction: row;
-        order: 2;           /* thumbnails below main image on mobile */
+        order: 2;
+        /* thumbnails below main image on mobile */
         height: 90px;
         gap: 0.5rem;
     }
@@ -249,7 +251,8 @@
         overflow-x: auto;
         overflow-y: hidden;
         -webkit-overflow-scrolling: touch;
-        scrollbar-width: none;          /* hide scrollbar on mobile — clean look */
+        scrollbar-width: none;
+        /* hide scrollbar on mobile — clean look */
         scrollbar-color: transparent transparent;
     }
 
@@ -260,13 +263,15 @@
     .thumbnailsScroll {
         flex-direction: row;
         gap: 8px;
-        transform: none !important;     /* override JS translateY on mobile */
+        transform: none !important;
+        /* override JS translateY on mobile */
         padding-bottom: 4px;
     }
 
     .thumbnail {
         width: 72px;
-        height: 54px;                   /* explicit height — prevents aspect-ratio collapse */
+        height: 54px;
+        /* explicit height — prevents aspect-ratio collapse */
         flex-shrink: 0;
         border-radius: 6px;
     }
@@ -278,9 +283,12 @@
     }
 
     .mainImageContainer {
-        order: 1;                       /* main image always on top */
-        flex: none;                     /* CRITICAL: stops flex-basis:0 overriding height */
-        height: 280px;                  /* shorter on small phones */
+        order: 1;
+        /* main image always on top */
+        flex: none;
+        /* CRITICAL: stops flex-basis:0 overriding height */
+        height: 280px;
+        /* shorter on small phones */
         min-height: 240px;
         border-radius: 12px;
     }
@@ -314,7 +322,8 @@
 /* Larger phones & small tablets: give a bit more gallery height */
 @media (min-width: 480px) and (max-width: 768px) {
     .mainImageContainer {
-        flex: none;                     /* keep flex:none override from base mobile rule */
+        flex: none;
+        /* keep flex:none override from base mobile rule */
         height: 340px;
     }
 

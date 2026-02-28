@@ -3,6 +3,8 @@
    ============================================================================ */
 
 /* Modal Overlay - Covers entire viewport including header */
+/* pointer-events:none so the overlay never intercepts taps on dropdowns.
+   Closing on outside-click is handled by the mousedown listener in JS. */
 .searchOverlay {
     position: fixed;
     top: 0;
@@ -11,7 +13,8 @@
     bottom: 0;
     background: rgba(0, 0, 0, 0.6);
     z-index: 9999;
-    cursor: pointer;
+    cursor: default;
+    pointer-events: none;
     opacity: 0;
     animation: overlayFadeIn 0.3s ease-out forwards;
 }
@@ -30,7 +33,8 @@
     position: relative;
     overflow: visible;
     z-index: 10000;
-    isolation: isolate;
+    /* NOTE: isolation:isolate removed — it was creating a bounded stacking context
+       that trapped dropdown z-indices and let later flex siblings paint over them */
 }
 
 @media (min-width: 640px) {
@@ -108,6 +112,7 @@
     align-items: stretch;
     background: rgba(255, 255, 255, 0.98);
     backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     border-radius: 70px;
     padding: 0 12px;
     box-shadow:
@@ -161,7 +166,8 @@
 .searchFieldModern.fieldActive {
     background: var(--brand-white);
     box-shadow: inset 0 0 0 1px rgba(31, 58, 95, 0.08), 0 4px 16px rgba(31, 58, 95, 0.08);
-    z-index: 100;
+    z-index: 9999;
+    position: relative;
 }
 
 .fieldWithButton {
@@ -330,16 +336,11 @@
     box-shadow:
         0 20px 60px rgba(31, 58, 95, 0.25),
         0 0 0 1px rgba(31, 58, 95, 0.08);
-    z-index: 10000;
+    z-index: 10010;
     animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     max-height: 480px;
     overflow-y: auto;
     overflow-x: hidden;
-    will-change: transform, opacity;
-    -webkit-transform: translateZ(0);
-    transform: translateZ(0);
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
 }
 
 /* Custom Scrollbar */
@@ -488,6 +489,7 @@
     max-width: 340px;
     right: 0;
     left: auto;
+    min-width: 300px;
     padding: 18px;
     backdrop-filter: blur(20px);
 }
@@ -1111,6 +1113,11 @@
         border-radius: 20px;
         padding: 10px;
         width: 100%;
+        /* CRITICAL: backdrop-filter creates a containing block for position:fixed children.
+           Removing it on mobile lets the dropdowns truly escape the card stacking context. */
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+        background: #ffffff;
     }
 
     .searchFieldModern {
@@ -1143,12 +1150,34 @@
         border-radius: 40px;
     }
 
+    /* City dropdown: position:fixed escapes all nested stacking contexts */
     .dropdownModern {
+        position: fixed;
+        left: 50%;
+        transform: translateX(-50%);
+        top: 240px;
+        width: min(92vw, 400px);
+        min-width: min(92vw, 400px);
+        max-width: min(92vw, 400px);
         border-radius: 16px;
+        z-index: 99999;
+        max-height: 55vh;
+        overflow-y: auto;
     }
 
+    /* Guests dropdown: fixed, centered vertically with transform to stay in viewport */
     .guestsDropdownModern {
-        min-width: 100%;
+        position: fixed;
+        right: auto;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        width: min(92vw, 360px);
+        min-width: min(92vw, 360px);
+        max-width: min(92vw, 360px);
+        border-radius: 20px;
+        z-index: 99999;
+        padding: 18px;
     }
 
     .toggleContainer {
@@ -1166,6 +1195,13 @@
 
     .toggleIcon {
         font-size: 1rem;
+    }
+
+    /* Stack search button below guests on mobile */
+    .fieldWithButton {
+        flex-direction: column;
+        gap: 8px;
+        align-items: self-start;
     }
 }
 
@@ -1206,6 +1242,26 @@
 }
 
 /* Additional Enhancement Styles */
+
+/* City/Area group labels inside the city dropdown */
+.dropdownGroupLabel {
+    padding: 10px 18px 5px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--brand-text-darker);
+    border-top: 1px solid var(--brand-border-light);
+    margin-top: 4px;
+    pointer-events: none;
+    user-select: none;
+}
+
+.dropdownGroupLabel:first-child {
+    border-top: none;
+    margin-top: 0;
+    padding-top: 12px;
+}
 
 /* Dropdown Header (for location search hint) */
 .dropdownHeader {
@@ -1293,19 +1349,17 @@
 .datesDropdownModern {
     min-width: 500px;
     max-width: 500px;
-    padding: 0;
+    padding: 20px;
     left: 50%;
     margin-left: -250px;
     overflow: visible;
-    background: transparent;
-    z-index: 10001;
+    background: #ffffff;
+    z-index: 99999;
     top: calc(100% + 16px);
-    box-shadow: none;
-    will-change: opacity;
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
-    -webkit-transform: translateZ(0);
-    transform: translateZ(0);
+    box-shadow:
+        0 20px 60px rgba(31, 58, 95, 0.25),
+        0 0 0 1px rgba(31, 58, 95, 0.08);
+    border-radius: 20px;
 }
 
 /* Override DateRangeSelector positioning for SearchBar (calendarOnly mode)
@@ -1411,7 +1465,7 @@
             0 20px 60px rgba(0, 0, 0, 0.2),
             0 8px 24px rgba(31, 58, 95, 0.12),
             0 0 0 1px rgba(31, 58, 95, 0.06);
-        z-index: 10005;
+        z-index: 99999;
         overflow-y: auto;
         max-height: calc(100vh - 130px);
     }
@@ -1423,7 +1477,7 @@
 
 /* Small mobile (below 480px) */
 @media (max-width: 480px) {
-    .SearchBar-modern-module__YpZgdW__datesDropdownModern {
+    .datesDropdownModern {
         border-radius: 12px;
         width: calc(100vw - 24px);
         min-width: calc(100vw - 24px);
@@ -1431,8 +1485,9 @@
         max-height: calc(100vh - 110px);
         margin-left: 0;
         padding: 12px;
-        top: 150px;
-        left: -20px;
-        transform: none;
+        top: 110px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 99999;
     }
 }

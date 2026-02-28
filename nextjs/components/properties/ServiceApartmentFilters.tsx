@@ -408,6 +408,14 @@ export default function ServiceApartmentFilters({
                   checkOut={checkoutDate}
                   onCheckInChange={(date) => {
                     setCheckinDate(date);
+                    if (date) {
+                      onFilterChange(
+                        "checkin",
+                        date.toISOString().split("T")[0],
+                      );
+                    } else {
+                      onFilterChange("checkin", "");
+                    }
                   }}
                   onCheckOutChange={(date) => {
                     setCheckoutDate(date);

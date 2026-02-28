@@ -74,7 +74,19 @@ function PropertiesContent() {
     const fetchProperties = async () => {
       try {
         setLoading(true);
-        const response = await api.get("/public/properties");
+        // Build API params — server handles availability (checkin/checkout)
+        // and guest-capacity filtering; everything else stays client-side.
+        const apiParams: Record<string, string> = {};
+        if (filters.city) apiParams.city = filters.city.toLowerCase();
+        if (filters.checkin) apiParams.checkin = filters.checkin;
+        if (filters.checkout) apiParams.checkout = filters.checkout;
+        // Send combined guest count (adults + children) for max_guests comparison
+        const totalGuests =
+          parseInt(filters.guests || "0") + parseInt(filters.children || "0");
+        if (totalGuests > 0) apiParams.guests = totalGuests.toString();
+        const response = await api.get("/public/properties", {
+          params: apiParams,
+        });
         const fetchedProperties = response.data.data.properties || [];
         setProperties(fetchedProperties);
         setFilteredProperties(fetchedProperties);
@@ -86,17 +98,19 @@ function PropertiesContent() {
     };
 
     fetchProperties();
-  }, []);
+  }, [
+    filters.city,
+    filters.checkin,
+    filters.checkout,
+    filters.guests,
+    filters.children,
+  ]);
 
   useEffect(() => {
     let filtered = [...properties];
 
-    // Filter by city
-    if (filters.city) {
-      filtered = filtered.filter(
-        (p) => p.city.toLowerCase() === filters.city.toLowerCase(),
-      );
-    }
+    // City is already filtered server-side — skip client-side city filter
+    // to avoid excluding results due to case/ID mismatch.
 
     // Filter by price range
     if (filters.minPrice) {
@@ -110,11 +124,13 @@ function PropertiesContent() {
       );
     }
 
-    // Filter by guests
-    if (filters.guests) {
-      filtered = filtered.filter(
-        (p) => p.max_guests >= parseInt(filters.guests),
-      );
+    // Filter by guests (combine adults + children for capacity check)
+    if (filters.guests || filters.children) {
+      const needed =
+        parseInt(filters.guests || "0") + parseInt(filters.children || "0");
+      if (needed > 0) {
+        filtered = filtered.filter((p) => p.max_guests >= needed);
+      }
     }
 
     // Filter by bedrooms

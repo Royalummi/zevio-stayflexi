@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import {
   FiSearch,
@@ -52,60 +53,100 @@ export default function SearchBar({ cities }: SearchBarProps) {
   // Modal state for search experience
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
 
+  // true only on client after hydration — prevents SSR mismatch
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth <= 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
   const cityDropdownRef = useRef<HTMLDivElement>(null);
   const guestsDropdownRef = useRef<HTMLDivElement>(null);
   const datesDropdownRef = useRef<HTMLDivElement>(null);
+  // Ref for the portal-rendered calendar panel — used to exempt it from the
+  // click-outside handler (portal lives in document.body, not in datesDropdownRef)
+  const calendarPortalRef = useRef<HTMLDivElement>(null);
   const destinationInputRef = useRef<HTMLInputElement>(null);
   const searchBarRef = useRef<HTMLDivElement>(null);
+  const spacerRef = useRef<HTMLDivElement>(null);
   const originalPositionRef = useRef<number>(0);
   const hasInteractedRef = useRef<boolean>(false);
 
-  // Handle smooth slide animation - Airbnb style with transform
+  // Lock / unlock body scroll when modal opens / closes
+  useEffect(() => {
+    if (isSearchModalOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isSearchModalOpen]);
+
+  // Handle smooth slide animation using `top` (NOT transform — transform creates
+  // a CSS stacking context that traps z-index of all dropdown children).
   useEffect(() => {
     if (!searchBarRef.current || !hasInteractedRef.current) return;
 
     const searchBar = searchBarRef.current;
+    const spacer = spacerRef.current;
 
     if (isSearchModalOpen) {
-      // Get current position and store it
+      // Capture current position before switching to fixed
       const rect = searchBar.getBoundingClientRect();
       originalPositionRef.current = rect.top;
 
-      const startY = rect.top;
-      const endY = 100; // Final position (100px from top - keeps tabs visible)
-      const translateDistance = -(startY - endY); // Negative because we're moving up
+      // Reserve space so hero layout doesn't collapse
+      if (spacer) {
+        spacer.style.height = `${rect.height}px`;
+        spacer.style.display = "block";
+      }
 
-      // Set initial fixed position at current location
+      const startY = rect.top;
+      const endY = 100;
+
+      // Fix position at its current visual location — NO transform so we
+      // never create a stacking context that traps fixed dropdowns.
+      // Centering: left:0 + right:0 + width:90% + margin:auto = centred.
       searchBar.style.position = "fixed";
       searchBar.style.top = `${startY}px`;
-      searchBar.style.left = "50%";
+      searchBar.style.left = "0";
+      searchBar.style.right = "0";
       searchBar.style.width = "90%";
       searchBar.style.maxWidth = "1200px";
+      searchBar.style.margin = "0 auto";
       searchBar.style.zIndex = "10001";
-      searchBar.style.transform = "translateX(-50%)";
+      searchBar.style.transform = "";
 
-      // Trigger smooth slide to top using transform
+      // Animate slide to top using `top` property — no transform
       requestAnimationFrame(() => {
-        searchBar.style.transition =
-          "transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)";
-        searchBar.style.transform = `translate(-50%, ${translateDistance}px)`;
+        searchBar.style.transition = "top 0.5s cubic-bezier(0.4, 0, 0.2, 1)";
+        searchBar.style.top = `${endY}px`;
       });
     } else {
-      // Smoothly slide back down to original position
-      searchBar.style.transition =
-        "transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)";
-      searchBar.style.transform = "translateX(-50%)";
+      // Slide back to original position
+      searchBar.style.transition = "top 0.5s cubic-bezier(0.4, 0, 0.2, 1)";
+      searchBar.style.top = `${originalPositionRef.current}px`;
 
-      // After animation completes, reset to relative positioning
       const timeout = setTimeout(() => {
         searchBar.style.position = "";
         searchBar.style.top = "";
         searchBar.style.left = "";
-        searchBar.style.transform = "";
+        searchBar.style.right = "";
         searchBar.style.width = "";
         searchBar.style.maxWidth = "";
+        searchBar.style.margin = "";
         searchBar.style.zIndex = "";
+        searchBar.style.transform = "";
         searchBar.style.transition = "";
+        if (spacer) {
+          spacer.style.height = "";
+          spacer.style.display = "none";
+        }
       }, 500);
 
       return () => clearTimeout(timeout);
@@ -184,47 +225,104 @@ export default function SearchBar({ cities }: SearchBarProps) {
     });
   }, [searchInput, cities, areas]);
 
+  // Sorted and grouped city list for dropdown display
+  type DropdownEntry = City | { type: "header"; label: string };
+  const renderList = useMemo((): DropdownEntry[] => {
+    const cityItems = filteredCities
+      .filter((c) => !c.area)
+      .sort((a, b) => a.name.localeCompare(b.name));
+    const areaItems = filteredCities
+      .filter((c) => c.area)
+      .sort((a, b) => {
+        const cityComp = (a.city || a.name).localeCompare(b.city || b.name);
+        if (cityComp !== 0) return cityComp;
+        return (a.area || "").localeCompare(b.area || "");
+      });
+
+    const list: DropdownEntry[] = [];
+    const isSearching = searchInput.trim().length > 0;
+
+    if (!isSearching && cityItems.length > 0 && areaItems.length > 0) {
+      list.push({ type: "header", label: "Cities" });
+    }
+    cityItems.forEach((c) => list.push(c));
+
+    if (areaItems.length > 0) {
+      let lastCityName = "";
+      areaItems.forEach((loc) => {
+        const cityName = loc.city || loc.name;
+        if (!isSearching && cityName !== lastCityName) {
+          list.push({ type: "header", label: cityName });
+          lastCityName = cityName;
+        }
+        list.push(loc);
+      });
+    }
+
+    return list;
+  }, [filteredCities, searchInput]);
+
+  // Flat list of City items only — used for keyboard navigation
+  const sortedCitiesForNav = useMemo(
+    () => renderList.filter((item): item is City => !("type" in item)),
+    [renderList],
+  );
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node;
+
+      // Close individual dropdowns when tapping outside their own field wrapper
       if (
         cityDropdownRef.current &&
-        !cityDropdownRef.current.contains(event.target as Node)
+        !cityDropdownRef.current.contains(target)
       ) {
         setShowCityDropdown(false);
-        setActiveField(null);
       }
       if (
         guestsDropdownRef.current &&
-        !guestsDropdownRef.current.contains(event.target as Node)
+        !guestsDropdownRef.current.contains(target)
       ) {
         setShowGuestsDropdown(false);
-        setActiveField(null);
       }
       if (
         datesDropdownRef.current &&
-        !datesDropdownRef.current.contains(event.target as Node)
+        !datesDropdownRef.current.contains(target) &&
+        !calendarPortalRef.current?.contains(target)
       ) {
         setShowDatesDropdown(false);
-        setActiveField(null);
+      }
+
+      // Close the entire modal when tapping outside the search bar.
+      // The overlay has pointer-events:none so this mousedown handler is the
+      // sole mechanism for closing on outside-tap (no overlay click interference).
+      if (
+        searchBarRef.current &&
+        !searchBarRef.current.contains(target) &&
+        !calendarPortalRef.current?.contains(target)
+      ) {
+        closeModal();
       }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (!showCityDropdown) return;
 
     if (e.key === "ArrowDown") {
       e.preventDefault();
-      setSelectedIndex((prev) => Math.min(prev + 1, filteredCities.length - 1));
+      setSelectedIndex((prev) =>
+        Math.min(prev + 1, sortedCitiesForNav.length - 1),
+      );
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
       setSelectedIndex((prev) => Math.max(prev - 1, 0));
     } else if (e.key === "Enter" && selectedIndex >= 0) {
       e.preventDefault();
-      selectCity(filteredCities[selectedIndex]);
+      selectCity(sortedCitiesForNav[selectedIndex]);
     } else if (e.key === "Escape") {
       setShowCityDropdown(false);
       setActiveField(null);
@@ -396,12 +494,11 @@ export default function SearchBar({ cities }: SearchBarProps) {
       }
     }
 
-    // Pass adults, children, and infants separately
-    if (adults > 0) {
-      params.append("adults", adults.toString());
-    }
-    if (children > 0) {
-      params.append("children", children.toString());
+    // Pass total guests (adults + children) — this matches the `guests` param
+    // both properties and service-apartments pages use to filter by max_guests.
+    // (totalGuests is already calculated above for validation)
+    if (totalGuests > 0) {
+      params.append("guests", totalGuests.toString());
     }
     if (infants > 0) {
       params.append("infants", infants.toString());
@@ -438,6 +535,17 @@ export default function SearchBar({ cities }: SearchBarProps) {
           onClick={closeModal}
         />
       )}
+
+      {/*
+        Invisible spacer: shown only when searchBar is position:fixed.
+        Takes the exact height of the searchBar so the hero flex container
+        doesn't collapse and the title doesn't jump.
+      */}
+      <div
+        ref={spacerRef}
+        aria-hidden="true"
+        style={{ display: "none", flexShrink: 0 }}
+      />
 
       {/* SearchBar with Smooth Slide Animation */}
       <div
@@ -483,6 +591,11 @@ export default function SearchBar({ cities }: SearchBarProps) {
                 openModal();
                 setShowCityDropdown(true);
                 setActiveField("where");
+                // If a city is already selected, clear the input text so the
+                // full list shows again — user can type to filter or pick a new one
+                if (selectedCity) {
+                  setSearchInput("");
+                }
                 destinationInputRef.current?.focus();
               }}
             >
@@ -519,7 +632,7 @@ export default function SearchBar({ cities }: SearchBarProps) {
             {/* City Dropdown */}
             {showCityDropdown && (
               <div className={styles.dropdownModern}>
-                {filteredCities.length === 0 ? (
+                {sortedCitiesForNav.length === 0 ? (
                   <div className={styles.dropdownEmptyModern}>
                     <FiMapPin className={styles.emptyIcon} />
                     <div>No destinations found</div>
@@ -529,36 +642,53 @@ export default function SearchBar({ cities }: SearchBarProps) {
                   </div>
                 ) : (
                   <div className={styles.dropdownListModern}>
-                    {filteredCities.map((city, index) => (
-                      <div
-                        key={city.area ? `${city.id}-${city.area}` : city.id}
-                        className={`${styles.dropdownItemModern} ${
-                          index === selectedIndex ? styles.itemHighlighted : ""
-                        } ${
-                          selectedCity?.id === city.id
-                            ? styles.itemSelected
-                            : ""
-                        }`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          selectCity(city);
-                        }}
-                      >
-                        <div className={styles.itemIconWrapper}>
-                          <FiMapPin className={styles.itemIconModern} />
-                        </div>
-                        <div className={styles.itemText}>
-                          <div className={styles.itemTitleModern}>
-                            {city.area
-                              ? `${city.area}, ${city.city || city.name}`
-                              : city.name}
+                    {renderList.map((entry, i) => {
+                      /* Group header */
+                      if ("type" in entry) {
+                        return (
+                          <div
+                            key={`header-${entry.label}`}
+                            className={styles.dropdownGroupLabel}
+                          >
+                            {entry.label}
                           </div>
-                          <div className={styles.itemSubtitleModern}>
-                            {city.state}
+                        );
+                      }
+                      /* City / area item */
+                      const city = entry;
+                      const navIndex = sortedCitiesForNav.indexOf(city);
+                      const isSelected =
+                        selectedCity?.id === city.id &&
+                        (selectedCity?.area ?? "") === (city.area ?? "");
+                      return (
+                        <div
+                          key={city.area ? `${city.id}-${city.area}` : city.id}
+                          className={`${styles.dropdownItemModern} ${
+                            navIndex === selectedIndex
+                              ? styles.itemHighlighted
+                              : ""
+                          } ${isSelected ? styles.itemSelected : ""}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            selectCity(city);
+                          }}
+                        >
+                          <div className={styles.itemIconWrapper}>
+                            <FiMapPin className={styles.itemIconModern} />
+                          </div>
+                          <div className={styles.itemText}>
+                            <div className={styles.itemTitleModern}>
+                              {city.area
+                                ? `${city.area}, ${city.city || city.name}`
+                                : city.name}
+                            </div>
+                            <div className={styles.itemSubtitleModern}>
+                              {city.state}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -605,15 +735,14 @@ export default function SearchBar({ cities }: SearchBarProps) {
                           day: "numeric",
                         })} - ${moveOutDate.toLocaleDateString("en-US", {
                           month: "short",
-                          day: "numeric",
                         })}`
                       : "Select dates"}
                 </div>
               </div>
             </div>
 
-            {/* Dates Dropdown with Side-by-Side Calendars */}
-            {showDatesDropdown && (
+            {/* Dates Dropdown — desktop only; mobile is portaled to body */}
+            {showDatesDropdown && !isMobile && (
               <div
                 className={`${styles.dropdownModern} ${styles.datesDropdownModern}`}
               >
@@ -623,11 +752,9 @@ export default function SearchBar({ cities }: SearchBarProps) {
                     checkOut={checkout}
                     onCheckInChange={(date) => {
                       setCheckin(date);
-                      // Keep dropdown open to select checkout
                     }}
                     onCheckOutChange={(date) => {
                       setCheckout(date);
-                      // Only close when BOTH dates are selected
                       if (checkin && date) {
                         setShowDatesDropdown(false);
                         setActiveField(null);
@@ -644,11 +771,9 @@ export default function SearchBar({ cities }: SearchBarProps) {
                     checkOut={moveOutDate}
                     onCheckInChange={(date) => {
                       setMoveInDate(date);
-                      // Keep dropdown open to select move-out date
                     }}
                     onCheckOutChange={(date) => {
                       setMoveOutDate(date);
-                      // Only close when BOTH dates are selected
                       if (moveInDate && date) {
                         setShowDatesDropdown(false);
                         setActiveField(null);
@@ -660,8 +785,6 @@ export default function SearchBar({ cities }: SearchBarProps) {
                     onOpenChange={setShowDatesDropdown}
                   />
                 )}
-
-                {/* Clear Dates Button */}
                 {((propertyType === "villas" && (checkin || checkout)) ||
                   (propertyType === "apartments" &&
                     (moveInDate || moveOutDate))) && (
@@ -831,6 +954,113 @@ export default function SearchBar({ cities }: SearchBarProps) {
           </div>
         </div>
       </div>
+
+      {/* ── Mobile calendar portal ────────────────────────────────────────
+           Rendered as a direct child of document.body so it lives at the
+           ROOT stacking context — no ancestor stacking context can trap
+           it, and z-index:999999 wins over everything on the page.
+      ──────────────────────────────────────────────────────────────── */}
+      {showDatesDropdown &&
+        isMobile &&
+        createPortal(
+          <>
+            {/* Invisible backdrop — tap outside to close */}
+            <div
+              style={{
+                position: "fixed",
+                inset: 0,
+                zIndex: 999998,
+                background: "transparent",
+              }}
+              onClick={() => {
+                setShowDatesDropdown(false);
+                setActiveField(null);
+              }}
+            />
+
+            {/* Calendar panel */}
+            <div
+              ref={calendarPortalRef}
+              style={{
+                position: "fixed",
+                top: "110px",
+                left: "50%",
+                transform: "translateX(-50%)",
+                zIndex: 999999,
+                background: "#ffffff",
+                borderRadius: "16px",
+                boxShadow:
+                  "0 20px 60px rgba(0,0,0,0.2), 0 8px 24px rgba(31,58,95,0.12), 0 0 0 1px rgba(31,58,95,0.06)",
+                padding: "16px",
+                width: "min(95vw, 380px)",
+                maxHeight: "calc(100vh - 130px)",
+                overflowY: "auto",
+              }}
+            >
+              {propertyType === "villas" ? (
+                <DateRangeSelector
+                  checkIn={checkin}
+                  checkOut={checkout}
+                  onCheckInChange={(date) => {
+                    setCheckin(date);
+                  }}
+                  onCheckOutChange={(date) => {
+                    setCheckout(date);
+                    if (checkin && date) {
+                      setShowDatesDropdown(false);
+                      setActiveField(null);
+                    }
+                  }}
+                  minDate={new Date()}
+                  calendarOnly={true}
+                  isOpen={showDatesDropdown}
+                  onOpenChange={setShowDatesDropdown}
+                />
+              ) : (
+                <DateRangeSelector
+                  checkIn={moveInDate}
+                  checkOut={moveOutDate}
+                  onCheckInChange={(date) => {
+                    setMoveInDate(date);
+                  }}
+                  onCheckOutChange={(date) => {
+                    setMoveOutDate(date);
+                    if (moveInDate && date) {
+                      setShowDatesDropdown(false);
+                      setActiveField(null);
+                    }
+                  }}
+                  minDate={new Date()}
+                  calendarOnly={true}
+                  isOpen={showDatesDropdown}
+                  onOpenChange={setShowDatesDropdown}
+                />
+              )}
+              {((propertyType === "villas" && (checkin || checkout)) ||
+                (propertyType === "apartments" &&
+                  (moveInDate || moveOutDate))) && (
+                <div className={styles.calendarFooter}>
+                  <button
+                    type="button"
+                    className={styles.clearDatesBtn}
+                    onClick={() => {
+                      if (propertyType === "villas") {
+                        setCheckin(null);
+                        setCheckout(null);
+                      } else {
+                        setMoveInDate(null);
+                        setMoveOutDate(null);
+                      }
+                    }}
+                  >
+                    Clear dates
+                  </button>
+                </div>
+              )}
+            </div>
+          </>,
+          document.body,
+        )}
     </>
   );
 }

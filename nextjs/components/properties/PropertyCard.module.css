@@ -46,7 +46,45 @@
   left: 0;
   width: 100%;
   height: 100%;
+  opacity: 1;
   transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Incoming image: pixel-crystallise reveal on top of the old one */
+@keyframes pixelReveal {
+  0% {
+    opacity: 0;
+    filter: blur(28px) saturate(3) brightness(2) contrast(0.7);
+    transform: scale(1.1);
+  }
+
+  30% {
+    opacity: 0.6;
+    filter: blur(14px) saturate(2) brightness(1.5) contrast(0.9);
+    transform: scale(1.06);
+  }
+
+  65% {
+    opacity: 0.9;
+    filter: blur(5px) saturate(1.3) brightness(1.1) contrast(1);
+    transform: scale(1.02);
+  }
+
+  100% {
+    opacity: 1;
+    filter: blur(0px) saturate(1) brightness(1) contrast(1);
+    transform: scale(1);
+  }
+}
+
+.propertyCardImageTop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  animation: pixelReveal 1.6s cubic-bezier(0.25, 0.1, 0.1, 1) forwards;
 }
 
 .propertyCard:hover .propertyCardImage {
@@ -487,88 +525,152 @@
    ============================================================================ */
 
 @media (max-width: 640px) {
-  .propertyCardName {
-    font-size: 15px;
-    line-height: 1.3;
-  }
 
-  .priceAmount {
-    font-size: 16px;
-  }
-
-  .priceLabel {
-    font-size: 12px;
-  }
-
-  .verifiedBadge {
-    padding: 4px 8px;
-    font-size: 11px;
-  }
-
-  .wishlistBtn {
-    width: 44px;
-    height: 44px;
-    top: 12px;
-    right: 12px;
-  }
-
-  .wishlistBtn svg {
-    width: 20px;
-    height: 20px;
-  }
-
-  .photoNavBtn {
-    width: 36px;
-    height: 36px;
-  }
-
-  .photoNavBtn svg {
-    width: 16px;
-    height: 16px;
-  }
-
-  .propertyCardContent {
-    padding: 14px;
-  }
-
-  .propertyCardFeatures {
-    gap: 12px;
-  }
-
-  .propertyFeatureItem {
-    font-size: 13px;
-    gap: 4px;
-  }
-
-  .propertyFeatureItem svg {
-    width: 14px;
-    height: 14px;
-  }
-}
-
-@media (max-width: 480px) {
+  /* ── Horizontal card layout ── */
   .propertyCard {
-    border-radius: var(--radius-md);
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    overflow: hidden;
+    border-radius: 12px;
   }
 
+  /* Disable hover lift on mobile */
+  .propertyCard:hover {
+    transform: none;
+  }
+
+  /* Image: fixed left column */
   .propertyCardImageContainer {
-    border-radius: var(--radius-md);
+    width: 130px;
+    min-width: 130px;
+    padding-bottom: 0;
+    /* remove 3:2 % trick */
+    height: 130px;
+    border-radius: 12px 0 0 12px;
+    flex-shrink: 0;
+    box-shadow: none;
+  }
+
+  .propertyCard:hover .propertyCardImageContainer {
+    box-shadow: none;
+  }
+
+  /* Content: fills remaining space */
+  .propertyCardContent {
+    flex: 1;
+    min-width: 0;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 4px;
   }
 
   .propertyCardName {
     font-size: 14px;
+    line-height: 1.3;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
   }
 
   .priceAmount {
     font-size: 15px;
   }
 
+  .pricePeriod {
+    font-size: 11px;
+  }
+
+  .propertyCardDetails {
+    gap: 8px;
+  }
+
+  .detailItem {
+    font-size: 12px;
+    gap: 4px;
+  }
+
+  .detailItem svg {
+    width: 13px;
+    height: 13px;
+  }
+
+  .locationText {
+    font-size: 12px;
+  }
+
+  .ratingValue,
+  .ratingCount {
+    font-size: 12px;
+  }
+
+  .propertyCardFooter {
+    margin-top: 4px;
+    padding-top: 6px;
+  }
+
+  /* Keep wishlist button in top-right of image */
+  .wishlistBtn {
+    width: 34px;
+    height: 34px;
+    top: 8px;
+    right: 8px;
+  }
+
+  .wishlistBtn svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  /* Hide carousel controls — no space in horizontal layout */
   .photoNavBtn {
     display: none;
   }
 
   .photoIndicators {
-    display: flex;
+    display: none;
+  }
+
+  .verifiedBadge {
+    padding: 3px 6px;
+    font-size: 10px;
+  }
+
+  .propertyCardFeatures {
+    gap: 8px;
+  }
+
+  .propertyFeatureItem {
+    font-size: 12px;
+    gap: 4px;
+  }
+
+  .propertyFeatureItem svg {
+    width: 13px;
+    height: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .propertyCard {
+    border-radius: 10px;
+  }
+
+  /* Image left column stays consistent, just slightly narrower */
+  .propertyCardImageContainer {
+    width: 110px;
+    min-width: 110px;
+    height: 100%;
+    border-radius: 10px 0 0 10px;
+  }
+
+  .propertyCardName {
+    font-size: 13px;
+  }
+
+  .priceAmount {
+    font-size: 14px;
   }
 }
 

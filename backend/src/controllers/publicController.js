@@ -63,6 +63,9 @@ export const getProperties = asyncHandler(async (req, res) => {
     min_price,
     max_price,
     search,
+    guests,
+    checkin,
+    checkout,
     page = 1,
     limit = 12,
   } = req.query;
@@ -101,7 +104,7 @@ export const getProperties = asyncHandler(async (req, res) => {
   const params = [];
 
   if (city) {
-    query += ` AND c.id = ?`;
+    query += ` AND LOWER(c.name) = LOWER(?)`;
     params.push(city);
   }
 
@@ -129,7 +132,28 @@ export const getProperties = asyncHandler(async (req, res) => {
     params.push(`%${search}%`, `%${search}%`);
   }
 
-  // Add GROUP BY for amenities aggregation
+  // Filter by guest capacity
+  const guestsNum = parseInt(guests);
+  if (guests && !isNaN(guestsNum) && guestsNum > 0) {
+    query += ` AND p.max_guests >= ?`;
+    params.push(guestsNum);
+  }
+
+  // Availability filter — exclude properties with overlapping confirmed bookings
+  // or blackout dates during the requested stay period.
+  if (checkin && checkout) {
+    query += `
+      AND p.id NOT IN (
+        SELECT b.property_id FROM bookings b
+        WHERE b.status IN ('confirmed', 'completed')
+          AND b.check_in < ? AND b.check_out > ?
+      )
+      AND p.id NOT IN (
+        SELECT pbd.property_id FROM property_blackout_dates pbd
+        WHERE pbd.start_date <= ? AND pbd.end_date >= ?
+      )`;
+    params.push(checkout, checkin, checkout, checkin);
+  }
   query += ` GROUP BY p.id`;
 
   // Count total (need to count distinct properties)
@@ -144,7 +168,7 @@ export const getProperties = asyncHandler(async (req, res) => {
   `;
 
   if (city) {
-    countQuery += " AND c.id = ?";
+    countQuery += " AND LOWER(c.name) = LOWER(?)";
   }
   if (min_price && !isNaN(parseFloat(min_price))) {
     countQuery += " AND pr.price_per_night >= ?";

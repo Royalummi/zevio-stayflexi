@@ -132,7 +132,19 @@ function ServiceApartmentsContent() {
     const fetchProperties = async () => {
       try {
         setLoading(true);
-        const response = await api.get("/service-apartments");
+        // Build API params — server handles availability (checkin/checkout)
+        // and guest-capacity filtering; everything else stays client-side.
+        const apiParams: Record<string, string> = {};
+        if (filters.city) apiParams.city = filters.city;
+        if (filters.checkin) apiParams.checkin = filters.checkin;
+        if (filters.checkout) apiParams.checkout = filters.checkout;
+        // Send combined guest count (adults + children) for max_guests comparison
+        const totalGuests =
+          parseInt(filters.guests || "0") + parseInt(filters.children || "0");
+        if (totalGuests > 0) apiParams.guests = totalGuests.toString();
+        const response = await api.get("/service-apartments", {
+          params: apiParams,
+        });
         const fetchedProperties = response.data.data.properties || [];
 
         // Parse features array into boolean flags for each property
@@ -150,7 +162,13 @@ function ServiceApartmentsContent() {
 
     fetchProperties();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [
+    filters.city,
+    filters.checkin,
+    filters.checkout,
+    filters.guests,
+    filters.children,
+  ]);
 
   useEffect(() => {
     let filtered = [...properties];
@@ -161,7 +179,6 @@ function ServiceApartmentsContent() {
         (p) => p.city.toLowerCase() === filters.city.toLowerCase(),
       );
     }
-
     // Filter by price range
     if (filters.minPrice) {
       filtered = filtered.filter(
@@ -174,12 +191,15 @@ function ServiceApartmentsContent() {
       );
     }
 
-    // Filter by guests
-    if (filters.guests) {
-      filtered = filtered.filter(
-        (p) =>
-          (p.max_guests || p.max_occupancy || 0) >= parseInt(filters.guests),
-      );
+    // Filter by guests (combine adults + children for capacity check)
+    if (filters.guests || filters.children) {
+      const needed =
+        parseInt(filters.guests || "0") + parseInt(filters.children || "0");
+      if (needed > 0) {
+        filtered = filtered.filter(
+          (p) => (p.max_guests || p.max_occupancy || 0) >= needed,
+        );
+      }
     }
 
     // Filter by bedrooms

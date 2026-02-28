@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
   FiHeart,
@@ -40,6 +40,8 @@ export default function PropertyCard({
   const { openLoginModal } = useAuthModals();
   const { showCorporateFeatures } = useCorporateUser();
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+  const [nextPhotoIndex, setNextPhotoIndex] = useState<number | null>(null);
+  const [isTransitioning, setIsTransitioning] = useState(false);
   const [isWishlisted, setIsWishlisted] = useState(initialWishlistState);
   const [isImageHovered, setIsImageHovered] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -167,14 +169,43 @@ export default function PropertyCard({
     router.push(`/properties/${property.id}`);
   };
 
+  // Two-layer crossfade: old image stays visible, new one pixel-reveals on top
+  const changePhoto = useCallback(
+    (getNext: (prev: number) => number) => {
+      if (isTransitioning) return; // prevent overlap
+      const next = getNext(currentPhotoIndex);
+      setNextPhotoIndex(next);
+      setIsTransitioning(true);
+    },
+    [currentPhotoIndex, isTransitioning],
+  );
+
+  const handleTransitionEnd = useCallback(() => {
+    if (nextPhotoIndex !== null) {
+      setCurrentPhotoIndex(nextPhotoIndex);
+    }
+    setNextPhotoIndex(null);
+    setIsTransitioning(false);
+  }, [nextPhotoIndex]);
+
+  // Auto-scroll: advance every 3 s, pause while hovering
+  useEffect(() => {
+    if (photos.length <= 1) return;
+    if (isImageHovered) return;
+    const timer = setInterval(() => {
+      changePhoto((prev) => (prev === photos.length - 1 ? 0 : prev + 1));
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [isImageHovered, photos.length, changePhoto]);
+
   const handlePrevPhoto = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setCurrentPhotoIndex((prev) => (prev === 0 ? photos.length - 1 : prev - 1));
+    changePhoto((prev) => (prev === 0 ? photos.length - 1 : prev - 1));
   };
 
   const handleNextPhoto = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setCurrentPhotoIndex((prev) => (prev === photos.length - 1 ? 0 : prev + 1));
+    changePhoto((prev) => (prev === photos.length - 1 ? 0 : prev + 1));
   };
 
   return (
@@ -185,6 +216,7 @@ export default function PropertyCard({
         onMouseEnter={() => setIsImageHovered(true)}
         onMouseLeave={() => setIsImageHovered(false)}
       >
+        {/* Bottom layer: current image — always visible, never hides */}
         <div className={styles.propertyCardImage}>
           <Image
             src={photos[currentPhotoIndex]}
@@ -196,6 +228,24 @@ export default function PropertyCard({
             unoptimized
           />
         </div>
+
+        {/* Top layer: incoming image pixel-reveals on top; on finish becomes bottom */}
+        {isTransitioning && nextPhotoIndex !== null && (
+          <div
+            className={styles.propertyCardImageTop}
+            onAnimationEnd={handleTransitionEnd}
+          >
+            <Image
+              src={photos[nextPhotoIndex]}
+              alt={property.title || `${property.city} Villa`}
+              fill
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+              className={styles.propertyImage}
+              style={{ objectFit: "cover" }}
+              unoptimized
+            />
+          </div>
+        )}
 
         {/* Wishlist Button */}
         <button

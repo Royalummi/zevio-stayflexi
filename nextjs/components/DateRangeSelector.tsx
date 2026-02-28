@@ -155,7 +155,15 @@ export default function DateRangeSelector({
   };
 
   const isDisabled = (date: Date) => {
-    return date < minDate;
+    // Compare date-only (ignore time-of-day) so today is always selectable.
+    // minDate = new Date() captures current time; without this fix a calendar
+    // date at midnight would be < "now at 2pm" and falsely appear disabled.
+    const minDay = new Date(
+      minDate.getFullYear(),
+      minDate.getMonth(),
+      minDate.getDate(),
+    );
+    return date < minDay;
   };
 
   const handleDayClick = (day: number) => {
@@ -297,28 +305,6 @@ export default function DateRangeSelector({
                 );
               })}
             </div>
-
-            {/* Quick select buttons */}
-            <div className={styles.quickSelect}>
-              <button
-                onClick={() => setQuickDate(0)}
-                className={styles.quickBtn}
-              >
-                Today
-              </button>
-              <button
-                onClick={() => setQuickDate(7)}
-                className={styles.quickBtn}
-              >
-                Next Week
-              </button>
-              <button
-                onClick={() => setQuickDate(30)}
-                className={styles.quickBtn}
-              >
-                Next Month
-              </button>
-            </div>
           </div>
         )}
       </>
@@ -440,22 +426,6 @@ export default function DateRangeSelector({
                 </button>
               );
             })}
-          </div>
-
-          {/* Quick select buttons */}
-          <div className={styles.quickSelect}>
-            <button onClick={() => setQuickDate(0)} className={styles.quickBtn}>
-              Today
-            </button>
-            <button onClick={() => setQuickDate(7)} className={styles.quickBtn}>
-              Next Week
-            </button>
-            <button
-              onClick={() => setQuickDate(30)}
-              className={styles.quickBtn}
-            >
-              Next Month
-            </button>
           </div>
         </div>
       )}
