@@ -46,6 +46,21 @@ export const login = asyncHandler(async (req, res) => {
         return sendError(res, "Invalid email or password", 401);
       }
 
+      // Block unverified corporate users from logging in
+      if (
+        table.name === "users" &&
+        user.is_corporate_user === 1 &&
+        user.company_email_verified !== 1
+      ) {
+        return res.status(403).json({
+          success: false,
+          corporate_unverified: true,
+          email: user.email,
+          message:
+            "Please verify your corporate email before logging in. Check your inbox or request a new link.",
+        });
+      }
+
       // Set role based on table
       if (table.roleField) {
         roleValue = user[table.roleField]; // For admins: 'admin' or 'super_admin'

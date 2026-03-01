@@ -13,10 +13,6 @@ import {
   FiCalendar,
   FiCheckCircle,
   FiShield,
-  FiClock,
-  FiHeart,
-  FiHome,
-  FiActivity,
 } from "react-icons/fi";
 import Image from "next/image";
 import { api } from "@/lib/axios";
@@ -34,13 +30,6 @@ type ProfileUser = {
   avatar?: string;
   address?: string;
   bio?: string;
-};
-
-type ActivityLog = {
-  id: string;
-  title: string;
-  timestamp: string;
-  icon: typeof FiHome;
 };
 
 export default function ProfileRedesign() {
@@ -65,10 +54,6 @@ export default function ProfileRedesign() {
     bio: "",
   });
 
-  // Activity logs from API
-  const [activities, setActivities] = useState<ActivityLog[]>([]);
-  const [loadingActivities, setLoadingActivities] = useState(true);
-
   const [isInitialized, setIsInitialized] = useState(false);
 
   // Handle authentication redirect
@@ -77,84 +62,6 @@ export default function ProfileRedesign() {
       router.push("/");
     }
   }, [isAuthenticated, isLoading, router]);
-
-  // Fetch activity logs
-  useEffect(() => {
-    const fetchActivities = async () => {
-      try {
-        setLoadingActivities(true);
-        const response = await api.get("/auth/activity");
-        const activityData = response.data.data?.activities || [];
-
-        // Transform API data to match ActivityLog interface
-        const transformedActivities = activityData.map((activity: any) => {
-          let icon = FiActivity;
-          let title = activity.action;
-
-          // Map actions to icons and readable titles
-          if (activity.action.toLowerCase().includes("booking")) {
-            icon = FiCheckCircle;
-            title = `${activity.action} - ${activity.entity}`;
-          } else if (
-            activity.action.toLowerCase().includes("wishlist") ||
-            activity.action.toLowerCase().includes("favorite")
-          ) {
-            icon = FiHeart;
-          } else if (
-            activity.action.toLowerCase().includes("property") ||
-            activity.action.toLowerCase().includes("view")
-          ) {
-            icon = FiHome;
-          } else if (
-            activity.action.toLowerCase().includes("profile") ||
-            activity.action.toLowerCase().includes("update")
-          ) {
-            icon = FiUser;
-          }
-
-          // Format timestamp as relative time
-          const createdAt = new Date(activity.created_at);
-          const now = new Date();
-          const diffMs = now.getTime() - createdAt.getTime();
-          const diffMins = Math.floor(diffMs / 60000);
-          const diffHours = Math.floor(diffMs / 3600000);
-          const diffDays = Math.floor(diffMs / 86400000);
-
-          let timestamp;
-          if (diffMins < 60) {
-            timestamp = `${diffMins} ${
-              diffMins === 1 ? "minute" : "minutes"
-            } ago`;
-          } else if (diffHours < 24) {
-            timestamp = `${diffHours} ${
-              diffHours === 1 ? "hour" : "hours"
-            } ago`;
-          } else {
-            timestamp = `${diffDays} ${diffDays === 1 ? "day" : "days"} ago`;
-          }
-
-          return {
-            id: activity.id,
-            title,
-            timestamp,
-            icon,
-          };
-        });
-
-        setActivities(transformedActivities);
-      } catch (error) {
-        console.error("Failed to fetch activity logs:", error);
-        // Set empty array on error
-        setActivities([]);
-      } finally {
-        setLoadingActivities(false);
-      }
-    };
-
-    if (isAuthenticated) {
-      fetchActivities();
-    }
-  }, [isAuthenticated]);
 
   // Initialize form data
   useEffect(() => {
@@ -377,18 +284,20 @@ export default function ProfileRedesign() {
                 {profileUser.role || "User"} Account
               </p>
 
-              <div className={styles.bannerStats}>
-                <div className={styles.bannerStat}>
-                  <span className={styles.bannerStatValue}>12</span>
-                  <span className={styles.bannerStatLabel}>Bookings</span>
+              <div className={styles.bannerMeta}>
+                <div className={styles.bannerMetaItem}>
+                  <FiCalendar size={14} />
+                  <span>Member since {formatDate(profileUser.created_at)}</span>
                 </div>
-                <div className={styles.bannerStat}>
-                  <span className={styles.bannerStatValue}>8</span>
-                  <span className={styles.bannerStatLabel}>Favorites</span>
+                <div className={styles.bannerMetaItem}>
+                  <FiMail size={14} />
+                  <span>{profileUser.email}</span>
                 </div>
-                <div className={styles.bannerStat}>
-                  <span className={styles.bannerStatValue}>Active</span>
-                  <span className={styles.bannerStatLabel}>Status</span>
+                <div className={styles.bannerMetaItem}>
+                  <FiCheckCircle size={14} />
+                  <span style={{ textTransform: "capitalize" }}>
+                    {profileUser.status || "Active"}
+                  </span>
                 </div>
               </div>
             </div>
@@ -512,88 +421,13 @@ export default function ProfileRedesign() {
               </form>
             </div>
 
-            {/* Activity Timeline Card */}
-            <div className={styles.activityCard}>
-              <div className={styles.cardHeader}>
-                <div className={styles.cardIcon}>
-                  <FiClock size={24} />
-                </div>
-                <h3 className={styles.cardTitle}>Recent Activity</h3>
-              </div>
 
-              <div className={styles.activityTimeline}>
-                {activities.map((activity) => (
-                  <div key={activity.id} className={styles.activityItem}>
-                    <div className={styles.activityIcon}>
-                      <activity.icon size={18} />
-                    </div>
-                    <div className={styles.activityContent}>
-                      <p className={styles.activityTitle}>{activity.title}</p>
-                      <p className={styles.activityTime}>
-                        {activity.timestamp}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
           </div>
 
-          {/* Right Column - Account Info */}
+          {/* Right Column - Security */}
           <div
             style={{ display: "flex", flexDirection: "column", gap: "2rem" }}
           >
-            {/* Account Information Card */}
-            <div className={styles.accountInfoCard}>
-              <div className={styles.cardHeader}>
-                <div className={styles.cardIcon}>
-                  <FiShield size={24} />
-                </div>
-                <h3 className={styles.cardTitle}>Account Details</h3>
-              </div>
-
-              <div className={styles.accountInfoGrid}>
-                <div className={styles.accountInfoItem}>
-                  <span className={styles.accountInfoLabel}>
-                    Account Status
-                  </span>
-                  <span
-                    className={`${styles.accountInfoValue} ${styles.statusActive}`}
-                  >
-                    {profileUser.status}
-                  </span>
-                </div>
-
-                <div className={styles.accountInfoItem}>
-                  <span className={styles.accountInfoLabel}>Account Type</span>
-                  <span className={styles.accountInfoValue}>
-                    {profileUser.role || "User"}
-                  </span>
-                </div>
-
-                <div className={styles.accountInfoItem}>
-                  <span className={styles.accountInfoLabel}>Member Since</span>
-                  <span className={styles.accountInfoValue}>
-                    <FiCalendar
-                      size={16}
-                      style={{ display: "inline", marginRight: "0.5rem" }}
-                    />
-                    {formatDate(profileUser.created_at)}
-                  </span>
-                </div>
-
-                <div className={styles.accountInfoItem}>
-                  <span className={styles.accountInfoLabel}>User ID</span>
-                  <span
-                    className={styles.accountInfoValue}
-                    style={{ fontSize: "0.875rem", fontFamily: "monospace" }}
-                  >
-                    {profileUser.id}
-                  </span>
-                </div>
-              </div>
-            </div>
-
             {/* Security Settings Card */}
             <div className={styles.settingsCard}>
               <div className={styles.cardHeader}>

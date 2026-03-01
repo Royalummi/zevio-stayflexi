@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState } from "react";
 import LoginModal from "@/components/auth/LoginModal";
 import SignupModal from "@/components/auth/SignupModal";
+import EmailVerificationSentModal from "@/components/auth/EmailVerificationSentModal";
 
 interface AuthModalContextType {
   openLoginModal: () => void;
@@ -11,12 +12,16 @@ interface AuthModalContextType {
 }
 
 const AuthModalContext = createContext<AuthModalContextType | undefined>(
-  undefined
+  undefined,
 );
 
 export function AuthModalProvider({ children }: { children: React.ReactNode }) {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isSignupOpen, setIsSignupOpen] = useState(false);
+  const [verificationInfo, setVerificationInfo] = useState<{
+    email: string;
+    companyName: string;
+  } | null>(null);
 
   const openLoginModal = () => {
     setIsSignupOpen(false);
@@ -43,6 +48,12 @@ export function AuthModalProvider({ children }: { children: React.ReactNode }) {
     setIsLoginOpen(true);
   };
 
+  const handleCorporateRegistered = (email: string, companyName: string) => {
+    // Set both states atomically so React batches them in one render
+    setVerificationInfo({ email, companyName });
+    setIsSignupOpen(false);
+  };
+
   return (
     <AuthModalContext.Provider
       value={{ openLoginModal, openSignupModal, closeModals }}
@@ -57,6 +68,13 @@ export function AuthModalProvider({ children }: { children: React.ReactNode }) {
         isOpen={isSignupOpen}
         onClose={closeModals}
         onSwitchToLogin={switchToLogin}
+        onCorporateRegistered={handleCorporateRegistered}
+      />
+      <EmailVerificationSentModal
+        isOpen={verificationInfo !== null}
+        onClose={() => setVerificationInfo(null)}
+        email={verificationInfo?.email ?? ""}
+        companyName={verificationInfo?.companyName ?? ""}
       />
     </AuthModalContext.Provider>
   );

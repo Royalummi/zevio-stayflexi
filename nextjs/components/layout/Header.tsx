@@ -4,17 +4,15 @@ import Link from "next/link";
 import { useMemo, useState, useEffect } from "react";
 import { FiMenu, FiX, FiUser, FiLogOut, FiHome } from "react-icons/fi";
 import { useAuth } from "@/contexts/AuthContext";
-import LoginModal from "@/components/auth/LoginModal";
-import SignupModal from "@/components/auth/SignupModal";
+import { useAuthModals } from "@/contexts/AuthModalContext";
 import styles from "./Header.module.css";
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [showLogin, setShowLogin] = useState(false);
-  const [showSignup, setShowSignup] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const { user, isAuthenticated, logout, isLoading } = useAuth();
+  const { openLoginModal, openSignupModal } = useAuthModals();
 
   // Fix hydration mismatch by waiting for client mount
   useEffect(() => {
@@ -41,16 +39,6 @@ export default function Header() {
 
   const toggleMobileMenu = () => setMobileMenuOpen((prev) => !prev);
   const closeMobileMenu = () => setMobileMenuOpen(false);
-
-  const handleSwitchToSignup = () => {
-    setShowLogin(false);
-    setShowSignup(true);
-  };
-
-  const handleSwitchToLogin = () => {
-    setShowSignup(false);
-    setShowLogin(true);
-  };
 
   const handleLogout = () => {
     logout();
@@ -138,7 +126,7 @@ export default function Header() {
             ) : (
               <>
                 <button
-                  onClick={() => setShowLogin(true)}
+                  onClick={openLoginModal}
                   className={styles.signInButton}
                   aria-label="Sign in"
                 >
@@ -146,7 +134,7 @@ export default function Header() {
                   <span>Sign In</span>
                 </button>
                 <button
-                  onClick={() => setShowSignup(true)}
+                  onClick={openSignupModal}
                   className={styles.signUpButton}
                   aria-label="Sign up"
                 >
@@ -226,7 +214,7 @@ export default function Header() {
                   <>
                     <button
                       onClick={() => {
-                        setShowLogin(true);
+                        openLoginModal();
                         closeMobileMenu();
                       }}
                       className={styles.mobileSignInButton}
@@ -235,7 +223,7 @@ export default function Header() {
                     </button>
                     <button
                       onClick={() => {
-                        setShowSignup(true);
+                        openSignupModal();
                         closeMobileMenu();
                       }}
                       className={styles.mobileSignUpButton}
@@ -250,17 +238,6 @@ export default function Header() {
         </>
       )}
 
-      {/* Authentication Modals */}
-      <LoginModal
-        isOpen={showLogin}
-        onClose={() => setShowLogin(false)}
-        onSwitchToSignup={handleSwitchToSignup}
-      />
-      <SignupModal
-        isOpen={showSignup}
-        onClose={() => setShowSignup(false)}
-        onSwitchToLogin={handleSwitchToLogin}
-      />
     </header>
   );
 }

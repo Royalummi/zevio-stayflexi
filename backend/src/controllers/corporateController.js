@@ -14,6 +14,9 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import db from "../config/database.js";
 import { sendEmail } from "../services/emailService.js";
+import { generateTokens } from "../config/jwt.js";
+
+const TOKEN_EXPIRY_HOURS = 24;
 
 /**
  * POST /api/auth/register-corporate
@@ -21,8 +24,16 @@ import { sendEmail } from "../services/emailService.js";
  */
 export const registerCorporate = async (req, res) => {
   try {
-    const { name, email, password, phone, company_name, company_gst } =
-      req.body;
+    const {
+      full_name,
+      name: _name,
+      email,
+      password,
+      phone,
+      company_name,
+    } = req.body;
+    // Accept either full_name (frontend) or name (legacy)
+    const name = full_name || _name;
 
     // Validate required fields
     if (!name || !email || !password || !phone || !company_name) {
@@ -32,28 +43,110 @@ export const registerCorporate = async (req, res) => {
       });
     }
 
-    // Validate GST format (optional but validate if provided)
-    if (company_gst) {
-      const gstRegex =
-        /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
-      if (!gstRegex.test(company_gst)) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid GST number format",
-        });
-      }
+    // Validate corporate email — reject free/personal email providers
+    const FREE_EMAIL_DOMAINS = [
+      "gmail.com",
+      "yahoo.com",
+      "hotmail.com",
+      "outlook.com",
+      "live.com",
+      "icloud.com",
+      "aol.com",
+      "protonmail.com",
+      "mail.com",
+      "ymail.com",
+      "rediffmail.com",
+      "zoho.com",
+      "inbox.com",
+      "gmx.com",
+      "fastmail.com",
+      "me.com",
+      "mac.com",
+      "msn.com",
+      "yahoo.in",
+      "yahoo.co.in",
+    ];
+    const emailDomain = email.split("@")[1]?.toLowerCase();
+    if (!emailDomain || FREE_EMAIL_DOMAINS.includes(emailDomain)) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Corporate registration requires a company email address. Free email providers are not accepted.",
+      });
     }
 
     // Check if user already exists
     const [existingUser] = await db.query(
-      "SELECT id, email FROM users WHERE email = ?",
-      [email]
+      "SELECT id, email, is_corporate_user, company_email_verified FROM users WHERE email = ?",
+      [email],
     );
 
     if (existingUser.length > 0) {
+      const existing = existingUser[0];
+
+      // Corporate account exists but email not yet verified → resend the link
+      if (existing.is_corporate_user && !existing.company_email_verified) {
+        const newToken = crypto.randomBytes(32).toString("hex");
+        const newExpiry = new Date(
+          Date.now() + TOKEN_EXPIRY_HOURS * 60 * 60 * 1000,
+        );
+        await db.query(
+          "UPDATE users SET email_verification_token = ?, email_verification_token_expiry = ?, company_name = ?, full_name = ? WHERE id = ?",
+          [newToken, newExpiry, company_name, name, existing.id],
+        );
+        const verificationLink = `${
+          process.env.FRONTEND_URL || "http://localhost:3000"
+        }/verify-email?token=${newToken}`;
+        try {
+          await sendEmail({
+            to: email,
+            subject: "Verify Your Corporate Account - Zevio",
+            html: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #2563eb;">Email Verification</h2>
+                <p>Hello ${name},</p>
+                <p>Here is a fresh verification link for your corporate account at <strong>${company_name}</strong>:</p>
+                <div style="text-align: center; margin: 30px 0;">
+                  <a href="${verificationLink}"
+                     style="background-color: #2563eb; color: white; padding: 12px 30px;
+                            text-decoration: none; border-radius: 5px; display: inline-block;">
+                    Verify Email Address
+                  </a>
+                </div>
+                <p style="color: #6b7280; word-break: break-all;">${verificationLink}</p>
+              </div>
+            `,
+          });
+        } catch (emailError) {
+          console.error("Error resending verification email:", emailError);
+        }
+        return res.status(200).json({
+          success: true,
+          resent: true,
+          message:
+            "A new verification link has been sent to your email. Please check your inbox.",
+          data: {
+            email,
+            company_name,
+            verification_required: true,
+          },
+        });
+      }
+
+      // Corporate account already verified
+      if (existing.is_corporate_user && existing.company_email_verified) {
+        return res.status(409).json({
+          success: false,
+          message:
+            "This email is already registered and verified. Please log in.",
+        });
+      }
+
+      // Regular (non-corporate) account with same email
       return res.status(409).json({
         success: false,
-        message: "User with this email already exists",
+        message:
+          "An account with this email already exists. Please log in instead.",
       });
     }
 
@@ -61,36 +154,38 @@ export const registerCorporate = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // Generate email verification token
+    // Generate email verification token + expiry
     const verificationToken = crypto.randomBytes(32).toString("hex");
+    const tokenExpiry = new Date(
+      Date.now() + TOKEN_EXPIRY_HOURS * 60 * 60 * 1000,
+    );
 
     // Insert user
     const userId = crypto.randomUUID();
     await db.query(
       `INSERT INTO users (
-        id, name, email, password, phone, role,
-        is_corporate_user, company_name, company_gst,
-        email_verification_token, company_email_verified
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        id, full_name, email, password_hash, phone,
+        is_corporate_user, company_name,
+        email_verification_token, email_verification_token_expiry, company_email_verified
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         userId,
         name,
         email,
         hashedPassword,
         phone,
-        "customer",
         true,
         company_name,
-        company_gst || null,
         verificationToken,
+        tokenExpiry,
         false,
-      ]
+      ],
     );
 
     // Send verification email
     const verificationLink = `${
       process.env.FRONTEND_URL || "http://localhost:3000"
-    }/verify-corporate-email?token=${verificationToken}`;
+    }/verify-email?token=${verificationToken}`;
 
     try {
       await sendEmail({
@@ -164,10 +259,10 @@ export const verifyCorporateEmail = async (req, res) => {
 
     // Find user with this token
     const [user] = await db.query(
-      `SELECT id, name, email, company_name, company_email_verified
+      `SELECT id, full_name, email, company_name, company_email_verified, email_verification_token_expiry
        FROM users 
        WHERE email_verification_token = ? AND is_corporate_user = TRUE`,
-      [token]
+      [token],
     );
 
     if (user.length === 0) {
@@ -179,33 +274,61 @@ export const verifyCorporateEmail = async (req, res) => {
 
     const userData = user[0];
 
+    // Check token expiry
+    if (
+      userData.email_verification_token_expiry &&
+      new Date() > new Date(userData.email_verification_token_expiry)
+    ) {
+      // Clear expired token
+      await db.query(
+        "UPDATE users SET email_verification_token = NULL, email_verification_token_expiry = NULL WHERE id = ?",
+        [userData.id],
+      );
+      return res.status(410).json({
+        success: false,
+        expired: true,
+        message:
+          "This verification link has expired. Please request a new one.",
+      });
+    }
+
     // Check if already verified
     if (userData.company_email_verified) {
       return res.status(400).json({
         success: false,
-        message: "Email already verified",
+        message: "Email already verified. You can log in.",
       });
     }
 
-    // Update user verification status
+    // Mark email as verified
     await db.query(
       `UPDATE users 
        SET company_email_verified = TRUE,
            email_verified_at = NOW(),
-           email_verification_token = NULL
+           email_verification_token = NULL,
+           email_verification_token_expiry = NULL
        WHERE id = ?`,
-      [userData.id]
+      [userData.id],
     );
+
+    // Generate login tokens so user is auto-logged in after verification
+    const tokens = generateTokens({
+      id: userData.id,
+      email: userData.email,
+      role: "user",
+      name: userData.full_name,
+    });
 
     res.json({
       success: true,
-      message:
-        "Corporate email verified successfully! You can now access exclusive corporate offers.",
+      message: "Corporate email verified successfully! Logging you in…",
       data: {
         user_id: userData.id,
         email: userData.email,
+        full_name: userData.full_name,
         company_name: userData.company_name,
         verified: true,
+        ...tokens,
       },
     });
   } catch (error) {
@@ -240,12 +363,11 @@ export const getCorporateStatus = async (req, res) => {
         email,
         is_corporate_user,
         company_name,
-        company_gst,
         company_email_verified,
         email_verified_at
        FROM users 
        WHERE id = ?`,
-      [userId]
+      [userId],
     );
 
     if (user.length === 0) {
@@ -262,11 +384,10 @@ export const getCorporateStatus = async (req, res) => {
       data: {
         is_corporate: Boolean(userData.is_corporate_user),
         company_name: userData.company_name,
-        company_gst: userData.company_gst,
         email_verified: Boolean(userData.company_email_verified),
         verified_at: userData.email_verified_at,
         can_access_corporate_offers: Boolean(
-          userData.is_corporate_user && userData.company_email_verified
+          userData.is_corporate_user && userData.company_email_verified,
         ),
       },
     });
@@ -297,10 +418,10 @@ export const resendCorporateVerification = async (req, res) => {
 
     // Find user
     const [user] = await db.query(
-      `SELECT id, name, email, company_name, is_corporate_user, company_email_verified
+      `SELECT id, full_name, email, company_name, is_corporate_user, company_email_verified
        FROM users 
        WHERE email = ?`,
-      [email]
+      [email],
     );
 
     if (user.length === 0) {
@@ -326,19 +447,22 @@ export const resendCorporateVerification = async (req, res) => {
       });
     }
 
-    // Generate new verification token
+    // Generate new verification token + expiry
     const verificationToken = crypto.randomBytes(32).toString("hex");
+    const tokenExpiry = new Date(
+      Date.now() + TOKEN_EXPIRY_HOURS * 60 * 60 * 1000,
+    );
 
     // Update token in database
     await db.query(
-      "UPDATE users SET email_verification_token = ? WHERE id = ?",
-      [verificationToken, userData.id]
+      "UPDATE users SET email_verification_token = ?, email_verification_token_expiry = ? WHERE id = ?",
+      [verificationToken, tokenExpiry, userData.id],
     );
 
     // Send verification email
     const verificationLink = `${
       process.env.FRONTEND_URL || "http://localhost:3000"
-    }/verify-corporate-email?token=${verificationToken}`;
+    }/verify-email?token=${verificationToken}`;
 
     await sendEmail({
       to: email,
@@ -346,7 +470,7 @@ export const resendCorporateVerification = async (req, res) => {
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #2563eb;">Email Verification</h2>
-          <p>Hello ${userData.name},</p>
+          <p>Hello ${userData.full_name},</p>
           <p>Please verify your corporate email address for <strong>${userData.company_name}</strong>:</p>
           <div style="text-align: center; margin: 30px 0;">
             <a href="${verificationLink}" 

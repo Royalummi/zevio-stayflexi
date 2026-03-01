@@ -91,10 +91,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Set authorization header for future requests
       api.defaults.headers.common["Authorization"] = `Bearer ${accessToken}`;
     } catch (error: unknown) {
-      const err = error as { response?: { data?: { message?: string } } };
+      const err = error as {
+        response?: {
+          data?: {
+            message?: string;
+            corporate_unverified?: boolean;
+            email?: string;
+          };
+        };
+      };
       const errorMessage =
         err.response?.data?.message || "Login failed. Please try again.";
-      throw new Error(errorMessage);
+      const thrownError = new Error(errorMessage);
+      // Attach full response data so callers can inspect it
+      Object.assign(thrownError, { responseData: err.response?.data });
+      throw thrownError;
     }
   };
 

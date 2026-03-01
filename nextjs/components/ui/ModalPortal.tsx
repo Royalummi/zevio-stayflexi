@@ -15,19 +15,22 @@ interface ModalPortalProps {
 export default function ModalPortal({ children, isOpen }: ModalPortalProps) {
   const [mounted, setMounted] = useState(false);
 
+  // Run once on mount to mark client-side hydration complete
   useEffect(() => {
     setMounted(true);
+  }, []);
 
-    // Prevent body scroll when modal is open
+  // Separately manage body scroll lock based on isOpen
+  useEffect(() => {
+    if (!mounted) return;
     if (isOpen) {
       const originalOverflow = document.body.style.overflow;
       document.body.style.overflow = "hidden";
-
       return () => {
         document.body.style.overflow = originalOverflow;
       };
     }
-  }, [isOpen]);
+  }, [isOpen, mounted]);
 
   if (!mounted || !isOpen) return null;
 

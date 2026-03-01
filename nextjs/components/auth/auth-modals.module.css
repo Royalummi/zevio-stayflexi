@@ -181,6 +181,7 @@
 /* Full width elements in two column */
 .authModal.signup .authFormGroup.fullWidth,
 .authModal.signup .authErrorMessage,
+.authModal.signup .authSuccessMessage,
 .authModal.signup .authSubmitBtn,
 .authModal.signup .authDivider,
 .authModal.signup .authSwitch,
@@ -378,7 +379,6 @@
 .authDivider {
     position: relative;
     text-align: center;
-    margin: 1.5rem 0;
 }
 
 .authDivider::before {
@@ -435,7 +435,7 @@
     font-size: 0.75rem;
     color: var(--brand-text-light);
     text-align: center;
-    margin-top: 1rem;
+    margin: 0;
     line-height: 1.5;
 }
 
@@ -549,7 +549,9 @@
     .authFormInput {
         border-width: 2px;
     }
-}/* ============================================================================
+}
+
+/* ============================================================================
    CORPORATE REGISTRATION
    ============================================================================ */
 
@@ -565,73 +567,379 @@
     line-height: 1.5;
 }
 
-/* Corporate Toggle Section */
-.corporateToggle {
-    grid-column: 1 / -1;
-    background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%);
-    border: 2px solid #3B82F6;
-    border-radius: 12px;
-    padding: 1.25rem;
-    margin-bottom: 1.5rem;
+/* ============================================================================
+   INPUT WITH ICON
+   ============================================================================ */
+.inputWrapper {
+    position: relative;
 }
 
-.corporateCheckbox {
+.inputIcon {
+    position: absolute;
+    left: 0.875rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--brand-text-light);
+    font-size: 1rem;
+    pointer-events: none;
+    transition: color 0.2s ease;
+    z-index: 1;
+}
+
+.inputWrapper:focus-within .inputIcon {
+    color: var(--brand-teal);
+}
+
+/* Also applies when icon is direct child of authPasswordInput */
+.authPasswordInput:focus-within .inputIcon {
+    color: var(--brand-teal);
+}
+
+.authFormInput.withIcon {
+    padding-left: 2.75rem;
+}
+
+/* ============================================================================
+   PASSWORD STRENGTH BAR
+   ============================================================================ */
+.strengthBar {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 0.5rem;
+}
+
+.strengthSegment {
+    height: 3px;
+    flex: 1;
+    border-radius: 2px;
+    background: var(--brand-border);
+    transition: background 0.3s ease;
+    display: block;
+}
+
+.strengthLabel {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    min-width: 42px;
+    transition: color 0.3s ease;
+}
+
+/* ============================================================================
+   CONFIRM PASSWORD MATCH
+   ============================================================================ */
+.matchHintOk {
+    display: block;
+    margin-top: 0.375rem;
+    font-size: 0.75rem;
+    color: #10B981;
+    font-weight: 500;
+}
+
+.matchHintBad {
+    display: block;
+    margin-top: 0.375rem;
+    font-size: 0.75rem;
+    color: #EF4444;
+    font-weight: 500;
+}
+
+/* ============================================================================
+   CORPORATE TOGGLE
+   ============================================================================ */
+.corporateToggle {
+    grid-column: 1 / -1;
+    border: 1.5px solid var(--brand-border);
+    border-radius: 12px;
+    padding: 0.875rem 1.125rem;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease;
+    user-select: none;
+    outline: none;
+}
+
+.corporateToggle:hover {
+    border-color: #93C5FD;
+    background: #F8FBFF;
+}
+
+.corporateToggle:focus-visible {
+    outline: 2px solid var(--brand-teal);
+    outline-offset: 2px;
+}
+
+.corporateToggleActive {
+    border-color: #3B82F6;
+    background: linear-gradient(135deg, #F0F6FF 0%, #EEF4FF 100%);
+}
+
+.corporateToggleRow {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    cursor: pointer;
-    font-weight: 500;
-    color: #1E40AF;
-    font-size: 1rem;
 }
 
-.corporateCheckbox input[type="checkbox"] {
-    width: 20px;
-    height: 20px;
-    cursor: pointer;
-    accent-color: #3B82F6;
+.corporateToggleLabel {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    font-weight: 500;
+    color: var(--brand-navy);
+    font-size: 0.9375rem;
+}
+
+/* Pill toggle switch */
+.toggleSwitch {
+    width: 40px;
+    height: 22px;
+    border-radius: 11px;
+    background: #D1D5DB;
+    position: relative;
+    flex-shrink: 0;
+    transition: background 0.2s ease;
+    display: block;
+}
+
+.toggleSwitch::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: white;
+    top: 3px;
+    left: 3px;
+    transition: transform 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.toggleSwitchOn {
+    background: #3B82F6;
+}
+
+.toggleSwitchOn::after {
+    transform: translateX(18px);
 }
 
 .corporateIcon {
-    font-size: 1.25rem;
+    font-size: 1.125rem;
     color: #3B82F6;
+    flex-shrink: 0;
 }
 
 .corporateNote {
-    margin: 0.75rem 0 0 2.75rem;
-    font-size: 0.875rem;
+    margin: 0.75rem 0 0;
+    font-size: 0.8125rem;
     color: #1E3A8A;
     line-height: 1.5;
-    padding-left: 1rem;
+    padding: 0.5rem 0.75rem;
+    background: rgba(59, 130, 246, 0.06);
+    border-radius: 7px;
     border-left: 3px solid #3B82F6;
 }
 
 /* Field Hint */
 .fieldHint {
     display: block;
-    margin-top: 0.5rem;
+    margin-top: 0.4rem;
     font-size: 0.8125rem;
-    color: #6B7280;
+    color: var(--brand-text-light);
     font-style: italic;
+}
+
+.fieldHintWarn {
+    display: block;
+    margin-top: 0.4rem;
+    font-size: 0.75rem;
+    color: #B45309;
+    line-height: 1.45;
 }
 
 /* Responsive - Corporate Toggle */
 @media (max-width: 768px) {
     .corporateToggle {
-        padding: 1rem;
+        padding: 0.75rem 1rem;
     }
 
-    .corporateCheckbox {
-        font-size: 0.9375rem;
+    .corporateToggleLabel {
+        font-size: 0.875rem;
     }
 
     .corporateNote {
-        margin-left: 0;
-        padding-left: 0.75rem;
         font-size: 0.8125rem;
     }
 
-    .fieldHint {
+    .fieldHint,
+    .fieldHintWarn {
         font-size: 0.75rem;
     }
+}
+
+/* ============================================================================
+   EMAIL VERIFICATION SENT MODAL
+   ============================================================================ */
+.verifyEmailHeader {
+    padding: 2.5rem 2rem 1.25rem;
+    text-align: center;
+    border-bottom: 1px solid var(--brand-border);
+}
+
+.verifyEmailIconWrap {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(47, 164, 169, 0.12), rgba(47, 164, 169, 0.06));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.25rem;
+    border: 2px solid rgba(47, 164, 169, 0.2);
+}
+
+.verifyEmailIcon {
+    font-size: 2rem;
+    color: var(--brand-teal);
+}
+
+.verifyEmailAddress {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--brand-navy);
+    margin-top: 0.375rem;
+    word-break: break-all;
+}
+
+.verifyCompanyName {
+    font-size: 0.875rem;
+    color: var(--brand-text-light);
+    margin-top: 0.25rem;
+}
+
+.verifyEmailBody {
+    padding: 1.75rem 2rem 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.verifyEmailInstructions {
+    font-size: 0.9375rem;
+    color: var(--brand-text-light);
+    line-height: 1.6;
+    text-align: center;
+    margin: 0;
+}
+
+.verifyResendRow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.625rem;
+    flex-wrap: wrap;
+}
+
+.verifyResendLabel {
+    font-size: 0.875rem;
+    color: var(--brand-text-light);
+}
+
+.verifyResendBtn {
+    background: none;
+    border: none;
+    color: var(--brand-teal);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    transition: color 0.2s, background 0.2s;
+}
+
+.verifyResendBtn:hover:not(:disabled) {
+    color: var(--brand-teal-dark);
+    background: rgba(47, 164, 169, 0.06);
+    text-decoration: underline;
+}
+
+.verifyResendBtn:disabled {
+    color: var(--brand-text-light);
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.verifyResendSuccess {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: #F0FDF4;
+    border: 1px solid #86EFAC;
+    color: #166534;
+    padding: 0.625rem 0.875rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+/* ============================================================================
+   LOGIN — CORPORATE UNVERIFIED BANNER
+   ============================================================================ */
+.corporateUnverifiedBanner {
+    background: #FFF7ED;
+    border: 1px solid #FED7AA;
+    border-radius: 10px;
+    padding: 1rem 1.125rem;
+    margin-bottom: 1.25rem;
+}
+
+.corporateUnverifiedTitle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: #92400E;
+    margin: 0 0 0.375rem;
+}
+
+.corporateUnverifiedText {
+    font-size: 0.8125rem;
+    color: #B45309;
+    margin: 0 0 0.75rem;
+    line-height: 1.5;
+}
+
+.corporateUnverifiedActions {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    flex-wrap: wrap;
+}
+
+.corporateResendBtn {
+    background: #92400E;
+    color: white;
+    border: none;
+    border-radius: 7px;
+    padding: 0.5rem 1rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.corporateResendBtn:hover:not(:disabled) {
+    background: #78350F;
+}
+
+.corporateResendBtn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.corporateResendCooldown {
+    font-size: 0.75rem;
+    color: #B45309;
 }

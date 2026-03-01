@@ -196,27 +196,24 @@
   margin-bottom: 1.5rem;
 }
 
-.bannerStats {
+.bannerMeta {
   display: flex;
-  gap: 2rem;
   flex-wrap: wrap;
+  gap: 0.75rem 1.75rem;
+  margin-top: 0.75rem;
 }
 
-.bannerStat {
+.bannerMetaItem {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.85);
 }
 
-.bannerStatValue {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: white;
-}
-
-.bannerStatLabel {
-  font-size: 0.875rem;
-  color: rgba(255, 255, 255, 0.7);
-  margin-top: 0.25rem;
+.bannerMetaItem svg {
+  color: #4ABBC0;
+  flex-shrink: 0;
 }
 
 /* ===================================================================
@@ -225,8 +222,9 @@
 
 .profileGrid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 2fr 1fr;
   gap: 2rem;
+  align-items: start;
 }
 
 /* ===================================================================
@@ -581,7 +579,7 @@
     text-align: center;
   }
 
-  .bannerStats {
+  .bannerMeta {
     justify-content: center;
   }
 }

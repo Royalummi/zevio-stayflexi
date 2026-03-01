@@ -213,3 +213,30 @@
         height: 48px;
     }
 }
+
+/* Resend Form (expired / error states) */
+.resendForm {
+    width: 100%;
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin: 0.75rem 0;
+    text-align: left;
+}
+
+.resendInput {
+    width: 100%;
+    padding: 0.625rem 0.875rem;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.9375rem;
+    color: #1e293b;
+    background: #ffffff;
+    outline: none;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+}
+
+.resendInput:focus {
+    border-color: #667eea;
+}

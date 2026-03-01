@@ -524,13 +524,21 @@ export const getMyBookings = asyncHandler(async (req, res) => {
     return res.send(csv);
   }
 
-  // Count total
-  const countQuery = query.replace(
-    /SELECT.*FROM/,
-    "SELECT COUNT(*) as total FROM",
-  );
-  const [countResult] = await db.query(countQuery, params);
-  const total = countResult[0].total;
+  // Count total — build separately so multi-line SQL doesn't break regex replacement
+  let countQuery = `
+    SELECT COUNT(*) as total
+    FROM bookings b
+    INNER JOIN properties p ON b.property_id = p.id
+    INNER JOIN cities c ON p.city_id = c.id
+    WHERE b.user_id = ? AND b.deleted_at IS NULL
+  `;
+  const countParams = [userId];
+  if (status) {
+    countQuery += ` AND b.status = ?`;
+    countParams.push(status);
+  }
+  const [countResult] = await db.query(countQuery, countParams);
+  const total = countResult[0]?.total ?? 0;
 
   // Add pagination
   const offset = (parseInt(page) - 1) * parseInt(limit);

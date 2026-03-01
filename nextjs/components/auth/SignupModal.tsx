@@ -1,7 +1,17 @@
 "use client";
 
-import { useState } from "react";
-import { FiX, FiEye, FiEyeOff, FiBriefcase } from "react-icons/fi";
+import { useState, useMemo } from "react";
+import {
+  FiX,
+  FiEye,
+  FiEyeOff,
+  FiBriefcase,
+  FiUser,
+  FiMail,
+  FiPhone,
+  FiLock,
+  FiGrid,
+} from "react-icons/fi";
 import { useAuth } from "@/contexts/AuthContext";
 import ModalPortal from "@/components/ui/ModalPortal";
 import { validateEmail, validatePhone, validatePassword } from "@/lib/utils";
@@ -12,12 +22,14 @@ interface SignupModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSwitchToLogin: () => void;
+  onCorporateRegistered: (email: string, companyName: string) => void;
 }
 
 export default function SignupModal({
   isOpen,
   onClose,
   onSwitchToLogin,
+  onCorporateRegistered,
 }: SignupModalProps) {
   const { register } = useAuth();
   const [formData, setFormData] = useState({
@@ -27,7 +39,6 @@ export default function SignupModal({
     password: "",
     confirmPassword: "",
     company_name: "",
-    gst_number: "",
   });
   const [isCorporate, setIsCorporate] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -35,63 +46,107 @@ export default function SignupModal({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<{
+    email?: string;
+    phone?: string;
+    password?: string;
+    confirmPassword?: string;
+    company_name?: string;
+  }>({});
+
+  // Password strength: 0-4
+  const passwordStrength = useMemo(() => {
+    const p = formData.password;
+    if (!p) return 0;
+    let score = 0;
+    if (p.length >= 8) score++;
+    if (/[A-Z]/.test(p)) score++;
+    if (/[0-9]/.test(p)) score++;
+    if (/[^A-Za-z0-9]/.test(p)) score++;
+    return score;
+  }, [formData.password]);
+  const strengthMeta = [
+    { label: "", color: "" },
+    { label: "Weak", color: "#EF4444" },
+    { label: "Fair", color: "#F59E0B" },
+    { label: "Good", color: "#3B82F6" },
+    { label: "Strong", color: "#10B981" },
+  ];
+  const { label: strengthLabel, color: strengthColor } =
+    strengthMeta[passwordStrength];
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+    // Clear the inline error for this field as the user types
+    if (fieldErrors[name as keyof typeof fieldErrors]) {
+      setFieldErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
   };
 
   const validateForm = () => {
-    // Email validation
+    const errors: typeof fieldErrors = {};
+
     if (!validateEmail(formData.email)) {
-      setError("Please enter a valid email address");
-      return false;
+      errors.email = "Please enter a valid email address.";
     }
 
-    // Phone validation
     if (!validatePhone(formData.phone)) {
-      setError("Please enter a valid 10-digit phone number");
-      return false;
+      errors.phone = "Please enter a valid 10-digit phone number.";
     }
 
-    // Password validation
     const passwordValidation = validatePassword(formData.password);
     if (!passwordValidation.isValid) {
-      setError(passwordValidation.errors[0]);
-      return false;
+      errors.password = passwordValidation.errors[0];
     }
 
-    // Confirm password match
     if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match");
-      return false;
+      errors.confirmPassword = "Passwords do not match.";
     }
 
-    // Corporate-specific validation
     if (isCorporate) {
       if (!formData.company_name.trim()) {
-        setError("Company name is required for corporate registration");
-        return false;
+        errors.company_name =
+          "Company name is required for corporate accounts.";
       }
 
-      if (!formData.gst_number.trim()) {
-        setError("GST number is required for corporate registration");
-        return false;
-      }
-
-      // GST format validation (15 characters alphanumeric)
-      const gstRegex =
-        /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
-      if (!gstRegex.test(formData.gst_number)) {
-        setError(
-          "Please enter a valid 15-character GST number (e.g., 22AAAAA0000A1Z5)"
-        );
-        return false;
+      const freeEmailDomains = [
+        "gmail.com",
+        "yahoo.com",
+        "hotmail.com",
+        "outlook.com",
+        "live.com",
+        "icloud.com",
+        "aol.com",
+        "protonmail.com",
+        "mail.com",
+        "ymail.com",
+        "rediffmail.com",
+        "zoho.com",
+        "inbox.com",
+        "gmx.com",
+        "fastmail.com",
+        "me.com",
+        "mac.com",
+        "msn.com",
+        "yahoo.in",
+        "yahoo.co.in",
+      ];
+      const emailDomain = formData.email.split("@")[1]?.toLowerCase();
+      if (
+        !errors.email &&
+        (!emailDomain || freeEmailDomains.includes(emailDomain))
+      ) {
+        errors.email =
+          "Please use your company email. Free providers (Gmail, Yahoo, Outlook, etc.) are not accepted.";
       }
     }
 
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      return false;
+    }
+    setFieldErrors({});
     return true;
   };
 
@@ -99,6 +154,7 @@ export default function SignupModal({
     e.preventDefault();
     setError("");
     setSuccessMessage("");
+    setFieldErrors({});
 
     if (!validateForm()) return;
 
@@ -107,34 +163,18 @@ export default function SignupModal({
     try {
       if (isCorporate) {
         // Corporate registration with email verification
-        const response = await api.post("/auth/register-corporate", {
+        const response = await api.post("/corporate/register", {
           full_name: formData.full_name,
           email: formData.email,
           phone: formData.phone,
           password: formData.password,
           company_name: formData.company_name,
-          gst_number: formData.gst_number,
         });
 
         if (response.data.success) {
-          setSuccessMessage(
-            "Registration successful! A verification email has been sent to your email address. Please verify your email to access corporate features."
-          );
-          // Clear form after 3 seconds
-          setTimeout(() => {
-            onClose();
-            setFormData({
-              full_name: "",
-              email: "",
-              phone: "",
-              password: "",
-              confirmPassword: "",
-              company_name: "",
-              gst_number: "",
-            });
-            setIsCorporate(false);
-            setSuccessMessage("");
-          }, 5000);
+          // Let handleCorporateRegistered close signup AND open the verification modal
+          // in a single batched state update — do NOT call onClose() separately
+          onCorporateRegistered(formData.email, formData.company_name);
         }
       } else {
         // Regular registration
@@ -153,7 +193,6 @@ export default function SignupModal({
           password: "",
           confirmPassword: "",
           company_name: "",
-          gst_number: "",
         });
       }
     } catch (err: unknown) {
@@ -162,7 +201,7 @@ export default function SignupModal({
       };
       setError(
         error.response?.data?.message ||
-          "Registration failed. Please try again."
+          "Registration failed. Please try again.",
       );
     } finally {
       setIsLoading(false);
@@ -198,100 +237,147 @@ export default function SignupModal({
               </p>
             </div>
 
-            {/* Form - Two Column Layout on Desktop */}
             <form onSubmit={handleSubmit} className={styles.authModalForm}>
-              {/* Error Message (Full Width) */}
+              {/* Server/submission error only */}
               {error && <div className={styles.authErrorMessage}>{error}</div>}
 
-              {/* Success Message (Full Width) */}
+              {/* Success */}
               {successMessage && (
                 <div className={styles.authSuccessMessage}>
                   {successMessage}
                 </div>
               )}
 
-              {/* Corporate Toggle (Full Width) */}
-              <div className={styles.corporateToggle}>
-                <label className={styles.corporateCheckbox}>
-                  <input
-                    type="checkbox"
-                    checked={isCorporate}
-                    onChange={(e) => setIsCorporate(e.target.checked)}
+              {/* ── Corporate Toggle ── */}
+              <div
+                className={`${styles.corporateToggle} ${
+                  isCorporate ? styles.corporateToggleActive : ""
+                }`}
+                onClick={() => setIsCorporate(!isCorporate)}
+                role="checkbox"
+                aria-checked={isCorporate}
+                tabIndex={0}
+                onKeyDown={(e) =>
+                  (e.key === " " || e.key === "Enter") &&
+                  setIsCorporate(!isCorporate)
+                }
+              >
+                <div className={styles.corporateToggleRow}>
+                  <span className={styles.corporateToggleLabel}>
+                    <FiBriefcase className={styles.corporateIcon} />
+                    I&apos;m registering for my company
+                  </span>
+                  <span
+                    className={`${styles.toggleSwitch} ${
+                      isCorporate ? styles.toggleSwitchOn : ""
+                    }`}
                   />
-                  <FiBriefcase className={styles.corporateIcon} />
-                  <span>Im registering for my company</span>
-                </label>
+                </div>
                 {isCorporate && (
                   <p className={styles.corporateNote}>
                     Corporate accounts get exclusive discounts on service
-                    apartments. Email verification required.
+                    apartments. A company email is required and will be
+                    verified.
                   </p>
                 )}
               </div>
 
-              {/* Full Name Field */}
+              {/* ── Full Name ── */}
               <div className={styles.authFormGroup}>
                 <label className={styles.authFormLabel} htmlFor="signup-name">
                   Full Name
                 </label>
-                <input
-                  id="signup-name"
-                  type="text"
-                  name="full_name"
-                  value={formData.full_name}
-                  onChange={handleChange}
-                  placeholder="John Doe"
-                  className={styles.authFormInput}
-                  required
-                  autoFocus
-                />
+                <div className={styles.inputWrapper}>
+                  <FiUser className={styles.inputIcon} />
+                  <input
+                    id="signup-name"
+                    type="text"
+                    name="full_name"
+                    value={formData.full_name}
+                    onChange={handleChange}
+                    placeholder="John Doe"
+                    className={`${styles.authFormInput} ${styles.withIcon}`}
+                    required
+                    autoFocus
+                  />
+                </div>
               </div>
 
-              {/* Email Field */}
+              {/* ── Email ── */}
               <div className={styles.authFormGroup}>
                 <label className={styles.authFormLabel} htmlFor="signup-email">
                   Email Address
                 </label>
-                <input
-                  id="signup-email"
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  placeholder="your@email.com"
-                  className={styles.authFormInput}
-                  required
-                />
+                <div className={styles.inputWrapper}>
+                  <FiMail className={styles.inputIcon} />
+                  <input
+                    id="signup-email"
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    placeholder="your@email.com"
+                    className={`${styles.authFormInput} ${styles.withIcon} ${
+                      fieldErrors.email ? styles.error : ""
+                    }`}
+                    required
+                  />
+                </div>
+                {fieldErrors.email ? (
+                  <small className={styles.matchHintBad}>
+                    ✗ {fieldErrors.email}
+                  </small>
+                ) : isCorporate ? (
+                  <small className={styles.fieldHintWarn}>
+                    Use your official company email — free providers (Gmail,
+                    Yahoo, Outlook&hellip;) are not accepted.
+                  </small>
+                ) : null}
               </div>
 
-              {/* Phone Field */}
-              <div className={styles.authFormGroup}>
+              {/* ── Phone — full-width when non-corporate ── */}
+              <div
+                className={`${styles.authFormGroup} ${
+                  !isCorporate ? styles.fullWidth : ""
+                }`}
+              >
                 <label className={styles.authFormLabel} htmlFor="signup-phone">
                   Phone Number
                 </label>
-                <input
-                  id="signup-phone"
-                  type="tel"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  placeholder="9876543210"
-                  className={styles.authFormInput}
-                  maxLength={10}
-                  required
-                />
+                <div className={styles.inputWrapper}>
+                  <FiPhone className={styles.inputIcon} />
+                  <input
+                    id="signup-phone"
+                    type="tel"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    placeholder="9876543210"
+                    className={`${styles.authFormInput} ${styles.withIcon} ${
+                      fieldErrors.phone ? styles.error : ""
+                    }`}
+                    maxLength={10}
+                    required
+                  />
+                </div>
+                {fieldErrors.phone && (
+                  <small className={styles.matchHintBad}>
+                    ✗ {fieldErrors.phone}
+                  </small>
+                )}
               </div>
 
-              {/* Corporate Fields (Conditional) */}
+              {/* ── Company Name (corporate only) ── */}
               {isCorporate && (
-                <>
-                  <div className={styles.authFormGroup}>
-                    <label
-                      className={styles.authFormLabel}
-                      htmlFor="signup-company"
-                    >
-                      Company Name
-                    </label>
+                <div className={styles.authFormGroup}>
+                  <label
+                    className={styles.authFormLabel}
+                    htmlFor="signup-company"
+                  >
+                    Company Name
+                  </label>
+                  <div className={styles.inputWrapper}>
+                    <FiGrid className={styles.inputIcon} />
                     <input
                       id="signup-company"
                       type="text"
@@ -299,54 +385,40 @@ export default function SignupModal({
                       value={formData.company_name}
                       onChange={handleChange}
                       placeholder="ABC Pvt Ltd"
-                      className={styles.authFormInput}
+                      className={`${styles.authFormInput} ${styles.withIcon} ${
+                        fieldErrors.company_name ? styles.error : ""
+                      }`}
                       required={isCorporate}
                     />
                   </div>
-
-                  <div className={styles.authFormGroup}>
-                    <label
-                      className={styles.authFormLabel}
-                      htmlFor="signup-gst"
-                    >
-                      GST Number
-                    </label>
-                    <input
-                      id="signup-gst"
-                      type="text"
-                      name="gst_number"
-                      value={formData.gst_number}
-                      onChange={handleChange}
-                      placeholder="22AAAAA0000A1Z5"
-                      className={styles.authFormInput}
-                      maxLength={15}
-                      required={isCorporate}
-                      style={{ textTransform: "uppercase" }}
-                    />
-                    <small className={styles.fieldHint}>
-                      15-character GST identification number
+                  {fieldErrors.company_name && (
+                    <small className={styles.matchHintBad}>
+                      ✗ {fieldErrors.company_name}
                     </small>
-                  </div>
-                </>
+                  )}
+                </div>
               )}
 
-              {/* Password Field */}
+              {/* ── Password ── */}
               <div className={styles.authFormGroup}>
                 <label
                   className={styles.authFormLabel}
                   htmlFor="signup-password"
                 >
-                  Password (min 8 characters)
+                  Password
                 </label>
                 <div className={styles.authPasswordInput}>
+                  <FiLock className={styles.inputIcon} />
                   <input
                     id="signup-password"
                     type={showPassword ? "text" : "password"}
                     name="password"
                     value={formData.password}
                     onChange={handleChange}
-                    placeholder="Create a strong password"
-                    className={styles.authFormInput}
+                    placeholder="Min 8 characters"
+                    className={`${styles.authFormInput} ${styles.withIcon} ${
+                      fieldErrors.password ? styles.error : ""
+                    }`}
                     required
                   />
                   <button
@@ -360,9 +432,36 @@ export default function SignupModal({
                     {showPassword ? <FiEyeOff /> : <FiEye />}
                   </button>
                 </div>
+                {fieldErrors.password && (
+                  <small className={styles.matchHintBad}>
+                    ✗ {fieldErrors.password}
+                  </small>
+                )}
+                {formData.password && !fieldErrors.password && (
+                  <div className={styles.strengthBar}>
+                    {[1, 2, 3, 4].map((i) => (
+                      <span
+                        key={i}
+                        className={styles.strengthSegment}
+                        style={{
+                          background:
+                            passwordStrength >= i
+                              ? strengthColor
+                              : "var(--brand-border)",
+                        }}
+                      />
+                    ))}
+                    <span
+                      className={styles.strengthLabel}
+                      style={{ color: strengthColor }}
+                    >
+                      {strengthLabel}
+                    </span>
+                  </div>
+                )}
               </div>
 
-              {/* Confirm Password Field */}
+              {/* ── Confirm Password ── */}
               <div className={styles.authFormGroup}>
                 <label
                   className={styles.authFormLabel}
@@ -371,6 +470,7 @@ export default function SignupModal({
                   Confirm Password
                 </label>
                 <div className={styles.authPasswordInput}>
+                  <FiLock className={styles.inputIcon} />
                   <input
                     id="signup-confirm-password"
                     type={showConfirmPassword ? "text" : "password"}
@@ -378,7 +478,9 @@ export default function SignupModal({
                     value={formData.confirmPassword}
                     onChange={handleChange}
                     placeholder="Re-enter your password"
-                    className={styles.authFormInput}
+                    className={`${styles.authFormInput} ${styles.withIcon} ${
+                      fieldErrors.confirmPassword ? styles.error : ""
+                    }`}
                     required
                   />
                   <button
@@ -392,30 +494,43 @@ export default function SignupModal({
                     {showConfirmPassword ? <FiEyeOff /> : <FiEye />}
                   </button>
                 </div>
+                {formData.confirmPassword && (
+                  <small
+                    className={
+                      formData.password === formData.confirmPassword
+                        ? styles.matchHintOk
+                        : styles.matchHintBad
+                    }
+                  >
+                    {formData.password === formData.confirmPassword
+                      ? "✓ Passwords match"
+                      : "✗ Passwords do not match"}
+                  </small>
+                )}
               </div>
 
-              {/* Submit Button (Full Width) */}
+              {/* ── Submit ── */}
               <button
                 type="submit"
                 className={styles.authSubmitBtn}
                 disabled={isLoading}
               >
-                {isLoading ? "Creating Account..." : "Create Account"}
+                {isLoading ? "Creating Account…" : "Create Account"}
               </button>
 
-              {/* Terms (Full Width) */}
+              {/* ── Terms ── */}
               <p className={styles.authTerms}>
                 By signing up, you agree to our{" "}
                 <a href="/terms">Terms of Service</a> and{" "}
                 <a href="/privacy">Privacy Policy</a>
               </p>
 
-              {/* Divider (Full Width) */}
+              {/* ── Divider ── */}
               <div className={styles.authDivider}>
                 <span>Or</span>
               </div>
 
-              {/* Switch to Login (Full Width) */}
+              {/* ── Switch to Login ── */}
               <div className={styles.authSwitch}>
                 <span>Already have an account?</span>
                 <button

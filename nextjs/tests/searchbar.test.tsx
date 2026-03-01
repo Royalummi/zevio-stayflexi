@@ -282,8 +282,8 @@ describe("SearchBar Component", () => {
       // After selection, searchInput has a value so the clear button is visible
       // It's an icon-only button; find it by querying for buttons without label text
       const allButtons = screen.getAllByRole("button");
-      const clearBtn = allButtons.find(
-        (btn) => btn.className.includes("clearBtn"),
+      const clearBtn = allButtons.find((btn) =>
+        btn.className.includes("clearBtn"),
       )!;
       await user.click(clearBtn);
 
