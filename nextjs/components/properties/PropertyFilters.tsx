@@ -13,8 +13,14 @@ import {
   FiDollarSign,
   FiMinus,
   FiPlus,
+  FiWifi,
+  FiDroplet,
+  FiTruck,
+  FiHeart,
+  FiSun,
 } from "react-icons/fi";
 import { IoBed } from "react-icons/io5";
+import { MdFitnessCenter } from "react-icons/md";
 import styles from "./PropertyFilters.module.css";
 
 export interface PropertyFiltersState {
@@ -27,12 +33,18 @@ export interface PropertyFiltersState {
   checkin: string;
   checkout: string;
   sortBy: string;
+  hasPool: boolean;
+  hasParking: boolean;
+  hasGym: boolean;
+  hasWifi: boolean;
+  hasPetFriendly: boolean;
+  hasGarden: boolean;
 }
 
 interface PropertyFiltersProps {
   cities: City[];
   filters: PropertyFiltersState;
-  onFilterChange: (key: keyof PropertyFiltersState, value: string) => void;
+  onFilterChange: (key: keyof PropertyFiltersState, value: string | boolean) => void;
   onClearFilters: () => void;
   resultsCount: number;
 }
@@ -51,6 +63,12 @@ export default function PropertyFilters({
     filters.children !== "" && parseInt(filters.children) > 0,
     filters.minPrice !== "" || filters.maxPrice !== "",
     filters.bedrooms !== "",
+    filters.hasPool,
+    filters.hasParking,
+    filters.hasGym,
+    filters.hasWifi,
+    filters.hasPetFriendly,
+    filters.hasGarden,
   ].filter(Boolean).length;
 
   // Auto-expand filters if any are active on initial load
@@ -76,6 +94,7 @@ export default function PropertyFilters({
   const capacityRef = useRef<HTMLDivElement>(null);
   const priceRef = useRef<HTMLDivElement>(null);
   const bedroomsRef = useRef<HTMLDivElement>(null);
+  const amenitiesRef = useRef<HTMLDivElement>(null);
   const sortRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown on outside click
@@ -87,6 +106,7 @@ export default function PropertyFilters({
         capacityRef,
         priceRef,
         bedroomsRef,
+        amenitiesRef,
         sortRef,
       ];
       if (
@@ -204,6 +224,19 @@ export default function PropertyFilters({
       })}`;
     }
     return "Select Dates";
+  };
+
+  const getAmenitiesText = () => {
+    const count = [
+      filters.hasPool,
+      filters.hasParking,
+      filters.hasGym,
+      filters.hasWifi,
+      filters.hasPetFriendly,
+      filters.hasGarden,
+    ].filter(Boolean).length;
+    if (count === 0) return "All Amenities";
+    return `${count} Amenit${count > 1 ? "ies" : "y"}`;
   };
 
   const getSortText = () => {
@@ -593,6 +626,91 @@ export default function PropertyFilters({
                 >
                   5+ Bedrooms
                 </button>
+              </div>
+            )}
+          </div>
+
+          {/* Amenities Filter */}
+          <div className={styles.filterItem} ref={amenitiesRef}>
+            <button
+              className={`${styles.filterButton} ${getAmenitiesText() !== "All Amenities" ? styles.active : ""}`}
+              onClick={() => toggleDropdown("amenities")}
+            >
+              <FiFilter className={styles.icon} />
+              <span className={styles.label}>{getAmenitiesText()}</span>
+              <FiChevronDown className={styles.chevron} />
+            </button>
+
+            {openDropdown === "amenities" && (
+              <div className={styles.dropdown}>
+                <div className={styles.amenitiesSection}>
+                  <label className={styles.amenityItem}>
+                    <input
+                      type="checkbox"
+                      checked={filters.hasPool}
+                      onChange={(e) =>
+                        onFilterChange("hasPool", e.target.checked)
+                      }
+                    />
+                    <FiDroplet className={styles.amenityIcon} />
+                    <span>Swimming Pool</span>
+                  </label>
+                  <label className={styles.amenityItem}>
+                    <input
+                      type="checkbox"
+                      checked={filters.hasParking}
+                      onChange={(e) =>
+                        onFilterChange("hasParking", e.target.checked)
+                      }
+                    />
+                    <FiTruck className={styles.amenityIcon} />
+                    <span>Parking</span>
+                  </label>
+                  <label className={styles.amenityItem}>
+                    <input
+                      type="checkbox"
+                      checked={filters.hasGym}
+                      onChange={(e) =>
+                        onFilterChange("hasGym", e.target.checked)
+                      }
+                    />
+                    <MdFitnessCenter className={styles.amenityIcon} />
+                    <span>Gym</span>
+                  </label>
+                  <label className={styles.amenityItem}>
+                    <input
+                      type="checkbox"
+                      checked={filters.hasWifi}
+                      onChange={(e) =>
+                        onFilterChange("hasWifi", e.target.checked)
+                      }
+                    />
+                    <FiWifi className={styles.amenityIcon} />
+                    <span>WiFi</span>
+                  </label>
+                  <label className={styles.amenityItem}>
+                    <input
+                      type="checkbox"
+                      checked={filters.hasPetFriendly}
+                      onChange={(e) =>
+                        onFilterChange("hasPetFriendly", e.target.checked)
+                      }
+                    />
+                    <FiHeart className={styles.amenityIcon} />
+                    <span>Pet Friendly</span>
+                  </label>
+                  <label className={styles.amenityItem}>
+                    <input
+                      type="checkbox"
+                      checked={filters.hasGarden}
+                      onChange={(e) =>
+                        onFilterChange("hasGarden", e.target.checked)
+                      }
+                    />
+                    <FiSun className={styles.amenityIcon} />
+                    <span>Garden</span>
+                  </label>
+                </div>
               </div>
             )}
           </div>

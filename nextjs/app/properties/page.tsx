@@ -51,6 +51,12 @@ function PropertiesContent() {
       checkin: checkinParam || "",
       checkout: checkoutParam || "",
       sortBy: "recommended",
+      hasPool: false,
+      hasParking: false,
+      hasGym: false,
+      hasWifi: false,
+      hasPetFriendly: false,
+      hasGarden: false,
     };
   });
 
@@ -140,6 +146,38 @@ function PropertiesContent() {
       );
     }
 
+    // Filter by amenities
+    const getPropertyAmenities = (amenities: string[] | string): string[] => {
+      if (Array.isArray(amenities)) return amenities.map((a) => a.toLowerCase());
+      if (typeof amenities === "string") {
+        try {
+          const parsed = JSON.parse(amenities);
+          if (Array.isArray(parsed))
+            return parsed.map((a: string) => a.toLowerCase());
+        } catch {}
+        return amenities.split(",").map((a) => a.trim().toLowerCase());
+      }
+      return [];
+    };
+    const requiredAmenities: string[] = [
+      [filters.hasPool, "swimming pool"],
+      [filters.hasParking, "parking"],
+      [filters.hasGym, "gym"],
+      [filters.hasWifi, "wifi"],
+      [filters.hasPetFriendly, "pet friendly"],
+      [filters.hasGarden, "garden"],
+    ]
+      .filter(([active]) => active)
+      .map(([, name]) => name as string);
+    if (requiredAmenities.length > 0) {
+      filtered = filtered.filter((p) => {
+        const propAmenities = getPropertyAmenities(p.amenities);
+        return requiredAmenities.every((a) =>
+          propAmenities.some((pa) => pa.includes(a)),
+        );
+      });
+    }
+
     // Sorting
     if (filters.sortBy === "price-low") {
       filtered.sort((a, b) => a.price_per_night - b.price_per_night);
@@ -154,7 +192,7 @@ function PropertiesContent() {
 
   const handleFilterChange = (
     key: keyof PropertyFiltersState,
-    value: string,
+    value: string | boolean,
   ) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
   };
@@ -170,6 +208,12 @@ function PropertiesContent() {
       checkin: "",
       checkout: "",
       sortBy: "recommended",
+      hasPool: false,
+      hasParking: false,
+      hasGym: false,
+      hasWifi: false,
+      hasPetFriendly: false,
+      hasGarden: false,
     });
   };
 
