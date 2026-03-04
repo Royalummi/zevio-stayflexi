@@ -101,7 +101,7 @@ export default function ProfileRedesign() {
   const profileUser = user as ProfileUser;
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     setFormData({
       ...formData,
@@ -420,8 +420,6 @@ export default function ProfileRedesign() {
                 </div>
               </form>
             </div>
-
-
           </div>
 
           {/* Right Column - Security */}

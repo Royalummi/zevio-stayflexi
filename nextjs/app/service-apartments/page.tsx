@@ -271,30 +271,12 @@ function ServiceApartmentsContent() {
     });
   };
 
-  const handleWishlistToggle = async (
-    propertyId: string,
-    isWishlisted: boolean,
-  ) => {
+  // The card handles its own API calls; this callback is only invoked when
+  // the user is not logged in (card detected no token before attempting the call).
+  const handleWishlistToggle = () => {
     const token = localStorage.getItem("token");
     if (!token) {
-      toast.error("Please login to manage your wishlist");
-      return;
-    }
-
-    try {
-      if (isWishlisted) {
-        await api.delete(`/wishlist/${propertyId}`);
-      } else {
-        await api.post("/wishlist", { property_id: propertyId });
-      }
-    } catch (error) {
-      console.error("Wishlist error:", error);
-      const errorMessage =
-        error instanceof Error
-          ? (error as Error & { response?: { data?: { message?: string } } })
-              .response?.data?.message || "Failed to update wishlist"
-          : "Failed to update wishlist";
-      toast.error(errorMessage);
+      toast.error("Please login to save properties to your wishlist");
     }
   };
 

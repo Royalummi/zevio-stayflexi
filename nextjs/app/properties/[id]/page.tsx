@@ -46,6 +46,7 @@ import PropertyGallery from "./PropertyGallery";
 import DateRangeSelector from "@/components/DateRangeSelector";
 import { getImageUrl } from "@/lib/imageUtils";
 import FeaturedPropertyBadge from "@/components/properties/FeaturedPropertyBadge";
+import MobileBookingSheet from "@/components/MobileBookingSheet";
 
 const getAmenityIcon = (amenity: string) => {
   const lower = amenity.toLowerCase();
@@ -104,6 +105,8 @@ function PropertyDetailContent() {
   // Modern dropdown states for guests only
   const [showGuestsDropdown, setShowGuestsDropdown] = useState(false);
   const guestsDropdownRef = useRef<HTMLDivElement>(null);
+  // Mobile bottom sheet — opens when user taps "Select Dates" on mobile
+  const [showMobileSheet, setShowMobileSheet] = useState(false);
   // Pre-fill from SearchBar URL params
   const [adults, setAdults] = useState(() => {
     const adultsParam = searchParams.get("adults");
@@ -179,7 +182,7 @@ function PropertyDetailContent() {
       try {
         const response = await api.get(`/wishlist/check/${propertyId}`);
         if (isMounted) {
-          setIsSaved(response.data.data.isSaved || false);
+          setIsSaved(response.data.data.isWishlisted || false);
         }
       } catch (error: unknown) {
         if (
@@ -497,14 +500,26 @@ function PropertyDetailContent() {
         setIsSaved(true);
         toast.success("Added to wishlist");
       }
-    } catch (error) {
-      console.error("Wishlist error:", error);
-      const errorMessage =
-        error instanceof Error
-          ? (error as Error & { response?: { data?: { message?: string } } })
-              .response?.data?.message || "Failed to update wishlist"
-          : "Failed to update wishlist";
-      toast.error(errorMessage);
+    } catch (error: unknown) {
+      const axiosErr = error as {
+        response?: { status?: number; data?: { message?: string } };
+      };
+      const status = axiosErr.response?.status;
+      const message = axiosErr.response?.data?.message || "";
+
+      if (status === 400 && message.toLowerCase().includes("already")) {
+        // Property is already wishlisted — sync UI state silently
+        setIsSaved(true);
+      } else if (status === 403) {
+        // Non-user role (admin/vendor) — don't show error, just ignore
+      } else {
+        console.error("Wishlist error:", error);
+        const errorMessage =
+          message ||
+          (error instanceof Error ? error.message : null) ||
+          "Failed to update wishlist";
+        toast.error(errorMessage);
+      }
     }
   };
 
@@ -1944,9 +1959,7 @@ function PropertyDetailContent() {
                 if (checkIn && checkOut) {
                   handleBooking();
                 } else {
-                  const el = document.getElementById("booking");
-                  if (el)
-                    el.scrollIntoView({ behavior: "smooth", block: "start" });
+                  setShowMobileSheet(true);
                 }
               }}
               className={luxuryStyles.mobileReserveBtn}
@@ -1956,6 +1969,29 @@ function PropertyDetailContent() {
           </div>
         </div>
       </div>
+
+      {/* Mobile booking bottom sheet */}
+      <MobileBookingSheet
+        isOpen={showMobileSheet}
+        onClose={() => setShowMobileSheet(false)}
+        onConfirm={() => {
+          setShowMobileSheet(false);
+          // If both dates are set after closing, proceed to booking
+          if (checkIn && checkOut) handleBooking();
+        }}
+        checkIn={checkIn}
+        checkOut={checkOut}
+        onCheckInChange={setCheckIn}
+        onCheckOutChange={setCheckOut}
+        adults={adults}
+        childCount={children}
+        onAdultsChange={setAdults}
+        onChildrenChange={setChildren}
+        maxGuests={propertyPricing.max_guests}
+        maxChildren={propertyPricing.max_children}
+        propertyId={property?.id}
+        pricePerNight={property?.price_per_night ?? 0}
+      />
 
       <ToastContainer toasts={toast.toasts} removeToast={toast.removeToast} />
     </div>

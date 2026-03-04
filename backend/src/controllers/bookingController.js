@@ -249,9 +249,9 @@ export const createBooking = asyncHandler(async (req, res) => {
     const [coupons] = await db.query(
       `SELECT * FROM coupons 
        WHERE code = ? 
-       AND status = 'active' 
-       AND start_date <= CURDATE() 
-       AND end_date >= CURDATE()`,
+       AND is_active = 1 
+       AND valid_from <= CURDATE() 
+       AND valid_until >= CURDATE()`,
       [coupon_code],
     );
 
@@ -270,7 +270,8 @@ export const createBooking = asyncHandler(async (req, res) => {
         if (usageCount[0].count < coupon.usage_limit) {
           couponId = coupon.id;
 
-          if (coupon.discount_type === "percentage") {
+          // DB column is 'type' (percentage | fixed)
+          if (coupon.type === "percentage") {
             discountAmount = (baseAmount * coupon.discount_value) / 100;
             if (coupon.max_discount && discountAmount > coupon.max_discount) {
               discountAmount = coupon.max_discount;
@@ -701,9 +702,9 @@ export const validateCoupon = asyncHandler(async (req, res) => {
   const [coupons] = await db.query(
     `SELECT * FROM coupons 
      WHERE code = ? 
-     AND status = 'active' 
-     AND start_date <= CURDATE() 
-     AND end_date >= CURDATE()`,
+     AND is_active = 1 
+     AND valid_from <= CURDATE() 
+     AND valid_until >= CURDATE()`,
     [code],
   );
 
@@ -732,9 +733,9 @@ export const validateCoupon = asyncHandler(async (req, res) => {
     return sendError(res, "Coupon usage limit exceeded", 400);
   }
 
-  // Calculate discount
+  // Calculate discount — DB column is 'type' (percentage | fixed)
   let discountAmount = 0;
-  if (coupon.discount_type === "percentage") {
+  if (coupon.type === "percentage") {
     discountAmount = (booking_amount * coupon.discount_value) / 100;
     if (coupon.max_discount && discountAmount > coupon.max_discount) {
       discountAmount = coupon.max_discount;
@@ -747,7 +748,7 @@ export const validateCoupon = asyncHandler(async (req, res) => {
     res,
     {
       coupon_code: coupon.code,
-      discount_type: coupon.discount_type,
+      discount_type: coupon.type, // use actual DB column name
       discount_value: coupon.discount_value,
       discount_amount: parseFloat(discountAmount.toFixed(2)),
       final_amount: parseFloat((booking_amount - discountAmount).toFixed(2)),

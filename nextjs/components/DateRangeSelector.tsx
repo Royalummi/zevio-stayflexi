@@ -18,6 +18,12 @@ interface DateRangeSelectorProps {
   label?: string;
   luxuryStyles?: { [key: string]: string };
   calendarOnly?: boolean;
+  /**
+   * inline=true: renders the calendar as a block element (no absolute/fixed
+   * positioning). Use inside bottom sheets / drawers where the calendar should
+   * be part of the normal document flow.
+   */
+  inline?: boolean;
   isOpen?: boolean;
   onOpenChange?: (isOpen: boolean) => void;
   /** Pass a property ID to show per-day pricing inside the calendar */
@@ -40,6 +46,7 @@ export default function DateRangeSelector({
   label = "Select dates",
   luxuryStyles: luxStyles,
   calendarOnly = false,
+  inline = false,
   isOpen: externalIsOpen,
   onOpenChange,
   propertyId,
@@ -308,6 +315,99 @@ export default function DateRangeSelector({
           </div>
         )}
       </>
+    );
+  }
+
+  // ── Inline mode: calendar rendered as a block, no absolute/fixed positioning ──
+  if (inline) {
+    return (
+      <div className={styles.inlineCalendar}>
+        {/* Month navigation */}
+        <div className={styles.calendarHeader}>
+          <button
+            onClick={() => {
+              const prev = new Date(currentMonth);
+              prev.setMonth(prev.getMonth() - 1);
+              setCurrentMonth(prev);
+            }}
+            className={styles.navBtn}
+            aria-label="Previous month"
+          >
+            <FiChevronLeft size={18} />
+          </button>
+          <span className={styles.monthYear}>
+            {currentMonth.toLocaleDateString("en-IN", {
+              month: "long",
+              year: "numeric",
+            })}
+          </span>
+          <button
+            onClick={() => {
+              const next = new Date(currentMonth);
+              next.setMonth(next.getMonth() + 1);
+              setCurrentMonth(next);
+            }}
+            className={styles.navBtn}
+            aria-label="Next month"
+          >
+            <FiChevronRight size={18} />
+          </button>
+        </div>
+
+        {/* Selection hint */}
+        <div className={styles.selectionHint}>
+          {!checkIn
+            ? "Select check-in date"
+            : !checkOut
+              ? "Select check-out date"
+              : `${formatDisplayDate(checkIn)} → ${formatDisplayDate(checkOut)}`}
+        </div>
+
+        {/* Days of week */}
+        <div className={styles.daysOfWeek}>
+          {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
+            <div key={day} className={styles.dayHeader}>
+              {day}
+            </div>
+          ))}
+        </div>
+
+        {/* Calendar grid */}
+        <div className={styles.daysGrid}>
+          {calendarDays.map((day, index) => {
+            if (day === null) {
+              return <div key={`empty-${index}`} className={styles.emptyDay} />;
+            }
+            const date = new Date(currentMonth);
+            date.setDate(day);
+            date.setHours(0, 0, 0, 0);
+            const disabled = isDisabled(date);
+            const selected = isSelected(date);
+            const inRange = isInRange(date);
+            const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+            const customPx = priceMap[dateKey];
+            const displayPx = customPx ?? basePrice;
+            return (
+              <button
+                key={day}
+                onClick={() => !disabled && handleDayClick(day)}
+                className={`${styles.day} ${disabled ? styles.disabled : ""} ${selected ? styles.selected : ""} ${inRange ? styles.inRange : ""}${displayPx !== undefined ? ` ${styles.hasPricing}` : ""}`}
+                disabled={disabled}
+                aria-label={`${day}${displayPx !== undefined ? " — " + formatDayPrice(displayPx) : ""}`}
+              >
+                <span className={styles.dayNumber}>{day}</span>
+                {!disabled && displayPx !== undefined && (
+                  <span
+                    className={`${styles.dayPrice}${customPx !== undefined ? ` ${styles.dayPriceCustom}` : ""}`}
+                  >
+                    {formatDayPrice(displayPx)}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
     );
   }
 

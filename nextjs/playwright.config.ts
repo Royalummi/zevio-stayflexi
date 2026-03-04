@@ -25,15 +25,27 @@ export default defineConfig({
   },
 
   projects: [
+    // ── Mobile user journey (runs in Chromium with mobile viewport) ──────────
+    {
+      name: "mobile-journey",
+      use: {
+        ...devices["iPhone 12"],
+        // Override baseURL so tests can also use absolute URLs
+        baseURL: "http://localhost:8000",
+      },
+      testMatch: /mobile-user-journey\.spec\.ts/,
+    },
+    // ── Existing desktop user-flow specs ─────────────────────────────────────
     {
       name: "user-flows-chromium",
       use: { ...devices["Desktop Chrome"] },
       testMatch: /user-flow-.*\.spec\.ts/,
     },
+    // ── All other specs (desktop Chromium) ───────────────────────────────────
     {
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
-      testIgnore: /user-flow-.*\.spec\.ts/,
+      testIgnore: /(user-flow-.*|mobile-user-journey)\.spec\.ts/,
     },
   ],
 

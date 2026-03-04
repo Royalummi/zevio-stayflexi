@@ -153,6 +153,18 @@ app.get("/health", (req, res) => {
 });
 
 // API Routes
+// Compatibility shim: rewrite /api/v1/* → /api/* so any tool or client
+// using a versioned URL prefix still works without 404 spam.
+app.use((req, _res, next) => {
+  if (req.path.startsWith("/api/v1/")) {
+    req.url = req.url.replace("/api/v1/", "/api/");
+  }
+  next();
+});
+// Stub for refurbishment alerts — endpoint not yet built; prevents 404 log noise
+app.get("/api/admin/refurbishment/alerts", (_req, res) => {
+  res.json({ success: true, data: { alerts: [], total: 0 } });
+});
 app.use("/api/auth", authLimiter, authRoutes); // Keep rate limiting on auth to prevent brute force
 app.use("/api/public", publicRoutes); // No rate limit
 app.use("/api/service-apartments", serviceApartmentsRoutes); // No rate limit

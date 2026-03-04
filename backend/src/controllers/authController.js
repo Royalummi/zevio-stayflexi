@@ -488,7 +488,8 @@ export const forceResetPassword = asyncHandler(async (req, res) => {
       user: {
         id: user.id,
         email: user.email,
-        name: user.name || user.full_name,
+        // Use full_name to match the User interface expected by the frontend
+        full_name: user.full_name || user.name,
         role: role,
       },
       ...tokens,

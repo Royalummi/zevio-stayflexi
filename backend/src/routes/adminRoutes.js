@@ -19,6 +19,7 @@ import {
   getUserDetails,
   updateUserStatus,
   createUser,
+  resetUserPassword,
   getUserStats,
   getRevenueAnalytics,
   getBookingTrends,
@@ -184,6 +185,7 @@ router.post(
   ],
   createUser,
 );
+router.post("/users/:id/reset-password", resetUserPassword);
 router.put(
   "/users/:id/status",
   [

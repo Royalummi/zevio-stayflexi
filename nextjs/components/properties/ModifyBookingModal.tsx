@@ -111,9 +111,11 @@ export default function ModifyBookingModal({
       onClose();
     } catch (error: unknown) {
       console.error("Modify booking error:", error);
+      const axiosErr = error as { response?: { data?: { message?: string } } };
       const errorMessage =
-        (error as { response?: { data?: { message?: string } } }).response?.data
-          ?.message || "Failed to modify booking";
+        axiosErr.response?.data?.message ||
+        (error instanceof Error ? error.message : null) ||
+        "Failed to modify booking";
       toast.error(errorMessage);
     } finally {
       setLoading(false);

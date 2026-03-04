@@ -44,6 +44,7 @@ import { useAuthModals } from "@/contexts/AuthModalContext";
 import { getImageUrl, getPropertyImages } from "@/lib/imageUtils";
 import ServiceDetailsCard from "@/components/properties/ServiceDetailsCard";
 import FeaturedPropertyBadge from "@/components/properties/FeaturedPropertyBadge";
+import MobileBookingSheet from "@/components/MobileBookingSheet";
 
 const getAmenityIcon = (amenity: string) => {
   const lower = amenity.toLowerCase();
@@ -232,6 +233,8 @@ function ServiceApartmentDetailContent() {
   // Modern dropdown states - guests only
   const [showGuestsDropdown, setShowGuestsDropdown] = useState(false);
   const guestsDropdownRef = useRef<HTMLDivElement>(null);
+  // Mobile bottom sheet — opens when user taps "Select Dates" on mobile
+  const [showMobileSheet, setShowMobileSheet] = useState(false);
 
   const [priceBreakdown, setPriceBreakdown] = useState<PriceBreakdown | null>(
     null,
@@ -251,7 +254,7 @@ function ServiceApartmentDetailContent() {
       try {
         const response = await api.get(`/wishlist/check/${params.id}`);
         if (response.data.success) {
-          setIsSaved(response.data.data.isSaved || false);
+          setIsSaved(response.data.data.isWishlisted || false);
         }
       } catch (error) {
         console.error("Error checking wishlist:", error);
@@ -524,9 +527,26 @@ function ServiceApartmentDetailContent() {
         setIsSaved(true);
         toast.success("Added to wishlist", 3000);
       }
-    } catch (_error) {
-      console.error("Error toggling wishlist:", _error);
-      toast.error("Failed to update wishlist. Please try again.", 5000);
+    } catch (error: unknown) {
+      const axiosErr = error as {
+        response?: { status?: number; data?: { message?: string } };
+      };
+      const status = axiosErr.response?.status;
+      const message = axiosErr.response?.data?.message || "";
+
+      if (status === 400 && message.toLowerCase().includes("already")) {
+        // Property is already wishlisted — sync UI state silently
+        setIsSaved(true);
+      } else if (status === 403) {
+        // Non-user role (admin/vendor) — don't show error, just ignore
+      } else {
+        console.error("Error toggling wishlist:", error);
+        const errorMessage =
+          message ||
+          (error instanceof Error ? error.message : null) ||
+          "Failed to update wishlist. Please try again.";
+        toast.error(errorMessage, 5000);
+      }
     }
   };
 
@@ -1731,9 +1751,7 @@ function ServiceApartmentDetailContent() {
               if (checkIn && checkOut) {
                 handleReserve();
               } else {
-                const el = document.getElementById("booking");
-                if (el)
-                  el.scrollIntoView({ behavior: "smooth", block: "start" });
+                setShowMobileSheet(true);
               }
             }}
             className={styles.mobileReserveBtn}
@@ -1742,6 +1760,27 @@ function ServiceApartmentDetailContent() {
           </button>
         </div>
       </div>
+      {/* Mobile booking bottom sheet */}
+      <MobileBookingSheet
+        isOpen={showMobileSheet}
+        onClose={() => setShowMobileSheet(false)}
+        onConfirm={() => {
+          setShowMobileSheet(false);
+          if (checkIn && checkOut) handleReserve();
+        }}
+        checkIn={checkIn}
+        checkOut={checkOut}
+        onCheckInChange={setCheckIn}
+        onCheckOutChange={setCheckOut}
+        adults={adults}
+        childCount={children}
+        onAdultsChange={setAdults}
+        onChildrenChange={setChildren}
+        maxGuests={property?.max_guests || property?.max_occupancy || 10}
+        propertyId={property?.id}
+        pricePerNight={property?.price_per_night ?? 0}
+      />
+
       <ToastContainer toasts={toast.toasts} removeToast={toast.removeToast} />
     </div>
   );

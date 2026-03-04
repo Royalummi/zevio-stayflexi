@@ -27,7 +27,8 @@ export default function NotificationsPage() {
     try {
       setLoading(true);
       const response = await api.get("/notifications");
-      setNotifications(response.data.notifications || []);
+      // Backend wraps response: { success, data: { notifications: [...], total: N } }
+      setNotifications(response.data.data?.notifications || []);
     } catch (err) {
       const error = err as { response?: { data?: { message?: string } } };
       setError(error.response?.data?.message || "Failed to load notifications");
@@ -41,8 +42,8 @@ export default function NotificationsPage() {
       await api.put(`/notifications/${id}/read`);
       setNotifications((prev) =>
         prev.map((notif) =>
-          notif.id === id ? { ...notif, is_read: true } : notif
-        )
+          notif.id === id ? { ...notif, is_read: true } : notif,
+        ),
       );
     } catch (err) {
       console.error("Failed to mark as read:", err);
@@ -53,7 +54,7 @@ export default function NotificationsPage() {
     try {
       await api.put("/notifications/read-all");
       setNotifications((prev) =>
-        prev.map((notif) => ({ ...notif, is_read: true }))
+        prev.map((notif) => ({ ...notif, is_read: true })),
       );
     } catch (err) {
       console.error("Failed to mark all as read:", err);

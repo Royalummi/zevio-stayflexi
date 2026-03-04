@@ -68,8 +68,9 @@ export default function Settings() {
     try {
       setLoadingSettings(true);
       const response = await api.get("/auth/settings");
-      if (response.data?.settings) {
-        setSettings(response.data.settings);
+      // Backend wraps response in data key: { success, data: { settings: {...} } }
+      if (response.data.data?.settings) {
+        setSettings(response.data.data.settings);
       }
     } catch (error: unknown) {
       console.error("Error fetching settings:", error);
@@ -84,7 +85,7 @@ export default function Settings() {
 
   const updateSetting = async (
     key: keyof UserSettings,
-    value: boolean | string
+    value: boolean | string,
   ) => {
     const updatedSettings = { ...settings, [key]: value };
     setSettings(updatedSettings);
@@ -306,7 +307,7 @@ export default function Settings() {
                     onChange={(e) =>
                       updateSetting(
                         "profile_visibility",
-                        e.target.checked ? "public" : "private"
+                        e.target.checked ? "public" : "private",
                       )
                     }
                     disabled={saving}

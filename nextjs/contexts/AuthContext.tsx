@@ -19,6 +19,11 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
+  loginWithTokens: (
+    accessToken: string,
+    refreshToken: string | null,
+    userData: User,
+  ) => void;
   register: (data: RegisterData) => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
@@ -76,7 +81,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         password,
       });
 
-      const { accessToken, refreshToken, user: userData } = response.data.data;
+      const data = response.data.data;
+
+      // Temporary-password flow: backend signals the user must change their password
+      if (data.requirePasswordChange) {
+        const err = new Error("PASSWORD_CHANGE_REQUIRED") as Error & {
+          requirePasswordChange: true;
+          tempToken: string;
+          loginEmail: string;
+          loginPassword: string;
+        };
+        err.requirePasswordChange = true;
+        err.tempToken = data.tempToken;
+        err.loginEmail = email;
+        err.loginPassword = password;
+        throw err;
+      }
+
+      const { accessToken, refreshToken, user: userData } = data;
 
       // Store token, refresh token, and user
       localStorage.setItem("token", accessToken);
@@ -91,6 +113,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Set authorization header for future requests
       api.defaults.headers.common["Authorization"] = `Bearer ${accessToken}`;
     } catch (error: unknown) {
+      // Re-throw our own typed signals (e.g. PASSWORD_CHANGE_REQUIRED) unchanged
+      if (
+        error instanceof Error &&
+        error.message === "PASSWORD_CHANGE_REQUIRED"
+      ) {
+        throw error;
+      }
       const err = error as {
         response?: {
           data?: {
@@ -135,6 +164,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const loginWithTokens = (
+    accessToken: string,
+    refreshToken: string | null,
+    userData: User,
+  ) => {
+    localStorage.setItem("token", accessToken);
+    if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
+    localStorage.setItem("user", JSON.stringify(userData));
+    setToken(accessToken);
+    setUser(userData);
+    api.defaults.headers.common["Authorization"] = `Bearer ${accessToken}`;
+  };
+
   const logout = () => {
     // Clear storage
     localStorage.removeItem("token");
@@ -157,7 +199,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!token) return;
 
       const response = await api.get("/auth/profile");
-      const userData = response.data.data.user;
+      // Backend returns the user object directly inside data (not nested under .user)
+      // Shape: { success: true, data: { id, full_name, email, ... role } }
+      const userData = response.data.data;
 
       localStorage.setItem("user", JSON.stringify(userData));
       setUser(userData);
@@ -172,6 +216,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isAuthenticated: !!user && !!token,
     isLoading,
     login,
+    loginWithTokens,
     register,
     logout,
     refreshUser,

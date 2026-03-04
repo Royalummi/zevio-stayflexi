@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Mar 01, 2026 at 08:12 PM
+-- Generation Time: Mar 04, 2026 at 06:30 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -98,6 +98,7 @@ CREATE TABLE `activity_logs` (
 
 INSERT INTO `activity_logs` (`id`, `actor_id`, `actor_role`, `action`, `entity`, `entity_id`, `created_at`) VALUES
 ('1b96c2ff-0d66-4e4c-8a88-2b087bc0237d', 'bb5898f8-e418-11f0-9f30-00410e2b5e6e', 'admin', 'Marked settlement as paid', 'vendor_settlement', 'settlement-005', '2026-01-16 14:57:18'),
+('22666076-17ba-11f1-8916-00410e2b5e6e', 'bb5898f8-e418-11f0-9f30-00410e2b5e6e', 'super_admin', 'Reset password for customer: Vinod (gopafyvinod@gmail.com)', 'customer', 'a85b436f-dde2-4b06-ae86-aca64e6b222c', '2026-03-04 11:05:54'),
 ('364f7eb9-143e-40b0-90c2-7dfa3ffbbb13', 'bb5898f8-e418-11f0-9f30-00410e2b5e6e', 'admin', 'EDIT_REVIEW', 'reviews', 'review-test-004', '2026-02-15 13:44:44'),
 ('5cc8fe4d-5514-43d9-bde5-3980a6fe0bab', 'bb5898f8-e418-11f0-9f30-00410e2b5e6e', 'admin', 'Updated coupon', 'coupon', 'bbb9c19d-e418-11f0-9f30-00410e2b5e6e', '2026-02-15 14:43:48'),
 ('7725d7f9-44c6-4870-96bf-af39ab216084', 'bb5898f8-e418-11f0-9f30-00410e2b5e6e', 'admin', 'EDIT_REVIEW', 'reviews', 'review-test-007', '2026-02-15 13:39:08'),
@@ -105,6 +106,7 @@ INSERT INTO `activity_logs` (`id`, `actor_id`, `actor_role`, `action`, `entity`,
 ('77633330-743b-486a-95a5-a8da445d727a', 'bb5898f8-e418-11f0-9f30-00410e2b5e6e', 'admin', 'Updated coupon', 'coupon', 'bbb9c19d-e418-11f0-9f30-00410e2b5e6e', '2026-02-15 14:43:45'),
 ('9c02a39a-54c8-4fdf-bb77-16c741f95e8c', 'bb5898f8-e418-11f0-9f30-00410e2b5e6e', 'admin', 'EDIT_REVIEW', 'reviews', 'review-test-007', '2026-02-15 13:38:44'),
 ('ae24b51c-0a28-11f1-8b48-00410e2b5e6e', 'bb5898f8-e418-11f0-9f30-00410e2b5e6e', 'super_admin', 'Created new vendor account: Ranjith (ranjithgopafy@gmail.com)', 'vendor', 'f10abec0-bc8b-4688-9b73-11eef686b9f3', '2026-02-15 04:42:01'),
+('bdde76dc-17a2-11f1-8916-00410e2b5e6e', 'bb5898f8-e418-11f0-9f30-00410e2b5e6e', 'super_admin', 'Created new customer account: Vinod (gopafyvinod@gmail.com)', 'customer', 'a85b436f-dde2-4b06-ae86-aca64e6b222c', '2026-03-04 08:18:27'),
 ('log-001', 'bb5898f8-e418-11f0-9f30-00410e2b5e6e', 'admin', 'Approved property', 'property', 'bb927936-e418-11f0-9f30-00410e2b5e6e', '2025-12-28 12:45:00'),
 ('log-002', 'bb5898f8-e418-11f0-9f30-00410e2b5e6e', 'admin', 'Processed refund', 'refund', 'refund-test-001', '2026-01-09 10:30:00'),
 ('log-003', 'bb58b3c4-e418-11f0-9f30-00410e2b5e6e', 'admin', 'Approved review', 'review', 'review-test-001', '2025-12-29 05:30:00'),
@@ -220,16 +222,34 @@ CREATE TABLE `bookings` (
 --
 
 INSERT INTO `bookings` (`id`, `user_id`, `property_id`, `check_in`, `check_out`, `nights`, `guest_count`, `children_count`, `infants_count`, `base_amount`, `extra_guest_charges`, `extra_children_charges`, `gst_amount`, `service_charge`, `coupon_id`, `coupon_code`, `coupon_discount`, `discount_amount`, `total_amount`, `status`, `payment_status`, `created_at`, `expires_at`, `payment_expires_at`, `deleted_at`) VALUES
+('04d469a5-cfff-43db-a1aa-8b69b4fc89f2', 'a9fb0aae-b803-427e-8540-e44bfe29e9a6', 'bb927936-e418-11f0-9f30-00410e2b5e6e', '2026-06-25', '2026-06-28', 3, 1, 0, 0, 45000.00, 0.00, 0.00, 8100.00, 2250.00, NULL, NULL, 0.00, 0.00, 55350.00, 'cancelled', 'pending', '2026-03-02 16:53:40', '2026-03-02 22:38:40', '2026-03-02 22:38:40', NULL),
+('0b3e982b-0ef5-4727-944b-950bff982996', '32d3b01b-2452-431e-aeff-b3a1fe3ea69d', 'bb927936-e418-11f0-9f30-00410e2b5e6e', '2027-01-16', '2027-01-21', 5, 1, 0, 0, 75000.00, 0.00, 0.00, 13500.00, 3750.00, NULL, NULL, 0.00, 0.00, 92250.00, 'cancelled', 'pending', '2026-03-02 17:01:25', '2026-03-02 22:46:25', '2026-03-02 22:46:25', NULL),
 ('1b73aa2f-bd80-4313-accf-96ed1f8c61ed', 'bb5538d1-e418-11f0-9f30-00410e2b5e6e', 'bb927936-e418-11f0-9f30-00410e2b5e6e', '2026-01-17', '2026-01-18', 1, 4, 2, 0, 15000.00, 0.00, 1600.00, 2988.00, 0.00, NULL, NULL, 0.00, 0.00, 19588.00, 'cancelled', 'failed', '2026-01-16 10:07:40', NULL, NULL, '2026-02-03 17:17:02'),
+('20004d4c-c85e-4c5d-a359-a8e6f77d796b', '32d3b01b-2452-431e-aeff-b3a1fe3ea69d', 'bb927936-e418-11f0-9f30-00410e2b5e6e', '2026-06-30', '2026-07-05', 5, 1, 0, 0, 75000.00, 0.00, 0.00, 13500.00, 3750.00, NULL, NULL, 0.00, 0.00, 92250.00, 'cancelled', 'pending', '2026-03-02 16:53:41', '2026-03-02 22:38:41', '2026-03-02 22:38:41', NULL),
 ('23051548-964f-4dab-851a-0763ce72948c', 'bb5538d1-e418-11f0-9f30-00410e2b5e6e', '495ca2b2-f31f-11f0-8f27-00410e2b5e6e', '2026-02-01', '2026-02-04', 3, 2, 0, 0, 8400.00, 0.00, 0.00, 1512.00, 0.00, NULL, NULL, 0.00, 0.00, 9912.00, '', 'pending', '2026-01-29 16:06:36', '2026-01-29 21:51:36', NULL, '2026-02-03 17:17:02'),
+('2cdd4906-531a-49d9-a13c-398fc57fe546', 'a9fb0aae-b803-427e-8540-e44bfe29e9a6', 'bb927936-e418-11f0-9f30-00410e2b5e6e', '2026-10-18', '2026-10-23', 5, 1, 0, 0, 75000.00, 0.00, 0.00, 13500.00, 3750.00, NULL, NULL, 0.00, 0.00, 92250.00, 'cancelled', 'pending', '2026-03-02 17:01:24', '2026-03-02 22:46:24', '2026-03-02 22:46:24', NULL),
+('33435cd3-c31f-45c5-b440-ce19e7083727', 'a9fb0aae-b803-427e-8540-e44bfe29e9a6', 'bb929607-e418-11f0-9f30-00410e2b5e6e', '2026-05-01', '2026-05-06', 5, 1, 0, 0, 40000.00, 0.00, 0.00, 7200.00, 2000.00, NULL, NULL, 0.00, 0.00, 49200.00, 'cancelled', 'pending', '2026-03-02 16:53:40', '2026-03-02 22:38:40', '2026-03-02 22:38:40', NULL),
 ('3c5e8c53-794f-4820-a5ac-ee46aa587004', '244c2909-85ef-4d38-8a0a-2723ff145942', 'bb927936-e418-11f0-9f30-00410e2b5e6e', '2026-03-04', '2026-03-07', 3, 2, 0, 0, 45000.00, 0.00, 0.00, 8100.00, 2250.00, NULL, NULL, 0.00, 0.00, 55350.00, 'cancel_requested', 'pending', '2026-02-22 03:24:19', '2026-02-22 09:09:19', '2026-02-22 09:09:19', NULL),
 ('40b35828-fb3c-4069-8f95-0593a164e36d', 'bb5538d1-e418-11f0-9f30-00410e2b5e6e', 'bb927936-e418-11f0-9f30-00410e2b5e6e', '2026-01-17', '2026-01-18', 1, 4, 2, 0, 15000.00, 0.00, 1600.00, 2988.00, 0.00, NULL, NULL, 0.00, 0.00, 19588.00, 'cancelled', 'failed', '2026-01-16 13:27:48', '2026-01-17 07:41:53', NULL, '2026-02-03 17:17:02'),
+('44fb4258-b0cd-4a21-a85e-bf6859700bc5', 'a9fb0aae-b803-427e-8540-e44bfe29e9a6', 'bb927936-e418-11f0-9f30-00410e2b5e6e', '2026-05-11', '2026-05-16', 5, 1, 0, 0, 75000.00, 0.00, 0.00, 13500.00, 3750.00, NULL, NULL, 0.00, 0.00, 92250.00, 'cancelled', 'pending', '2026-03-02 16:53:40', '2026-03-02 22:38:40', '2026-03-02 22:38:40', NULL),
+('457c530b-4e62-4daa-b0ae-c2632c1b6a1c', 'a9fb0aae-b803-427e-8540-e44bfe29e9a6', 'bb927936-e418-11f0-9f30-00410e2b5e6e', '2027-01-16', '2027-01-21', 5, 1, 0, 0, 75000.00, 0.00, 0.00, 13500.00, 3750.00, NULL, NULL, 0.00, 0.00, 92250.00, 'cancelled', 'pending', '2026-03-02 17:01:25', '2026-03-02 22:46:25', '2026-03-02 22:46:25', NULL),
+('55b16f5d-8777-4801-a484-3ff64f5dffc6', '32d3b01b-2452-431e-aeff-b3a1fe3ea69d', 'bb927936-e418-11f0-9f30-00410e2b5e6e', '2026-04-16', '2026-04-21', 5, 1, 0, 0, 75000.00, 0.00, 0.00, 13500.00, 3750.00, NULL, NULL, 0.00, 0.00, 92250.00, 'cancelled', 'pending', '2026-03-02 16:53:40', '2026-03-02 22:38:40', '2026-03-02 22:38:40', NULL),
 ('5d0e628a-f343-4d59-9c7a-7a7730a51a22', 'bb5538d1-e418-11f0-9f30-00410e2b5e6e', 'bb927936-e418-11f0-9f30-00410e2b5e6e', '2026-01-31', '2026-02-03', 3, 7, 0, 0, 45000.00, 13500.00, 0.00, 10530.00, 0.00, NULL, NULL, 0.00, 0.00, 69030.00, '', 'pending', '2026-01-29 16:44:05', '2026-01-29 22:37:39', NULL, '2026-02-03 17:17:02'),
+('638f490b-8436-48f6-bbf8-b95defeb81f1', 'a9fb0aae-b803-427e-8540-e44bfe29e9a6', 'bb927936-e418-11f0-9f30-00410e2b5e6e', '2026-09-20', '2026-09-24', 4, 2, 0, 0, 60000.00, 0.00, 0.00, 10800.00, 3000.00, NULL, NULL, 0.00, 0.00, 73800.00, 'cancelled', 'pending', '2026-03-02 17:01:24', '2026-03-02 22:46:24', '2026-03-02 22:46:24', NULL),
+('6fe75a9c-1a14-4f69-a438-677ae090a5eb', '32d3b01b-2452-431e-aeff-b3a1fe3ea69d', 'bb927936-e418-11f0-9f30-00410e2b5e6e', '2026-10-08', '2026-10-13', 5, 1, 0, 0, 75000.00, 0.00, 0.00, 13500.00, 3750.00, NULL, NULL, 0.00, 0.00, 92250.00, 'cancelled', 'pending', '2026-03-02 17:01:24', '2026-03-02 22:46:24', '2026-03-02 22:46:24', NULL),
 ('82b4cf48-b0bd-49e8-acfb-4ff3d2c3507e', '244c2909-85ef-4d38-8a0a-2723ff145942', 'bb927936-e418-11f0-9f30-00410e2b5e6e', '2026-03-04', '2026-03-07', 3, 2, 0, 0, 45000.00, 0.00, 0.00, 8100.00, 2250.00, NULL, NULL, 0.00, 0.00, 55350.00, 'cancel_requested', 'pending', '2026-02-22 03:14:38', '2026-02-22 09:02:41', '2026-02-22 09:02:41', NULL),
 ('830cd3d6-0ffb-47dd-b5f0-59611c66b88c', 'bb5538d1-e418-11f0-9f30-00410e2b5e6e', 'bb929607-e418-11f0-9f30-00410e2b5e6e', '2026-01-19', '2026-01-21', 2, 4, 1, 0, 16000.00, 4000.00, 0.00, 3600.00, 0.00, NULL, NULL, 0.00, 0.00, 23600.00, 'cancelled', 'failed', '2026-01-16 14:29:17', '2026-01-17 08:02:31', NULL, '2026-02-03 17:17:02'),
+('8959feac-09e7-44a6-830a-160dea03c2d0', 'a9fb0aae-b803-427e-8540-e44bfe29e9a6', 'bb927936-e418-11f0-9f30-00410e2b5e6e', '2026-10-28', '2026-11-02', 5, 1, 0, 0, 75000.00, 0.00, 0.00, 13500.00, 3750.00, NULL, NULL, 0.00, 0.00, 92250.00, 'cancelled', 'pending', '2026-03-02 17:01:24', '2026-03-02 22:46:24', '2026-03-02 22:46:24', NULL),
+('8e6cf054-3d23-4657-9a42-c61290a20a0f', 'a9fb0aae-b803-427e-8540-e44bfe29e9a6', 'bb927936-e418-11f0-9f30-00410e2b5e6e', '2026-06-30', '2026-07-05', 5, 1, 0, 0, 75000.00, 0.00, 0.00, 13500.00, 3750.00, NULL, NULL, 0.00, 0.00, 92250.00, 'cancelled', 'pending', '2026-03-02 16:53:41', '2026-03-02 22:38:41', '2026-03-02 22:38:41', NULL),
+('9587718f-d491-4171-b268-79558bf3a3c2', '32d3b01b-2452-431e-aeff-b3a1fe3ea69d', 'bb927936-e418-11f0-9f30-00410e2b5e6e', '2026-10-28', '2026-11-02', 5, 1, 0, 0, 75000.00, 0.00, 0.00, 13500.00, 3750.00, NULL, NULL, 0.00, 0.00, 92250.00, 'cancelled', 'pending', '2026-03-02 17:01:24', '2026-03-02 22:46:24', '2026-03-02 22:46:24', NULL),
+('9aba3632-ead7-425b-896e-c86bbdb23769', 'a9fb0aae-b803-427e-8540-e44bfe29e9a6', 'bb927936-e418-11f0-9f30-00410e2b5e6e', '2026-05-01', '2026-05-06', 5, 1, 0, 0, 75000.00, 0.00, 0.00, 13500.00, 3750.00, NULL, NULL, 0.00, 0.00, 92250.00, 'cancelled', 'pending', '2026-03-02 16:53:40', '2026-03-02 22:38:40', '2026-03-02 22:38:40', NULL),
+('9e286f12-a07a-42bf-9b17-a461ed11e653', 'a9fb0aae-b803-427e-8540-e44bfe29e9a6', 'bb927936-e418-11f0-9f30-00410e2b5e6e', '2026-04-11', '2026-04-16', 5, 1, 0, 0, 75000.00, 0.00, 0.00, 13500.00, 3750.00, NULL, NULL, 0.00, 0.00, 92250.00, 'cancelled', 'pending', '2026-03-02 16:53:40', '2026-03-02 22:38:40', '2026-03-02 22:38:40', NULL),
+('9fb7b17c-5c1a-4d82-9a85-404f58cf12c5', '32d3b01b-2452-431e-aeff-b3a1fe3ea69d', 'bb927936-e418-11f0-9f30-00410e2b5e6e', '2026-05-11', '2026-05-16', 5, 1, 0, 0, 75000.00, 0.00, 0.00, 13500.00, 3750.00, NULL, NULL, 0.00, 0.00, 92250.00, 'cancelled', 'pending', '2026-03-02 16:53:40', '2026-03-02 22:38:40', '2026-03-02 22:38:40', NULL),
 ('bbc94743-e418-11f0-9f30-00410e2b5e6e', 'bb551978-e418-11f0-9f30-00410e2b5e6e', 'bb927936-e418-11f0-9f30-00410e2b5e6e', '2025-02-15', '2025-02-18', 3, 5, 2, 1, 45000.00, 1500.00, 1600.00, 8100.00, 0.00, NULL, NULL, 0.00, 0.00, 53100.00, 'completed', 'completed', '2025-12-28 18:12:12', NULL, NULL, NULL),
 ('bbcd0c8e-e418-11f0-9f30-00410e2b5e6e', 'bb5538d1-e418-11f0-9f30-00410e2b5e6e', 'bb929607-e418-11f0-9f30-00410e2b5e6e', '2025-03-10', '2025-03-12', 2, 4, 1, 0, 16000.00, 0.00, 0.00, 2880.00, 0.00, NULL, NULL, 0.00, 0.00, 18880.00, 'cancelled', 'failed', '2025-12-28 18:12:12', NULL, NULL, '2026-02-03 17:17:02'),
 ('bbd09930-e418-11f0-9f30-00410e2b5e6e', 'bb553a04-e418-11f0-9f30-00410e2b5e6e', 'bb9298e7-e418-11f0-9f30-00410e2b5e6e', '2024-12-20', '2024-12-23', 3, 8, 3, 1, 75000.00, 0.00, 3000.00, 13500.00, 0.00, NULL, NULL, 0.00, 7500.00, 81000.00, 'completed', 'completed', '2025-12-28 18:12:12', NULL, NULL, NULL),
+('bd23f401-2dfe-4525-bbba-215535b2e769', '32d3b01b-2452-431e-aeff-b3a1fe3ea69d', 'bb927936-e418-11f0-9f30-00410e2b5e6e', '2026-10-03', '2026-10-08', 5, 1, 0, 0, 75000.00, 0.00, 0.00, 13500.00, 3750.00, NULL, NULL, 0.00, 0.00, 92250.00, 'cancelled', 'pending', '2026-03-02 17:01:24', '2026-03-02 22:46:24', '2026-03-02 22:46:24', NULL),
+('bdc6afdb-307d-4292-afea-ff782f2cfd7e', '32d3b01b-2452-431e-aeff-b3a1fe3ea69d', 'bb927936-e418-11f0-9f30-00410e2b5e6e', '2026-04-21', '2026-04-26', 5, 1, 0, 0, 75000.00, 0.00, 0.00, 13500.00, 3750.00, NULL, NULL, 0.00, 0.00, 92250.00, 'cancelled', 'pending', '2026-03-02 16:53:40', '2026-03-02 22:38:40', '2026-03-02 22:38:40', NULL),
 ('beb0274a-e8e1-4d35-a70e-b035cb8332e0', 'bb5538d1-e418-11f0-9f30-00410e2b5e6e', 'bb927936-e418-11f0-9f30-00410e2b5e6e', '2026-01-18', '2026-01-20', 2, 5, 2, 0, 30000.00, 3000.00, 3200.00, 6516.00, 0.00, NULL, NULL, 0.00, 0.00, 42716.00, '', 'pending', '2026-01-16 19:11:31', '2026-01-17 00:56:31', NULL, '2026-02-03 17:17:02'),
 ('booking-test-001', 'bb551978-e418-11f0-9f30-00410e2b5e6e', 'bb927936-e418-11f0-9f30-00410e2b5e6e', '2026-02-15', '2026-02-18', 3, 6, 2, 1, 45000.00, 6000.00, 1600.00, 9468.00, 0.00, NULL, NULL, 0.00, 0.00, 61068.00, 'completed', 'completed', '2026-01-08 05:00:00', NULL, NULL, NULL),
 ('booking-test-002', 'user-test-001', 'bb9739d5-e418-11f0-9f30-00410e2b5e6e', '2026-03-01', '2026-03-03', 2, 6, 4, 0, 20000.00, 0.00, 1200.00, 3816.00, 0.00, NULL, NULL, 0.00, 0.00, 25016.00, 'confirmed', 'completed', '2026-01-09 05:30:00', NULL, NULL, NULL),
@@ -245,8 +265,15 @@ INSERT INTO `bookings` (`id`, `user_id`, `property_id`, `check_in`, `check_out`,
 ('booking-test-012', 'user-test-002', 'bb9739d5-e418-11f0-9f30-00410e2b5e6e', '2025-11-15', '2025-11-17', 2, 6, 0, 0, 20000.00, 0.00, 0.00, 3600.00, 0.00, NULL, NULL, 0.00, 0.00, 23600.00, 'completed', 'completed', '2025-11-10 00:00:00', NULL, NULL, NULL),
 ('booking-test-013', 'user-test-003', 'bb9b250d-e418-11f0-9f30-00410e2b5e6e', '2025-10-20', '2025-10-22', 2, 8, 2, 0, 36000.00, 6000.00, 500.00, 7650.00, 0.00, NULL, NULL, 0.00, 0.00, 50150.00, 'completed', 'completed', '2025-10-15 01:00:00', NULL, NULL, NULL),
 ('booking-test-014', 'user-test-005', 'bb974859-e418-11f0-9f30-00410e2b5e6e', '2025-09-25', '2025-09-27', 2, 10, 3, 1, 60000.00, 8000.00, 1000.00, 12420.00, 0.00, NULL, NULL, 0.00, 0.00, 81420.00, 'completed', 'completed', '2025-09-19 22:00:00', NULL, NULL, NULL),
+('c999b850-de48-4a4a-954f-25e8a3d8f589', 'a9fb0aae-b803-427e-8540-e44bfe29e9a6', 'bb927936-e418-11f0-9f30-00410e2b5e6e', '2027-01-11', '2027-01-14', 3, 1, 0, 0, 45000.00, 0.00, 0.00, 8100.00, 2250.00, NULL, NULL, 0.00, 0.00, 55350.00, 'cancelled', 'pending', '2026-03-02 17:01:25', '2026-03-02 22:46:25', '2026-03-02 22:46:25', NULL),
+('cff2a0a7-c904-442c-9154-6a37a60ac054', 'a9fb0aae-b803-427e-8540-e44bfe29e9a6', 'bb927936-e418-11f0-9f30-00410e2b5e6e', '2026-05-23', '2026-06-22', 30, 1, 0, 0, 450000.00, 0.00, 0.00, 81000.00, 22500.00, NULL, NULL, 0.00, 0.00, 553500.00, 'cancelled', 'pending', '2026-03-02 16:53:40', '2026-03-02 22:38:40', '2026-03-02 22:38:40', NULL),
+('dfc79b3b-f859-4a20-a3b0-26d023e3d1ae', 'a9fb0aae-b803-427e-8540-e44bfe29e9a6', 'bb927936-e418-11f0-9f30-00410e2b5e6e', '2026-09-28', '2026-10-03', 5, 1, 0, 0, 75000.00, 0.00, 0.00, 13500.00, 3750.00, NULL, NULL, 0.00, 0.00, 92250.00, 'cancelled', 'pending', '2026-03-02 17:01:24', '2026-03-02 22:46:24', '2026-03-02 22:46:24', NULL),
 ('e121073a-b74c-48f2-870d-9f501f29648a', 'bb5538d1-e418-11f0-9f30-00410e2b5e6e', 'bb929607-e418-11f0-9f30-00410e2b5e6e', '2026-01-17', '2026-01-18', 1, 2, 2, 0, 8000.00, 0.00, 500.00, 1530.00, 0.00, NULL, NULL, 0.00, 0.00, 10030.00, '', 'pending', '2026-01-16 18:00:27', '2026-01-16 23:45:27', NULL, '2026-02-03 17:17:02'),
-('fb174d45-d4cc-4ef1-a9ab-7e4c816d9166', 'bb5538d1-e418-11f0-9f30-00410e2b5e6e', 'bb927936-e418-11f0-9f30-00410e2b5e6e', '2026-01-17', '2026-01-18', 1, 3, 2, 0, 15000.00, 0.00, 1600.00, 2988.00, 0.00, NULL, NULL, 0.00, 0.00, 19588.00, 'cancelled', 'failed', '2026-01-16 14:13:31', '2026-01-17 07:45:37', NULL, '2026-02-03 17:17:02');
+('e997f4c8-3796-4ed7-aa76-07dc51c9d0f3', 'a9fb0aae-b803-427e-8540-e44bfe29e9a6', 'bb927936-e418-11f0-9f30-00410e2b5e6e', '2026-11-09', '2026-12-09', 30, 1, 0, 0, 450000.00, 0.00, 0.00, 81000.00, 22500.00, NULL, NULL, 0.00, 0.00, 553500.00, 'cancelled', 'pending', '2026-03-02 17:01:25', '2026-03-02 22:46:24', '2026-03-02 22:46:24', NULL),
+('f4a30a70-b5a1-49c6-8ff9-aa709edb64ac', 'a9fb0aae-b803-427e-8540-e44bfe29e9a6', 'bb927936-e418-11f0-9f30-00410e2b5e6e', '2026-05-21', '2026-05-22', 1, 1, 0, 0, 15000.00, 0.00, 0.00, 2700.00, 750.00, NULL, NULL, 0.00, 0.00, 18450.00, 'cancelled', 'pending', '2026-03-02 16:53:40', '2026-03-02 22:38:40', '2026-03-02 22:38:40', NULL),
+('f706b324-0fb7-4967-849b-d7932420dc60', 'a9fb0aae-b803-427e-8540-e44bfe29e9a6', 'bb929607-e418-11f0-9f30-00410e2b5e6e', '2026-10-18', '2026-10-23', 5, 1, 0, 0, 40000.00, 0.00, 0.00, 7200.00, 2000.00, NULL, NULL, 0.00, 0.00, 49200.00, 'cancelled', 'pending', '2026-03-02 17:01:24', '2026-03-02 22:46:24', '2026-03-02 22:46:24', NULL),
+('fb174d45-d4cc-4ef1-a9ab-7e4c816d9166', 'bb5538d1-e418-11f0-9f30-00410e2b5e6e', 'bb927936-e418-11f0-9f30-00410e2b5e6e', '2026-01-17', '2026-01-18', 1, 3, 2, 0, 15000.00, 0.00, 1600.00, 2988.00, 0.00, NULL, NULL, 0.00, 0.00, 19588.00, 'cancelled', 'failed', '2026-01-16 14:13:31', '2026-01-17 07:45:37', NULL, '2026-02-03 17:17:02'),
+('fcbb4174-93b5-45d7-91d8-57be02869420', 'a9fb0aae-b803-427e-8540-e44bfe29e9a6', 'bb927936-e418-11f0-9f30-00410e2b5e6e', '2026-11-07', '2026-11-08', 1, 1, 0, 0, 15000.00, 0.00, 0.00, 2700.00, 750.00, NULL, NULL, 0.00, 0.00, 18450.00, 'cancelled', 'pending', '2026-03-02 17:01:24', '2026-03-02 22:46:24', '2026-03-02 22:46:24', NULL);
 
 -- --------------------------------------------------------
 
@@ -428,9 +455,11 @@ INSERT INTO `cron_jobs_log` (`id`, `job_name`, `run_date`, `status`, `remarks`) 
 ('1048eca0-bd8d-4f6a-83f4-e2cd154046a4', 'check_in_reminder_24h', '2026-02-25', 'success', 'Sent 0 reminders, 0 failed'),
 ('2bcd0a3c-a8af-424c-bb44-f95f1ccd0d0d', 'check_in_reminder_24h', '2026-02-22', 'success', 'Sent 0 reminders, 0 failed'),
 ('3e2e27ab-923d-4a80-a3c8-dc22537cc210', 'review_request', '2026-02-15', 'success', 'Sent 0 review requests, 0 failed'),
+('41380528-58cf-439e-bd65-03e5e4e655db', 'check_in_reminder_24h', '2026-03-03', 'success', 'Sent 0 reminders, 0 failed'),
 ('4e4f6494-4b55-4a62-8c18-2fdca9d49b5c', 'daily_booking_processor', '2026-01-19', 'success', 'Processed 0 settlements'),
 ('4eee4cab-7f09-4fde-bad2-c049d800b1c6', 'daily_booking_processor', '2026-02-14', 'success', 'Processed 0 settlements'),
 ('50f3f5a8-349a-4856-8712-1bd64b78bb53', 'daily_cleanup', '2026-01-19', 'success', 'Cancelled 0 expired bookings'),
+('533977e8-da56-43ad-9c8b-f3aa053c5f64', 'check_out_reminder', '2026-03-04', 'success', 'Sent 0 reminders, 0 failed'),
 ('576a9bc9-593b-4f50-9d31-83d60edd0c5a', 'check_out_reminder', '2026-01-17', 'success', 'Sent 0 reminders, 0 failed'),
 ('6a87defb-247c-42df-ae4c-7b4b92cc19d2', 'check_in_reminder_24h', '2026-02-15', 'success', 'Sent 0 reminders, 0 failed'),
 ('6d6ba5b9-e24d-45ff-a09e-346a3180580c', 'daily_booking_processor', '2026-01-17', 'success', 'Processed 0 settlements'),
@@ -528,8 +557,32 @@ CREATE TABLE `employee_points` (
 --
 
 INSERT INTO `employee_points` (`id`, `employee_id`, `booking_id`, `points`, `status`, `created_at`) VALUES
+('00fcd4db-7526-4dc6-a593-27589b7bc3b4', 'bb5c7d89-e418-11f0-9f30-00410e2b5e6e', 'c999b850-de48-4a4a-954f-25e8a3d8f589', 2250.00, 'pending', '2026-03-02 17:01:25'),
+('0ba14594-4f93-4241-b2e1-9002839ee551', 'bb5c7d89-e418-11f0-9f30-00410e2b5e6e', '638f490b-8436-48f6-bbf8-b95defeb81f1', 2250.00, 'pending', '2026-03-02 17:01:24'),
+('157a75c7-45be-49e6-8528-496bfb8bfc4e', 'bb5c7d89-e418-11f0-9f30-00410e2b5e6e', '8e6cf054-3d23-4657-9a42-c61290a20a0f', 3750.00, 'pending', '2026-03-02 16:53:41'),
+('16ecc876-7b20-4438-bedc-bb1556b66b74', 'bb5c7d89-e418-11f0-9f30-00410e2b5e6e', '44fb4258-b0cd-4a21-a85e-bf6859700bc5', 3750.00, 'pending', '2026-03-02 16:53:40'),
+('1799c46d-25a3-470c-a5ee-d88df742d9a5', 'bb5c7d89-e418-11f0-9f30-00410e2b5e6e', '9fb7b17c-5c1a-4d82-9a85-404f58cf12c5', 3750.00, 'pending', '2026-03-02 16:53:40'),
+('2f62c327-9bd2-4b74-9d1e-22eec95b2ce6', 'bb5c7d89-e418-11f0-9f30-00410e2b5e6e', 'cff2a0a7-c904-442c-9154-6a37a60ac054', 22500.00, 'pending', '2026-03-02 16:53:40'),
+('30c28a4c-1ed4-4aa9-884e-5f9a5edb5e13', 'bb5c7d89-e418-11f0-9f30-00410e2b5e6e', 'dfc79b3b-f859-4a20-a3b0-26d023e3d1ae', 3750.00, 'pending', '2026-03-02 17:01:24'),
+('35b6323c-5103-420d-b290-6be748d6122b', 'bb5c7d89-e418-11f0-9f30-00410e2b5e6e', 'f4a30a70-b5a1-49c6-8ff9-aa709edb64ac', 750.00, 'pending', '2026-03-02 16:53:40'),
+('39bf3451-54ab-4675-a980-663c56595e7a', 'bb5c7d89-e418-11f0-9f30-00410e2b5e6e', '8959feac-09e7-44a6-830a-160dea03c2d0', 3750.00, 'pending', '2026-03-02 17:01:24'),
+('497a460b-88d1-4542-bc9c-364bca1d85d3', 'bb5c7d89-e418-11f0-9f30-00410e2b5e6e', 'bd23f401-2dfe-4525-bbba-215535b2e769', 3750.00, 'pending', '2026-03-02 17:01:24'),
+('66dbfa65-73b5-4249-951f-2bd0c99ece55', 'bb5c7d89-e418-11f0-9f30-00410e2b5e6e', '457c530b-4e62-4daa-b0ae-c2632c1b6a1c', 3750.00, 'pending', '2026-03-02 17:01:25'),
+('68b166e4-a63e-4e5a-9c20-0c8c5c619c5d', 'bb5c7d89-e418-11f0-9f30-00410e2b5e6e', '638f490b-8436-48f6-bbf8-b95defeb81f1', 2250.00, 'pending', '2026-03-02 17:01:24'),
+('759503ce-5cc0-4b8d-a43f-e43b762e3b61', 'bb5c7d89-e418-11f0-9f30-00410e2b5e6e', '04d469a5-cfff-43db-a1aa-8b69b4fc89f2', 2250.00, 'pending', '2026-03-02 16:53:40'),
+('75c4f474-a2da-4c2b-8850-2e4f78eda1ac', 'bb5c7d89-e418-11f0-9f30-00410e2b5e6e', 'f706b324-0fb7-4967-849b-d7932420dc60', 2000.00, 'pending', '2026-03-02 17:01:24'),
+('789a71b9-4fc0-4ef1-9848-24ee7dbcffec', 'bb5c7d89-e418-11f0-9f30-00410e2b5e6e', '9587718f-d491-4171-b268-79558bf3a3c2', 3750.00, 'pending', '2026-03-02 17:01:24'),
+('7dafe6db-e8c7-4d3a-a602-b1c016798a86', 'bb5c7d89-e418-11f0-9f30-00410e2b5e6e', '0b3e982b-0ef5-4727-944b-950bff982996', 3750.00, 'pending', '2026-03-02 17:01:25'),
+('808a3445-4ed2-4b18-937b-905e483d7be4', 'bb5c7d89-e418-11f0-9f30-00410e2b5e6e', '9aba3632-ead7-425b-896e-c86bbdb23769', 3750.00, 'pending', '2026-03-02 16:53:40'),
+('94ae5f5f-a4b8-46e8-8d06-79b760866ac8', 'bb5c7d89-e418-11f0-9f30-00410e2b5e6e', 'bdc6afdb-307d-4292-afea-ff782f2cfd7e', 3750.00, 'pending', '2026-03-02 16:53:40'),
+('94c6192a-d367-4767-ad88-17df175daa77', 'bb5c7d89-e418-11f0-9f30-00410e2b5e6e', '55b16f5d-8777-4801-a484-3ff64f5dffc6', 3750.00, 'pending', '2026-03-02 16:53:40'),
+('9a4850ef-a10a-4c8c-be3e-18f8a38553ea', 'bb5c7d89-e418-11f0-9f30-00410e2b5e6e', '33435cd3-c31f-45c5-b440-ce19e7083727', 2000.00, 'pending', '2026-03-02 16:53:40'),
+('9b942c41-d888-4a9d-8c2c-944af8dee17f', 'bb5c7d89-e418-11f0-9f30-00410e2b5e6e', '2cdd4906-531a-49d9-a13c-398fc57fe546', 3750.00, 'pending', '2026-03-02 17:01:24'),
+('ac0974e9-cd35-4fac-9dfe-519028196355', 'bb5c7d89-e418-11f0-9f30-00410e2b5e6e', '9e286f12-a07a-42bf-9b17-a461ed11e653', 3750.00, 'pending', '2026-03-02 16:53:40'),
 ('aed55a3e-7db7-4363-bbeb-bb1907f63fe8', 'bb5c7d89-e418-11f0-9f30-00410e2b5e6e', '3c5e8c53-794f-4820-a5ac-ee46aa587004', 2250.00, 'pending', '2026-02-22 03:24:19'),
 ('bf5d2dc4-71f7-4bda-a1ae-2fe1a99a99be', 'bb5c7d89-e418-11f0-9f30-00410e2b5e6e', '82b4cf48-b0bd-49e8-acfb-4ff3d2c3507e', 2250.00, 'pending', '2026-02-22 03:17:41'),
+('c1b630ab-051c-4a84-947e-a90aeff8b5aa', 'bb5c7d89-e418-11f0-9f30-00410e2b5e6e', '20004d4c-c85e-4c5d-a359-a8e6f77d796b', 3750.00, 'pending', '2026-03-02 16:53:41'),
+('e617a7df-ab56-46f2-86ca-f1d5f94987f1', 'bb5c7d89-e418-11f0-9f30-00410e2b5e6e', '6fe75a9c-1a14-4f69-a438-677ae090a5eb', 3750.00, 'pending', '2026-03-02 17:01:24'),
 ('ebdccc3f-2127-459b-a5d0-e715e73ab47f', 'bb5c7d89-e418-11f0-9f30-00410e2b5e6e', '82b4cf48-b0bd-49e8-acfb-4ff3d2c3507e', 2250.00, 'pending', '2026-02-22 03:14:38'),
 ('emp-points-001', 'bb5c7d89-e418-11f0-9f30-00410e2b5e6e', 'booking-test-001', 3053.40, 'confirmed', '2026-01-08 05:05:00'),
 ('emp-points-002', 'bb5c7d89-e418-11f0-9f30-00410e2b5e6e', 'booking-test-002', 1250.80, 'confirmed', '2026-01-09 05:35:00'),
@@ -537,7 +590,9 @@ INSERT INTO `employee_points` (`id`, `employee_id`, `booking_id`, `points`, `sta
 ('emp-points-004', 'bb5c7d89-e418-11f0-9f30-00410e2b5e6e', 'booking-test-010', 1416.00, 'confirmed', '2026-01-10 02:35:00'),
 ('emp-points-005', 'bb5c91ad-e418-11f0-9f30-00410e2b5e6e', 'booking-test-008', 2418.40, 'confirmed', '2025-12-19 23:15:00'),
 ('emp-points-006', 'bb5c7d89-e418-11f0-9f30-00410e2b5e6e', 'booking-test-009', 3650.00, 'confirmed', '2026-01-10 02:10:00'),
-('emp-points-007', 'bb5c91ad-e418-11f0-9f30-00410e2b5e6e', 'booking-test-011', 833.28, 'confirmed', '2025-11-24 23:10:00');
+('emp-points-007', 'bb5c91ad-e418-11f0-9f30-00410e2b5e6e', 'booking-test-011', 833.28, 'confirmed', '2025-11-24 23:10:00'),
+('f01c874b-bc68-485b-84cd-6c60112d85ca', 'bb5c7d89-e418-11f0-9f30-00410e2b5e6e', 'e997f4c8-3796-4ed7-aa76-07dc51c9d0f3', 22500.00, 'pending', '2026-03-02 17:01:25'),
+('f0e1f138-b7b5-4318-94aa-fd158df69de3', 'bb5c7d89-e418-11f0-9f30-00410e2b5e6e', 'fcbb4174-93b5-45d7-91d8-57be02869420', 750.00, 'pending', '2026-03-02 17:01:24');
 
 -- --------------------------------------------------------
 
@@ -1534,6 +1589,8 @@ CREATE TABLE `users` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `deleted_at` timestamp NULL DEFAULT NULL,
   `avatar` varchar(255) DEFAULT NULL,
+  `address` varchar(500) DEFAULT NULL,
+  `bio` text DEFAULT NULL,
   `reset_token` varchar(10) DEFAULT NULL,
   `reset_token_expiry` datetime DEFAULT NULL,
   `is_corporate_user` tinyint(1) DEFAULT 0 COMMENT 'User booking for company',
@@ -1554,27 +1611,30 @@ CREATE TABLE `users` (
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`id`, `full_name`, `email`, `phone`, `password_hash`, `status`, `created_at`, `deleted_at`, `avatar`, `reset_token`, `reset_token_expiry`, `is_corporate_user`, `company_name`, `company_gst`, `company_email_verified`, `email_verification_token`, `email_verification_token_expiry`, `email_verified_at`, `is_temporary_password`, `password_change_required`, `created_by`, `profile_completed`, `last_password_change`) VALUES
-('2311bd48-54ff-469e-8a7c-9ff89ee7fb78', 'Test User', 'test_1767631087306@test.com', '1234567890', '$2a$10$IFE7cN/VckZtwgbSnVMimOD9EgQrjyTm38mVumUfQ9xXVpIkuRSJi', 'active', '2026-01-05 16:38:07', NULL, NULL, NULL, NULL, 0, NULL, NULL, 0, NULL, NULL, NULL, 0, 0, NULL, 0, NULL),
-('244c2909-85ef-4d38-8a0a-2723ff145942', 'Test User', 'testuser@zevio.in', '9999999999', '$2a$10$xPefuZECysURprHDo7i6lOIKmTbVoEY.w7IFEcpFQ7K3p5unFze0m', 'active', '2026-02-21 14:05:13', NULL, NULL, NULL, NULL, 0, NULL, NULL, 0, NULL, NULL, NULL, 0, 0, NULL, 0, NULL),
-('4df955f5-45e7-4844-a832-9ec9e5649f5c', 'Test User', 'test_1767630472022@test.com', '1234567890', '$2a$10$KXETuyYNN8uo1XUBxA9JQu03zPLX/gnEGGJZRqwidjQMGiiuaoQya', 'active', '2026-01-05 16:27:52', NULL, NULL, NULL, NULL, 0, NULL, NULL, 0, NULL, NULL, NULL, 0, 0, NULL, 0, NULL),
-('88f47b63-ef0c-4726-9fdf-c976759d7da6', 'Ranjith', 'ranjith@thinktreemedia.in', '9945554414', '$2a$10$KoekUVESQ/.z4QNhNtAsfOqYIK/LSI319UjIXfo2ACzUuczIDYU5K', 'active', '2026-03-01 18:05:00', NULL, NULL, NULL, NULL, 1, 'Gopafy', NULL, 1, NULL, NULL, '2026-03-01 18:56:37', 0, 0, NULL, 0, '2026-03-01 18:59:54'),
-('ae1a695c-6724-4098-bd50-73a2cf569779', 'Test User', 'test_1767631229011@test.com', '1234567890', '$2a$10$mcTBWcR5QPiIMxXEWNCApeMchTQFiWI7qWlAkbif.COPYjv9EcXI6', 'active', '2026-01-05 16:40:29', NULL, NULL, NULL, NULL, 0, NULL, NULL, 0, NULL, NULL, NULL, 0, 0, NULL, 0, NULL),
-('bb551978-e418-11f0-9f30-00410e2b5e6e', 'Amit Kumar', 'rajesh@example.com', '9876543210', '$2a$10$gui.vHTx6R8XjrdoznshdO9tv.Hqeu6lv6gY09s6q.P.iYv1.VfzS', 'active', '2025-12-28 18:12:12', NULL, NULL, NULL, NULL, 0, NULL, NULL, 0, NULL, NULL, NULL, 0, 0, NULL, 0, NULL),
-('bb5538d1-e418-11f0-9f30-00410e2b5e6e', 'Priya Sharma', 'priya@example.com', '9876543211', '$2a$10$gui.vHTx6R8XjrdoznshdO9tv.Hqeu6lv6gY09s6q.P.iYv1.VfzS', 'active', '2025-12-28 18:12:12', NULL, NULL, NULL, NULL, 0, NULL, NULL, 0, NULL, NULL, NULL, 0, 0, NULL, 0, NULL),
-('bb553a04-e418-11f0-9f30-00410e2b5e6e', 'Ravi Singh', 'amit@example.com', '9876543212', '$2a$10$yOC.Vpu6kJrpjz4KSW6saeD/sw7BObnKzK09TUCt1fKFKDgyoSEA.', 'active', '2025-12-28 18:12:12', NULL, NULL, NULL, NULL, 0, NULL, NULL, 0, NULL, NULL, NULL, 0, 0, NULL, 0, NULL),
-('bb553ab0-e418-11f0-9f30-00410e2b5e6e', 'Sneha Reddy', 'sneha@example.com', '9876543213', '$2a$10$yOC.Vpu6kJrpjz4KSW6saeD/sw7BObnKzK09TUCt1fKFKDgyoSEA.', 'active', '2025-12-28 18:12:12', NULL, NULL, NULL, NULL, 0, NULL, NULL, 0, NULL, NULL, NULL, 0, 0, NULL, 0, NULL),
-('bb553b3e-e418-11f0-9f30-00410e2b5e6e', 'Vikram Singh', 'vikram@example.com', '9876543214', '$2a$10$yOC.Vpu6kJrpjz4KSW6saeD/sw7BObnKzK09TUCt1fKFKDgyoSEA.', 'active', '2025-12-28 18:12:12', NULL, NULL, NULL, NULL, 0, NULL, NULL, 0, NULL, NULL, NULL, 0, 0, NULL, 0, NULL),
-('c25ee6dc-46b9-4c05-9ed1-82a3b3e5732d', 'Test User', 'test_1767631377325@test.com', '1234567890', '$2a$10$K5A5Z/1KuUBCry3p742ykOEFd5/7WuSph7XZ78a1oGobwDDOvtupC', 'active', '2026-01-05 16:42:57', NULL, NULL, NULL, NULL, 0, NULL, NULL, 0, NULL, NULL, NULL, 0, 0, NULL, 0, NULL),
-('c5c35ba5-8d7c-43ed-9eb6-fe1a19fe6f94', 'Test User', 'test_1767631170547@test.com', '1234567890', '$2a$10$OXFoboJiCN87YHVowsO7IunlcokOE1YbCThiNmBGWKLfTsx2/UifG', 'active', '2026-01-05 16:39:30', NULL, NULL, NULL, NULL, 0, NULL, NULL, 0, NULL, NULL, NULL, 0, 0, NULL, 0, NULL),
-('user-test-001', 'Rajesh Mehta', 'rajesh.mehta@test.com', '9123456780', '$2a$10$gui.vHTx6R8XjrdoznshdO9tv.Hqeu6lv6gY09s6q.P.iYv1.VfzS', 'active', '2025-12-29 04:30:00', NULL, NULL, NULL, NULL, 0, NULL, NULL, 0, NULL, NULL, NULL, 0, 0, NULL, 0, NULL),
-('user-test-002', 'Sneha Patel', 'sneha.patel@test.com', '9123456781', '$2a$10$gui.vHTx6R8XjrdoznshdO9tv.Hqeu6lv6gY09s6q.P.iYv1.VfzS', 'active', '2025-12-29 05:30:00', NULL, NULL, NULL, NULL, 0, NULL, NULL, 0, NULL, NULL, NULL, 0, 0, NULL, 0, NULL),
-('user-test-003', 'Vikram Rao', 'vikram.rao@test.com', '9123456782', '$2a$10$gui.vHTx6R8XjrdoznshdO9tv.Hqeu6lv6gY09s6q.P.iYv1.VfzS', 'active', '2025-12-29 06:30:00', NULL, NULL, NULL, NULL, 0, NULL, NULL, 0, NULL, NULL, NULL, 0, 0, NULL, 0, NULL),
-('user-test-004', 'Anjali Desai', 'anjali.desai@test.com', '9123456783', '$2a$10$gui.vHTx6R8XjrdoznshdO9tv.Hqeu6lv6gY09s6q.P.iYv1.VfzS', 'active', '2025-12-30 03:30:00', NULL, NULL, NULL, NULL, 0, NULL, NULL, 0, NULL, NULL, NULL, 0, 0, NULL, 0, NULL),
-('user-test-005', 'Karan Shah', 'karan.shah@test.com', '9123456784', '$2a$10$gui.vHTx6R8XjrdoznshdO9tv.Hqeu6lv6gY09s6q.P.iYv1.VfzS', 'active', '2025-12-30 04:30:00', NULL, NULL, NULL, NULL, 0, NULL, NULL, 0, NULL, NULL, NULL, 0, 0, NULL, 0, NULL),
-('user-test-006', 'Neha Gupta', 'neha.gupta@test.com', '9123456785', '$2a$10$gui.vHTx6R8XjrdoznshdO9tv.Hqeu6lv6gY09s6q.P.iYv1.VfzS', 'blocked', '2025-12-30 05:30:00', NULL, NULL, NULL, NULL, 0, NULL, NULL, 0, NULL, NULL, NULL, 0, 0, NULL, 0, NULL),
-('user-test-007', 'Arjun Nair', 'arjun.nair@test.com', '9123456786', '$2a$10$gui.vHTx6R8XjrdoznshdO9tv.Hqeu6lv6gY09s6q.P.iYv1.VfzS', 'active', '2025-12-31 02:30:00', NULL, NULL, NULL, NULL, 0, NULL, NULL, 0, NULL, NULL, NULL, 0, 0, NULL, 0, NULL),
-('user-test-008', 'Pooja Kapoor', 'pooja.kapoor@test.com', '9123456787', '$2a$10$gui.vHTx6R8XjrdoznshdO9tv.Hqeu6lv6gY09s6q.P.iYv1.VfzS', 'active', '2025-12-31 03:30:00', NULL, NULL, NULL, NULL, 0, NULL, NULL, 0, NULL, NULL, NULL, 0, 0, NULL, 0, NULL);
+INSERT INTO `users` (`id`, `full_name`, `email`, `phone`, `password_hash`, `status`, `created_at`, `deleted_at`, `avatar`, `address`, `bio`, `reset_token`, `reset_token_expiry`, `is_corporate_user`, `company_name`, `company_gst`, `company_email_verified`, `email_verification_token`, `email_verification_token_expiry`, `email_verified_at`, `is_temporary_password`, `password_change_required`, `created_by`, `profile_completed`, `last_password_change`) VALUES
+('2311bd48-54ff-469e-8a7c-9ff89ee7fb78', 'Test User', 'test_1767631087306@test.com', '1234567890', '$2a$10$IFE7cN/VckZtwgbSnVMimOD9EgQrjyTm38mVumUfQ9xXVpIkuRSJi', 'active', '2026-01-05 16:38:07', NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, 0, NULL, NULL, NULL, 0, 0, NULL, 0, NULL),
+('244c2909-85ef-4d38-8a0a-2723ff145942', 'Test User', 'testuser@zevio.in', '9999999999', '$2a$10$xPefuZECysURprHDo7i6lOIKmTbVoEY.w7IFEcpFQ7K3p5unFze0m', 'active', '2026-02-21 14:05:13', NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, 0, NULL, NULL, NULL, 0, 0, NULL, 0, NULL),
+('32d3b01b-2452-431e-aeff-b3a1fe3ea69d', 'Test Booker B', 'testbooker_b@zevio.test', '9000000002', '$2a$10$WunCdjKZCiqJlHp7gUS2nu9IA9gpUu0j75/adT4Dm7IuUgjTM/I1G', 'active', '2026-03-02 16:53:39', NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, 0, NULL, NULL, NULL, 0, 0, NULL, 0, NULL),
+('4df955f5-45e7-4844-a832-9ec9e5649f5c', 'Test User', 'test_1767630472022@test.com', '1234567890', '$2a$10$KXETuyYNN8uo1XUBxA9JQu03zPLX/gnEGGJZRqwidjQMGiiuaoQya', 'active', '2026-01-05 16:27:52', NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, 0, NULL, NULL, NULL, 0, 0, NULL, 0, NULL),
+('88f47b63-ef0c-4726-9fdf-c976759d7da6', 'Ranjith', 'ranjith@thinktreemedia.in', '9945554414', '$2a$10$KoekUVESQ/.z4QNhNtAsfOqYIK/LSI319UjIXfo2ACzUuczIDYU5K', 'active', '2026-03-01 18:05:00', NULL, NULL, NULL, NULL, NULL, NULL, 1, 'Gopafy', NULL, 1, NULL, NULL, '2026-03-01 18:56:37', 0, 0, NULL, 0, '2026-03-01 18:59:54'),
+('a85b436f-dde2-4b06-ae86-aca64e6b222c', 'Vinod', 'gopafyvinod@gmail.com', '7811720071', '$2a$10$2qHb5erxwyOIHHcN1ELc2eK/RWgLM/sl7GVnv2zOHd9W1LQ.wRETu', 'active', '2026-03-04 08:18:27', NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, 0, NULL, NULL, NULL, 0, 0, 'bb5898f8-e418-11f0-9f30-00410e2b5e6e', 0, '2026-03-04 11:39:28'),
+('a9fb0aae-b803-427e-8540-e44bfe29e9a6', 'Test Booker A', 'testbooker_a@zevio.test', '9000000001', '$2a$10$iaHQ5ZsALhDCyyasG1Mq9OuiAwcadihRH9PgXH91sXNZMKsO5paOa', 'active', '2026-03-02 16:53:39', NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, 0, NULL, NULL, NULL, 0, 0, NULL, 0, NULL),
+('ae1a695c-6724-4098-bd50-73a2cf569779', 'Test User', 'test_1767631229011@test.com', '1234567890', '$2a$10$mcTBWcR5QPiIMxXEWNCApeMchTQFiWI7qWlAkbif.COPYjv9EcXI6', 'active', '2026-01-05 16:40:29', NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, 0, NULL, NULL, NULL, 0, 0, NULL, 0, NULL),
+('bb551978-e418-11f0-9f30-00410e2b5e6e', 'Amit Kumar', 'rajesh@example.com', '9876543210', '$2a$10$gui.vHTx6R8XjrdoznshdO9tv.Hqeu6lv6gY09s6q.P.iYv1.VfzS', 'active', '2025-12-28 18:12:12', NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, 0, NULL, NULL, NULL, 0, 0, NULL, 0, NULL),
+('bb5538d1-e418-11f0-9f30-00410e2b5e6e', 'Priya Sharma', 'priya@example.com', '9876543211', '$2a$10$gui.vHTx6R8XjrdoznshdO9tv.Hqeu6lv6gY09s6q.P.iYv1.VfzS', 'active', '2025-12-28 18:12:12', NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, 0, NULL, NULL, NULL, 0, 0, NULL, 0, NULL),
+('bb553a04-e418-11f0-9f30-00410e2b5e6e', 'Ravi Singh', 'amit@example.com', '9876543212', '$2a$10$yOC.Vpu6kJrpjz4KSW6saeD/sw7BObnKzK09TUCt1fKFKDgyoSEA.', 'active', '2025-12-28 18:12:12', NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, 0, NULL, NULL, NULL, 0, 0, NULL, 0, NULL),
+('bb553ab0-e418-11f0-9f30-00410e2b5e6e', 'Sneha Reddy', 'sneha@example.com', '9876543213', '$2a$10$yOC.Vpu6kJrpjz4KSW6saeD/sw7BObnKzK09TUCt1fKFKDgyoSEA.', 'active', '2025-12-28 18:12:12', NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, 0, NULL, NULL, NULL, 0, 0, NULL, 0, NULL),
+('bb553b3e-e418-11f0-9f30-00410e2b5e6e', 'Vikram Singh', 'vikram@example.com', '9876543214', '$2a$10$yOC.Vpu6kJrpjz4KSW6saeD/sw7BObnKzK09TUCt1fKFKDgyoSEA.', 'active', '2025-12-28 18:12:12', NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, 0, NULL, NULL, NULL, 0, 0, NULL, 0, NULL),
+('c25ee6dc-46b9-4c05-9ed1-82a3b3e5732d', 'Test User', 'test_1767631377325@test.com', '1234567890', '$2a$10$K5A5Z/1KuUBCry3p742ykOEFd5/7WuSph7XZ78a1oGobwDDOvtupC', 'active', '2026-01-05 16:42:57', NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, 0, NULL, NULL, NULL, 0, 0, NULL, 0, NULL),
+('c5c35ba5-8d7c-43ed-9eb6-fe1a19fe6f94', 'Test User', 'test_1767631170547@test.com', '1234567890', '$2a$10$OXFoboJiCN87YHVowsO7IunlcokOE1YbCThiNmBGWKLfTsx2/UifG', 'active', '2026-01-05 16:39:30', NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, 0, NULL, NULL, NULL, 0, 0, NULL, 0, NULL),
+('user-test-001', 'Rajesh Mehta', 'rajesh.mehta@test.com', '9123456780', '$2a$10$gui.vHTx6R8XjrdoznshdO9tv.Hqeu6lv6gY09s6q.P.iYv1.VfzS', 'active', '2025-12-29 04:30:00', NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, 0, NULL, NULL, NULL, 0, 0, NULL, 0, NULL),
+('user-test-002', 'Sneha Patel', 'sneha.patel@test.com', '9123456781', '$2a$10$gui.vHTx6R8XjrdoznshdO9tv.Hqeu6lv6gY09s6q.P.iYv1.VfzS', 'active', '2025-12-29 05:30:00', NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, 0, NULL, NULL, NULL, 0, 0, NULL, 0, NULL),
+('user-test-003', 'Vikram Rao', 'vikram.rao@test.com', '9123456782', '$2a$10$gui.vHTx6R8XjrdoznshdO9tv.Hqeu6lv6gY09s6q.P.iYv1.VfzS', 'active', '2025-12-29 06:30:00', NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, 0, NULL, NULL, NULL, 0, 0, NULL, 0, NULL),
+('user-test-004', 'Anjali Desai', 'anjali.desai@test.com', '9123456783', '$2a$10$gui.vHTx6R8XjrdoznshdO9tv.Hqeu6lv6gY09s6q.P.iYv1.VfzS', 'active', '2025-12-30 03:30:00', NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, 0, NULL, NULL, NULL, 0, 0, NULL, 0, NULL),
+('user-test-005', 'Karan Shah', 'karan.shah@test.com', '9123456784', '$2a$10$gui.vHTx6R8XjrdoznshdO9tv.Hqeu6lv6gY09s6q.P.iYv1.VfzS', 'active', '2025-12-30 04:30:00', NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, 0, NULL, NULL, NULL, 0, 0, NULL, 0, NULL),
+('user-test-006', 'Neha Gupta', 'neha.gupta@test.com', '9123456785', '$2a$10$gui.vHTx6R8XjrdoznshdO9tv.Hqeu6lv6gY09s6q.P.iYv1.VfzS', 'blocked', '2025-12-30 05:30:00', NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, 0, NULL, NULL, NULL, 0, 0, NULL, 0, NULL),
+('user-test-007', 'Arjun Nair', 'arjun.nair@test.com', '9123456786', '$2a$10$gui.vHTx6R8XjrdoznshdO9tv.Hqeu6lv6gY09s6q.P.iYv1.VfzS', 'active', '2025-12-31 02:30:00', NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, 0, NULL, NULL, NULL, 0, 0, NULL, 0, NULL),
+('user-test-008', 'Pooja Kapoor', 'pooja.kapoor@test.com', '9123456787', '$2a$10$gui.vHTx6R8XjrdoznshdO9tv.Hqeu6lv6gY09s6q.P.iYv1.VfzS', 'active', '2025-12-31 03:30:00', NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, 0, NULL, NULL, NULL, 0, 0, NULL, 0, NULL);
 
 -- --------------------------------------------------------
 
@@ -1604,6 +1664,7 @@ CREATE TABLE `user_settings` (
 --
 
 INSERT INTO `user_settings` (`id`, `user_id`, `email_notifications`, `email_promotions`, `email_reminders`, `sms_notifications`, `sms_reminders`, `push_notifications`, `profile_visibility`, `show_wishlist`, `share_activity`, `newsletter_subscription`, `created_at`, `updated_at`) VALUES
+('26523f3a-0c46-4ea5-b715-74996830dcca', 'a85b436f-dde2-4b06-ae86-aca64e6b222c', 1, 1, 1, 0, 0, 1, 'private', 0, 0, 1, '2026-03-04 11:41:32', '2026-03-04 11:41:32'),
 ('af3aa059-8353-443b-b386-d164b6694b87', '244c2909-85ef-4d38-8a0a-2723ff145942', 1, 1, 1, 0, 0, 1, 'private', 0, 0, 1, '2026-02-22 05:29:10', '2026-02-22 05:29:10'),
 ('d4d8ac23-ee5e-11f0-8497-00410e2b5e6e', 'bb553a04-e418-11f0-9f30-00410e2b5e6e', 1, 1, 1, 0, 0, 1, 'private', 0, 0, 1, '2026-01-10 19:59:03', '2026-01-10 19:59:03'),
 ('d4d8acbb-ee5e-11f0-8497-00410e2b5e6e', 'user-test-004', 1, 1, 1, 0, 0, 1, 'private', 0, 0, 1, '2026-01-10 19:59:03', '2026-01-10 19:59:03'),
@@ -1710,19 +1771,17 @@ INSERT INTO `wishlists` (`id`, `user_id`, `property_id`, `created_at`, `deleted_
 ('3b79c8ec-e89e-11f0-a597-00410e2b5e6e', 'bb551978-e418-11f0-9f30-00410e2b5e6e', 'bb9298e7-e418-11f0-9f30-00410e2b5e6e', '2026-01-03 12:17:54', NULL),
 ('3b79ca44-e89e-11f0-a597-00410e2b5e6e', 'bb5538d1-e418-11f0-9f30-00410e2b5e6e', 'bb929607-e418-11f0-9f30-00410e2b5e6e', '2026-01-03 12:17:54', NULL),
 ('3b79cb7b-e89e-11f0-a597-00410e2b5e6e', 'bb553a04-e418-11f0-9f30-00410e2b5e6e', 'bb927936-e418-11f0-9f30-00410e2b5e6e', '2026-01-03 12:17:54', NULL),
+('3c03a911-bab3-4adc-8f13-96b516d9fa64', 'a85b436f-dde2-4b06-ae86-aca64e6b222c', 'bb9298e7-e418-11f0-9f30-00410e2b5e6e', '2026-03-04 12:17:12', NULL),
+('52b704a4-4e6d-4852-a20d-2d94273a4259', 'a85b436f-dde2-4b06-ae86-aca64e6b222c', '495d4419-f31f-11f0-8f27-00410e2b5e6e', '2026-03-04 12:45:07', NULL),
 ('70b9abac-fa96-4d8d-aa9a-9a9b10aadd00', 'bb5538d1-e418-11f0-9f30-00410e2b5e6e', 'bb9298e7-e418-11f0-9f30-00410e2b5e6e', '2026-01-10 08:59:59', NULL),
-('wishlist-test-001', 'bb551978-e418-11f0-9f30-00410e2b5e6e', 'bb927936-e418-11f0-9f30-00410e2b5e6e', '2026-01-05 04:30:00', NULL),
-('wishlist-test-002', 'bb551978-e418-11f0-9f30-00410e2b5e6e', 'bb9298e7-e418-11f0-9f30-00410e2b5e6e', '2026-01-05 04:45:00', NULL),
 ('wishlist-test-003', 'bb551978-e418-11f0-9f30-00410e2b5e6e', 'bb9739d5-e418-11f0-9f30-00410e2b5e6e', '2026-01-06 03:30:00', NULL),
 ('wishlist-test-004', 'bb551978-e418-11f0-9f30-00410e2b5e6e', 'bb9fb45f-e418-11f0-9f30-00410e2b5e6e', '2026-01-07 05:30:00', NULL),
 ('wishlist-test-005', 'bb551978-e418-11f0-9f30-00410e2b5e6e', 'bba49bf2-e418-11f0-9f30-00410e2b5e6e', '2026-01-08 08:30:00', NULL),
-('wishlist-test-006', 'bb5538d1-e418-11f0-9f30-00410e2b5e6e', 'bb929607-e418-11f0-9f30-00410e2b5e6e', '2026-01-04 04:30:00', NULL),
 ('wishlist-test-007', 'bb5538d1-e418-11f0-9f30-00410e2b5e6e', 'bb9b250d-e418-11f0-9f30-00410e2b5e6e', '2026-01-05 04:30:00', NULL),
 ('wishlist-test-008', 'bb5538d1-e418-11f0-9f30-00410e2b5e6e', 'bba4ada9-e418-11f0-9f30-00410e2b5e6e', '2026-01-06 04:30:00', NULL),
 ('wishlist-test-009', 'bb553a04-e418-11f0-9f30-00410e2b5e6e', 'bb974859-e418-11f0-9f30-00410e2b5e6e', '2026-01-03 04:30:00', NULL),
 ('wishlist-test-010', 'bb553a04-e418-11f0-9f30-00410e2b5e6e', 'bb9b3625-e418-11f0-9f30-00410e2b5e6e', '2026-01-04 04:30:00', NULL),
 ('wishlist-test-011', 'bb553a04-e418-11f0-9f30-00410e2b5e6e', 'bb9fca40-e418-11f0-9f30-00410e2b5e6e', '2026-01-05 04:30:00', NULL),
-('wishlist-test-012', 'bb553a04-e418-11f0-9f30-00410e2b5e6e', 'bb927936-e418-11f0-9f30-00410e2b5e6e', '2026-01-08 04:30:00', NULL),
 ('wishlist-test-013', 'user-test-001', 'bb927936-e418-11f0-9f30-00410e2b5e6e', '2026-01-08 03:30:00', NULL),
 ('wishlist-test-014', 'user-test-001', 'bb9298e7-e418-11f0-9f30-00410e2b5e6e', '2026-01-08 04:00:00', NULL),
 ('wishlist-test-015', 'user-test-002', 'bb929607-e418-11f0-9f30-00410e2b5e6e', '2026-01-09 04:30:00', NULL),
@@ -2088,7 +2147,7 @@ ALTER TABLE `vendor_settlements`
 --
 ALTER TABLE `wishlists`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `unique_user_property` (`user_id`,`property_id`,`deleted_at`),
+  ADD UNIQUE KEY `unique_user_property` (`user_id`,`property_id`),
   ADD KEY `idx_user_id` (`user_id`),
   ADD KEY `idx_property_id` (`property_id`),
   ADD KEY `idx_user_created` (`user_id`,`created_at`);

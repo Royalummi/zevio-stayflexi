@@ -54,6 +54,7 @@ import {
   Phone,
   MapPin,
   UserPlus,
+  KeyRound,
 } from "lucide-react";
 import { formatCurrency, formatDate } from "../../lib/utils";
 import CreateUserDialog from "../../components/admin/CreateUserDialog";
@@ -82,6 +83,7 @@ const AdminUsers = () => {
   const [showBlockModal, setShowBlockModal] = useState(false);
   const [showUnblockModal, setShowUnblockModal] = useState(false);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [showResetPasswordModal, setShowResetPasswordModal] = useState(false);
   const [blockReason, setBlockReason] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
 
@@ -201,6 +203,26 @@ const AdminUsers = () => {
   const handleUnblockClick = (user) => {
     setSelectedUser(user);
     setShowUnblockModal(true);
+  };
+
+  // Reset temporary password
+  const handleResetPasswordClick = (user) => {
+    setSelectedUser(user);
+    setShowResetPasswordModal(true);
+  };
+
+  const confirmResetPassword = async () => {
+    try {
+      setActionLoading(true);
+      await api.post(`/admin/users/${selectedUser.id}/reset-password`);
+      toast.success(`Temporary password sent to ${selectedUser.email}`);
+      setShowResetPasswordModal(false);
+    } catch (error) {
+      console.error("Error resetting password:", error);
+      toast.error(error.response?.data?.error || "Failed to reset password");
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   const confirmUnblock = async () => {
@@ -561,6 +583,17 @@ const AdminUsers = () => {
                                 className="text-green-600 hover:text-green-700"
                               >
                                 <ShieldCheck className="h-4 w-4" />
+                              </Button>
+                            )}
+                            {["customer", "vendor"].includes(user.role) && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleResetPasswordClick(user)}
+                                className="text-amber-600 hover:text-amber-700"
+                                title="Reset temporary password"
+                              >
+                                <KeyRound className="h-4 w-4" />
                               </Button>
                             )}
                           </div>
@@ -938,6 +971,57 @@ const AdminUsers = () => {
                 disabled={actionLoading}
               >
                 {actionLoading ? "Unblocking..." : "Unblock User"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Reset Password Modal */}
+      {selectedUser && (
+        <Dialog
+          open={showResetPasswordModal}
+          onOpenChange={setShowResetPasswordModal}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-amber-600">
+                <KeyRound className="h-5 w-5" />
+                Reset Temporary Password
+              </DialogTitle>
+              <DialogDescription>
+                A new temporary password will be generated and sent to the
+                user's email. They will be required to change it on their next
+                login.
+              </DialogDescription>
+            </DialogHeader>
+
+            <Card className="border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950">
+              <CardContent className="pt-4">
+                <div className="text-sm">
+                  <p className="font-medium">{selectedUser.name}</p>
+                  <p className="text-muted-foreground">{selectedUser.email}</p>
+                  <p className="mt-2 text-xs">
+                    <strong>Role:</strong> {getRoleLabel(selectedUser.role)}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setShowResetPasswordModal(false)}
+                disabled={actionLoading}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="bg-amber-600 hover:bg-amber-700"
+                onClick={confirmResetPassword}
+                disabled={actionLoading}
+              >
+                {actionLoading ? "Sending..." : "Reset & Send Email"}
               </Button>
             </DialogFooter>
           </DialogContent>

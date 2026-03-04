@@ -1047,7 +1047,11 @@ export const sendWelcomeEmail = async (email, name, tempPassword, role) => {
 
   try {
     const roleLabel = role === "vendor" ? "Vendor" : "Customer";
-    const loginUrl = `${process.env.FRONTEND_URL || "http://localhost:5173"}/login`;
+    // Users (customers) log in via the Next.js customer app; vendors/admins use the Vite admin panel
+    const loginUrl =
+      role === "user" || role === "customer"
+        ? `${process.env.NEXTJS_URL || "http://localhost:3000"}/login`
+        : `${process.env.VITE_FRONTEND_URL || process.env.FRONTEND_URL || "http://localhost:5173"}/login`;
 
     // Professional email template with inline CSS for email client compatibility
     const html = `
@@ -1180,6 +1184,167 @@ If you have any questions, please contact our support team.
     return true;
   } catch (error) {
     console.error("Failed to send welcome email:", error);
+    throw error;
+  }
+};
+
+/**
+ * Send password-reset email with a new temporary password (admin-triggered)
+ * @param {string} email - User's email address
+ * @param {string} name  - User's full name
+ * @param {string} tempPassword - Newly generated temporary password
+ * @param {string} role  - User role (customer/vendor)
+ */
+export const sendPasswordResetEmail = async (
+  email,
+  name,
+  tempPassword,
+  role,
+) => {
+  if (!transporter) {
+    console.log(
+      "⚠️  Password reset email not sent: Email service not configured",
+    );
+    return false;
+  }
+
+  try {
+    const roleLabel = role === "vendor" ? "Vendor" : "Customer";
+    const loginUrl =
+      role === "user" || role === "customer"
+        ? `${process.env.NEXTJS_URL || "http://localhost:3000"}/login`
+        : `${process.env.VITE_FRONTEND_URL || process.env.FRONTEND_URL || "http://localhost:5173"}/login`;
+
+    const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Password Reset - Zevio</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f5;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow: hidden;">
+
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); padding: 40px 20px; text-align: center;">
+              <div style="width: 80px; height: 80px; margin: 0 auto 20px; background-color: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                <span style="font-size: 36px; font-weight: bold; color: #ffffff;">Z</span>
+              </div>
+              <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 600;">Password Reset</h1>
+            </td>
+          </tr>
+
+          <!-- Content -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              <h2 style="margin: 0 0 20px; color: #1a1a1a; font-size: 22px; font-weight: 600;">Hello ${name}! 👋</h2>
+
+              <p style="margin: 0 0 20px; color: #4a4a4a; font-size: 16px; line-height: 1.6;">
+                Your <strong>${roleLabel}</strong> account password has been <strong>reset by an administrator</strong>. Use the temporary password below to sign in.
+              </p>
+
+              <!-- Credentials box -->
+              <table width="100%" cellpadding="20" cellspacing="0" style="background-color: #f8f9fa; border-radius: 6px; border-left: 4px solid #f59e0b; margin: 30px 0;">
+                <tr>
+                  <td>
+                    <p style="margin: 0 0 15px; color: #1a1a1a; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Your New Login Credentials</p>
+
+                    <p style="margin: 0 0 10px; color: #4a4a4a; font-size: 15px;">
+                      <strong style="color: #1a1a1a;">Email:</strong><br>
+                      <span style="font-family: 'Courier New', monospace; background-color: #ffffff; padding: 6px 10px; border-radius: 4px; display: inline-block; margin-top: 5px;">${email}</span>
+                    </p>
+
+                    <p style="margin: 0; color: #4a4a4a; font-size: 15px;">
+                      <strong style="color: #1a1a1a;">Temporary Password:</strong><br>
+                      <span style="font-family: 'Courier New', monospace; background-color: #ffffff; padding: 6px 10px; border-radius: 4px; display: inline-block; margin-top: 5px; font-weight: 600; color: #d97706;">${tempPassword}</span>
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Security notice -->
+              <table width="100%" cellpadding="15" cellspacing="0" style="background-color: #fff3cd; border-radius: 6px; border: 1px solid #ffc107; margin: 20px 0;">
+                <tr>
+                  <td>
+                    <p style="margin: 0; color: #856404; font-size: 14px; line-height: 1.5;">
+                      <strong style="display: block; margin-bottom: 5px;">🔒 Security Notice</strong>
+                      You will be prompted to set a new permanent password when you log in. Choose a strong password with at least 8 characters, including uppercase, lowercase, numbers, and special characters.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- CTA Button -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin: 30px 0;">
+                <tr>
+                  <td align="center">
+                    <a href="${loginUrl}" style="display: inline-block; padding: 14px 40px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: 600; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);">Login &amp; Set New Password</a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 20px 0 0; color: #6c757d; font-size: 14px; line-height: 1.6;">
+                If you didn't request this reset or have any questions, please contact our support team immediately.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #f8f9fa; padding: 30px; text-align: center; border-top: 1px solid #e9ecef;">
+              <p style="margin: 0 0 10px; color: #6c757d; font-size: 14px;">
+                © ${new Date().getFullYear()} Zevio Villa Booking. All rights reserved.
+              </p>
+              <p style="margin: 0; color: #adb5bd; font-size: 12px;">
+                This is an automated email. Please do not reply to this message.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+    `;
+
+    const text = `
+Password Reset - Zevio
+
+Hello ${name},
+
+Your ${roleLabel} account password has been reset by an administrator.
+
+New Login Credentials:
+Email: ${email}
+Temporary Password: ${tempPassword}
+
+You will be required to set a new permanent password when you log in.
+
+Login at: ${loginUrl}
+
+If you didn't request this reset, contact support immediately.
+
+© ${new Date().getFullYear()} Zevio Villa Booking
+    `;
+
+    await sendEmail({
+      to: email,
+      subject: `Zevio - Your Password Has Been Reset`,
+      html,
+      text,
+    });
+
+    console.log(`✅ Password reset email sent to ${email} (${role})`);
+    return true;
+  } catch (error) {
+    console.error("Failed to send password reset email:", error);
     throw error;
   }
 };

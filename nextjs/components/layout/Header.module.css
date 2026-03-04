@@ -332,15 +332,35 @@
     }
 }
 
-/* Mobile Menu */
+/* Mobile Menu — slide-in drawer from the RIGHT (80% width)
+   The overlay covers the remaining left strip, which IS clickable to close. */
 .mobileMenu {
     display: block;
     position: fixed;
-    inset: 72px 0 0 0;
+    top: 72px;
+    right: 0;
+    bottom: 0;
+    left: auto;
+    width: min(82vw, 340px);
     background: var(--brand-white);
     border-top: 1px solid var(--brand-border);
+    border-left: 1px solid var(--brand-border-light);
     z-index: 999;
     overflow-y: auto;
+    box-shadow: -4px 0 24px rgba(31, 58, 95, 0.15);
+    animation: slideInRight 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0.5;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
 }
 
 @media (min-width: 768px) {
@@ -349,11 +369,15 @@
     }
 }
 
+/* Overlay covers full screen below the header — left strip IS visible
+   and tappable because the menu only takes up 82vw from the right */
 .mobileMenuOverlay {
     position: fixed;
     inset: 72px 0 0 0;
-    background: rgba(31, 58, 95, 0.5);
+    background: rgba(31, 58, 95, 0.50);
     z-index: 998;
+    /* cursor: pointer hints that tapping here closes the menu */
+    cursor: pointer;
 }
 
 .mobileMenuContent {

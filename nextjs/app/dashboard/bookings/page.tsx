@@ -12,7 +12,6 @@ import {
   FiArrowLeft,
   FiDownload,
   FiSearch,
-  FiFilter,
   FiX,
   FiCheckCircle,
   FiClock,
@@ -20,10 +19,12 @@ import {
   FiAlertCircle,
   FiEye,
   FiFileText,
+  FiSliders,
 } from "react-icons/fi";
 import { api } from "@/lib/axios";
 import { API_ENDPOINTS } from "@/lib/constants";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import DateRangeSelector from "@/components/DateRangeSelector";
 import styles from "./bookings.module.css";
 
 interface Booking {
@@ -82,10 +83,11 @@ export default function BookingsEnhanced() {
 
   // Filters
   const [searchQuery, setSearchQuery] = useState("");
-  const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
+  const [filterCheckIn, setFilterCheckIn] = useState<Date | null>(null);
+  const [filterCheckOut, setFilterCheckOut] = useState<Date | null>(null);
   const [minAmount, setMinAmount] = useState("");
   const [maxAmount, setMaxAmount] = useState("");
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   // Pagination
   const [page, setPage] = useState(1);
@@ -182,14 +184,12 @@ export default function BookingsEnhanced() {
     }
 
     // Date range filter
-    if (dateFrom) {
-      filtered = filtered.filter(
-        (b) => new Date(b.check_in) >= new Date(dateFrom),
-      );
+    if (filterCheckIn) {
+      filtered = filtered.filter((b) => new Date(b.check_in) >= filterCheckIn);
     }
-    if (dateTo) {
+    if (filterCheckOut) {
       filtered = filtered.filter(
-        (b) => new Date(b.check_out) <= new Date(dateTo),
+        (b) => new Date(b.check_out) <= filterCheckOut,
       );
     }
 
@@ -211,13 +211,14 @@ export default function BookingsEnhanced() {
 
   const clearFilters = () => {
     setSearchQuery("");
-    setDateFrom("");
-    setDateTo("");
+    setFilterCheckIn(null);
+    setFilterCheckOut(null);
     setMinAmount("");
     setMaxAmount("");
     setActiveStatus("all");
     setFilteredBookings(bookings);
     setPage(1);
+    setShowDatePicker(false);
   };
 
   // ============================================
@@ -519,84 +520,116 @@ export default function BookingsEnhanced() {
 
         {/* Filters Section */}
         <div className={styles.filtersSection}>
-          <div className={styles.filtersGrid}>
-            <div className={styles.filterGroup}>
-              <label className={styles.filterLabel}>
-                <FiSearch size={16} />
-                Search
-              </label>
+          <div className={styles.filtersRow}>
+            {/* Search */}
+            <div className={styles.filterInputWrap}>
+              <FiSearch className={styles.filterIcon} size={16} />
               <input
                 type="text"
-                placeholder="Search by property name or ID..."
+                placeholder="Search by name, city, or ID…"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className={styles.filterInput}
+                className={styles.filterInlineInput}
               />
             </div>
 
-            <div className={styles.filterGroup}>
-              <label className={styles.filterLabel}>
-                <FiCalendar size={16} />
-                Check-in From
-              </label>
-              <input
-                type="date"
-                value={dateFrom}
-                onChange={(e) => setDateFrom(e.target.value)}
-                className={styles.filterInput}
-              />
+            <div className={styles.filterDivider} />
+
+            {/* Date Range */}
+            <div style={{ position: "relative" }}>
+              <button
+                type="button"
+                className={styles.filterDateBtn}
+                onClick={() => setShowDatePicker((v) => !v)}
+              >
+                <FiCalendar size={15} />
+                {filterCheckIn || filterCheckOut ? (
+                  <span className={styles.filterDateValue}>
+                    {filterCheckIn
+                      ? filterCheckIn.toLocaleDateString("en-IN", {
+                          day: "2-digit",
+                          month: "short",
+                        })
+                      : "Any"}
+                    {" – "}
+                    {filterCheckOut
+                      ? filterCheckOut.toLocaleDateString("en-IN", {
+                          day: "2-digit",
+                          month: "short",
+                        })
+                      : "Any"}
+                  </span>
+                ) : (
+                  <span className={styles.filterDatePlaceholder}>
+                    Dates
+                  </span>
+                )}
+                {(filterCheckIn || filterCheckOut) && (
+                  <span
+                    role="button"
+                    className={styles.dateRangeClear}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setFilterCheckIn(null);
+                      setFilterCheckOut(null);
+                    }}
+                  >
+                    <FiX size={13} />
+                  </span>
+                )}
+              </button>
+              {showDatePicker && (
+                <div className={styles.datePickerDropdown}>
+                  <DateRangeSelector
+                    checkIn={filterCheckIn}
+                    checkOut={filterCheckOut}
+                    onCheckInChange={(d) => setFilterCheckIn(d)}
+                    onCheckOutChange={(d) => {
+                      setFilterCheckOut(d);
+                      if (d) setShowDatePicker(false);
+                    }}
+                    isOpen={showDatePicker}
+                    onOpenChange={setShowDatePicker}
+                    inline
+                  />
+                </div>
+              )}
             </div>
 
-            <div className={styles.filterGroup}>
-              <label className={styles.filterLabel}>
-                <FiCalendar size={16} />
-                Check-out To
-              </label>
-              <input
-                type="date"
-                value={dateTo}
-                onChange={(e) => setDateTo(e.target.value)}
-                className={styles.filterInput}
-              />
-            </div>
+            <div className={styles.filterDivider} />
 
-            <div className={styles.filterGroup}>
-              <label className={styles.filterLabel}>
-                <FiCreditCard size={16} />
-                Min Amount (₹)
-              </label>
+            {/* Amount Range */}
+            <div className={styles.filterAmountRow}>
+              <FiCreditCard size={15} className={styles.filterIcon} />
               <input
                 type="number"
-                placeholder="Min amount"
+                placeholder="Min ₹"
                 value={minAmount}
                 onChange={(e) => setMinAmount(e.target.value)}
-                className={styles.filterInput}
+                className={styles.filterAmountInput}
+                min={0}
               />
-            </div>
-
-            <div className={styles.filterGroup}>
-              <label className={styles.filterLabel}>
-                <FiCreditCard size={16} />
-                Max Amount (₹)
-              </label>
+              <span className={styles.amountSep}>–</span>
               <input
                 type="number"
-                placeholder="Max amount"
+                placeholder="Max ₹"
                 value={maxAmount}
                 onChange={(e) => setMaxAmount(e.target.value)}
-                className={styles.filterInput}
+                className={styles.filterAmountInput}
+                min={0}
               />
             </div>
-          </div>
 
-          <div className={styles.filterActions}>
-            <button onClick={clearFilters} className={styles.clearFiltersBtn}>
-              <FiX size={18} />
-              Clear Filters
+            <div className={styles.filterDivider} />
+
+            {/* Actions */}
+            <button onClick={clearFilters} className={styles.filterClearBtn}>
+              <FiX size={14} />
+              Clear
             </button>
-            <button onClick={applyFilters} className={styles.applyFiltersBtn}>
-              <FiFilter size={18} />
-              Apply Filters
+            <button onClick={applyFilters} className={styles.filterApplyBtn}>
+              <FiSliders size={14} />
+              Apply
             </button>
           </div>
         </div>

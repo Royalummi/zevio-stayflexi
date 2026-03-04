@@ -35,12 +35,16 @@ export const addToWishlist = asyncHandler(async (req, res) => {
     return sendError(res, "Property already in wishlist", 400);
   }
 
-  // Add to wishlist
+  // Add to wishlist — use regular INSERT so any FK or constraint error surfaces properly
   const wishlistId = generateUUID();
-  await db.query(
+  const [result] = await db.query(
     "INSERT INTO wishlists (id, user_id, property_id) VALUES (?, ?, ?)",
     [wishlistId, userId, property_id],
   );
+
+  if (result.affectedRows === 0) {
+    return sendError(res, "Failed to add property to wishlist", 500);
+  }
 
   sendSuccess(
     res,
@@ -59,9 +63,9 @@ export const removeFromWishlist = asyncHandler(async (req, res) => {
     return sendError(res, "Property ID is required", 400);
   }
 
-  // Check if in wishlist
+  // Check if in wishlist (exclude soft-deleted rows defensively)
   const [existing] = await db.query(
-    "SELECT id FROM wishlists WHERE user_id = ? AND property_id = ?",
+    "SELECT id FROM wishlists WHERE user_id = ? AND property_id = ? AND deleted_at IS NULL",
     [userId, propertyId],
   );
 
@@ -69,9 +73,9 @@ export const removeFromWishlist = asyncHandler(async (req, res) => {
     return sendError(res, "Property not in wishlist", 404);
   }
 
-  // Remove from wishlist
+  // Hard delete (wishlists table is append-only — no soft-delete needed)
   await db.query(
-    "DELETE FROM wishlists WHERE user_id = ? AND property_id = ?",
+    "DELETE FROM wishlists WHERE user_id = ? AND property_id = ? AND deleted_at IS NULL",
     [userId, propertyId],
   );
 
@@ -86,6 +90,8 @@ export const getMyWishlist = asyncHandler(async (req, res) => {
   const offset = (page - 1) * limit;
 
   // Get wishlisted properties with full details
+  // GROUP BY w.id, p.id ensures one row per wishlist entry regardless of
+  // how many pricing records a property has (uses MAX to grab the price).
   const [wishlists] = await db.query(
     `SELECT 
       w.id as wishlist_id,
@@ -99,10 +105,12 @@ export const getMyWishlist = asyncHandler(async (req, res) => {
       p.bedrooms,
       p.bathrooms,
       p.max_guests,
-      pp.price_per_night,
+      MAX(pp.price_per_night) as price_per_night,
+      MAX(pp.corporate_discount_percent) as corporate_discount_percentage,
       p.rating,
       p.reviews_count,
       p.photos,
+      p.is_recommended,
       ${getAmenitiesSelectClause("p", "pa", "a")},
       c.name as city_name
     FROM wishlists w
@@ -111,31 +119,49 @@ export const getMyWishlist = asyncHandler(async (req, res) => {
     LEFT JOIN property_types pt ON p.property_type_id = pt.id
     LEFT JOIN property_pricing pp ON p.id = pp.property_id
     ${getAmenitiesJoinClause("p", "pa", "a")}
-    WHERE w.user_id = ? 
+    WHERE w.user_id = ?
+    AND w.deleted_at IS NULL
     AND p.status = 'approved'
     AND p.deleted_at IS NULL
-    GROUP BY w.id, p.id, pp.id
+    GROUP BY w.id, p.id
     ORDER BY w.created_at DESC
     LIMIT ? OFFSET ?`,
     [userId, parseInt(limit), offset],
   );
 
+  // Parse photos from JSON string to array (stored as JSON string in DB)
+  const parsedWishlists = wishlists.map((item) => ({
+    ...item,
+    photos: (() => {
+      if (Array.isArray(item.photos)) return item.photos;
+      if (typeof item.photos === "string") {
+        try {
+          return JSON.parse(item.photos);
+        } catch {
+          return [item.photos];
+        }
+      }
+      return [];
+    })(),
+  }));
+
   // Get total count
   const [countResult] = await db.query(
-    `SELECT COUNT(*) as total 
+    `SELECT COUNT(DISTINCT w.id) as total
      FROM wishlists w
      INNER JOIN properties p ON w.property_id = p.id
-     WHERE w.user_id = ? 
+     WHERE w.user_id = ?
+     AND w.deleted_at IS NULL
      AND p.status = 'approved'
      AND p.deleted_at IS NULL`,
     [userId],
   );
 
   const total = countResult[0].total;
-  const totalPages = Math.ceil(total / limit);
+  const totalPages = Math.ceil(total / parseInt(limit));
 
   sendSuccess(res, {
-    wishlists,
+    wishlists: parsedWishlists,
     pagination: {
       page: parseInt(page),
       limit: parseInt(limit),
@@ -167,7 +193,7 @@ export const checkWishlistStatus = asyncHandler(async (req, res) => {
     const userId = decoded.id;
 
     const [existing] = await db.query(
-      "SELECT id FROM wishlists WHERE user_id = ? AND property_id = ?",
+      "SELECT id FROM wishlists WHERE user_id = ? AND property_id = ? AND deleted_at IS NULL",
       [userId, propertyId],
     );
 

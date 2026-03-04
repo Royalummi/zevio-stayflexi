@@ -5,6 +5,7 @@ import {
   sendCancellationEmail,
   sendRefundEmail,
   sendWelcomeEmail,
+  sendPasswordResetEmail,
 } from "../services/emailService.js";
 import { sanitizeRichText } from "../utils/sanitize.js";
 import cashfreeService from "../services/cashfree.service.js";
@@ -1520,6 +1521,76 @@ export const createUser = asyncHandler(async (req, res) => {
   }
 });
 
+// Reset user password — generate a new temporary password and email it to the user
+export const resetUserPassword = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  // Look up in users table first, then vendors
+  const [userRows] = await db.query(
+    "SELECT id, full_name, email, status FROM users WHERE id = ? AND deleted_at IS NULL",
+    [id],
+  );
+  const [vendorRows] = await db.query(
+    "SELECT id, name AS full_name, email, status FROM vendors WHERE id = ? AND deleted_at IS NULL",
+    [id],
+  );
+
+  const user = userRows[0] || vendorRows[0];
+  const isVendor = !userRows[0] && !!vendorRows[0];
+
+  if (!user) {
+    return sendError(res, "User not found", 404);
+  }
+
+  const role = isVendor ? "vendor" : "customer";
+  const tableName = isVendor ? "vendors" : "users";
+
+  // Generate a fresh temporary password
+  const tempPassword = generateSecurePassword(8);
+  const hashedPassword = await hashPassword(tempPassword);
+
+  await db.query(
+    `UPDATE ${tableName}
+     SET password_hash = ?,
+         is_temporary_password = 1,
+         password_change_required = 1,
+         last_password_change = NOW()
+     WHERE id = ?`,
+    [hashedPassword, id],
+  );
+
+  // Log the action
+  await db.query(
+    `INSERT INTO activity_logs (id, actor_id, actor_role, action, entity, entity_id, created_at)
+     VALUES (UUID(), ?, ?, ?, ?, ?, NOW())`,
+    [
+      req.user.id,
+      req.user.role,
+      `Reset password for ${role}: ${user.full_name} (${user.email})`,
+      role,
+      id,
+    ],
+  );
+
+  // Send the reset email (don't fail the request if email bounces)
+  try {
+    await sendPasswordResetEmail(
+      user.email,
+      user.full_name,
+      tempPassword,
+      role,
+    );
+  } catch (emailError) {
+    console.error("Failed to send password reset email:", emailError);
+  }
+
+  sendSuccess(
+    res,
+    { id, email: user.email, full_name: user.full_name, role },
+    "Password reset successfully. A new temporary password has been sent to the user's email.",
+  );
+});
+
 // Get user statistics
 export const getUserStats = asyncHandler(async (req, res) => {
   const [userStats] = await db.query(`
@@ -1752,12 +1823,12 @@ export const getUserActivityReport = asyncHandler(async (req, res) => {
   const [newUsers] = await db.query(
     `
     SELECT 
-      DATE(created_at) as date,
+      DATE_FORMAT(created_at, '%Y-%m-%d') as date,
       COUNT(*) as new_users
     FROM users
     WHERE DATE(created_at) BETWEEN ? AND ?
     AND deleted_at IS NULL
-    GROUP BY DATE(created_at)
+    GROUP BY DATE_FORMAT(created_at, '%Y-%m-%d')
     ORDER BY date ASC
   `,
     [startDate, endDate],
@@ -1898,12 +1969,12 @@ export const getPropertyPerformance = asyncHandler(async (req, res) => {
   const [newProperties] = await db.query(
     `
     SELECT 
-      DATE(created_at) as date,
+      DATE_FORMAT(created_at, '%Y-%m-%d') as date,
       COUNT(*) as new_properties
     FROM properties
     WHERE DATE(created_at) BETWEEN ? AND ?
     AND deleted_at IS NULL
-    GROUP BY DATE(created_at)
+    GROUP BY DATE_FORMAT(created_at, '%Y-%m-%d')
     ORDER BY date ASC
   `,
     [startDate, endDate],

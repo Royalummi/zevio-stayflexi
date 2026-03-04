@@ -1,0 +1,312 @@
+/* ============================================================================
+   MOBILE BOOKING BOTTOM SHEET
+   Slides up from the bottom — date picker + guest picker + price summary
+   ============================================================================ */
+
+/* ── Backdrop ──────────────────────────────────────────────────────────────── */
+.backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    z-index: 2000;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    /* prevent scroll bleed-through on iOS */
+    -webkit-tap-highlight-color: transparent;
+}
+
+.backdropVisible {
+    opacity: 1;
+}
+
+/* ── Sheet container ────────────────────────────────────────────────────────── */
+.sheet {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    max-height: 92dvh;
+    /* use dvh so it respects the address bar on iOS */
+    max-height: 92vh;
+    /* fallback */
+    background: #ffffff;
+    border-radius: 24px 24px 0 0;
+    box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.18);
+    z-index: 2001;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transform: translateY(100%);
+    transition: transform 0.38s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.sheetVisible {
+    transform: translateY(0);
+}
+
+/* ── Handle ─────────────────────────────────────────────────────────────────── */
+.handle {
+    display: flex;
+    justify-content: center;
+    padding: 14px 0 6px;
+    flex-shrink: 0;
+    cursor: grab;
+}
+
+.handleBar {
+    width: 44px;
+    height: 5px;
+    background: #d0d8e0;
+    border-radius: 999px;
+}
+
+/* ── Header row ─────────────────────────────────────────────────────────────── */
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 20px 12px;
+    flex-shrink: 0;
+    border-bottom: 1px solid #eef2f5;
+}
+
+.headerTitle {
+    font-size: 1.0625rem;
+    font-weight: 700;
+    color: #1f3a5f;
+    letter-spacing: -0.01em;
+}
+
+.closeBtn {
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: #f0f4f8;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #4a6080;
+    transition: background 0.18s ease;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.closeBtn:hover,
+.closeBtn:active {
+    background: #e0e8f0;
+    color: #1f3a5f;
+}
+
+/* ── Scrollable body ────────────────────────────────────────────────────────── */
+.body {
+    flex: 1;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    padding: 12px 20px 0;
+}
+
+/* ── Tab strip (Dates / Guests) ─────────────────────────────────────────────── */
+.tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.tab {
+    flex: 1;
+    padding: 10px 0;
+    border: 2px solid #d0e8ea;
+    border-radius: 12px;
+    background: #f8fbfc;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: #6b8da8;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.tabActive {
+    border-color: #2fa4a9;
+    background: linear-gradient(135deg, #eaf7f8, #d4f0f2);
+    color: #1f3a5f;
+}
+
+/* ── Section blocks ─────────────────────────────────────────────────────────── */
+.section {
+    margin-bottom: 20px;
+}
+
+.sectionLabel {
+    font-size: 0.8125rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: #8da4b8;
+    margin-bottom: 10px;
+}
+
+/* ── Guest counter ──────────────────────────────────────────────────────────── */
+.guestRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 0;
+    border-bottom: 1px solid #eef2f5;
+}
+
+.guestRow:last-child {
+    border-bottom: none;
+}
+
+.guestInfo {}
+
+.guestType {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: #1f3a5f;
+}
+
+.guestSubtype {
+    font-size: 0.8125rem;
+    color: #8da4b8;
+    margin-top: 2px;
+}
+
+.counter {
+    display: flex;
+    align-items: center;
+    gap: 0;
+}
+
+.counterBtn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1.5px solid #d0e8ea;
+    background: white;
+    font-size: 1.25rem;
+    line-height: 1;
+    color: #1f3a5f;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    flex-shrink: 0;
+}
+
+.counterBtn:hover:not(:disabled),
+.counterBtn:active:not(:disabled) {
+    background: #eaf7f8;
+    border-color: #2fa4a9;
+    color: #2fa4a9;
+}
+
+.counterBtn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+.counterValue {
+    min-width: 36px;
+    text-align: center;
+    font-size: 1.0625rem;
+    font-weight: 700;
+    color: #1f3a5f;
+}
+
+/* ── Price summary ──────────────────────────────────────────────────────────── */
+.priceSummary {
+    background: linear-gradient(135deg, #f0f8f9, #e6f3f4);
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin: 4px 0 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.priceSummaryLabel {
+    font-size: 0.875rem;
+    color: #4a6080;
+}
+
+.priceSummaryNights {
+    font-size: 0.8125rem;
+    color: #8da4b8;
+    margin-top: 2px;
+}
+
+.priceSummaryAmount {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #1f3a5f;
+}
+
+.priceSummaryPer {
+    font-size: 0.8125rem;
+    color: #8da4b8;
+    text-align: right;
+    margin-top: 2px;
+}
+
+/* ── Footer (confirm button) ────────────────────────────────────────────────── */
+.footer {
+    padding: 16px 20px;
+    border-top: 1px solid #eef2f5;
+    flex-shrink: 0;
+    /* Safe area inset for iPhone X+ home bar */
+    padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+}
+
+.confirmBtn {
+    width: 100%;
+    padding: 17px;
+    border: none;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #2fa4a9 0%, #1e8a8f 100%);
+    color: white;
+    font-size: 1.0625rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    cursor: pointer;
+    transition: all 0.22s ease;
+    box-shadow: 0 4px 18px rgba(47, 164, 169, 0.38);
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.confirmBtn:hover {
+    background: linear-gradient(135deg, #1e8a8f 0%, #1f3a5f 100%);
+    box-shadow: 0 6px 22px rgba(31, 58, 95, 0.28);
+    transform: translateY(-1px);
+}
+
+.confirmBtn:active {
+    transform: scale(0.98) translateY(0);
+    box-shadow: 0 2px 8px rgba(47, 164, 169, 0.25);
+}
+
+.confirmBtn:disabled {
+    background: linear-gradient(135deg, #a0cfd2, #8bbbbe);
+    box-shadow: none;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* ── Only show on mobile ────────────────────────────────────────────────────── */
+@media (min-width: 768px) {
+
+    .backdrop,
+    .sheet {
+        display: none !important;
+    }
+}

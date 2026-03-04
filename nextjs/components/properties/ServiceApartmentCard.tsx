@@ -60,16 +60,11 @@ export default function ServiceApartmentCard({
       }
 
       try {
-        const response = await api.get("/wishlist/my");
-        const wishlist = response.data.data.wishlist || [];
-        const isInWishlist = wishlist.some(
-          (item: { property_id: string }) =>
-            item.property_id === property.id ||
-            item.property_id === property.property_id,
-        );
-        setIsWishlisted(isInWishlist);
+        const targetId = property.id || property.property_id;
+        if (!targetId) return;
+        const response = await api.get(`/wishlist/check/${targetId}`);
+        setIsWishlisted(response.data.data?.isWishlisted || false);
       } catch {
-        // Silently fail - user might not be authenticated or token expired
         setIsWishlisted(false);
       }
     };
@@ -81,13 +76,48 @@ export default function ServiceApartmentCard({
     e.preventDefault();
     e.stopPropagation();
 
+    const token = localStorage.getItem("token");
+    if (!token) {
+      // Delegate to parent to show login toast / open modal
+      onWishlistToggle(property.id || property.property_id || "", false);
+      return;
+    }
+
+    const targetId = property.id || property.property_id || "";
+    const wasWishlisted = isWishlisted;
+
+    // Optimistic update — feels instant to the user
+    setIsWishlisted(!wasWishlisted);
     setLoading(true);
-    await onWishlistToggle(
-      property.id || property.property_id || "",
-      isWishlisted,
-    );
-    setIsWishlisted(!isWishlisted);
-    setLoading(false);
+
+    try {
+      if (wasWishlisted) {
+        await api.delete(`/wishlist/${targetId}`);
+      } else {
+        await api.post("/wishlist", { property_id: targetId });
+      }
+    } catch (error: unknown) {
+      const status = (
+        error as { response?: { status?: number; data?: { message?: string } } }
+      )?.response?.status;
+      const message =
+        (error as { response?: { data?: { message?: string } } })?.response
+          ?.data?.message || "";
+
+      if (status === 400 && message.toLowerCase().includes("already")) {
+        // Already wishlisted — keep as true (don't revert)
+        setIsWishlisted(true);
+      } else if (status === 403) {
+        // Non-user role — revert silently
+        setIsWishlisted(wasWishlisted);
+      } else {
+        // Revert optimistic update on unexpected failure
+        setIsWishlisted(wasWishlisted);
+        console.error("Wishlist error:", error);
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const defaultPhoto =

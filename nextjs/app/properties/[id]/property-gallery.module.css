@@ -80,6 +80,10 @@
     padding: 0;
     transition: all 0.3s ease;
     box-shadow: var(--shadow-sm);
+    /* Prevent browser from treating taps as scrolls — fixes mobile tap */
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
 }
 
 .thumbnail img {
@@ -195,6 +199,58 @@
     letter-spacing: 0.02em;
 }
 
+/* ===== PREV / NEXT OVERLAY ARROWS ===== */
+.navArrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 20;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(31, 58, 95, 0.80);
+    backdrop-filter: blur(8px);
+    color: #ffffff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease, transform 0.2s ease, opacity 0.2s ease;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+    /* Never intercept swipe tracking on the parent */
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.navArrow:hover:not(:disabled) {
+    background: var(--brand-teal, #4ABBC0);
+    transform: translateY(-50%) scale(1.08);
+}
+
+.navArrow:active:not(:disabled) {
+    transform: translateY(-50%) scale(0.95);
+}
+
+.navArrow svg {
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+}
+
+.navArrowPrev {
+    left: 14px;
+}
+
+.navArrowNext {
+    right: 14px;
+}
+
+.navArrowHidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
 /* Photo Counter Badge */
 .photoCounter {
     position: absolute;
@@ -254,6 +310,8 @@
         scrollbar-width: none;
         /* hide scrollbar on mobile — clean look */
         scrollbar-color: transparent transparent;
+        /* Allow horizontal scrolling gesture on the container itself */
+        touch-action: pan-x;
     }
 
     .thumbnailsContainer::-webkit-scrollbar {
@@ -266,6 +324,8 @@
         transform: none !important;
         /* override JS translateY on mobile */
         padding-bottom: 4px;
+        /* required so row of thumbs extends beyond viewport for CSS scroll */
+        width: max-content;
     }
 
     .thumbnail {
@@ -274,12 +334,35 @@
         /* explicit height — prevents aspect-ratio collapse */
         flex-shrink: 0;
         border-radius: 6px;
+        /* Ensure tap registeres immediately, not treated as a scroll gesture */
+        touch-action: manipulation;
+        cursor: pointer;
     }
 
     .thumbnail img {
         width: 100% !important;
         height: 100% !important;
         object-fit: cover;
+    }
+
+    /* Smaller arrows on mobile — still easily tappable (44px touch targets) */
+    .navArrow {
+        width: 44px;
+        height: 44px;
+        background: rgba(0, 0, 0, 0.55);
+    }
+
+    .navArrow svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    .navArrowPrev {
+        left: 8px;
+    }
+
+    .navArrowNext {
+        right: 8px;
     }
 
     .mainImageContainer {
