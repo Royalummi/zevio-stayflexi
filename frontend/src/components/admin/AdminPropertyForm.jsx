@@ -196,7 +196,7 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
   const guidelineTemplates = {
     "pt-001": {
       // Villa
-      check_in_guidelines: `<h3>Check-In Guidelines</h3><ul><li><strong>Check-in Time:</strong> 2:00 PM onwards</li><li><strong>Check-out Time:</strong> 11:00 AM</li><li><strong>Key Collection:</strong> Keys will be handed over by our property manager at the villa</li><li><strong>ID Proof:</strong> Please carry a valid government-issued ID</li><li><strong>Security Deposit:</strong> Refundable deposit will be collected at check-in</li><li><strong>Parking:</strong> Designated parking available on premises</li></ul>`,
+      check_in_guidelines: `<h3>Check-In Guidelines</h3><ul><li><strong>Check-in Time:</strong> 2:00 PM onwards</li><li><strong>Check-out Time:</strong> 11:00 AM</li><li><strong>Key Collection:</strong> Keys will be handed over by our property manager at the villa</li><li><strong>ID Proof:</strong> Please carry a valid government-issued ID</li><li><strong>Parking:</strong> Designated parking available on premises</li></ul>`,
       house_rules_text: `<h3>House Rules</h3><ul><li>No smoking inside the villa</li><li>Parties and events require prior approval</li><li>Quiet hours: 10:00 PM - 8:00 AM</li><li>Please respect the neighbors</li><li>Maximum occupancy must be maintained</li><li>Pets allowed with prior approval</li></ul>`,
       amenities_guide: `<h3>Amenities Guide</h3><ul><li><strong>WiFi:</strong> Network name and password will be provided at check-in</li><li><strong>Air Conditioning:</strong> Remote controls available in all bedrooms</li><li><strong>Kitchen:</strong> Fully equipped with basic utensils, gas stove, microwave, and refrigerator</li><li><strong>Swimming Pool:</strong> Pool usage hours 7:00 AM - 8:00 PM. Children must be supervised</li><li><strong>TV:</strong> Smart TV with streaming services access</li><li><strong>Washing Machine:</strong> Available in utility area</li></ul>`,
       safety_information: `<h3>Safety Information</h3><ul><li><strong>Fire Safety:</strong> Fire extinguisher located in the kitchen</li><li><strong>First Aid:</strong> Basic first aid kit available</li><li><strong>Emergency Exits:</strong> Clearly marked exit routes</li><li><strong>Swimming Pool:</strong> No lifeguard on duty - swim at your own risk</li><li><strong>Security:</strong> 24/7 CCTV surveillance for your safety</li></ul>`,
@@ -205,7 +205,7 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
     },
     "pt-002": {
       // Service Apartment
-      check_in_guidelines: `<h3>Check-In Guidelines</h3><ul><li><strong>Check-in Time:</strong> 2:00 PM onwards</li><li><strong>Check-out Time:</strong> 11:00 AM</li><li><strong>Key Collection:</strong> Collect keys from reception desk with valid ID</li><li><strong>ID Proof:</strong> Government-issued photo ID mandatory</li><li><strong>Rent Agreement:</strong> Will be provided for long-term stays</li><li><strong>Security Deposit:</strong> One month rent as refundable deposit</li><li><strong>Parking:</strong> Designated parking slot will be assigned</li></ul>`,
+      check_in_guidelines: `<h3>Check-In Guidelines</h3><ul><li><strong>Check-in Time:</strong> 2:00 PM onwards</li><li><strong>Check-out Time:</strong> 11:00 AM</li><li><strong>Key Collection:</strong> Collect keys from reception desk with valid ID</li><li><strong>ID Proof:</strong> Government-issued photo ID mandatory</li><li><strong>Rent Agreement:</strong> Will be provided for long-term stays</li><li><strong>Parking:</strong> Designated parking slot will be assigned</li></ul>`,
       house_rules_text: `<h3>House Rules</h3><ul><li>No smoking inside the apartment</li><li>No loud music or parties</li><li>Visitor hours: 8:00 AM - 10:00 PM (register at reception)</li><li>Monthly rent due on 1st of every month</li><li>30 days notice required for vacating</li><li>Pets not allowed</li><li>No alterations to the property without permission</li></ul>`,
       amenities_guide: `<h3>Amenities Guide</h3><ul><li><strong>WiFi:</strong> High-speed WiFi credentials at reception</li><li><strong>Air Conditioning:</strong> Available in all rooms</li><li><strong>Kitchen:</strong> Fully equipped with modular fittings</li><li><strong>Housekeeping:</strong> Weekly cleaning service included</li><li><strong>Laundry:</strong> Common laundry facilities available</li><li><strong>Gym:</strong> Access card required (obtain from reception)</li><li><strong>Power Backup:</strong> 100% power backup for essential appliances</li></ul>`,
       safety_information: `<h3>Safety Information</h3><ul><li><strong>Fire Safety:</strong> Fire extinguishers on every floor</li><li><strong>First Aid:</strong> First aid available at reception</li><li><strong>Emergency Exits:</strong> Marked on each floor</li><li><strong>Security:</strong> 24/7 security personnel and CCTV</li><li><strong>Elevator:</strong> Regular maintenance schedule followed</li></ul>`,
@@ -455,6 +455,13 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
           ),
           photos: safeJsonParse(property.photos, []),
         };
+
+        // Sanitize: controlled inputs must not receive null — replace all nulls with ''
+        Object.keys(loadedFormData).forEach((key) => {
+          if (loadedFormData[key] === null) {
+            loadedFormData[key] = "";
+          }
+        });
 
         setFormData(loadedFormData);
         // Store original data for dirty field tracking
@@ -1119,9 +1126,9 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
             <div className="flex flex-col">
               <label className="text-sm font-medium text-foreground mb-2 flex items-center gap-2">
                 Property Type *
-                {(propertyId || preSelectedPropertyType) && (
+                {!propertyId && preSelectedPropertyType && (
                   <span className="text-xs text-yellow-600 dark:text-yellow-400 font-normal">
-                    (Cannot be changed)
+                    (Pre-selected)
                   </span>
                 )}
               </label>
@@ -1130,7 +1137,7 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
                 value={formData.property_type_id || ""}
                 onChange={handleInputChange}
                 required
-                disabled={!!(propertyId || preSelectedPropertyType)}
+                disabled={!propertyId && !!preSelectedPropertyType}
                 className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <option value="">Select Property Type</option>

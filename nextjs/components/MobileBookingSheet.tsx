@@ -73,7 +73,10 @@ export default function MobileBookingSheet({
       document.body.style.overflow = "hidden";
       // Small delay so transform animation starts after DOM paint
       const t = setTimeout(() => setVisible(true), 10);
-      return () => clearTimeout(t);
+      return () => {
+        clearTimeout(t);
+        document.body.style.overflow = ""; // restore on unmount (e.g. navigation)
+      };
     } else {
       setVisible(false);
       const t = setTimeout(() => {

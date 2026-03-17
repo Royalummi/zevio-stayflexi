@@ -52,6 +52,12 @@ function ResetPasswordContent() {
         token,
         newPassword,
       });
+
+      // Clear any stale auth tokens — password changed, old session is invalid
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      localStorage.removeItem("refreshToken");
+
       setIsSuccess(true);
 
       // Redirect to login after 3 seconds
@@ -66,7 +72,7 @@ function ResetPasswordContent() {
               ?.data?.message
           : undefined;
       setError(
-        errorMessage || "Failed to reset password. The link may have expired."
+        errorMessage || "Failed to reset password. The link may have expired.",
       );
     } finally {
       setIsLoading(false);

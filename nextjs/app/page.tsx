@@ -1,6 +1,5 @@
 import Image from "next/image";
 import Link from "next/link";
-import { getCities } from "@/lib/api";
 import { FiShield, FiDollarSign, FiHeadphones } from "react-icons/fi";
 import SearchBar from "@/components/home/SearchBar";
 import FloatingElements from "@/components/home/FloatingElements";
@@ -30,9 +29,6 @@ const destinations = [
 ];
 
 export default async function Home() {
-  // Fetch cities with graceful fallback if backend is unavailable
-  const cities = await getCities();
-
   return (
     <>
       {/* Hero Section */}
@@ -66,7 +62,7 @@ export default async function Home() {
           </div>
 
           {/* Unified Search Bar */}
-          <SearchBar cities={cities} />
+          <SearchBar />
         </div>
       </section>
 

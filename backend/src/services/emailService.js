@@ -1348,3 +1348,126 @@ If you didn't request this reset, contact support immediately.
     throw error;
   }
 };
+
+// Forgot-password reset link email (user-initiated flow)
+export const sendForgotPasswordLinkEmail = async (email, name, resetToken) => {
+  if (!transporter) {
+    console.log(
+      "⚠️  Forgot password email not sent: Email service not configured",
+    );
+    return false;
+  }
+
+  try {
+    const resetUrl = `${process.env.NEXTJS_URL || "http://localhost:3000"}/reset-password?token=${resetToken}`;
+
+    const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reset Your Password - Zevio</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f5;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow: hidden;">
+
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); padding: 40px 20px; text-align: center;">
+              <div style="width: 80px; height: 80px; margin: 0 auto 20px; background-color: rgba(255,255,255,0.2); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;">
+                <span style="font-size: 36px; font-weight: bold; color: #ffffff;">Z</span>
+              </div>
+              <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 600;">Reset Your Password</h1>
+            </td>
+          </tr>
+
+          <!-- Content -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              <h2 style="margin: 0 0 20px; color: #1a1a1a; font-size: 22px; font-weight: 600;">Hello ${name}! 👋</h2>
+
+              <p style="margin: 0 0 20px; color: #4a4a4a; font-size: 16px; line-height: 1.6;">
+                We received a request to reset the password for your Zevio account. Click the button below to set a new password.
+              </p>
+
+              <!-- CTA Button -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin: 30px 0;">
+                <tr>
+                  <td align="center">
+                    <a href="${resetUrl}" style="display: inline-block; padding: 14px 40px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: 600; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);">Reset Password</a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 0 0 20px; color: #4a4a4a; font-size: 14px; line-height: 1.6;">
+                Or copy and paste this link into your browser:<br>
+                <a href="${resetUrl}" style="color: #d97706; word-break: break-all;">${resetUrl}</a>
+              </p>
+
+              <!-- Security notice -->
+              <table width="100%" cellpadding="15" cellspacing="0" style="background-color: #fff3cd; border-radius: 6px; border: 1px solid #ffc107; margin: 20px 0;">
+                <tr>
+                  <td>
+                    <p style="margin: 0; color: #856404; font-size: 14px; line-height: 1.5;">
+                      <strong style="display: block; margin-bottom: 5px;">🔒 Security Notice</strong>
+                      This link expires in <strong>1 hour</strong>. If you did not request a password reset, you can safely ignore this email — your password will remain unchanged.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #f8f9fa; padding: 30px; text-align: center; border-top: 1px solid #e9ecef;">
+              <p style="margin: 0 0 10px; color: #6c757d; font-size: 14px;">
+                © ${new Date().getFullYear()} Zevio Villa Booking. All rights reserved.
+              </p>
+              <p style="margin: 0; color: #adb5bd; font-size: 12px;">
+                This is an automated email. Please do not reply to this message.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+    `;
+
+    const text = `
+Reset Your Password - Zevio
+
+Hello ${name},
+
+We received a request to reset the password for your Zevio account.
+
+Click the link below to reset your password (expires in 1 hour):
+${resetUrl}
+
+If you did not request a password reset, you can safely ignore this email.
+
+© ${new Date().getFullYear()} Zevio Villa Booking
+    `;
+
+    await sendEmail({
+      to: email,
+      subject: "Reset Your Password - Zevio",
+      html,
+      text,
+    });
+
+    console.log(`✅ Forgot password email sent to ${email}`);
+    return true;
+  } catch (error) {
+    console.error("Failed to send forgot password email:", error);
+    throw error;
+  }
+};

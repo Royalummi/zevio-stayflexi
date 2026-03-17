@@ -91,6 +91,13 @@ const VendorAnalytics = () => {
     }));
 
     const csvData = [...propertyData, ...trendData];
+
+    // Guard against empty data
+    if (csvData.length === 0) {
+      toast.error("No data available to export");
+      return;
+    }
+
     const headers = Object.keys(csvData[0]).join(",");
     const rows = csvData.map((row) => Object.values(row).join(","));
     const csv = [headers, ...rows].join("\n");

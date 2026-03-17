@@ -59,7 +59,7 @@ const VendorSettlements = () => {
 
   useEffect(() => {
     fetchSettlements();
-  }, [pagination.page, statusFilter]);
+  }, [pagination.page, statusFilter, searchTerm]);
 
   const fetchSettlements = async () => {
     try {

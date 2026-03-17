@@ -319,6 +319,8 @@ function ServiceApartmentsContent() {
                 key={property.id}
                 property={property}
                 onWishlistToggle={handleWishlistToggle}
+                checkin={filters.checkin}
+                checkout={filters.checkout}
               />
             ))}
           </div>

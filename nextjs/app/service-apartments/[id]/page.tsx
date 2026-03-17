@@ -853,22 +853,33 @@ function ServiceApartmentDetailContent() {
                   <span>Free Parking</span>
                 </div>
               )}
-              {property.amenities?.map((amenity, index) => (
-                <div key={index} className={styles.amenity}>
-                  {getAmenityIcon(amenity)}
-                  <span>{amenity}</span>
-                </div>
-              ))}
-              {property.features_list &&
-                property.features_list
-                  .split(", ")
-                  .filter((f) => f.trim())
-                  .map((feature, index) => (
-                    <div key={`feature-${index}`} className={styles.amenity}>
-                      <FiCheck />
-                      <span>{feature}</span>
-                    </div>
-                  ))}
+              {property.amenities
+                ?.filter((amenity) => {
+                  const lower = amenity.toLowerCase();
+                  if (property.has_workspace && lower.includes("workspace"))
+                    return false;
+                  if (
+                    property.has_housekeeping &&
+                    lower.includes("housekeeping")
+                  )
+                    return false;
+                  if (property.has_elevator && lower.includes("elevator"))
+                    return false;
+                  if (
+                    property.has_gym &&
+                    (lower.includes("gym") || lower.includes("fitness"))
+                  )
+                    return false;
+                  if (property.has_parking && lower.includes("parking"))
+                    return false;
+                  return true;
+                })
+                .map((amenity, index) => (
+                  <div key={index} className={styles.amenity}>
+                    {getAmenityIcon(amenity)}
+                    <span>{amenity}</span>
+                  </div>
+                ))}
             </div>
           </div>
 
@@ -934,22 +945,6 @@ function ServiceApartmentDetailContent() {
                         ✓ Same-day booking available
                       </div>
                     )}
-                  </div>
-                </div>
-
-                {/* Base Occupancy */}
-                <div className={styles.infoItem}>
-                  <div className={styles.infoIcon}>
-                    <FiUsers />
-                  </div>
-                  <div className={styles.infoContent}>
-                    <div className={styles.infoLabel}>Base Occupancy</div>
-                    <div className={styles.infoValue}>
-                      Up to {property.base_occupancy || 2} guests included
-                    </div>
-                    <div className={styles.infoNote}>
-                      Base price covers all included guests
-                    </div>
                   </div>
                 </div>
 

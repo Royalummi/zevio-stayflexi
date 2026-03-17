@@ -22,11 +22,15 @@ import { getImageUrl } from "@/lib/imageUtils";
 interface ServiceApartmentCardProps {
   property: ServiceApartment;
   onWishlistToggle: (propertyId: string, isWishlisted: boolean) => void;
+  checkin?: string;
+  checkout?: string;
 }
 
 export default function ServiceApartmentCard({
   property,
   onWishlistToggle,
+  checkin,
+  checkout,
 }: ServiceApartmentCardProps) {
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -133,9 +137,13 @@ export default function ServiceApartmentCard({
     property.monthly_discount_percentage ||
     0;
 
+  const cardId = property.id || property.property_id;
+  const dateParams =
+    checkin && checkout ? `?checkIn=${checkin}&checkOut=${checkout}` : "";
+
   return (
     <Link
-      href={`/service-apartments/${property.id || property.property_id}`}
+      href={`/service-apartments/${cardId}${dateParams}`}
       className={styles.card}
     >
       {/* Image Section */}

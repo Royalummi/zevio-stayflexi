@@ -28,12 +28,16 @@ interface PropertyCardProps {
   property: Property;
   onWishlistToggle?: (propertyId: string, isWishlisted: boolean) => void;
   initialWishlistState?: boolean;
+  checkin?: string;
+  checkout?: string;
 }
 
 export default function PropertyCard({
   property,
   onWishlistToggle,
   initialWishlistState = false,
+  checkin,
+  checkout,
 }: PropertyCardProps) {
   const router = useRouter();
   const { user } = useAuth();
@@ -166,7 +170,9 @@ export default function PropertyCard({
   };
 
   const handleCardClick = () => {
-    router.push(`/properties/${property.id}`);
+    const dateParams =
+      checkin && checkout ? `?checkIn=${checkin}&checkOut=${checkout}` : "";
+    router.push(`/properties/${property.id}${dateParams}`);
   };
 
   // Two-layer crossfade: old image stays visible, new one pixel-reveals on top

@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import db from "../config/database.js";
 import {
   hashPassword,
@@ -7,6 +8,7 @@ import {
 import { generateTokens, verifyRefreshToken } from "../config/jwt.js";
 import { generateUUID } from "../utils/helpers.js";
 import { asyncHandler, sendSuccess, sendError } from "../utils/response.js";
+import { sendForgotPasswordLinkEmail } from "../services/emailService.js";
 
 // Login (Multi-role) - Auto-detect user type
 export const login = asyncHandler(async (req, res) => {
@@ -736,8 +738,8 @@ export const forgotPassword = asyncHandler(async (req, res) => {
 
   const user = users[0];
 
-  // Generate reset token (6-character alphanumeric)
-  const resetToken = Math.random().toString(36).substring(2, 8).toUpperCase();
+  // Generate a cryptographically secure reset token
+  const resetToken = crypto.randomBytes(32).toString("hex");
   const resetTokenExpiry = new Date(Date.now() + 3600000); // 1 hour from now
 
   // Store token in database
@@ -746,20 +748,8 @@ export const forgotPassword = asyncHandler(async (req, res) => {
     [resetToken, resetTokenExpiry, user.id],
   );
 
-  // TODO: Send email with reset link
-  // For now, just log it (in production, use emailService.js)
-  console.log(`Reset token for ${user.email}: ${resetToken}`);
-  console.log(
-    `Reset link: http://localhost:8000/reset-password?token=${resetToken}`,
-  );
-
-  // In production, uncomment and implement:
-  // import { sendEmail } from '../services/emailService.js';
-  // await sendEmail({
-  //   to: user.email,
-  //   subject: 'Password Reset Request - Zevio',
-  //   html: `<p>Click this link to reset your password: <a href="http://localhost:8000/reset-password?token=${resetToken}">Reset Password</a></p>`
-  // });
+  // Send reset link via email
+  await sendForgotPasswordLinkEmail(user.email, user.full_name, resetToken);
 
   sendSuccess(res, {}, "If the email exists, a reset link has been sent", 200);
 });

@@ -560,9 +560,7 @@ export default function BookingsEnhanced() {
                       : "Any"}
                   </span>
                 ) : (
-                  <span className={styles.filterDatePlaceholder}>
-                    Dates
-                  </span>
+                  <span className={styles.filterDatePlaceholder}>Dates</span>
                 )}
                 {(filterCheckIn || filterCheckOut) && (
                   <span

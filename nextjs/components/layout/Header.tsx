@@ -24,6 +24,21 @@ export default function Header() {
     return () => clearTimeout(timer);
   }, []);
 
+  // Auto-open login modal when redirected with ?login=true (e.g. after password reset)
+  useEffect(() => {
+    if (!isMounted || isLoading) return;
+    if (!isAuthenticated) {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get("login") === "true") {
+        openLoginModal();
+        // Clean the param from URL without triggering a navigation
+        const url = new URL(window.location.href);
+        url.searchParams.delete("login");
+        window.history.replaceState({}, "", url.toString());
+      }
+    }
+  }, [isMounted, isLoading, isAuthenticated, openLoginModal]);
+
   const navItems = useMemo(
     () => [
       { href: "/properties", label: "Villas" },

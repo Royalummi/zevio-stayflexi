@@ -44,7 +44,10 @@ export interface PropertyFiltersState {
 interface PropertyFiltersProps {
   cities: City[];
   filters: PropertyFiltersState;
-  onFilterChange: (key: keyof PropertyFiltersState, value: string | boolean) => void;
+  onFilterChange: (
+    key: keyof PropertyFiltersState,
+    value: string | boolean,
+  ) => void;
   onClearFilters: () => void;
   resultsCount: number;
 }

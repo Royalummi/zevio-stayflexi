@@ -824,40 +824,6 @@ function PropertyDetailContent() {
                 </p>
               </section>
 
-              {/* Location Section */}
-              {(property.area || property.maps_location) && (
-                <section className={luxuryStyles.locationSectionLuxury}>
-                  <h2 className={luxuryStyles.sectionTitleLuxury}>
-                    <FiMapPin /> Location
-                  </h2>
-                  <div className={luxuryStyles.locationCard}>
-                    <div className={luxuryStyles.locationDetails}>
-                      <div className={luxuryStyles.locationAddress}>
-                        <strong>Address:</strong>
-                        <p>
-                          {property.area && <span>{property.area}, </span>}
-                          {property.city}, {property.state}
-                          {property.pincode && (
-                            <span> - {property.pincode}</span>
-                          )}
-                        </p>
-                      </div>
-                      {property.maps_location && (
-                        <button
-                          onClick={() =>
-                            window.open(property.maps_location, "_blank")
-                          }
-                          className={luxuryStyles.viewMapButton}
-                        >
-                          <FiMapPin />
-                          <span>View on Google Maps</span>
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </section>
-              )}
-
               {/* Amenities & Features */}
               {allFeatures.length > 0 && (
                 <section className={luxuryStyles.amenitiesSectionLuxury}>
@@ -1080,33 +1046,6 @@ function PropertyDetailContent() {
                             .trim()
                             .substring(0, 80)}
                           ...
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Base Occupancy */}
-                  {propertyPricing.min_guests && (
-                    <div className={luxuryStyles.infoItem}>
-                      <div className={luxuryStyles.infoIcon}>
-                        <FiUsers />
-                      </div>
-                      <div className={luxuryStyles.infoContent}>
-                        <div className={luxuryStyles.infoLabel}>
-                          Base Occupancy
-                        </div>
-                        <div className={luxuryStyles.infoValue}>
-                          Up to {propertyPricing.min_guests}{" "}
-                          {propertyPricing.min_guests === 1
-                            ? "guest"
-                            : "guests"}{" "}
-                          included
-                        </div>
-                        <div className={luxuryStyles.infoNote}>
-                          Additional guests charged ₹
-                          {propertyPricing.extra_guest_charge?.toLocaleString() ||
-                            0}{" "}
-                          per night
                         </div>
                       </div>
                     </div>
@@ -1526,6 +1465,40 @@ function PropertyDetailContent() {
                         ))}
                       </div>
                     )}
+                </section>
+              )}
+
+              {/* Location Section */}
+              {(property.area || property.maps_location) && (
+                <section className={luxuryStyles.locationSectionLuxury}>
+                  <h2 className={luxuryStyles.sectionTitleLuxury}>
+                    <FiMapPin /> Location
+                  </h2>
+                  <div className={luxuryStyles.locationCard}>
+                    <div className={luxuryStyles.locationDetails}>
+                      <div className={luxuryStyles.locationAddress}>
+                        <strong>Address:</strong>
+                        <p>
+                          {property.area && <span>{property.area}, </span>}
+                          {property.city}, {property.state}
+                          {property.pincode && (
+                            <span> - {property.pincode}</span>
+                          )}
+                        </p>
+                      </div>
+                      {property.maps_location && (
+                        <button
+                          onClick={() =>
+                            window.open(property.maps_location, "_blank")
+                          }
+                          className={luxuryStyles.viewMapButton}
+                        >
+                          <FiMapPin />
+                          <span>View on Google Maps</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 </section>
               )}
 

@@ -323,9 +323,25 @@ export default function CorporateOffersPage() {
         return;
       }
 
+      // Parse email from stored user — backend requires it in the request body
+      let userEmail = "";
+      try {
+        const stored = localStorage.getItem("user");
+        if (stored) userEmail = JSON.parse(stored).email || "";
+      } catch {
+        // ignore parse error
+      }
+
+      if (!userEmail) {
+        alert(
+          "Could not determine your email. Please log out and log back in.",
+        );
+        return;
+      }
+
       const response = await api.post(
         `/corporate/resend-verification`,
-        {},
+        { email: userEmail },
         {
           headers: { Authorization: `Bearer ${token}` },
         },

@@ -11,6 +11,9 @@ interface User {
   status: string;
   role?: "user" | "vendor" | "employee" | "admin";
   corporate_verified?: boolean;
+  // Actual DB column names returned by the backend
+  is_corporate_user?: number | boolean;
+  company_email_verified?: number | boolean;
 }
 
 interface AuthContextType {

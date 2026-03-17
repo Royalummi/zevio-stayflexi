@@ -148,7 +148,8 @@ function PropertiesContent() {
 
     // Filter by amenities
     const getPropertyAmenities = (amenities: string[] | string): string[] => {
-      if (Array.isArray(amenities)) return amenities.map((a) => a.toLowerCase());
+      if (Array.isArray(amenities))
+        return amenities.map((a) => a.toLowerCase());
       if (typeof amenities === "string") {
         try {
           const parsed = JSON.parse(amenities);
@@ -217,38 +218,6 @@ function PropertiesContent() {
     });
   };
 
-  const handleWishlistToggle = async (
-    propertyId: string,
-    isWishlisted: boolean,
-  ) => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      toast.error("Please login to manage your wishlist");
-      return;
-    }
-
-    try {
-      if (isWishlisted) {
-        // Remove from wishlist
-        await api.delete(`/wishlist/${propertyId}`);
-      } else {
-        // Add to wishlist
-        await api.post("/wishlist", { property_id: propertyId });
-      }
-
-      // Refresh property to get updated wishlist status
-      // The PropertyCard component will update its own state
-    } catch (error) {
-      console.error("Wishlist error:", error);
-      const errorMessage =
-        error instanceof Error
-          ? (error as Error & { response?: { data?: { message?: string } } })
-              .response?.data?.message || "Failed to update wishlist"
-          : "Failed to update wishlist";
-      toast.error(errorMessage);
-    }
-  };
-
   return (
     <div className={styles.propertiesPage}>
       {/* Filters Component */}
@@ -287,7 +256,8 @@ function PropertiesContent() {
               <PropertyCard
                 key={property.id}
                 property={property}
-                onWishlistToggle={handleWishlistToggle}
+                checkin={filters.checkin}
+                checkout={filters.checkout}
               />
             ))}
           </div>

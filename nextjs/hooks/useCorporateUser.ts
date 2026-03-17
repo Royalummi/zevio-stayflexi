@@ -57,8 +57,12 @@ export const useCorporateUser = (): CorporateUser => {
   const { openLoginModal } = useAuthModals();
 
   // Check if user is corporate verified
+  // The backend returns DB column names: is_corporate_user and company_email_verified (as 0/1 integers)
   const typedUser = user as User | null;
-  const corporateVerified = typedUser?.corporate_verified === true;
+  const corporateVerified =
+    typedUser?.corporate_verified === true ||
+    typedUser?.company_email_verified === 1 ||
+    typedUser?.company_email_verified === true;
   const isCorporateUser = isAuthenticated && corporateVerified;
 
   /**
@@ -85,7 +89,7 @@ export const useCorporateUser = (): CorporateUser => {
       // User logged in but not corporate verified
       // Show alert for now (will be replaced with modal in Phase 2)
       alert(
-        "This offer is exclusively for corporate users. Please verify your corporate account or contact support."
+        "This offer is exclusively for corporate users. Please verify your corporate account or contact support.",
       );
     }
   };
@@ -108,7 +112,7 @@ export const useCorporateUser = (): CorporateUser => {
  */
 export const calculateCorporateSavings = (
   regularPrice: number,
-  corporateDiscountPercent: number
+  corporateDiscountPercent: number,
 ): {
   discountedPrice: number;
   savingsAmount: number;
@@ -132,7 +136,7 @@ export const calculateCorporateSavings = (
  */
 export const formatCorporatePricing = (
   regularPrice: number,
-  discountedPrice: number
+  discountedPrice: number,
 ): { regular: string; discounted: string; savings: string } => {
   const savings = regularPrice - discountedPrice;
   const savingsPercent = Math.round((savings / regularPrice) * 100);

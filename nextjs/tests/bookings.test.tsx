@@ -466,9 +466,7 @@ describe("Bookings Dashboard", () => {
         expect(screen.getByText("Sunset Villa")).toBeInTheDocument(),
       );
 
-      const searchInput = screen.getByPlaceholderText(
-        /search by name/i,
-      );
+      const searchInput = screen.getByPlaceholderText(/search by name/i);
       await user.type(searchInput, "Sunset");
 
       // Click Apply Filters
@@ -491,9 +489,7 @@ describe("Bookings Dashboard", () => {
         expect(screen.getByText("Sunset Villa")).toBeInTheDocument(),
       );
 
-      const searchInput = screen.getByPlaceholderText(
-        /search by name/i,
-      );
+      const searchInput = screen.getByPlaceholderText(/search by name/i);
       await user.type(searchInput, "Manali");
       await user.click(screen.getByRole("button", { name: /apply/i }));
 
@@ -514,9 +510,7 @@ describe("Bookings Dashboard", () => {
         expect(screen.getByText("Sunset Villa")).toBeInTheDocument(),
       );
 
-      const searchInput = screen.getByPlaceholderText(
-        /search by name/i,
-      );
+      const searchInput = screen.getByPlaceholderText(/search by name/i);
       await user.type(searchInput, "bk-b");
       await user.click(screen.getByRole("button", { name: /apply/i }));
 
@@ -537,9 +531,7 @@ describe("Bookings Dashboard", () => {
         expect(screen.getByText("Sunset Villa")).toBeInTheDocument(),
       );
 
-      const searchInput = screen.getByPlaceholderText(
-        /search by name/i,
-      );
+      const searchInput = screen.getByPlaceholderText(/search by name/i);
       await user.type(searchInput, "Mountain");
       await user.click(screen.getByRole("button", { name: /apply/i }));
       await waitFor(() =>
@@ -724,9 +716,7 @@ describe("Bookings Dashboard", () => {
         expect(screen.getByText("Villa One")).toBeInTheDocument(),
       );
 
-      const searchInput = screen.getByPlaceholderText(
-        /search by name/i,
-      );
+      const searchInput = screen.getByPlaceholderText(/search by name/i);
       await user.type(searchInput, "Villa One");
       await user.click(screen.getByRole("button", { name: /apply/i }));
       await waitFor(() =>

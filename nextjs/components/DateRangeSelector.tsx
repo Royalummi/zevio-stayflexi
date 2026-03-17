@@ -296,18 +296,11 @@ export default function DateRangeSelector({
                       disabled ? styles.disabled : ""
                     } ${selected ? styles.selected : ""} ${
                       inRange ? styles.inRange : ""
-                    }${displayPx !== undefined ? ` ${styles.hasPricing}` : ""}`}
+                    }`}
                     disabled={disabled}
-                    aria-label={`${day}${displayPx !== undefined ? " \u2014 " + formatDayPrice(displayPx) : ""}`}
+                    aria-label={`${day}`}
                   >
                     <span className={styles.dayNumber}>{day}</span>
-                    {!disabled && displayPx !== undefined && (
-                      <span
-                        className={`${styles.dayPrice}${customPx !== undefined ? ` ${styles.dayPriceCustom}` : ""}`}
-                      >
-                        {formatDayPrice(displayPx)}
-                      </span>
-                    )}
                   </button>
                 );
               })}
@@ -391,18 +384,11 @@ export default function DateRangeSelector({
               <button
                 key={day}
                 onClick={() => !disabled && handleDayClick(day)}
-                className={`${styles.day} ${disabled ? styles.disabled : ""} ${selected ? styles.selected : ""} ${inRange ? styles.inRange : ""}${displayPx !== undefined ? ` ${styles.hasPricing}` : ""}`}
+                className={`${styles.day} ${disabled ? styles.disabled : ""} ${selected ? styles.selected : ""} ${inRange ? styles.inRange : ""}`}
                 disabled={disabled}
-                aria-label={`${day}${displayPx !== undefined ? " — " + formatDayPrice(displayPx) : ""}`}
+                aria-label={`${day}`}
               >
                 <span className={styles.dayNumber}>{day}</span>
-                {!disabled && displayPx !== undefined && (
-                  <span
-                    className={`${styles.dayPrice}${customPx !== undefined ? ` ${styles.dayPriceCustom}` : ""}`}
-                  >
-                    {formatDayPrice(displayPx)}
-                  </span>
-                )}
               </button>
             );
           })}
@@ -511,18 +497,11 @@ export default function DateRangeSelector({
                     disabled ? styles.disabled : ""
                   } ${selected ? styles.selected : ""} ${
                     inRange ? styles.inRange : ""
-                  }${displayPx !== undefined ? ` ${styles.hasPricing}` : ""}`}
+                  }`}
                   disabled={disabled}
-                  aria-label={`${day}${displayPx !== undefined ? " \u2014 " + formatDayPrice(displayPx) : ""}`}
+                  aria-label={`${day}`}
                 >
                   <span className={styles.dayNumber}>{day}</span>
-                  {!disabled && displayPx !== undefined && (
-                    <span
-                      className={`${styles.dayPrice}${customPx !== undefined ? ` ${styles.dayPriceCustom}` : ""}`}
-                    >
-                      {formatDayPrice(displayPx)}
-                    </span>
-                  )}
                 </button>
               );
             })}

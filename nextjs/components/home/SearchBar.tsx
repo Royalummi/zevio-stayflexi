@@ -7,6 +7,7 @@ import {
   FiSearch,
   FiX,
   FiMapPin,
+  FiNavigation,
   FiCalendar,
   FiUsers,
   FiHome,
@@ -18,13 +19,9 @@ import { formatDateForAPI } from "@/lib/utils";
 import { api } from "@/lib/axios";
 import styles from "./SearchBar-modern.module.css";
 
-interface SearchBarProps {
-  cities: City[];
-}
-
 type PropertyType = "villas" | "apartments";
 
-export default function SearchBar({ cities }: SearchBarProps) {
+export default function SearchBar() {
   const router = useRouter();
 
   // Property type toggle
@@ -179,15 +176,18 @@ export default function SearchBar({ cities }: SearchBarProps) {
     return () => window.removeEventListener("keydown", handleEscKey);
   }, [isSearchModalOpen]);
 
-  // Fetch areas/localities based on property type
+  // Fetch areas/localities based on property type.
+  // Villas tab: no filter → backend returns all approved property types merged
+  // (DB DISTINCT on area+city_id ensures deduplication automatically).
+  // Apartments tab: filter to service_apartment only.
   useEffect(() => {
     const fetchAreas = async () => {
       try {
-        const propertyTypeParam =
-          propertyType === "villas" ? "villa" : "service_apartment";
-        const response = await api.get(
-          `/public/areas?property_type=${propertyTypeParam}`,
-        );
+        const url =
+          propertyType === "villas"
+            ? `/public/areas`
+            : `/public/areas?property_type=service_apartment`;
+        const response = await api.get(url);
         if (response.data.success && response.data.data) {
           setAreas(response.data.data.areas || []);
         }
@@ -198,16 +198,13 @@ export default function SearchBar({ cities }: SearchBarProps) {
     fetchAreas();
   }, [propertyType]);
 
-  // Filter cities based on property type
+  // Filter locations based on search input — only areas from real properties
   const filteredCities = useMemo(() => {
-    // Combine cities and areas for comprehensive search
-    const allLocations = [...cities, ...areas];
-
     if (!searchInput.trim()) {
-      return allLocations;
+      return areas;
     }
 
-    return allLocations.filter((location) => {
+    return areas.filter((location) => {
       const searchLower = searchInput.toLowerCase();
       // Search in area, city, and state
       if (location.area) {
@@ -223,11 +220,10 @@ export default function SearchBar({ cities }: SearchBarProps) {
         location.state.toLowerCase().includes(searchLower)
       );
     });
-  }, [searchInput, cities, areas]);
+  }, [searchInput, areas]);
 
-  // Sorted and grouped city list for dropdown display
-  type DropdownEntry = City | { type: "header"; label: string };
-  const renderList = useMemo((): DropdownEntry[] => {
+  // Flat list: cities first (no area), then areas sorted by city then area name
+  const renderList = useMemo((): City[] => {
     const cityItems = filteredCities
       .filter((c) => !c.area)
       .sort((a, b) => a.name.localeCompare(b.name));
@@ -238,35 +234,11 @@ export default function SearchBar({ cities }: SearchBarProps) {
         if (cityComp !== 0) return cityComp;
         return (a.area || "").localeCompare(b.area || "");
       });
+    return [...cityItems, ...areaItems];
+  }, [filteredCities]);
 
-    const list: DropdownEntry[] = [];
-    const isSearching = searchInput.trim().length > 0;
-
-    if (!isSearching && cityItems.length > 0 && areaItems.length > 0) {
-      list.push({ type: "header", label: "Cities" });
-    }
-    cityItems.forEach((c) => list.push(c));
-
-    if (areaItems.length > 0) {
-      let lastCityName = "";
-      areaItems.forEach((loc) => {
-        const cityName = loc.city || loc.name;
-        if (!isSearching && cityName !== lastCityName) {
-          list.push({ type: "header", label: cityName });
-          lastCityName = cityName;
-        }
-        list.push(loc);
-      });
-    }
-
-    return list;
-  }, [filteredCities, searchInput]);
-
-  // Flat list of City items only — used for keyboard navigation
-  const sortedCitiesForNav = useMemo(
-    () => renderList.filter((item): item is City => !("type" in item)),
-    [renderList],
-  );
+  // Used for keyboard navigation (renderList is already all City items)
+  const sortedCitiesForNav = renderList;
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -307,7 +279,7 @@ export default function SearchBar({ cities }: SearchBarProps) {
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (!showCityDropdown) return;
@@ -642,20 +614,9 @@ export default function SearchBar({ cities }: SearchBarProps) {
                   </div>
                 ) : (
                   <div className={styles.dropdownListModern}>
-                    {renderList.map((entry, i) => {
-                      /* Group header */
-                      if ("type" in entry) {
-                        return (
-                          <div
-                            key={`header-${entry.label}`}
-                            className={styles.dropdownGroupLabel}
-                          >
-                            {entry.label}
-                          </div>
-                        );
-                      }
+                    {renderList.map((city, i) => {
                       /* City / area item */
-                      const city = entry;
+                      void i;
                       const navIndex = sortedCitiesForNav.indexOf(city);
                       const isSelected =
                         selectedCity?.id === city.id &&
@@ -674,16 +635,20 @@ export default function SearchBar({ cities }: SearchBarProps) {
                           }}
                         >
                           <div className={styles.itemIconWrapper}>
-                            <FiMapPin className={styles.itemIconModern} />
+                            {city.area ? (
+                              <FiNavigation className={styles.itemIconModern} />
+                            ) : (
+                              <FiMapPin className={styles.itemIconModern} />
+                            )}
                           </div>
                           <div className={styles.itemText}>
                             <div className={styles.itemTitleModern}>
-                              {city.area
-                                ? `${city.area}, ${city.city || city.name}`
-                                : city.name}
+                              {city.area ? city.area : city.name}
                             </div>
                             <div className={styles.itemSubtitleModern}>
-                              {city.state}
+                              {city.area
+                                ? `${city.city || city.name}, ${city.state}`
+                                : city.state}
                             </div>
                           </div>
                         </div>

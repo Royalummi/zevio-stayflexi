@@ -80,8 +80,8 @@ const PropertyTypeSelectionModal = ({ open, onClose }) => {
           <DialogDescription className="text-base">
             Select the type of property you want to add. This will customize the
             form to show only relevant fields.
-            <span className="block mt-2 text-yellow-600 dark:text-yellow-400 font-medium">
-              ⚠️ Property type cannot be changed after creation
+            <span className="block mt-2 text-blue-600 dark:text-blue-400 font-medium">
+              ℹ️ Property type can be changed later by admin from the edit form
             </span>
           </DialogDescription>
         </DialogHeader>

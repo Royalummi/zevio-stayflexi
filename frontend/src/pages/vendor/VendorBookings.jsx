@@ -71,7 +71,7 @@ const VendorBookings = () => {
 
   useEffect(() => {
     fetchBookings();
-  }, [pagination.page, statusFilter]);
+  }, [pagination.page, statusFilter, searchTerm, dateFilter]);
 
   const fetchBookings = async () => {
     try {
