@@ -520,3 +520,32 @@ export const getRecommendedProperties = asyncHandler(async (req, res) => {
     200,
   );
 });
+
+/**
+ * @route   GET /api/public/properties/:id/blocked-dates
+ * @desc    Return booked + blackout date ranges for the property calendar
+ * @access  Public
+ */
+export const getPropertyBlockedDates = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  const [blackouts] = await db.query(
+    `SELECT start_date, end_date
+     FROM property_blackout_dates
+     WHERE property_id = ? AND end_date >= CURDATE()
+     ORDER BY start_date ASC`,
+    [id],
+  );
+
+  const [bookings] = await db.query(
+    `SELECT check_in AS start_date, check_out AS end_date
+     FROM bookings
+     WHERE property_id = ?
+       AND status IN ('confirmed', 'pending_payment')
+       AND check_out >= CURDATE()
+     ORDER BY check_in ASC`,
+    [id],
+  );
+
+  sendSuccess(res, { blackouts, bookings }, "Blocked dates retrieved");
+});

@@ -71,8 +71,39 @@ const VendorProfile = () => {
 
   const fetchVendorProfile = async () => {
     try {
-      // In a real app, you'd have a /vendor/profile endpoint
-      // For now, we'll use the user data from auth store
+      const response = await api.get("/auth/profile");
+      if (response.data.success) {
+        const u = response.data.data;
+        setProfileData({
+          full_name: u.full_name || u.name || "",
+          email: u.email || "",
+          phone: u.phone || "",
+          company_name: u.company_name || "",
+          address: u.address || "",
+          city: u.city || "",
+          state: u.state || "",
+          pincode: u.pincode || "",
+          gst_number: u.gst_number || "",
+          pan_number: u.pan_number || "",
+        });
+        // Load bank details from vendor record
+        if (u.bank_details) {
+          const bd =
+            typeof u.bank_details === "object"
+              ? u.bank_details
+              : JSON.parse(u.bank_details);
+          setBankData({
+            bank_name: bd.bank_name || "",
+            account_holder_name: bd.account_holder_name || "",
+            account_number: bd.account_number || "",
+            ifsc_code: bd.ifsc_code || "",
+            branch_name: bd.branch_name || "",
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+      // Fallback to auth store data
       if (user) {
         setProfileData({
           full_name: user.full_name || user.name || "",
@@ -86,12 +117,7 @@ const VendorProfile = () => {
           gst_number: user.gst_number || "",
           pan_number: user.pan_number || "",
         });
-
-        // Bank details would come from vendor_bank_details table
-        // For now, leaving empty
       }
-    } catch (error) {
-      console.error("Error fetching profile:", error);
       toast.error("Failed to load profile");
     }
   };
@@ -107,19 +133,28 @@ const VendorProfile = () => {
         return;
       }
 
-      // In a real app, you'd call /vendor/profile endpoint
-      // For now, simulating success
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // Update auth store
-      updateUser({
-        ...user,
+      const response = await api.put("/auth/profile", {
+        name: profileData.full_name,
         full_name: profileData.full_name,
-        email: profileData.email,
         phone: profileData.phone,
+        company_name: profileData.company_name,
+        address: profileData.address,
+        city: profileData.city,
+        state: profileData.state,
+        pincode: profileData.pincode,
+        gst_number: profileData.gst_number,
+        pan_number: profileData.pan_number,
       });
 
-      toast.success("Profile updated successfully");
+      if (response.data.success) {
+        updateUser({
+          ...user,
+          full_name: profileData.full_name,
+          name: profileData.full_name,
+          phone: profileData.phone,
+        });
+        toast.success("Profile updated successfully");
+      }
     } catch (error) {
       console.error("Error updating profile:", error);
       toast.error(error.response?.data?.message || "Failed to update profile");
@@ -153,11 +188,10 @@ const VendorProfile = () => {
         return;
       }
 
-      // Call change password API
-      // await api.post('/vendor/change-password', passwordData);
-
-      // For now, simulating success
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await api.put("/auth/change-password", {
+        currentPassword: passwordData.current_password,
+        newPassword: passwordData.new_password,
+      });
 
       toast.success("Password changed successfully");
       setPasswordData({
@@ -188,11 +222,7 @@ const VendorProfile = () => {
         return;
       }
 
-      // Call update bank details API
-      // await api.put('/vendor/bank-details', bankData);
-
-      // For now, simulating success
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await api.put("/vendor/bank-details", bankData);
 
       toast.success("Bank details updated successfully");
     } catch (error) {

@@ -83,7 +83,7 @@ const getDashboardStats = asyncHandler(async (req, res) => {
  */
 const getProperties = asyncHandler(async (req, res) => {
   const vendorId = req.user.id;
-  const { page = 1, limit = 10, status } = req.query;
+  const { page = 1, limit = 10, status, city } = req.query;
 
   const offset = (page - 1) * limit;
 
@@ -114,18 +114,28 @@ const getProperties = asyncHandler(async (req, res) => {
     params.push(status);
   }
 
+  if (city) {
+    query += ` AND c.name = ?`;
+    params.push(city);
+  }
+
   query += ` ORDER BY p.created_at DESC LIMIT ? OFFSET ?`;
   params.push(parseInt(limit), offset);
 
   const [properties] = await db.query(query, params);
 
   // Get total count
-  let countQuery = `SELECT COUNT(*) as total FROM properties WHERE vendor_id = ? AND deleted_at IS NULL`;
+  let countQuery = `SELECT COUNT(*) as total FROM properties p LEFT JOIN cities c ON p.city_id = c.id WHERE p.vendor_id = ? AND p.deleted_at IS NULL`;
   const countParams = [vendorId];
 
   if (status) {
-    countQuery += ` AND status = ?`;
+    countQuery += ` AND p.status = ?`;
     countParams.push(status);
+  }
+
+  if (city) {
+    countQuery += ` AND c.name = ?`;
+    countParams.push(city);
   }
 
   const [countResult] = await db.query(countQuery, countParams);
@@ -202,6 +212,26 @@ const getBookings = asyncHandler(async (req, res) => {
   const [countResult] = await db.query(countQuery, countParams);
   const total = countResult[0]?.total || 0;
 
+  // Aggregate stats across ALL bookings for this vendor (not just current page)
+  let statsQuery = `
+    SELECT
+      COUNT(*) as total,
+      SUM(CASE WHEN b.status = 'confirmed' THEN 1 ELSE 0 END) as confirmed,
+      SUM(CASE WHEN b.status = 'pending_payment' THEN 1 ELSE 0 END) as pending_payment,
+      SUM(CASE WHEN b.status = 'completed' THEN 1 ELSE 0 END) as completed,
+      SUM(CASE WHEN b.status = 'cancelled' THEN 1 ELSE 0 END) as cancelled,
+      COALESCE(SUM(CASE WHEN b.status IN ('confirmed', 'completed') THEN b.total_amount ELSE 0 END), 0) as total_revenue
+    FROM bookings b
+    INNER JOIN properties p ON b.property_id = p.id
+    WHERE p.vendor_id = ?
+  `;
+  const statsParams = [vendorId];
+  if (status) {
+    statsQuery += ` AND b.status = ?`;
+    statsParams.push(status);
+  }
+  const [statsResult] = await db.query(statsQuery, statsParams);
+
   sendSuccess(res, {
     bookings,
     pagination: {
@@ -210,6 +240,7 @@ const getBookings = asyncHandler(async (req, res) => {
       total,
       totalPages: Math.ceil(total / limit),
     },
+    stats: statsResult[0],
   });
 });
 
@@ -263,6 +294,28 @@ const getSettlements = asyncHandler(async (req, res) => {
   const [countResult] = await db.query(countQuery, countParams);
   const total = countResult[0]?.total || 0;
 
+  // Aggregate stats across ALL settlements for this vendor (not just current page)
+  let settlementStatsQuery = `
+    SELECT
+      COUNT(*) as total,
+      SUM(CASE WHEN vs.status = 'pending' THEN 1 ELSE 0 END) as pending,
+      SUM(CASE WHEN vs.status = 'paid' THEN 1 ELSE 0 END) as paid,
+      COALESCE(SUM(vs.amount), 0) as total_amount,
+      COALESCE(SUM(CASE WHEN vs.status = 'pending' THEN vs.amount ELSE 0 END), 0) as pending_amount,
+      COALESCE(SUM(CASE WHEN vs.status = 'paid' THEN vs.amount ELSE 0 END), 0) as paid_amount
+    FROM vendor_settlements vs
+    WHERE vs.vendor_id = ?
+  `;
+  const settlementStatsParams = [vendorId];
+  if (status) {
+    settlementStatsQuery += ` AND vs.status = ?`;
+    settlementStatsParams.push(status);
+  }
+  const [settlementStatsResult] = await db.query(
+    settlementStatsQuery,
+    settlementStatsParams,
+  );
+
   sendSuccess(res, {
     settlements,
     pagination: {
@@ -271,6 +324,7 @@ const getSettlements = asyncHandler(async (req, res) => {
       total,
       totalPages: Math.ceil(total / limit),
     },
+    stats: settlementStatsResult[0],
   });
 });
 
@@ -325,10 +379,58 @@ const getAnalytics = asyncHandler(async (req, res) => {
   });
 });
 
+/**
+ * @route   PUT /api/vendor/bank-details
+ * @desc    Update vendor bank details
+ * @access  Private (Vendor only)
+ */
+const updateBankDetails = asyncHandler(async (req, res) => {
+  const vendorId = req.user.id;
+  const {
+    bank_name,
+    account_holder_name,
+    account_number,
+    ifsc_code,
+    branch_name,
+  } = req.body;
+
+  if (!account_number || !ifsc_code || !account_holder_name) {
+    return sendError(
+      res,
+      "account_holder_name, account_number, and ifsc_code are required",
+      400,
+    );
+  }
+
+  // Sanitize: only allow known safe characters in banking fields
+  const safeIfsc = String(ifsc_code)
+    .replace(/[^A-Z0-9]/gi, "")
+    .substring(0, 11);
+  const safeAccount = String(account_number)
+    .replace(/[^0-9]/g, "")
+    .substring(0, 20);
+
+  const bankDetails = {
+    bank_name: bank_name ? String(bank_name).substring(0, 100) : null,
+    account_holder_name: String(account_holder_name).substring(0, 150),
+    account_number: safeAccount,
+    ifsc_code: safeIfsc,
+    branch_name: branch_name ? String(branch_name).substring(0, 100) : null,
+  };
+
+  await db.query(`UPDATE vendors SET bank_details = ? WHERE id = ?`, [
+    JSON.stringify(bankDetails),
+    vendorId,
+  ]);
+
+  sendSuccess(res, bankDetails, "Bank details updated successfully");
+});
+
 export default {
   getDashboardStats,
   getProperties,
   getBookings,
   getSettlements,
   getAnalytics,
+  updateBankDetails,
 };

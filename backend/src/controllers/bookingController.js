@@ -6,6 +6,49 @@ import {
   calculateBookingAmount,
 } from "../utils/helpers.js";
 
+/**
+ * Compute the calendar-aware base amount for a booking date range.
+ * For each night (check_in to check_out - 1 day), uses the custom calendar
+ * price if one exists, otherwise falls back to the property's base price_per_night.
+ * Returns the total base amount (sum across all nights).
+ */
+const getCalendarBaseAmount = async (
+  propertyId,
+  checkIn,
+  checkOut,
+  pricePerNight,
+) => {
+  const start = new Date(checkIn);
+  const end = new Date(checkOut);
+
+  // Fetch any calendar price overrides for this range
+  const [calendarRows] = await db.query(
+    `SELECT DATE_FORMAT(price_date, '%Y-%m-%d') AS price_date, price
+     FROM property_calendar_pricing
+     WHERE property_id = ?
+       AND price_date >= ?
+       AND price_date < ?`,
+    [propertyId, checkIn, checkOut],
+  );
+
+  // Build a map of date → custom price
+  const calendarMap = {};
+  for (const row of calendarRows) {
+    calendarMap[row.price_date] = parseFloat(row.price);
+  }
+
+  // Sum up the nightly prices
+  let total = 0;
+  const cursor = new Date(start);
+  while (cursor < end) {
+    const key = cursor.toISOString().slice(0, 10); // YYYY-MM-DD
+    total += calendarMap[key] !== undefined ? calendarMap[key] : pricePerNight;
+    cursor.setDate(cursor.getDate() + 1);
+  }
+
+  return total;
+};
+
 // SESSION 41: Razorpay removed - Payment order creation moved to paymentController.js
 // Bookings are created first, then payment orders are created separately via /api/payments/create-order
 
@@ -244,6 +287,14 @@ export const createBooking = asyncHandler(async (req, res) => {
   let discountAmount = 0;
   let couponId = null;
 
+  // Compute calendar-aware base amount upfront (used for coupon check + final calculation)
+  const calendarBaseAmount = await getCalendarBaseAmount(
+    property_id,
+    check_in,
+    check_out,
+    property.price_per_night,
+  );
+
   // Check and apply coupon if provided
   if (coupon_code) {
     const [coupons] = await db.query(
@@ -257,7 +308,7 @@ export const createBooking = asyncHandler(async (req, res) => {
 
     if (coupons.length > 0) {
       const coupon = coupons[0];
-      const baseAmount = property.price_per_night * nights;
+      const baseAmount = calendarBaseAmount;
 
       // Check minimum booking amount
       if (baseAmount >= coupon.min_booking_amount) {
@@ -285,6 +336,7 @@ export const createBooking = asyncHandler(async (req, res) => {
   }
 
   // Calculate amounts with new pricing system
+  // Calendar-aware base amount already computed before coupon check
   const amounts = calculateBookingAmount(
     property.price_per_night,
     nights,
@@ -301,6 +353,7 @@ export const createBooking = asyncHandler(async (req, res) => {
       children_count,
       infants_count,
     },
+    calendarBaseAmount,
   );
 
   // Create NEW booking OR update EXISTING pending booking
@@ -954,7 +1007,14 @@ export const modifyPendingBooking = asyncHandler(async (req, res) => {
     return sendError(res, "Property is already booked for selected dates", 400);
   }
 
-  // Recalculate amounts with CURRENT property rates
+  // Recalculate amounts with CURRENT property rates + calendar overrides
+  const calendarBaseAmount = await getCalendarBaseAmount(
+    booking.property_id,
+    check_in,
+    check_out,
+    property.price_per_night,
+  );
+
   const amounts = calculateBookingAmount(
     property.price_per_night,
     nights,
@@ -971,6 +1031,7 @@ export const modifyPendingBooking = asyncHandler(async (req, res) => {
       children_count,
       infants_count,
     },
+    calendarBaseAmount,
   );
 
   // Reset expires_at to 15 minutes from now

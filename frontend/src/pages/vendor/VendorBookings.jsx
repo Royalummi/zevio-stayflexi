@@ -83,8 +83,22 @@ const VendorBookings = () => {
       };
 
       const response = await api.get("/vendor/bookings", { params });
-      const { bookings: fetchedBookings, pagination: paginationData } =
-        response.data.data;
+      const {
+        bookings: fetchedBookings,
+        pagination: paginationData,
+        stats: backendStats,
+      } = response.data.data;
+
+      // Use aggregate stats from backend (covers all pages, not just current)
+      if (backendStats) {
+        setStats({
+          total: parseInt(backendStats.total || 0),
+          confirmed: parseInt(backendStats.confirmed || 0),
+          pending: parseInt(backendStats.pending_payment || 0),
+          completed: parseInt(backendStats.completed || 0),
+          cancelled: parseInt(backendStats.cancelled || 0),
+        });
+      }
 
       // Apply client-side filters
       let filteredBookings = fetchedBookings;
@@ -124,9 +138,6 @@ const VendorBookings = () => {
 
       setBookings(filteredBookings);
       setPagination(paginationData);
-
-      // Calculate stats
-      calculateStats(fetchedBookings);
     } catch (error) {
       console.error("Error fetching bookings:", error);
       toast.error("Failed to load bookings");

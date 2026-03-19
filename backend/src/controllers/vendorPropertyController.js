@@ -63,6 +63,14 @@ export const createProperty = asyncHandler(async (req, res) => {
     primary_incharge_name,
     primary_incharge_phone,
     primary_incharge_email,
+    secondary_incharge_name,
+    secondary_incharge_phone,
+    secondary_incharge_email,
+    pool_type,
+    garden_type,
+    pets_allowed,
+    events_allowed,
+    event_capacity,
   } = req.body;
 
   // Minimal validation - allow draft saving
@@ -103,7 +111,9 @@ export const createProperty = asyncHandler(async (req, res) => {
       same_day_booking_allowed, max_booking_days, check_in_time, check_out_time,
       check_in_guidelines, house_rules_text, amenities_guide,
       safety_information, local_area_info, emergency_contacts,
-      house_rules, cancellation_policy, photos, status, created_at
+      house_rules, cancellation_policy, photos,
+      pool_type, garden_type, pets_allowed, events_allowed, event_capacity,
+      status, created_at
     ) VALUES (
       ?, ?, ?, ?, ?, ?,
       ?, ?, ?, ?, ?,
@@ -113,7 +123,9 @@ export const createProperty = asyncHandler(async (req, res) => {
       ?, ?, ?, ?,
       ?, ?, ?,
       ?, ?, ?,
-      ?, ?, ?, 'draft', NOW()
+      ?, ?, ?,
+      ?, ?, ?, ?, ?,
+      'draft', NOW()
     )
   `;
 
@@ -155,6 +167,11 @@ export const createProperty = asyncHandler(async (req, res) => {
     house_rules ? JSON.stringify(house_rules) : "{}",
     cancellation_policy ? JSON.stringify(cancellation_policy) : "{}",
     photos ? JSON.stringify(photos) : "[]",
+    pool_type || "none",
+    garden_type || "none",
+    pets_allowed ? 1 : 0,
+    events_allowed ? 1 : 0,
+    event_capacity || null,
   ];
 
   await db.query(propertyQuery, propertyValues);
@@ -213,6 +230,20 @@ export const createProperty = asyncHandler(async (req, res) => {
       primary_incharge_name,
       primary_incharge_phone,
       primary_incharge_email || null,
+    ]);
+  }
+
+  // Insert secondary incharge if provided
+  if (secondary_incharge_name && secondary_incharge_phone) {
+    const contactQuery = `
+      INSERT INTO property_contacts (property_id, contact_type_id, name, phone, email, is_active)
+      VALUES (?, 2, ?, ?, ?, 1)
+    `;
+    await db.query(contactQuery, [
+      propertyId,
+      secondary_incharge_name,
+      secondary_incharge_phone,
+      secondary_incharge_email || null,
     ]);
   }
 
@@ -290,6 +321,19 @@ export const getPropertyById = asyncHandler(async (req, res) => {
      LIMIT 1`,
     [id],
   );
+
+  // Get property guidelines (stored separately for rich text)
+  const [guidelinesRows] = await db.query(
+    `SELECT check_in_guidelines, house_rules_text, amenities_guide,
+            safety_information, local_area_info, emergency_contacts
+     FROM property_guidelines
+     WHERE property_id = ?
+     LIMIT 1`,
+    [id],
+  );
+  if (guidelinesRows.length > 0) {
+    Object.assign(property, guidelinesRows[0]);
+  }
 
   // Parse JSON fields
   if (property.house_rules) {
@@ -519,6 +563,50 @@ export const updateProperty = asyncHandler(async (req, res) => {
   }
 
   // If property is draft or pending_approval, update directly
+  // Whitelist of allowed properties table columns (prevents SQL injection)
+  const ALLOWED_PROPERTIES_FIELDS = new Set([
+    "title",
+    "description",
+    "address",
+    "area",
+    "state",
+    "pincode",
+    "maps_location",
+    "bedrooms",
+    "bathrooms",
+    "max_guests",
+    "check_in_time",
+    "check_out_time",
+    "min_stay_days",
+    "max_stay_days",
+    "housekeeping_frequency",
+    "laundry_frequency",
+    "utilities_included",
+    "parking_slots",
+    "floor_number",
+    "wifi_speed_mbps",
+    "wifi_provider",
+    "furnishing_type",
+    "same_day_booking_allowed",
+    "max_booking_days",
+    "city_id",
+    "property_type_id",
+    "check_in_guidelines",
+    "house_rules_text",
+    "amenities_guide",
+    "safety_information",
+    "local_area_info",
+    "emergency_contacts",
+    "house_rules",
+    "cancellation_policy",
+    "photos",
+    "pool_type",
+    "garden_type",
+    "pets_allowed",
+    "events_allowed",
+    "event_capacity",
+  ]);
+
   // Build update query dynamically
   const updateFields = [];
   const params = [];
@@ -572,6 +660,11 @@ export const updateProperty = asyncHandler(async (req, res) => {
       return;
     }
 
+    // Reject fields not in the allowed whitelist (SQL injection prevention)
+    if (!ALLOWED_PROPERTIES_FIELDS.has(field)) {
+      return;
+    }
+
     let value = updates[field];
 
     // Sanitize rich text
@@ -611,6 +704,8 @@ export const updateProperty = asyncHandler(async (req, res) => {
     const pricingParams = [];
 
     Object.keys(allPricingUpdates).forEach((field) => {
+      // Only allow known pricing columns (SQL injection prevention)
+      if (!PRICING_FIELDS.has(field)) return;
       pricingFields.push(`${field} = ?`);
       pricingParams.push(allPricingUpdates[field]);
     });
@@ -628,15 +723,15 @@ export const updateProperty = asyncHandler(async (req, res) => {
           pricingParams,
         );
       } else if (allPricingUpdates.price_per_night) {
-        // Insert new pricing row
+        // Insert new pricing row (only use whitelisted keys)
+        const safeKeys = Object.keys(allPricingUpdates).filter((k) =>
+          PRICING_FIELDS.has(k),
+        );
+        const safeValues = safeKeys.map((k) => allPricingUpdates[k]);
         const pricingId = generateUUID();
         await db.query(
-          `INSERT INTO property_pricing (id, property_id, ${Object.keys(allPricingUpdates).join(", ")}) VALUES (?, ?, ${Object.keys(
-            allPricingUpdates,
-          )
-            .map(() => "?")
-            .join(", ")})`,
-          [pricingId, id, ...Object.values(allPricingUpdates)],
+          `INSERT INTO property_pricing (id, property_id, ${safeKeys.join(", ")}) VALUES (?, ?, ${safeKeys.map(() => "?").join(", ")})`,
+          [pricingId, id, ...safeValues],
         );
       }
     }
@@ -659,6 +754,48 @@ export const updateProperty = asyncHandler(async (req, res) => {
       await db.query(
         `INSERT INTO property_amenities (id, property_id, amenity_id) VALUES ?`,
         [amenityValues],
+      );
+    }
+  }
+
+  // Update primary incharge contact if provided
+  if (
+    updates.primary_incharge_name !== undefined ||
+    updates.primary_incharge_phone !== undefined
+  ) {
+    const {
+      primary_incharge_name: piName,
+      primary_incharge_phone: piPhone,
+      primary_incharge_email: piEmail,
+    } = updates;
+    if (piName && piPhone) {
+      await db.query(
+        `DELETE FROM property_contacts WHERE property_id = ? AND contact_type_id = 1`,
+        [id],
+      );
+      await db.query(
+        `INSERT INTO property_contacts (property_id, contact_type_id, name, phone, email, is_active) VALUES (?, 1, ?, ?, ?, 1)`,
+        [id, piName, piPhone, piEmail || null],
+      );
+    }
+  }
+  if (
+    updates.secondary_incharge_name !== undefined ||
+    updates.secondary_incharge_phone !== undefined
+  ) {
+    const {
+      secondary_incharge_name: siName,
+      secondary_incharge_phone: siPhone,
+      secondary_incharge_email: siEmail,
+    } = updates;
+    if (siName && siPhone) {
+      await db.query(
+        `DELETE FROM property_contacts WHERE property_id = ? AND contact_type_id = 2`,
+        [id],
+      );
+      await db.query(
+        `INSERT INTO property_contacts (property_id, contact_type_id, name, phone, email, is_active) VALUES (?, 2, ?, ?, ?, 1)`,
+        [id, siName, siPhone, siEmail || null],
       );
     }
   }

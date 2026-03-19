@@ -27,6 +27,44 @@ import {
 import featuresService from "../services/featuresService.js";
 
 /**
+ * Compute the calendar-aware base amount for a date range.
+ * Uses custom per-day prices from property_calendar_pricing where available,
+ * falls back to the property's base price_per_night for uncustomised days.
+ */
+const getCalendarBaseAmount = async (
+  propertyId,
+  checkIn,
+  checkOut,
+  pricePerNight,
+) => {
+  const start = new Date(checkIn);
+  const end = new Date(checkOut);
+
+  const [calendarRows] = await db.query(
+    `SELECT DATE_FORMAT(price_date, '%Y-%m-%d') AS price_date, price
+     FROM property_calendar_pricing
+     WHERE property_id = ?
+       AND price_date >= ?
+       AND price_date < ?`,
+    [propertyId, checkIn, checkOut],
+  );
+
+  const calendarMap = {};
+  for (const row of calendarRows) {
+    calendarMap[row.price_date] = parseFloat(row.price);
+  }
+
+  let total = 0;
+  const cursor = new Date(start);
+  while (cursor < end) {
+    const key = cursor.toISOString().slice(0, 10);
+    total += calendarMap[key] !== undefined ? calendarMap[key] : pricePerNight;
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  return total;
+};
+
+/**
  * GET /api/service-apartments
  * List service apartments with advanced filters
  */
@@ -515,8 +553,13 @@ export const calculatePrice = async (req, res) => {
       });
     }
 
-    // Calculate base price
-    const basePrice = parseFloat(propertyData.price_per_night) * nights;
+    // Calculate base price using calendar-aware per-night prices
+    const basePrice = await getCalendarBaseAmount(
+      property_id,
+      check_in,
+      check_out,
+      parseFloat(propertyData.price_per_night),
+    );
 
     // Determine long-stay discount
     let longStayDiscount = 0;

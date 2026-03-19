@@ -49,6 +49,11 @@ import {
   clearCalendarPricingRange,
 } from "../controllers/calendarPricingController.js";
 import {
+  adminGetPropertyBlackouts,
+  adminCreateBlackout,
+  adminDeleteBlackout,
+} from "../controllers/blackoutController.js";
+import {
   getAllCancellationPolicies,
   createCancellationPolicy,
   updateCancellationPolicy,
@@ -232,6 +237,11 @@ router.put(
   ],
   reorderRecommendedProperties,
 );
+
+// ── Blackout Dates (admin can block/unblock any property) ──
+router.get("/properties/:id/blackouts", adminGetPropertyBlackouts);
+router.post("/properties/:id/blackouts", adminCreateBlackout);
+router.delete("/properties/:id/blackouts/:blackoutId", adminDeleteBlackout);
 
 // ── Session 70: Calendar Pricing (admin can manage any property) ──
 router.get("/properties/:propertyId/calendar-pricing", getCalendarPricing);

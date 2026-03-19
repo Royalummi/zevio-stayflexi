@@ -154,6 +154,13 @@ const VendorPropertyForm = ({
 
     // Photos
     photos: [],
+
+    // Property features
+    pool_type: "none",
+    garden_type: "none",
+    pets_allowed: false,
+    events_allowed: false,
+    event_capacity: null,
   });
 
   // Rich Text Guidelines
@@ -425,6 +432,26 @@ const VendorPropertyForm = ({
 
         setFormData(loadedFormData);
 
+        // Map contacts array back to incharge fields
+        const contacts = response.data.data.contacts || [];
+        const primary = contacts.find((c) => c.contact_type_id === 1) || {};
+        const secondary = contacts.find((c) => c.contact_type_id === 2) || {};
+        setFormData((prev) => ({
+          ...prev,
+          primary_incharge_name: primary.name || "",
+          primary_incharge_phone: primary.phone || "",
+          primary_incharge_email: primary.email || "",
+          secondary_incharge_name: secondary.name || "",
+          secondary_incharge_phone: secondary.phone || "",
+          secondary_incharge_email: secondary.email || "",
+          // Map 5 new property feature fields
+          pool_type: property.pool_type || "none",
+          garden_type: property.garden_type || "none",
+          pets_allowed: !!property.pets_allowed,
+          events_allowed: !!property.events_allowed,
+          event_capacity: property.event_capacity || null,
+        }));
+
         const loadedGuidelines = {
           check_in_guidelines: property.check_in_guidelines || "",
           house_rules_text: property.house_rules_text || "",
@@ -630,6 +657,11 @@ const VendorPropertyForm = ({
         wifi_speed_mbps: formData.wifi_speed_mbps
           ? parseInt(formData.wifi_speed_mbps)
           : null,
+        event_capacity: formData.event_capacity
+          ? parseInt(formData.event_capacity)
+          : null,
+        pets_allowed: !!formData.pets_allowed,
+        events_allowed: !!formData.events_allowed,
       };
 
       if (propertyId) {

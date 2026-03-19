@@ -43,10 +43,13 @@ const AddEditVendorProperty = () => {
 
   const checkPendingChangeRequests = async () => {
     try {
-      const response = await api.get(
-        `/vendor/properties/${id}/change-requests`,
-      );
-      const pending = response.data.data?.find((cr) => cr.status === "pending");
+      const response = await api.get("/vendor/change-requests");
+      const allCRs =
+        response.data.data?.requests ||
+        (Array.isArray(response.data.data) ? response.data.data : []);
+      const pending = Array.isArray(allCRs)
+        ? allCRs.find((cr) => cr.property_id === id && cr.status === "pending")
+        : null;
       setPendingChangeRequest(pending);
     } catch (error) {
       console.error("Failed to check change requests:", error);

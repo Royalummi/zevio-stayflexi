@@ -99,7 +99,7 @@ export const getVendorChangeRequests = asyncHandler(async (req, res) => {
     [vendorId],
   );
 
-  sendSuccess(res, "Change requests retrieved successfully", { requests });
+  sendSuccess(res, { requests }, "Change requests retrieved successfully");
 });
 
 /**

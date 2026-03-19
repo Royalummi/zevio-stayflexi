@@ -7,6 +7,7 @@ import {
   getPropertyDetails,
   checkAvailability,
   getRecommendedProperties,
+  getPropertyBlockedDates,
 } from "../controllers/publicController.js";
 import {
   getAllAmenities,
@@ -35,5 +36,6 @@ router.get(
   "/properties/:propertyId/calendar-pricing",
   getPublicCalendarPricing,
 ); // Public price calendar for detail pages
+router.get("/properties/:id/blocked-dates", getPropertyBlockedDates); // Blocked/booked dates for customer calendar
 
 export default router;

@@ -330,12 +330,13 @@ export default function PropertyCalendarPricing({
 
   const todayKey = today();
   const cells = buildDays();
-  const customDatesInMonth = Object.keys(activeMap).filter((k) =>
-    k.startsWith(`${viewYear}-${String(viewMonth + 1).padStart(2, "0")}`),
-  );
 
   // Active map: pending (pre-creation) vs saved (edit mode)
   const activeMap = propertyId ? priceMap : pendingMap;
+
+  const customDatesInMonth = Object.keys(activeMap).filter((k) =>
+    k.startsWith(`${viewYear}-${String(viewMonth + 1).padStart(2, "0")}`),
+  );
 
   return (
     <div className="space-y-4">

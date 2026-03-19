@@ -19,9 +19,13 @@ export const calculateBookingAmount = (
   discountAmount = 0,
   propertyPricing = {},
   guestCounts = {},
+  precomputedBaseAmount = null, // Optional: calendar-aware pre-computed base
 ) => {
-  // Base amount (includes minimum guests/children in property price)
-  const baseAmount = pricePerNight * nights;
+  // Base amount: use pre-computed calendar total if provided, else flat rate
+  const baseAmount =
+    precomputedBaseAmount !== null
+      ? precomputedBaseAmount
+      : pricePerNight * nights;
 
   // Calculate extra guest charges
   let extraGuestCharges = 0;

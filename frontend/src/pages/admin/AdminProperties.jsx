@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import api from "../../lib/api";
 import { formatCurrency, formatDate } from "../../lib/utils";
 import PropertyViewEditModal from "../../components/admin/PropertyViewEditModal";
+import PropertyBlockoutCalendar from "../../components/vendor/PropertyBlockoutCalendar";
 import {
   Building2,
   Search,
@@ -34,6 +35,7 @@ import {
   Wifi,
   Car,
   CalendarDays,
+  CalendarOff,
   Sparkles,
   Shield,
 } from "lucide-react";
@@ -71,6 +73,13 @@ import {
   DialogTitle,
 } from "../../components/ui/dialog";
 import { Textarea } from "../../components/ui/textarea";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "../../components/ui/dropdown-menu";
 import PropertyTypeSelectionModal from "../../components/admin/PropertyTypeSelectionModal";
 
 const AdminProperties = () => {
@@ -115,6 +124,14 @@ const AdminProperties = () => {
   // Villa duration discount modal states
   const [showDiscountModal, setShowDiscountModal] = useState(false);
   const [discountProperty, setDiscountProperty] = useState(null);
+
+  // Delete confirmation modal
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteProperty, setDeleteProperty] = useState(null);
+
+  // Blockout calendar modal
+  const [showBlockoutModal, setShowBlockoutModal] = useState(false);
+  const [blockoutProperty, setBlockoutProperty] = useState(null);
   const [discountForm, setDiscountForm] = useState({
     discount_3_5_days: 0,
     discount_6_14_days: 0,
@@ -425,19 +442,19 @@ const AdminProperties = () => {
     navigate(`/admin/properties/${property.id}/edit`);
   };
 
-  const handleDeleteProperty = async (property) => {
-    if (
-      !window.confirm(
-        `Are you sure you want to delete "${property.title}"? This action cannot be undone.`,
-      )
-    ) {
-      return;
-    }
+  const handleDeleteProperty = (property) => {
+    setDeleteProperty(property);
+    setShowDeleteModal(true);
+  };
 
+  const confirmDeleteProperty = async () => {
+    if (!deleteProperty) return;
     try {
       setActionLoading(true);
-      await api.delete(`/admin/properties/${property.id}`);
+      await api.delete(`/admin/properties/${deleteProperty.id}`);
       toast.success("Property deleted successfully");
+      setShowDeleteModal(false);
+      setDeleteProperty(null);
       fetchProperties();
       fetchStats();
     } catch (error) {
@@ -446,6 +463,11 @@ const AdminProperties = () => {
     } finally {
       setActionLoading(false);
     }
+  };
+
+  const handleBlockDates = (property) => {
+    setBlockoutProperty(property);
+    setShowBlockoutModal(true);
   };
 
   // ── Villa Duration Discounts ──
@@ -867,8 +889,6 @@ const AdminProperties = () => {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Property</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Location</TableHead>
                       <TableHead>Vendor</TableHead>
                       <TableHead>Price/Night</TableHead>
                       <TableHead>Status</TableHead>
@@ -912,38 +932,27 @@ const AdminProperties = () => {
                                 {property.bedrooms || 0} Bed •{" "}
                                 {property.bathrooms || 0} Bath
                               </div>
+                              <div className="flex items-center gap-2 mt-1 flex-wrap">
+                                {property.property_type_name && (
+                                  <Badge className="bg-primary/90 text-white border-0 text-xs py-0">
+                                    {property.property_type_name}
+                                  </Badge>
+                                )}
+                                {property.is_recommended && (
+                                  <Badge className="bg-yellow-500/90 text-white border-0 text-xs py-0">
+                                    <Sparkles className="h-3 w-3 mr-1" />
+                                    Featured
+                                  </Badge>
+                                )}
+                                {(property.area || property.city_name) && (
+                                  <span className="flex items-center gap-0.5 text-xs text-gray-500 dark:text-gray-400">
+                                    <MapPin className="h-3 w-3" />
+                                    {property.area || property.city_name}
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
-                        </TableCell>
-                        <TableCell>
-                          {property.property_type_name && (
-                            <Badge className="bg-primary/90 text-white border-0">
-                              {property.property_type_name}
-                            </Badge>
-                          )}
-                          {property.is_recommended && (
-                            <Badge
-                              variant="secondary"
-                              className="bg-yellow-500/90 text-white mt-1"
-                            >
-                              <Sparkles className="h-3 w-3 mr-1" />
-                              Featured
-                            </Badge>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center space-x-1 text-sm">
-                            <MapPin className="h-4 w-4 text-gray-400" />
-                            <span>
-                              {property.area || property.city_name || "N/A"}
-                            </span>
-                          </div>
-                          {property.min_stay_days &&
-                            property.min_stay_days > 1 && (
-                              <div className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                                Min {property.min_stay_days} days
-                              </div>
-                            )}
                         </TableCell>
                         <TableCell>
                           <div className="text-sm">
@@ -961,32 +970,6 @@ const AdminProperties = () => {
                               ? formatCurrency(property.price_per_night)
                               : "Not set"}
                           </div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400">
-                            {property.gst_percentage
-                              ? `+${property.gst_percentage}% GST`
-                              : "No GST"}
-                          </div>
-                          {(property.discount_3_5_days > 0 ||
-                            property.discount_6_14_days > 0 ||
-                            property.discount_15_plus_days > 0) && (
-                            <div className="flex flex-wrap gap-1 mt-1">
-                              {property.discount_3_5_days > 0 && (
-                                <span className="text-xs bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 px-1.5 py-0.5 rounded font-medium">
-                                  3-5N: {property.discount_3_5_days}%
-                                </span>
-                              )}
-                              {property.discount_6_14_days > 0 && (
-                                <span className="text-xs bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 px-1.5 py-0.5 rounded font-medium">
-                                  6-14N: {property.discount_6_14_days}%
-                                </span>
-                              )}
-                              {property.discount_15_plus_days > 0 && (
-                                <span className="text-xs bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 px-1.5 py-0.5 rounded font-medium">
-                                  15+N: {property.discount_15_plus_days}%
-                                </span>
-                              )}
-                            </div>
-                          )}
                         </TableCell>
                         <TableCell>
                           <Badge className={getStatusColor(property.status)}>
@@ -999,62 +982,72 @@ const AdminProperties = () => {
                           </div>
                         </TableCell>
                         <TableCell className="text-right">
-                          <div className="flex items-center justify-end space-x-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleViewDetails(property)}
-                              className="hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300"
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleEditProperty(property)}
-                              className="hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-300"
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            {property.property_type_id === "pt-001" && (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
                               <Button
                                 size="sm"
-                                variant="outline"
-                                onClick={() => handleEditDiscounts(property)}
-                                title="Edit Villa Duration Discounts"
-                                className="hover:bg-amber-50 hover:text-amber-600 hover:border-amber-300"
+                                variant="ghost"
+                                className="h-8 w-8 p-0"
                               >
-                                <TrendingUp className="h-4 w-4" />
+                                <MoreVertical className="h-4 w-4" />
                               </Button>
-                            )}
-                            {property.status === "pending_approval" && (
-                              <>
-                                <Button
-                                  size="sm"
-                                  variant="default"
-                                  onClick={() => handleApprove(property)}
-                                  className="bg-green-600 hover:bg-green-700"
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                onClick={() => handleViewDetails(property)}
+                              >
+                                <Eye className="h-4 w-4 mr-2" />
+                                View Details
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleEditProperty(property)}
+                              >
+                                <Edit className="h-4 w-4 mr-2" />
+                                Edit Property
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleBlockDates(property)}
+                              >
+                                <CalendarOff className="h-4 w-4 mr-2" />
+                                Block Dates
+                              </DropdownMenuItem>
+                              {property.property_type_id === "pt-001" && (
+                                <DropdownMenuItem
+                                  onClick={() => handleEditDiscounts(property)}
                                 >
-                                  <CheckCircle className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="destructive"
-                                  onClick={() => handleReject(property)}
-                                >
-                                  <XCircle className="h-4 w-4" />
-                                </Button>
-                              </>
-                            )}
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleDeleteProperty(property)}
-                              className="hover:bg-red-50 hover:text-red-600 hover:border-red-300"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
+                                  <TrendingUp className="h-4 w-4 mr-2" />
+                                  Edit Discounts
+                                </DropdownMenuItem>
+                              )}
+                              {property.status === "pending_approval" && (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    onClick={() => handleApprove(property)}
+                                    className="text-green-600 focus:text-green-600"
+                                  >
+                                    <CheckCircle className="h-4 w-4 mr-2" />
+                                    Approve
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() => handleReject(property)}
+                                    className="text-red-600 focus:text-red-600"
+                                  >
+                                    <XCircle className="h-4 w-4 mr-2" />
+                                    Reject
+                                  </DropdownMenuItem>
+                                </>
+                              )}
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => handleDeleteProperty(property)}
+                                className="text-red-600 focus:text-red-600"
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -1229,6 +1222,17 @@ const AdminProperties = () => {
                           Edit Duration Discounts
                         </Button>
                       )}
+
+                      {/* Block Dates */}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleBlockDates(property)}
+                        className="w-full mt-2 hover:bg-red-50 hover:text-red-700 hover:border-red-300 dark:hover:bg-red-950/20"
+                      >
+                        <CalendarOff className="h-4 w-4 mr-1" />
+                        Block Dates
+                      </Button>
 
                       {/* Additional Actions for Pending */}
                       {property.status === "pending_approval" && (
@@ -1564,6 +1568,89 @@ const AdminProperties = () => {
               {discountSaving ? "Saving..." : "Save Discounts"}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Modal */}
+      <Dialog
+        open={showDeleteModal}
+        onOpenChange={(open) => {
+          if (!open) {
+            setShowDeleteModal(false);
+            setDeleteProperty(null);
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-[440px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <Trash2 className="h-5 w-5" />
+              Delete Property
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete{" "}
+              <span className="font-semibold text-foreground">
+                &ldquo;{deleteProperty?.title}&rdquo;
+              </span>
+              ? This action{" "}
+              <span className="font-semibold text-destructive">
+                cannot be undone
+              </span>{" "}
+              and will permanently remove the property and all associated data.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowDeleteModal(false);
+                setDeleteProperty(null);
+              }}
+              disabled={actionLoading}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDeleteProperty}
+              disabled={actionLoading}
+            >
+              {actionLoading ? "Deleting..." : "Yes, Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Blockout Calendar Modal */}
+      <Dialog
+        open={showBlockoutModal}
+        onOpenChange={(open) => {
+          if (!open) {
+            setShowBlockoutModal(false);
+            setBlockoutProperty(null);
+          }
+        }}
+      >
+        <DialogContent className="max-w-5xl w-full">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CalendarOff className="h-5 w-5 text-primary" />
+              Block Dates — {blockoutProperty?.title}
+            </DialogTitle>
+            <DialogDescription>
+              Block availability for this property. Admin-created blocks cannot
+              be removed by the vendor.
+            </DialogDescription>
+          </DialogHeader>
+          {blockoutProperty && (
+            <PropertyBlockoutCalendar
+              propertyId={blockoutProperty.id}
+              propertyTitle={blockoutProperty.title}
+              apiBase="admin"
+              isAdmin={true}
+              onClose={() => setShowBlockoutModal(false)}
+            />
+          )}
         </DialogContent>
       </Dialog>
     </div>

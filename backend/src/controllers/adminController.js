@@ -928,8 +928,36 @@ export const getPropertyDetails = asyncHandler(async (req, res) => {
     [id],
   );
 
+  // Get guidelines from property_guidelines table (fallback for properties created before guidelines were added to properties table)
+  const [guidelinesData] = await db.query(
+    `SELECT check_in_guidelines, house_rules_text, amenities_guide, safety_information, local_area_info, emergency_contacts
+     FROM property_guidelines WHERE property_id = ? LIMIT 1`,
+    [id],
+  );
+  const guidelinesFallback =
+    guidelinesData && guidelinesData.length > 0 ? guidelinesData[0] : {};
+
   const propertyDetails = {
     ...property,
+    // Merge guidelines: prefer properties columns, fall back to property_guidelines table
+    check_in_guidelines:
+      property.check_in_guidelines ||
+      guidelinesFallback.check_in_guidelines ||
+      "",
+    house_rules_text:
+      property.house_rules_text || guidelinesFallback.house_rules_text || "",
+    amenities_guide:
+      property.amenities_guide || guidelinesFallback.amenities_guide || "",
+    safety_information:
+      property.safety_information ||
+      guidelinesFallback.safety_information ||
+      "",
+    local_area_info:
+      property.local_area_info || guidelinesFallback.local_area_info || "",
+    emergency_contacts:
+      property.emergency_contacts ||
+      guidelinesFallback.emergency_contacts ||
+      "",
     pricing: pricingData && pricingData.length > 0 ? pricingData[0] : null,
     amenities: amenitiesData || [],
     contacts: contactsData || [],
@@ -2239,6 +2267,11 @@ export const createProperty = asyncHandler(async (req, res) => {
     state,
     pincode,
     maps_location,
+    pool_type,
+    garden_type,
+    pets_allowed,
+    events_allowed,
+    event_capacity,
     bedrooms,
     bathrooms,
     max_guests,
@@ -2345,20 +2378,24 @@ export const createProperty = asyncHandler(async (req, res) => {
   const query = `
     INSERT INTO properties (
       id, vendor_id, employee_id, city_id, property_type_id, title, description,
-      address, area, maps_location,
+      address, area, state, pincode, maps_location,
+      pool_type, garden_type, pets_allowed, events_allowed, event_capacity,
       bedrooms, bathrooms, max_guests,
       min_stay_days, max_stay_days, housekeeping_frequency, laundry_frequency,
       utilities_included, parking_slots, floor_number, wifi_speed_mbps, wifi_provider, furnishing_type,
       is_recommended, recommended_priority, recommended_at, recommended_by,
+      check_in_guidelines, house_rules_text, amenities_guide, safety_information, local_area_info, emergency_contacts,
       same_day_booking_allowed, max_booking_days, check_in_time, check_out_time,
       house_rules, cancellation_policy, photos, status
     ) VALUES (
       ?, ?, ?, ?, ?, ?, ?,
-      ?, ?, ?,
+      ?, ?, ?, ?, ?,
+      ?, ?, ?, ?, ?,
       ?, ?, ?,
       ?, ?, ?, ?,
       ?, ?, ?, ?, ?, ?,
       ?, ?, ?, ?,
+      ?, ?, ?, ?, ?, ?,
       ?, ?, ?, ?,
       ?, ?, ?, ?
     )
@@ -2374,7 +2411,14 @@ export const createProperty = asyncHandler(async (req, res) => {
     description || null,
     address || null,
     area || null,
+    state || null,
+    pincode || null,
     maps_location || null,
+    pool_type || "none",
+    garden_type || "none",
+    pets_allowed || false,
+    events_allowed || false,
+    event_capacity || null,
     bedrooms || 0,
     bathrooms || 0,
     max_guests || 2,
@@ -2392,6 +2436,12 @@ export const createProperty = asyncHandler(async (req, res) => {
     recommended_priority || 0,
     is_recommended ? new Date() : null,
     is_recommended ? req.user.id : null,
+    safeCheckInGuidelines,
+    safeHouseRulesText,
+    safeAmenitiesGuide,
+    safeSafetyInfo,
+    safeLocalAreaInfo,
+    safeEmergencyContacts,
     same_day_booking_allowed || false,
     max_booking_days || null,
     check_in_time || "2:00 PM",
@@ -2582,6 +2632,11 @@ export const updateProperty = asyncHandler(async (req, res) => {
     state,
     pincode,
     maps_location, // NEW: Google Maps URL/coordinates
+    pool_type,
+    garden_type,
+    pets_allowed,
+    events_allowed,
+    event_capacity,
     bedrooms,
     bathrooms,
     max_guests,
@@ -2708,6 +2763,11 @@ export const updateProperty = asyncHandler(async (req, res) => {
       state = ?,
       pincode = ?,
       maps_location = ?,
+      pool_type = ?,
+      garden_type = ?,
+      pets_allowed = ?,
+      events_allowed = ?,
+      event_capacity = ?,
       bedrooms = ?,
       bathrooms = ?,
       max_guests = ?,
@@ -2753,6 +2813,11 @@ export const updateProperty = asyncHandler(async (req, res) => {
     state || null,
     pincode || null,
     maps_location || null,
+    pool_type || "none",
+    garden_type || "none",
+    pets_allowed || false,
+    events_allowed || false,
+    event_capacity || null,
     bedrooms || 0,
     bathrooms || 0,
     max_guests || 2,
@@ -3022,6 +3087,44 @@ export const updateProperty = asyncHandler(async (req, res) => {
   console.log("📝 Property ID:", id);
   console.log("⏰ Completed at:", new Date().toISOString());
   console.log("========================================\n");
+
+  // Sync property_guidelines table to stay consistent with properties columns
+  const [existingGuidelines] = await db.query(
+    "SELECT id FROM property_guidelines WHERE property_id = ?",
+    [id],
+  );
+  if (existingGuidelines.length > 0) {
+    await db.query(
+      `UPDATE property_guidelines SET
+        check_in_guidelines = ?, house_rules_text = ?, amenities_guide = ?,
+        safety_information = ?, local_area_info = ?, emergency_contacts = ?
+       WHERE property_id = ?`,
+      [
+        safeCheckInGuidelines,
+        safeHouseRulesText,
+        safeAmenitiesGuide,
+        safeSafetyInfo,
+        safeLocalAreaInfo,
+        safeEmergencyContacts,
+        id,
+      ],
+    );
+  } else {
+    await db.query(
+      `INSERT INTO property_guidelines (id, property_id, check_in_guidelines, house_rules_text, amenities_guide, safety_information, local_area_info, emergency_contacts)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        generateUUID(),
+        id,
+        safeCheckInGuidelines,
+        safeHouseRulesText,
+        safeAmenitiesGuide,
+        safeSafetyInfo,
+        safeLocalAreaInfo,
+        safeEmergencyContacts,
+      ],
+    );
+  }
 
   sendSuccess(res, { id }, "Property updated successfully", 200);
 });

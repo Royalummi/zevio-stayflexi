@@ -98,28 +98,26 @@ const AmenitiesGrid = ({ selectedAmenities = [], onChange }) => {
   };
 
   const handleToggle = (amenityId, amenityName) => {
-    // Ensure amenityName is always a string
-    const nameStr = String(amenityName || "");
-    if (!nameStr) return;
+    // Ensure amenityId is always a string
+    const idStr = String(amenityId || "");
+    if (!idStr) return;
 
     let newSelected;
 
-    if (selectedAmenities.includes(nameStr)) {
+    if (selectedAmenities.includes(idStr)) {
       // Remove amenity
-      newSelected = selectedAmenities.filter((a) => a !== nameStr);
+      newSelected = selectedAmenities.filter((a) => a !== idStr);
     } else {
       // Add amenity
-      newSelected = [...selectedAmenities, nameStr];
+      newSelected = [...selectedAmenities, idStr];
     }
 
     onChange(newSelected);
   };
 
-  const isSelected = (amenityName) => {
-    // Handle both string and object amenities
-    return selectedAmenities.some((a) =>
-      typeof a === "string" ? a === amenityName : a?.name === amenityName,
-    );
+  const isSelected = (amenityId) => {
+    const idStr = String(amenityId || "");
+    return selectedAmenities.some((a) => String(a) === idStr);
   };
 
   if (loading) {
@@ -165,7 +163,7 @@ const AmenitiesGrid = ({ selectedAmenities = [], onChange }) => {
               const amenityName = String(amenity.name || "Unknown");
               const amenityId = amenity.id || amenityName;
               const IconComponent = iconMap[amenity.icon] || Monitor;
-              const selected = isSelected(amenityName);
+              const selected = isSelected(amenityId);
 
               return (
                 <button

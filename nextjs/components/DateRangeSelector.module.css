@@ -321,6 +321,26 @@
     border-color: #E6E9EE;
 }
 
+.day.blocked {
+    color: #B71C1C;
+    cursor: not-allowed;
+    background-color: #FFEBEE;
+    border-color: #FFCDD2;
+    text-decoration: line-through;
+    opacity: 0.75;
+}
+
+.rangeError {
+    color: #B71C1C;
+    background-color: #FFEBEE;
+    border: 1px solid #FFCDD2;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 12px;
+    line-height: 1.4;
+    margin-bottom: 8px;
+}
+
 /* Quick Select */
 .quickSelect {
     display: flex;

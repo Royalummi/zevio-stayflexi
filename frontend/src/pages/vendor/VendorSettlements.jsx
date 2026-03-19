@@ -71,8 +71,22 @@ const VendorSettlements = () => {
       };
 
       const response = await api.get("/vendor/settlements", { params });
-      const { settlements: fetchedSettlements, pagination: paginationData } =
-        response.data.data;
+      const {
+        settlements: fetchedSettlements,
+        pagination: paginationData,
+        stats: backendStats,
+      } = response.data.data;
+
+      // Use aggregate stats from backend (covers all pages, not just current)
+      if (backendStats) {
+        setStats({
+          pending: parseFloat(backendStats.pending_amount || 0),
+          approved: 0,
+          paid: parseFloat(backendStats.paid_amount || 0),
+          total: parseFloat(backendStats.total_amount || 0),
+          lifetime: parseFloat(backendStats.paid_amount || 0),
+        });
+      }
 
       // Apply client-side search filter
       let filteredSettlements = fetchedSettlements;
@@ -89,9 +103,6 @@ const VendorSettlements = () => {
 
       setSettlements(filteredSettlements);
       setPagination(paginationData);
-
-      // Calculate stats
-      calculateStats(fetchedSettlements);
     } catch (error) {
       console.error("Error fetching settlements:", error);
       toast.error("Failed to load settlements");

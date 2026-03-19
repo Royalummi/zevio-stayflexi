@@ -9,6 +9,11 @@ interface PriceEntry {
   price: number;
 }
 
+interface BlockedRange {
+  start_date: string;
+  end_date: string;
+}
+
 interface DateRangeSelectorProps {
   checkIn: Date | null;
   checkOut: Date | null;
@@ -58,6 +63,10 @@ export default function DateRangeSelector({
   // Pricing state — keyed by "YYYY-MM-DD"
   const [priceMap, setPriceMap] = useState<Record<string, number>>({});
   const [fetchedYears, setFetchedYears] = useState<Set<number>>(new Set());
+  // Blocked date ranges (blackouts + confirmed bookings)
+  const [blockedRanges, setBlockedRanges] = useState<BlockedRange[]>([]);
+  const [blockedLoaded, setBlockedLoaded] = useState(false);
+  const [rangeError, setRangeError] = useState<string>("");
 
   // Use external isOpen if provided (for controlled mode), otherwise use internal state
   const showDropdown =
@@ -90,6 +99,30 @@ export default function DateRangeSelector({
     };
     load();
   }, [showDropdown, currentMonth, propertyId, fetchedYears]);
+
+  // Fetch blocked/booked date ranges once per propertyId
+  useEffect(() => {
+    if (!propertyId || blockedLoaded) return;
+    const load = async () => {
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/public/properties/${propertyId}/blocked-dates`,
+        );
+        const json = await res.json();
+        if (json.success && json.data) {
+          const ranges: BlockedRange[] = [
+            ...(json.data.blackouts || []),
+            ...(json.data.bookings || []),
+          ];
+          setBlockedRanges(ranges);
+          setBlockedLoaded(true);
+        }
+      } catch {
+        // calendar still works without blocked dates
+      }
+    };
+    load();
+  }, [propertyId, blockedLoaded]);
 
   const handleOpenChange = (newState: boolean) => {
     if (externalIsOpen === undefined) {
@@ -173,20 +206,59 @@ export default function DateRangeSelector({
     return date < minDay;
   };
 
+  const toKey = (date: Date): string => {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  };
+
+  const isBlocked = (date: Date): boolean => {
+    if (blockedRanges.length === 0) return false;
+    const key = toKey(date);
+    return blockedRanges.some((r) => key >= r.start_date.substring(0, 10) && key <= r.end_date.substring(0, 10));
+  };
+
+  /** Returns true if any date strictly between fromDate and toDate (exclusive) is blocked */
+  const hasBlockedInRange = (fromDate: Date, toDate: Date): boolean => {
+    if (blockedRanges.length === 0) return false;
+    const cur = new Date(fromDate);
+    cur.setDate(cur.getDate() + 1); // start day after check-in
+    while (cur < toDate) {
+      if (isBlocked(cur)) return true;
+      cur.setDate(cur.getDate() + 1);
+    }
+    return false;
+  };
+
   const handleDayClick = (day: number) => {
     const selectedDate = new Date(currentMonth);
     selectedDate.setDate(day);
     selectedDate.setHours(0, 0, 0, 0);
 
+    if (isDisabled(selectedDate) || isBlocked(selectedDate)) return;
+
+    setRangeError("");
+
     if (!checkIn || (checkIn && checkOut)) {
+      // Starting a new selection
       onCheckInChange(selectedDate);
       onCheckOutChange(null);
     } else {
       if (selectedDate > checkIn) {
+        // Validate: no blocked dates inside the selected range
+        if (hasBlockedInRange(checkIn, selectedDate)) {
+          setRangeError("Your selected range includes unavailable dates. Please choose dates that don't span blocked periods.");
+          onCheckInChange(selectedDate);
+          onCheckOutChange(null);
+          return;
+        }
         onCheckOutChange(selectedDate);
         handleOpenChange(false);
       } else {
+        // Clicked before or on check-in — restart selection
         onCheckInChange(selectedDate);
+        onCheckOutChange(null);
       }
     }
   };
@@ -268,6 +340,11 @@ export default function DateRangeSelector({
               ))}
             </div>
 
+            {/* Range error message */}
+            {rangeError && (
+              <div className={styles.rangeError}>{rangeError}</div>
+            )}
+
             {/* Calendar days grid */}
             <div className={styles.daysGrid}>
               {calendarDays.map((day, index) => {
@@ -282,6 +359,7 @@ export default function DateRangeSelector({
                 date.setHours(0, 0, 0, 0);
 
                 const disabled = isDisabled(date);
+                const blocked = !disabled && isBlocked(date);
                 const selected = isSelected(date);
                 const inRange = isInRange(date);
                 const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
@@ -291,13 +369,15 @@ export default function DateRangeSelector({
                 return (
                   <button
                     key={day}
-                    onClick={() => !disabled && handleDayClick(day)}
+                    onClick={() => !disabled && !blocked && handleDayClick(day)}
                     className={`${styles.day} ${
                       disabled ? styles.disabled : ""
+                    } ${
+                      blocked ? styles.blocked : ""
                     } ${selected ? styles.selected : ""} ${
                       inRange ? styles.inRange : ""
                     }`}
-                    disabled={disabled}
+                    disabled={disabled || blocked}
                     aria-label={`${day}`}
                   >
                     <span className={styles.dayNumber}>{day}</span>
@@ -355,7 +435,10 @@ export default function DateRangeSelector({
               ? "Select check-out date"
               : `${formatDisplayDate(checkIn)} → ${formatDisplayDate(checkOut)}`}
         </div>
-
+        {/* Range error message */}
+        {rangeError && (
+          <div className={styles.rangeError}>{rangeError}</div>
+        )}
         {/* Days of week */}
         <div className={styles.daysOfWeek}>
           {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
@@ -375,6 +458,7 @@ export default function DateRangeSelector({
             date.setDate(day);
             date.setHours(0, 0, 0, 0);
             const disabled = isDisabled(date);
+            const blocked = !disabled && isBlocked(date);
             const selected = isSelected(date);
             const inRange = isInRange(date);
             const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
@@ -383,9 +467,9 @@ export default function DateRangeSelector({
             return (
               <button
                 key={day}
-                onClick={() => !disabled && handleDayClick(day)}
-                className={`${styles.day} ${disabled ? styles.disabled : ""} ${selected ? styles.selected : ""} ${inRange ? styles.inRange : ""}`}
-                disabled={disabled}
+                onClick={() => !disabled && !blocked && handleDayClick(day)}
+                className={`${styles.day} ${disabled ? styles.disabled : ""} ${blocked ? styles.blocked : ""} ${selected ? styles.selected : ""} ${inRange ? styles.inRange : ""}`}
+                disabled={disabled || blocked}
                 aria-label={`${day}`}
               >
                 <span className={styles.dayNumber}>{day}</span>
@@ -469,6 +553,8 @@ export default function DateRangeSelector({
             ))}
           </div>
 
+          {rangeError && <div className={styles.rangeError}>{rangeError}</div>}
+
           {/* Calendar days grid */}
           <div className={styles.daysGrid}>
             {calendarDays.map((day, index) => {
@@ -483,6 +569,7 @@ export default function DateRangeSelector({
               date.setHours(0, 0, 0, 0);
 
               const disabled = isDisabled(date);
+              const blocked = !disabled && isBlocked(date);
               const selected = isSelected(date);
               const inRange = isInRange(date);
               const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
@@ -492,13 +579,15 @@ export default function DateRangeSelector({
               return (
                 <button
                   key={day}
-                  onClick={() => !disabled && handleDayClick(day)}
+                  onClick={() => !disabled && !blocked && handleDayClick(day)}
                   className={`${styles.day} ${
                     disabled ? styles.disabled : ""
+                  } ${
+                    blocked ? styles.blocked : ""
                   } ${selected ? styles.selected : ""} ${
                     inRange ? styles.inRange : ""
                   }`}
-                  disabled={disabled}
+                  disabled={disabled || blocked}
                   aria-label={`${day}`}
                 >
                   <span className={styles.dayNumber}>{day}</span>

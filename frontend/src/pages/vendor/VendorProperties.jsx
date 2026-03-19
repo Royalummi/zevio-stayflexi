@@ -6,23 +6,19 @@ import {
   Plus,
   Edit,
   Trash2,
-  Eye,
   Search,
-  Filter,
   Download,
   Calendar,
   IndianRupee,
   MapPin,
-  Users,
-  Bed,
-  Bath,
-  SlidersHorizontal,
   TrendingUp,
   Star,
   CheckCircle,
   Clock,
   XCircle,
   Home,
+  CalendarOff,
+  MoreHorizontal,
 } from "lucide-react";
 import {
   Card,
@@ -59,14 +55,27 @@ import {
   TableRow,
 } from "../../components/ui/table";
 import { Skeleton } from "../../components/ui/skeleton";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "../../components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "../../components/ui/dropdown-menu";
 import api from "../../lib/api";
 import { formatCurrency, formatDate } from "../../lib/utils";
 
 // Import Shared Components
 import StatsCard from "../../components/shared/StatsCard";
 import ViewModeToggle from "../../components/shared/ViewModeToggle";
-import AdvancedFiltersPanel from "../../components/shared/AdvancedFiltersPanel";
 import PropertyTypeModal from "../../components/shared/PropertyTypeModal";
+import PropertyBlockoutCalendar from "../../components/vendor/PropertyBlockoutCalendar";
 
 const VendorProperties = () => {
   const navigate = useNavigate();
@@ -91,12 +100,7 @@ const VendorProperties = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
-  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
-
-  // Advanced Filters
   const [cityFilter, setCityFilter] = useState("all");
-  const [bedroomsFilter, setBedroomsFilter] = useState("all");
-  const [priceRange, setPriceRange] = useState("");
   const [cities, setCities] = useState([]);
 
   // View Mode
@@ -104,6 +108,9 @@ const VendorProperties = () => {
 
   // Property Type Modal
   const [showPropertyTypeModal, setShowPropertyTypeModal] = useState(false);
+
+  // Blocking Calendar
+  const [blockingProperty, setBlockingProperty] = useState(null); // { id, title }
 
   // Pagination
   const [pagination, setPagination] = useState({
@@ -118,17 +125,14 @@ const VendorProperties = () => {
     fetchCities();
   }, []);
 
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setPagination((prev) => ({ ...prev, page: 1 }));
+  }, [statusFilter, searchTerm, cityFilter]);
+
   useEffect(() => {
     fetchProperties();
-  }, [
-    pagination.page,
-    statusFilter,
-    searchTerm,
-    sortBy,
-    cityFilter,
-    bedroomsFilter,
-    priceRange,
-  ]);
+  }, [pagination.page, statusFilter, searchTerm, sortBy, cityFilter]);
 
   const fetchStats = async () => {
     try {
@@ -160,6 +164,7 @@ const VendorProperties = () => {
         page: pagination.page,
         limit: pagination.limit,
         ...(statusFilter !== "all" && { status: statusFilter }),
+        ...(cityFilter !== "all" && { city: cityFilter }),
       };
 
       const response = await api.get("/vendor/properties", { params });
@@ -181,26 +186,7 @@ const VendorProperties = () => {
       // City filter
       if (cityFilter && cityFilter !== "all") {
         filteredProperties = filteredProperties.filter(
-          (p) => p.city_id === cityFilter,
-        );
-      }
-
-      // Bedrooms filter
-      if (bedroomsFilter && bedroomsFilter !== "all") {
-        const bedroomsCount = parseInt(bedroomsFilter);
-        filteredProperties = filteredProperties.filter((p) => {
-          if (bedroomsCount === 5) {
-            return (p.bedrooms || 0) >= 5;
-          }
-          return (p.bedrooms || 0) === bedroomsCount;
-        });
-      }
-
-      // Price range filter
-      if (priceRange) {
-        const maxPrice = parseFloat(priceRange);
-        filteredProperties = filteredProperties.filter(
-          (p) => (p.price_per_night || 0) <= maxPrice,
+          (p) => p.city_name === cityFilter,
         );
       }
 
@@ -255,8 +241,6 @@ const VendorProperties = () => {
     setStatusFilter("all");
     setSortBy("newest");
     setCityFilter("all");
-    setBedroomsFilter("all");
-    setPriceRange("");
   };
 
   const handleEditProperty = (propertyId) => {
@@ -429,11 +413,10 @@ const VendorProperties = () => {
       <Card>
         <CardContent className="pt-6">
           <div className="space-y-4">
-            {/* Main Filter Row */}
-            <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex flex-col md:flex-row gap-3">
               {/* Status Filter */}
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full md:w-48">
+                <SelectTrigger className="w-full md:w-44">
                   <SelectValue placeholder="Filter by status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -447,9 +430,24 @@ const VendorProperties = () => {
                 </SelectContent>
               </Select>
 
+              {/* City Filter */}
+              <Select value={cityFilter} onValueChange={setCityFilter}>
+                <SelectTrigger className="w-full md:w-44">
+                  <SelectValue placeholder="All Cities" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Cities</SelectItem>
+                  {cities.map((city) => (
+                    <SelectItem key={city.id} value={city.name}>
+                      {city.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
               {/* Search */}
               <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
                   placeholder="Search by property name or city..."
                   value={searchTerm}
@@ -460,7 +458,7 @@ const VendorProperties = () => {
 
               {/* Sort By */}
               <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-full md:w-48">
+                <SelectTrigger className="w-full md:w-44">
                   <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
                 <SelectContent>
@@ -471,16 +469,6 @@ const VendorProperties = () => {
                 </SelectContent>
               </Select>
 
-              {/* Advanced Filters Toggle */}
-              <Button
-                variant={showAdvancedFilters ? "default" : "outline"}
-                onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-                className="w-full md:w-auto"
-              >
-                <SlidersHorizontal className="h-4 w-4 mr-2" />
-                {showAdvancedFilters ? "Hide" : "Show"} Filters
-              </Button>
-
               {/* View Mode Toggle */}
               <ViewModeToggle
                 viewMode={viewMode}
@@ -488,26 +476,8 @@ const VendorProperties = () => {
               />
             </div>
 
-            {/* Advanced Filters Panel */}
-            {showAdvancedFilters && (
-              <AdvancedFiltersPanel
-                cities={cities}
-                cityFilter={cityFilter}
-                onCityFilterChange={setCityFilter}
-                bedroomsFilter={bedroomsFilter}
-                onBedroomsFilterChange={setBedroomsFilter}
-                priceRange={priceRange}
-                onPriceRangeChange={setPriceRange}
-                showVendorFilter={false}
-              />
-            )}
-
-            {/* Clear Filters Button */}
-            {(searchTerm ||
-              statusFilter !== "all" ||
-              cityFilter !== "all" ||
-              bedroomsFilter !== "all" ||
-              priceRange) && (
+            {/* Clear Filters */}
+            {(searchTerm || statusFilter !== "all" || cityFilter !== "all") && (
               <div className="flex justify-end">
                 <Button variant="outline" size="sm" onClick={clearAllFilters}>
                   Clear All Filters
@@ -527,11 +497,7 @@ const VendorProperties = () => {
               No properties found
             </h3>
             <p className="text-gray-500 dark:text-gray-400 mb-4 text-center max-w-md">
-              {searchTerm ||
-              statusFilter !== "all" ||
-              cityFilter !== "all" ||
-              bedroomsFilter !== "all" ||
-              priceRange
+              {searchTerm || statusFilter !== "all" || cityFilter !== "all"
                 ? "No properties match your current filters. Try adjusting your search criteria."
                 : "Get started by adding your first property to showcase your rental offerings"}
             </p>
@@ -622,29 +588,49 @@ const VendorProperties = () => {
                             {getStatusBadge(property.status)}
                           </TableCell>
                           <TableCell className="text-right">
-                            <div className="flex items-center justify-end gap-2">
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => handleEditProperty(property.id)}
-                                title="Edit property"
-                                className="hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20"
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => {
-                                  setDeletingPropertyId(property.id);
-                                  setDeleteDialogOpen(true);
-                                }}
-                                title="Delete property"
-                                className="hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-8 w-8 p-0"
+                                >
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem
+                                  onClick={() =>
+                                    handleEditProperty(property.id)
+                                  }
+                                >
+                                  <Edit className="h-4 w-4 mr-2" />
+                                  Edit Property
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() =>
+                                    setBlockingProperty({
+                                      id: property.id,
+                                      title: property.title,
+                                    })
+                                  }
+                                >
+                                  <CalendarOff className="h-4 w-4 mr-2" />
+                                  Block Calendar Dates
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  className="text-red-600 focus:text-red-600"
+                                  onClick={() => {
+                                    setDeletingPropertyId(property.id);
+                                    setDeleteDialogOpen(true);
+                                  }}
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Delete Property
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -717,28 +703,48 @@ const VendorProperties = () => {
                       </div>
 
                       {/* Actions */}
-                      <div className="flex items-center gap-2 ml-4">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleEditProperty(property.id)}
-                          title="Edit property"
-                          className="hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => {
-                            setDeletingPropertyId(property.id);
-                            setDeleteDialogOpen(true);
-                          }}
-                          title="Delete property"
-                          className="hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                      <div className="ml-4">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-8 w-8 p-0"
+                            >
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={() => handleEditProperty(property.id)}
+                            >
+                              <Edit className="h-4 w-4 mr-2" />
+                              Edit Property
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() =>
+                                setBlockingProperty({
+                                  id: property.id,
+                                  title: property.title,
+                                })
+                              }
+                            >
+                              <CalendarOff className="h-4 w-4 mr-2" />
+                              Block Calendar Dates
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              className="text-red-600 focus:text-red-600"
+                              onClick={() => {
+                                setDeletingPropertyId(property.id);
+                                setDeleteDialogOpen(true);
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Delete Property
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </div>
                   </CardContent>
@@ -805,6 +811,30 @@ const VendorProperties = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Blocking Calendar Dialog */}
+      <Dialog
+        open={!!blockingProperty}
+        onOpenChange={(open) => {
+          if (!open) setBlockingProperty(null);
+        }}
+      >
+        <DialogContent className="max-w-5xl w-full">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CalendarOff className="h-5 w-5 text-orange-500" />
+              Block Calendar Dates
+            </DialogTitle>
+          </DialogHeader>
+          {blockingProperty && (
+            <PropertyBlockoutCalendar
+              propertyId={blockingProperty.id}
+              propertyTitle={blockingProperty.title}
+              onClose={() => setBlockingProperty(null)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Property Type Modal */}
       <PropertyTypeModal

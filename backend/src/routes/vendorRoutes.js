@@ -1,6 +1,11 @@
 import express from "express";
 import vendorController from "../controllers/vendorController.js";
 import vendorPropertyController from "../controllers/vendorPropertyController.js";
+import {
+  getPropertyBlackouts,
+  createBlackout,
+  deleteBlackout,
+} from "../controllers/blackoutController.js";
 import { authenticate, authorize } from "../middlewares/auth.js";
 import { validatePagination } from "../middlewares/pagination.js";
 import {
@@ -39,6 +44,11 @@ router.delete(
   deleteCalendarPricing,
 );
 
+// ── Blackout Dates (manual blocking calendar) ──
+router.get("/properties/:id/blackouts", getPropertyBlackouts);
+router.post("/properties/:id/blackouts", createBlackout);
+router.delete("/properties/:id/blackouts/:blackoutId", deleteBlackout);
+
 // Bookings (with pagination)
 router.get("/bookings", validatePagination, vendorController.getBookings);
 
@@ -47,5 +57,8 @@ router.get("/settlements", validatePagination, vendorController.getSettlements);
 
 // Analytics (stats - no pagination)
 router.get("/analytics", vendorController.getAnalytics);
+
+// Bank details
+router.put("/bank-details", vendorController.updateBankDetails);
 
 export default router;
