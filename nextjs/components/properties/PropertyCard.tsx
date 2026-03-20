@@ -389,10 +389,10 @@ export default function PropertyCard({
               <>
                 <div className={styles.corporatePricing}>
                   <span className={styles.originalPrice}>
-                    ₹{property.price_per_night.toLocaleString()}
+                    ₹{(property.price_per_night || 0).toLocaleString()}
                   </span>
                   <span className={styles.priceAmount}>
-                    ₹{corporatePricing.discountedPrice.toLocaleString()}
+                    ₹{(corporatePricing.discountedPrice || 0).toLocaleString()}
                   </span>
                   <span className={styles.pricePeriod}>/ night</span>
                 </div>
@@ -403,7 +403,7 @@ export default function PropertyCard({
             ) : (
               <>
                 <span className={styles.priceAmount}>
-                  ₹{property.price_per_night.toLocaleString()}
+                  ₹{(property.price_per_night || 0).toLocaleString()}
                 </span>
                 <span className={styles.pricePeriod}>/ night</span>
               </>

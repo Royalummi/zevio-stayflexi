@@ -146,7 +146,7 @@ export default function PendingBookingModal({
 
             <div className={styles.detailItem}>
               <div className={styles.amountBadge}>
-                ₹{booking.total_amount.toLocaleString()}
+                ₹{(booking.total_amount || 0).toLocaleString()}
               </div>
               <div>
                 <p className={styles.detailLabel}>Total Amount</p>

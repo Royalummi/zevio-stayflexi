@@ -141,7 +141,7 @@ export default function ModifyBookingModal({
         <div className={styles.propertySection}>
           <p className={styles.propertyName}>{booking.property_title}</p>
           <p className={styles.propertyPrice}>
-            ₹{propertyPrice.toLocaleString()} / night
+            ₹{(propertyPrice || 0).toLocaleString()} / night
           </p>
         </div>
 
@@ -212,15 +212,15 @@ export default function ModifyBookingModal({
         <div className={styles.priceSection}>
           <div className={styles.priceRow}>
             <span>Base Amount ({priceBreakdown.nights} nights)</span>
-            <span>₹{priceBreakdown.baseAmount.toLocaleString()}</span>
+            <span>₹{(priceBreakdown.baseAmount || 0).toLocaleString()}</span>
           </div>
           <div className={styles.priceRow}>
             <span>GST (18%)</span>
-            <span>₹{priceBreakdown.gstAmount.toLocaleString()}</span>
+            <span>₹{(priceBreakdown.gstAmount || 0).toLocaleString()}</span>
           </div>
           <div className={styles.priceRowTotal}>
             <span>Total Amount</span>
-            <span>₹{priceBreakdown.totalAmount.toLocaleString()}</span>
+            <span>₹{(priceBreakdown.totalAmount || 0).toLocaleString()}</span>
           </div>
         </div>
 
