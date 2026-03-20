@@ -106,7 +106,7 @@ function SortablePropertyItem({
           <span>·</span>
           <span>{property.max_guests} Guests</span>
           <span>·</span>
-          <span>₹{property.price_per_night.toLocaleString()}/night</span>
+          <span>₹{(property.price_per_night || 0).toLocaleString()}/night</span>
         </div>
       </div>
 
@@ -454,7 +454,7 @@ export default function RecommendedPropertiesAdmin() {
                     <span>{property.bedrooms} BHK</span>
                     <span>·</span>
                     <span>
-                      ₹{property.price_per_night.toLocaleString()}/night
+                      ₹{(property.price_per_night || 0).toLocaleString()}/night
                     </span>
                   </div>
                 </div>

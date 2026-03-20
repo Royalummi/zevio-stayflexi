@@ -959,9 +959,7 @@ function ServiceApartmentDetailContent() {
                         <div className={styles.infoLabel}>Security Deposit</div>
                         <div className={styles.infoValue}>
                           ₹
-                          {parseFloat(
-                            property.deposit_amount.toString(),
-                          ).toLocaleString()}
+                          {(property.deposit_amount || 0).toLocaleString()}
                         </div>
                         <div className={styles.infoNote}>
                           Fully refundable at check-out
@@ -981,9 +979,7 @@ function ServiceApartmentDetailContent() {
                         <div className={styles.infoLabel}>Maintenance Fee</div>
                         <div className={styles.infoValue}>
                           ₹
-                          {parseFloat(
-                            property.maintenance_charges.toString(),
-                          ).toLocaleString()}
+                          {(property.maintenance_charges || 0).toLocaleString()}
                         </div>
                         <div className={styles.infoNote}>
                           One-time maintenance charge
@@ -1100,10 +1096,7 @@ function ServiceApartmentDetailContent() {
                         parseFloat(property.extra_child_charge.toString()) >
                           0 ? (
                           <div className={styles.infoNote}>
-                            Extra charge: ₹
-                            {parseFloat(
-                              property.extra_child_charge.toString(),
-                            ).toLocaleString()}{" "}
+                            Extra charge: ₹{(property.extra_child_charge || 0).toLocaleString()}{" "}
                             per child per night
                           </div>
                         ) : (

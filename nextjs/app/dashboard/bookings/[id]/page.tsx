@@ -627,7 +627,7 @@ export default function BookingDetailsPage() {
                 <span className={styles.priceLabel}>
                   ₹
                   {(
-                    booking.base_amount / (booking.nights || 1)
+                    (booking.base_amount || 0) / (booking.nights || 1)
                   ).toLocaleString()}{" "}
                   x {booking.nights} nights
                 </span>
