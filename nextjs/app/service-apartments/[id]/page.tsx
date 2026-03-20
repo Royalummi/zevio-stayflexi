@@ -1704,9 +1704,9 @@ function ServiceApartmentDetailContent() {
                   )}{" "}
                   nights · ₹
                   {priceBreakdown
-                    ? priceBreakdown.total_amount.toLocaleString("en-IN")
+                    ? (priceBreakdown.total_amount || 0).toLocaleString("en-IN")
                     : (
-                        property.price_per_night *
+                        (property.price_per_night || 0) *
                         Math.ceil(
                           (checkOut.getTime() - checkIn.getTime()) /
                             (1000 * 60 * 60 * 24),

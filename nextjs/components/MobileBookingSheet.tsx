@@ -304,7 +304,7 @@ export default function MobileBookingSheet({
           <div className={styles.priceSummary}>
             <div>
               <div className={styles.priceSummaryLabel}>
-                ₹{pricePerNight.toLocaleString("en-IN")} / night
+                ₹{(pricePerNight || 0).toLocaleString("en-IN")} / night
               </div>
               {nights > 0 && (
                 <div className={styles.priceSummaryNights}>
@@ -315,7 +315,7 @@ export default function MobileBookingSheet({
             <div>
               <div className={styles.priceSummaryAmount}>
                 {nights > 0
-                  ? `₹${(pricePerNight * nights).toLocaleString("en-IN")}`
+                  ? `₹${((pricePerNight || 0) * nights).toLocaleString("en-IN")}`
                   : "—"}
               </div>
               {nights > 0 && (

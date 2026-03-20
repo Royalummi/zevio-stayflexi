@@ -163,7 +163,7 @@ export default function RecommendedProperties({
                 <div className={styles.footer}>
                   <div className={styles.price}>
                     <span className={styles.amount}>
-                      ₹{property.price_per_night.toLocaleString("en-IN")}
+                      ₹{(property.price_per_night || 0).toLocaleString("en-IN")}
                     </span>
                     <span className={styles.period}>/ night</span>
                   </div>
