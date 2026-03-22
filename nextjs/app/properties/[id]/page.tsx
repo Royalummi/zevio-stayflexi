@@ -261,13 +261,21 @@ function PropertyDetailContent() {
                 ? JSON.parse(data.amenities)
                 : []
               : [],
-          photos: Array.isArray(data.photos)
-            ? data.photos
-            : data.photos
-              ? typeof data.photos === "string"
-                ? JSON.parse(data.photos)
-                : []
-              : [],
+          photos: (() => {
+            // Prefer property_images table (R2 uploads) over legacy photos column
+            if (Array.isArray(data.images) && data.images.length > 0) {
+              return data.images.map(
+                (img: { image_url: string }) => img.image_url,
+              );
+            }
+            return Array.isArray(data.photos)
+              ? data.photos
+              : data.photos
+                ? typeof data.photos === "string"
+                  ? JSON.parse(data.photos)
+                  : []
+                : [];
+          })(),
           rating: data.rating || 0,
           reviews_count: data.reviews_count || 0,
           status: data.status,

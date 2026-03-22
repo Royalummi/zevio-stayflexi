@@ -18,7 +18,7 @@ import {
 } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
 import api from "../../lib/api";
-import { formatCurrency, formatDate } from "../../lib/utils";
+import { formatCurrency } from "../../lib/utils";
 
 const VendorAnalytics = () => {
   const [loading, setLoading] = useState(true);
@@ -137,12 +137,10 @@ const VendorAnalytics = () => {
 
   // Calculate trend (comparing last 2 months)
   const recentTrends = analyticsData.booking_trends.slice(0, 2);
+  const prevRevenue = recentTrends.length === 2 ? parseFloat(recentTrends[1].revenue) : 0;
   const trendPercentage =
-    recentTrends.length === 2
-      ? ((parseFloat(recentTrends[0].revenue) -
-          parseFloat(recentTrends[1].revenue)) /
-          parseFloat(recentTrends[1].revenue)) *
-        100
+    recentTrends.length === 2 && prevRevenue > 0
+      ? ((parseFloat(recentTrends[0].revenue) - prevRevenue) / prevRevenue) * 100
       : 0;
 
   if (loading) {
@@ -177,7 +175,14 @@ const VendorAnalytics = () => {
             <option value="90days">Last 90 Days</option>
             <option value="year">Last Year</option>
           </select>
-          <Button variant="outline" onClick={handleExportReport}>
+          <Button
+            variant="outline"
+            onClick={handleExportReport}
+            disabled={
+              analyticsData.revenue_by_property.length === 0 &&
+              analyticsData.booking_trends.length === 0
+            }
+          >
             <Download className="h-4 w-4 mr-2" />
             Export Report
           </Button>
@@ -294,12 +299,7 @@ const VendorAnalytics = () => {
           <CardContent>
             {analyticsData.revenue_by_property.length > 0 ? (
               <div className="space-y-4">
-                {analyticsData.revenue_by_property
-                  .sort(
-                    (a, b) =>
-                      parseFloat(b.total_revenue) - parseFloat(a.total_revenue),
-                  )
-                  .map((property, index) => {
+                {analyticsData.revenue_by_property.map((property, index) => {
                     const maxRevenue = Math.max(
                       ...analyticsData.revenue_by_property.map((p) =>
                         parseFloat(p.total_revenue),
@@ -368,7 +368,7 @@ const VendorAnalytics = () => {
                     >
                       <div className="flex items-center justify-between mb-2">
                         <span className="font-semibold text-gray-900 dark:text-white">
-                          {trend.month}
+                          {new Date(trend.month + "-02").toLocaleDateString("en-IN", { month: "long", year: "numeric" })}
                         </span>
                         <span className="text-sm text-gray-600">
                           {trend.bookings} bookings

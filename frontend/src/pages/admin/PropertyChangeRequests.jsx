@@ -44,7 +44,7 @@ const PropertyChangeRequests = () => {
     try {
       setLoading(true);
       const response = await api.get("/admin/change-requests?status=pending");
-      setChangeRequests(response.data.data.changeRequests || []);
+      setChangeRequests(response.data.data.requests || []);
     } catch (error) {
       console.error("Error fetching change requests:", error);
       toast.error("Failed to load change requests");

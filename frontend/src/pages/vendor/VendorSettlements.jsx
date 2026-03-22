@@ -4,10 +4,8 @@ import {
   Wallet,
   Download,
   Search,
-  Filter,
   Clock,
   CheckCircle,
-  XCircle,
   IndianRupee,
   Calendar,
   FileText,
@@ -51,15 +49,16 @@ const VendorSettlements = () => {
   // Stats
   const [stats, setStats] = useState({
     pending: 0,
-    approved: 0,
-    paid: 0,
     total: 0,
+    totalCount: 0,
+    pendingCount: 0,
     lifetime: 0,
   });
 
+  // searchTerm is applied client-side; only re-fetch when page or server-side filter (status) change.
   useEffect(() => {
     fetchSettlements();
-  }, [pagination.page, statusFilter, searchTerm]);
+  }, [pagination.page, statusFilter]);
 
   const fetchSettlements = async () => {
     try {
@@ -81,27 +80,14 @@ const VendorSettlements = () => {
       if (backendStats) {
         setStats({
           pending: parseFloat(backendStats.pending_amount || 0),
-          approved: 0,
-          paid: parseFloat(backendStats.paid_amount || 0),
           total: parseFloat(backendStats.total_amount || 0),
+          totalCount: parseInt(backendStats.total || 0),
+          pendingCount: parseInt(backendStats.pending || 0),
           lifetime: parseFloat(backendStats.paid_amount || 0),
         });
       }
 
-      // Apply client-side search filter
-      let filteredSettlements = fetchedSettlements;
-      if (searchTerm) {
-        filteredSettlements = fetchedSettlements.filter(
-          (s) =>
-            s.property_title
-              ?.toLowerCase()
-              .includes(searchTerm.toLowerCase()) ||
-            s.booking_id?.toString().includes(searchTerm) ||
-            s.id?.toString().includes(searchTerm),
-        );
-      }
-
-      setSettlements(filteredSettlements);
+      setSettlements(fetchedSettlements);
       setPagination(paginationData);
     } catch (error) {
       console.error("Error fetching settlements:", error);
@@ -111,35 +97,8 @@ const VendorSettlements = () => {
     }
   };
 
-  const calculateStats = (settlementsList) => {
-    const pending = settlementsList
-      .filter((s) => s.status === "pending")
-      .reduce((sum, s) => sum + parseFloat(s.amount || 0), 0);
-
-    const approved = settlementsList
-      .filter((s) => s.status === "approved")
-      .reduce((sum, s) => sum + parseFloat(s.amount || 0), 0);
-
-    const paid = settlementsList
-      .filter((s) => s.status === "paid")
-      .reduce((sum, s) => sum + parseFloat(s.amount || 0), 0);
-
-    const total = settlementsList.reduce(
-      (sum, s) => sum + parseFloat(s.amount || 0),
-      0,
-    );
-
-    setStats({
-      pending,
-      approved,
-      paid,
-      total,
-      lifetime: paid, // Lifetime earnings = all paid settlements
-    });
-  };
-
   const handleExportCSV = () => {
-    const csvData = settlements.map((s) => ({
+    const csvData = visibleSettlements.map((s) => ({
       "Settlement ID": s.id,
       "Booking ID": s.booking_id || "N/A",
       Property: s.property_title || "N/A",
@@ -168,17 +127,9 @@ const VendorSettlements = () => {
         icon: Clock,
         className: "bg-yellow-100 text-yellow-800 border-yellow-300",
       },
-      approved: {
-        icon: CheckCircle,
-        className: "bg-blue-100 text-blue-800 border-blue-300",
-      },
       paid: {
         icon: CheckCircle,
         className: "bg-green-100 text-green-800 border-green-300",
-      },
-      cancelled: {
-        icon: XCircle,
-        className: "bg-red-100 text-red-800 border-red-300",
       },
     };
 
@@ -203,6 +154,17 @@ const VendorSettlements = () => {
     );
   }
 
+  // Derive filtered list from raw API data so search bar responds instantly without extra fetches.
+  const visibleSettlements = settlements.filter((s) => {
+    if (!searchTerm) return true;
+    const term = searchTerm.toLowerCase();
+    return (
+      s.property_title?.toLowerCase().includes(term) ||
+      s.booking_id?.toString().includes(searchTerm) ||
+      s.id?.toString().includes(searchTerm)
+    );
+  });
+
   return (
     <div className="space-y-6 p-6">
       {/* Header */}
@@ -218,7 +180,7 @@ const VendorSettlements = () => {
         <Button
           variant="outline"
           onClick={handleExportCSV}
-          disabled={settlements.length === 0}
+          disabled={visibleSettlements.length === 0}
         >
           <Download className="h-4 w-4 mr-2" />
           Export CSV
@@ -248,7 +210,7 @@ const VendorSettlements = () => {
             <div className="text-2xl font-bold text-blue-600">
               {formatCurrency(stats.total)}
             </div>
-            <div className="text-sm text-gray-500">Total Settlements</div>
+            <div className="text-sm text-gray-500">Total Amount</div>
           </CardContent>
         </Card>
 
@@ -260,31 +222,31 @@ const VendorSettlements = () => {
             <div className="text-2xl font-bold text-yellow-600">
               {formatCurrency(stats.pending)}
             </div>
-            <div className="text-sm text-gray-500">Pending</div>
+            <div className="text-sm text-gray-500">Pending Payout</div>
           </CardContent>
         </Card>
 
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
-              <CheckCircle className="h-5 w-5 text-blue-600" />
+              <FileText className="h-5 w-5 text-purple-600" />
             </div>
-            <div className="text-2xl font-bold text-blue-600">
-              {formatCurrency(stats.approved)}
+            <div className="text-2xl font-bold text-purple-600">
+              {stats.totalCount}
             </div>
-            <div className="text-sm text-gray-500">Approved</div>
+            <div className="text-sm text-gray-500">Total Records</div>
           </CardContent>
         </Card>
 
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
-              <CheckCircle className="h-5 w-5 text-green-600" />
+              <Clock className="h-5 w-5 text-orange-500" />
             </div>
-            <div className="text-2xl font-bold text-green-600">
-              {formatCurrency(stats.paid)}
+            <div className="text-2xl font-bold text-orange-500">
+              {stats.pendingCount}
             </div>
-            <div className="text-sm text-gray-500">Paid</div>
+            <div className="text-sm text-gray-500">Pending Count</div>
           </CardContent>
         </Card>
       </div>
@@ -303,16 +265,20 @@ const VendorSettlements = () => {
               />
             </div>
 
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <Select
+              value={statusFilter}
+              onValueChange={(v) => {
+                setStatusFilter(v);
+                setPagination((prev) => ({ ...prev, page: 1 }));
+              }}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Status</SelectItem>
                 <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="approved">Approved</SelectItem>
                 <SelectItem value="paid">Paid</SelectItem>
-                <SelectItem value="cancelled">Cancelled</SelectItem>
               </SelectContent>
             </Select>
 
@@ -321,6 +287,7 @@ const VendorSettlements = () => {
               onClick={() => {
                 setSearchTerm("");
                 setStatusFilter("all");
+                setPagination((prev) => ({ ...prev, page: 1 }));
               }}
             >
               Clear Filters
@@ -330,7 +297,7 @@ const VendorSettlements = () => {
       </Card>
 
       {/* Settlements List */}
-      {settlements.length === 0 ? (
+      {visibleSettlements.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Wallet className="h-16 w-16 text-gray-300 mb-4" />
@@ -346,7 +313,7 @@ const VendorSettlements = () => {
         </Card>
       ) : (
         <div className="space-y-4">
-          {settlements.map((settlement) => (
+          {visibleSettlements.map((settlement) => (
             <Card
               key={settlement.id}
               className="hover:shadow-md transition-shadow"

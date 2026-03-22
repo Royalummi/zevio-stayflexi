@@ -5,6 +5,7 @@ import sharp from "sharp";
 import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
+import { uploadToR2, isR2Configured } from "../utils/r2Storage.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -42,47 +43,40 @@ export const uploadPropertyImages = asyncHandler(async (req, res) => {
 
   let sortOrder = maxOrder[0].max_order;
   const uploadedImages = [];
+  const useR2 = isR2Configured();
 
-  // Process and compress each uploaded image using sharp
   for (const file of req.files) {
-    const filePath = file.path;
-
-    try {
-      // Compress image using sharp
-      // Format: JPEG with 85% quality, resize if width > 1920px
-      await sharp(filePath)
-        .resize(1920, null, {
-          withoutEnlargement: true, // Don't upscale smaller images
-          fit: "inside",
-        })
-        .jpeg({ quality: 85, progressive: true })
-        .toFile(filePath + ".tmp");
-
-      // Replace original with compressed version
-      fs.unlinkSync(filePath);
-      fs.renameSync(filePath + ".tmp", filePath);
-
-      console.log(`Image compressed: ${file.filename}`);
-    } catch (compressionError) {
-      console.error("Image compression error:", compressionError);
-      // Continue with original file if compression fails
-    }
-
     sortOrder++;
     const imageId = generateUUID();
-    const imageUrl = `/uploads/properties/${file.filename}`;
+    let imageUrl;
+
+    if (useR2) {
+      // R2 path: file.buffer available from memoryStorage
+      imageUrl = await uploadToR2(file.buffer, "properties", null, {
+        ext: file.originalname.split(".").pop(),
+      });
+    } else {
+      // Local disk path: compress with sharp then store
+      const filePath = file.path;
+      try {
+        await sharp(filePath)
+          .resize(1920, null, { withoutEnlargement: true, fit: "inside" })
+          .jpeg({ quality: 85, progressive: true })
+          .toFile(filePath + ".tmp");
+        fs.unlinkSync(filePath);
+        fs.renameSync(filePath + ".tmp", filePath);
+      } catch (compressionError) {
+        console.error("Image compression error:", compressionError);
+      }
+      imageUrl = `/uploads/properties/${file.filename}`;
+    }
 
     await db.query(
-      `INSERT INTO property_images (id, property_id, image_url, sort_order) 
-       VALUES (?, ?, ?, ?)`,
+      `INSERT INTO property_images (id, property_id, image_url, sort_order) VALUES (?, ?, ?, ?)`,
       [imageId, id, imageUrl, sortOrder],
     );
 
-    uploadedImages.push({
-      id: imageId,
-      url: imageUrl,
-      sort_order: sortOrder,
-    });
+    uploadedImages.push({ id: imageId, image_url: imageUrl, sort_order: sortOrder });
   }
 
   // Update property photos JSON field
@@ -90,8 +84,8 @@ export const uploadPropertyImages = asyncHandler(async (req, res) => {
 
   sendSuccess(
     res,
-    "Images uploaded successfully",
     { images: uploadedImages },
+    "Images uploaded successfully",
     201,
   );
 });
@@ -212,7 +206,7 @@ export const getPropertyImages = asyncHandler(async (req, res) => {
     [id],
   );
 
-  sendSuccess(res, "Images retrieved successfully", { images });
+  sendSuccess(res, images, "Images retrieved successfully");
 });
 
 /**

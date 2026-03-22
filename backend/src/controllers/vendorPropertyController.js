@@ -184,8 +184,11 @@ export const createProperty = asyncHandler(async (req, res) => {
         id, property_id, price_per_night, gst_percentage,
         min_guests, extra_guest_charge, min_children, max_children, extra_child_charge,
         weekly_discount_percent, monthly_discount_percent,
+        quarterly_discount_percent, long_term_discount_percent,
+        allow_corporate_booking, corporate_discount_percent,
+        deposit_amount, maintenance_charges, notice_period_days,
         discount_3_5_days, discount_6_14_days, discount_15_plus_days
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const pricingValues = [
@@ -200,6 +203,13 @@ export const createProperty = asyncHandler(async (req, res) => {
       extra_child_charge || 0,
       weekly_discount_percent || 0,
       monthly_discount_percent || 0,
+      parseFloat(req.body.quarterly_discount_percent) || 0,
+      parseFloat(req.body.long_term_discount_percent) || 0,
+      req.body.allow_corporate_booking ? 1 : 0,
+      parseFloat(req.body.corporate_discount_percent) || 0,
+      parseFloat(req.body.deposit_amount) || 0,
+      parseFloat(req.body.maintenance_charges) || 0,
+      parseInt(req.body.notice_period_days) || 30,
       parseFloat(discount_3_5_days) || 0,
       parseFloat(discount_6_14_days) || 0,
       parseFloat(discount_15_plus_days) || 0,
@@ -222,28 +232,32 @@ export const createProperty = asyncHandler(async (req, res) => {
   // Insert primary incharge if provided
   if (primary_incharge_name && primary_incharge_phone) {
     const contactQuery = `
-      INSERT INTO property_contacts (property_id, contact_type_id, name, phone, email, is_active)
-      VALUES (?, 1, ?, ?, ?, 1)
+      INSERT INTO property_contacts (property_id, contact_type_id, name, phone, email, whatsapp, alt_contact, is_active)
+      VALUES (?, 1, ?, ?, ?, ?, ?, 1)
     `;
     await db.query(contactQuery, [
       propertyId,
       primary_incharge_name,
       primary_incharge_phone,
       primary_incharge_email || null,
+      req.body.primary_incharge_whatsapp || null,
+      req.body.primary_incharge_alt_contact || null,
     ]);
   }
 
   // Insert secondary incharge if provided
   if (secondary_incharge_name && secondary_incharge_phone) {
     const contactQuery = `
-      INSERT INTO property_contacts (property_id, contact_type_id, name, phone, email, is_active)
-      VALUES (?, 2, ?, ?, ?, 1)
+      INSERT INTO property_contacts (property_id, contact_type_id, name, phone, email, whatsapp, alt_contact, is_active)
+      VALUES (?, 2, ?, ?, ?, ?, ?, 1)
     `;
     await db.query(contactQuery, [
       propertyId,
       secondary_incharge_name,
       secondary_incharge_phone,
       secondary_incharge_email || null,
+      req.body.secondary_incharge_whatsapp || null,
+      req.body.secondary_incharge_alt_contact || null,
     ]);
   }
 
@@ -306,7 +320,7 @@ export const getPropertyById = asyncHandler(async (req, res) => {
 
   // Get contacts
   const [contacts] = await db.query(
-    `SELECT id, name, phone, email, contact_type_id
+    `SELECT id, name, phone, email, whatsapp, alt_contact, contact_type_id
      FROM property_contacts
      WHERE property_id = ? AND is_active = 1`,
     [id],
@@ -469,7 +483,11 @@ export const submitProperty = asyncHandler(async (req, res) => {
 export const updateProperty = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const vendorId = req.user.id;
-  const updates = req.body;
+  // Support both flat body `{ title: "..." }` and wrapped body `{ updates: { title: "..." } }`
+  const updates =
+    req.body && typeof req.body.updates === "object" && req.body.updates !== null
+      ? req.body.updates
+      : req.body;
 
   // Check if property exists and belongs to vendor
   const [properties] = await db.query(
@@ -774,8 +792,8 @@ export const updateProperty = asyncHandler(async (req, res) => {
         [id],
       );
       await db.query(
-        `INSERT INTO property_contacts (property_id, contact_type_id, name, phone, email, is_active) VALUES (?, 1, ?, ?, ?, 1)`,
-        [id, piName, piPhone, piEmail || null],
+        `INSERT INTO property_contacts (property_id, contact_type_id, name, phone, email, whatsapp, alt_contact, is_active) VALUES (?, 1, ?, ?, ?, ?, ?, 1)`,
+        [id, piName, piPhone, piEmail || null, updates.primary_incharge_whatsapp || null, updates.primary_incharge_alt_contact || null],
       );
     }
   }
@@ -794,8 +812,8 @@ export const updateProperty = asyncHandler(async (req, res) => {
         [id],
       );
       await db.query(
-        `INSERT INTO property_contacts (property_id, contact_type_id, name, phone, email, is_active) VALUES (?, 2, ?, ?, ?, 1)`,
-        [id, siName, siPhone, siEmail || null],
+        `INSERT INTO property_contacts (property_id, contact_type_id, name, phone, email, whatsapp, alt_contact, is_active) VALUES (?, 2, ?, ?, ?, ?, ?, 1)`,
+        [id, siName, siPhone, siEmail || null, updates.secondary_incharge_whatsapp || null, updates.secondary_incharge_alt_contact || null],
       );
     }
   }
@@ -832,7 +850,7 @@ export const deleteProperty = asyncHandler(async (req, res) => {
   const [activeBookings] = await db.query(
     `SELECT COUNT(*) as count FROM bookings 
      WHERE property_id = ? 
-     AND status IN ('pending', 'confirmed') 
+     AND status IN ('pending_payment', 'confirmed') 
      AND check_out >= CURDATE()`,
     [id],
   );

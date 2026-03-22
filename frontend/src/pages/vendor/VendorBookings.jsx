@@ -3,14 +3,10 @@ import { toast } from "sonner";
 import {
   Calendar as CalendarIcon,
   Search,
-  Filter,
   Download,
   Eye,
   Phone,
   Mail,
-  MapPin,
-  IndianRupee,
-  Users,
   Clock,
   CheckCircle,
   XCircle,
@@ -19,8 +15,6 @@ import {
 import {
   Card,
   CardContent,
-  CardHeader,
-  CardTitle,
 } from "../../components/ui/card";
 import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/button";
@@ -69,9 +63,11 @@ const VendorBookings = () => {
     cancelled: 0,
   });
 
+  // searchTerm and dateFilter are applied client-side on the fetched page data;
+  // only re-fetch from API when page or server-side filter (status) change.
   useEffect(() => {
     fetchBookings();
-  }, [pagination.page, statusFilter, searchTerm, dateFilter]);
+  }, [pagination.page, statusFilter]);
 
   const fetchBookings = async () => {
     try {
@@ -100,43 +96,7 @@ const VendorBookings = () => {
         });
       }
 
-      // Apply client-side filters
-      let filteredBookings = fetchedBookings;
-
-      if (searchTerm) {
-        filteredBookings = fetchedBookings.filter(
-          (b) =>
-            b.property_title
-              ?.toLowerCase()
-              .includes(searchTerm.toLowerCase()) ||
-            b.guest_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            b.guest_email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            b.id?.toString().includes(searchTerm),
-        );
-      }
-
-      if (dateFilter !== "all") {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-
-        filteredBookings = filteredBookings.filter((b) => {
-          const checkIn = new Date(b.check_in);
-          const checkOut = new Date(b.check_out);
-
-          if (dateFilter === "upcoming") {
-            return checkIn > today && b.status === "confirmed";
-          } else if (dateFilter === "ongoing") {
-            return (
-              checkIn <= today && checkOut >= today && b.status === "confirmed"
-            );
-          } else if (dateFilter === "past") {
-            return checkOut < today || b.status === "completed";
-          }
-          return true;
-        });
-      }
-
-      setBookings(filteredBookings);
+      setBookings(fetchedBookings);
       setPagination(paginationData);
     } catch (error) {
       console.error("Error fetching bookings:", error);
@@ -146,24 +106,13 @@ const VendorBookings = () => {
     }
   };
 
-  const calculateStats = (bookingsList) => {
-    const stats = {
-      total: bookingsList.length,
-      confirmed: bookingsList.filter((b) => b.status === "confirmed").length,
-      pending: bookingsList.filter((b) => b.status === "pending").length,
-      completed: bookingsList.filter((b) => b.status === "completed").length,
-      cancelled: bookingsList.filter((b) => b.status === "cancelled").length,
-    };
-    setStats(stats);
-  };
-
   const handleViewDetails = (booking) => {
     setSelectedBooking(booking);
     setViewDialogOpen(true);
   };
 
   const handleExportCSV = () => {
-    const csvData = bookings.map((b) => ({
+    const csvData = visibleBookings.map((b) => ({
       "Booking ID": b.id,
       Property: b.property_title,
       Guest: b.guest_name,
@@ -196,7 +145,7 @@ const VendorBookings = () => {
         icon: CheckCircle,
         className: "bg-green-100 text-green-800 border-green-300",
       },
-      pending: {
+      pending_payment: {
         icon: Clock,
         className: "bg-yellow-100 text-yellow-800 border-yellow-300",
       },
@@ -214,7 +163,11 @@ const VendorBookings = () => {
       },
     };
 
-    const { icon: Icon, className } = config[status] || config.pending;
+    const { icon: Icon, className } = config[status] || config.pending_payment;
+
+    // Fix: use the replaced string for both charAt and slice so all underscores are converted
+    const label = status.replace(/_/g, " ");
+    const displayLabel = label.charAt(0).toUpperCase() + label.slice(1);
 
     return (
       <Badge
@@ -222,7 +175,7 @@ const VendorBookings = () => {
         className={`${className} flex items-center gap-1`}
       >
         <Icon className="h-3 w-3" />
-        {status.replace("_", " ").charAt(0).toUpperCase() + status.slice(1)}
+        {displayLabel}
       </Badge>
     );
   };
@@ -250,6 +203,31 @@ const VendorBookings = () => {
     );
   }
 
+  // Derive filtered list from raw API data using current filter state.
+  // This runs on every render so search/dateFilter respond instantly without extra fetches.
+  const visibleBookings = bookings.filter((b) => {
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      if (
+        !b.property_title?.toLowerCase().includes(term) &&
+        !b.guest_name?.toLowerCase().includes(term) &&
+        !b.guest_email?.toLowerCase().includes(term) &&
+        !b.id?.toString().includes(searchTerm)
+      )
+        return false;
+    }
+    if (dateFilter !== "all") {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const checkIn = new Date(b.check_in);
+      const checkOut = new Date(b.check_out);
+      if (dateFilter === "upcoming") return checkIn > today && b.status === "confirmed";
+      if (dateFilter === "ongoing") return checkIn <= today && checkOut >= today && b.status === "confirmed";
+      if (dateFilter === "past") return checkOut < today || b.status === "completed";
+    }
+    return true;
+  });
+
   return (
     <div className="space-y-6 p-6">
       {/* Header */}
@@ -265,7 +243,7 @@ const VendorBookings = () => {
         <Button
           variant="outline"
           onClick={handleExportCSV}
-          disabled={bookings.length === 0}
+          disabled={visibleBookings.length === 0}
         >
           <Download className="h-4 w-4 mr-2" />
           Export CSV
@@ -330,16 +308,25 @@ const VendorBookings = () => {
               />
             </div>
 
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <Select
+              value={statusFilter}
+              onValueChange={(v) => {
+                setStatusFilter(v);
+                setPagination((prev) => ({ ...prev, page: 1 }));
+              }}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="pending_payment">Pending Payment</SelectItem>
                 <SelectItem value="confirmed">Confirmed</SelectItem>
                 <SelectItem value="completed">Completed</SelectItem>
                 <SelectItem value="cancelled">Cancelled</SelectItem>
+                <SelectItem value="cancel_requested">
+                  Cancel Requested
+                </SelectItem>
               </SelectContent>
             </Select>
 
@@ -361,6 +348,7 @@ const VendorBookings = () => {
                 setSearchTerm("");
                 setStatusFilter("all");
                 setDateFilter("all");
+                setPagination((prev) => ({ ...prev, page: 1 }));
               }}
             >
               Clear Filters
@@ -370,7 +358,7 @@ const VendorBookings = () => {
       </Card>
 
       {/* Bookings List */}
-      {bookings.length === 0 ? (
+      {visibleBookings.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <CalendarIcon className="h-16 w-16 text-gray-300 mb-4" />
@@ -386,7 +374,7 @@ const VendorBookings = () => {
         </Card>
       ) : (
         <div className="grid grid-cols-1 gap-4">
-          {bookings.map((booking) => (
+          {visibleBookings.map((booking) => (
             <Card
               key={booking.id}
               className="hover:shadow-md transition-shadow"

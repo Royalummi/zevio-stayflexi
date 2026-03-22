@@ -359,19 +359,33 @@ const getAnalytics = asyncHandler(async (req, res) => {
   );
 
   // Booking trends (monthly)
-  const [bookingTrends] = await db.query(
-    `SELECT 
+  let trendsQuery = `
+    SELECT 
       DATE_FORMAT(b.created_at, '%Y-%m') as month,
       COUNT(*) as bookings,
       COALESCE(SUM(b.total_amount), 0) as revenue
     FROM bookings b
     INNER JOIN properties p ON b.property_id = p.id
     WHERE p.vendor_id = ? AND b.status IN ('confirmed', 'completed')
+  `;
+  const trendsParams = [vendorId];
+
+  if (start_date) {
+    trendsQuery += ` AND b.created_at >= ?`;
+    trendsParams.push(start_date);
+  }
+  if (end_date) {
+    trendsQuery += ` AND b.created_at <= ?`;
+    trendsParams.push(end_date);
+  }
+
+  trendsQuery += `
     GROUP BY DATE_FORMAT(b.created_at, '%Y-%m')
     ORDER BY month DESC
-    LIMIT 12`,
-    [vendorId],
-  );
+    LIMIT 12
+  `;
+
+  const [bookingTrends] = await db.query(trendsQuery, trendsParams);
 
   sendSuccess(res, {
     revenue_by_property: revenueByProperty,

@@ -190,6 +190,24 @@ export const getProperties = asyncHandler(async (req, res) => {
 
   const [properties] = await db.query(query, params);
 
+  // Fetch first image from property_images table for all returned properties
+  let propertyImagesMap = {};
+  if (properties.length > 0) {
+    const propertyIds = properties.map((p) => p.id);
+    const [firstImages] = await db.query(
+      `SELECT property_id, image_url FROM property_images
+       WHERE property_id IN (?)
+       ORDER BY sort_order ASC`,
+      [propertyIds],
+    );
+    // Group by property_id — keep only the first image per property (lowest sort_order)
+    firstImages.forEach((img) => {
+      if (!propertyImagesMap[img.property_id]) {
+        propertyImagesMap[img.property_id] = img.image_url;
+      }
+    });
+  }
+
   // Parse JSON fields (photos only, amenities now come from JOIN)
   const parsedProperties = properties.map((property) => {
     try {
@@ -198,6 +216,12 @@ export const getProperties = asyncHandler(async (req, res) => {
         ? property.amenities.split(", ")
         : [];
       property.photos = property.photos ? JSON.parse(property.photos) : [];
+
+      // Prefer property_images table (R2 uploads) over legacy photos column
+      if (propertyImagesMap[property.id]) {
+        property.photos = [propertyImagesMap[property.id], ...property.photos.filter((u) => u !== propertyImagesMap[property.id])];
+      }
+
       // Transform photos array into images format expected by frontend
       property.images = property.photos.map((url, index) => ({
         id: `${property.id}-${index}`,

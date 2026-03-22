@@ -1004,30 +1004,31 @@ export const updatePropertyStatus = asyncHandler(async (req, res) => {
     [req.user.id, `Property status changed to ${status}`, id],
   );
 
-  // If rejected and reason provided, could store in change_requests or notifications
-  if (status === "inactive" && rejection_reason) {
-    await db.query(
-      `INSERT INTO notifications (id, recipient_id, recipient_role, title, message, created_at)
-       VALUES (UUID(), ?, 'vendor', ?, ?, NOW())`,
-      [
-        property[0].vendor_id,
-        "Property Status Updated",
-        `Your property has been marked as inactive. Reason: ${rejection_reason}`,
-      ],
-    );
-  }
-
-  // If approved, send notification
-  if (status === "approved") {
-    await db.query(
-      `INSERT INTO notifications (id, recipient_id, recipient_role, title, message, created_at)
-       VALUES (UUID(), ?, 'vendor', ?, ?, NOW())`,
-      [
-        property[0].vendor_id,
-        "Property Approved",
-        "Your property has been approved and is now live on the platform!",
-      ],
-    );
+  // Send notification (best-effort — don't block on FK mismatch between vendors/users tables)
+  try {
+    if (status === "inactive" && rejection_reason) {
+      await db.query(
+        `INSERT INTO notifications (id, recipient_id, recipient_role, title, message, created_at)
+         VALUES (UUID(), ?, 'vendor', ?, ?, NOW())`,
+        [
+          property[0].vendor_id,
+          "Property Status Updated",
+          `Your property has been marked as inactive. Reason: ${rejection_reason}`,
+        ],
+      );
+    } else if (status === "approved") {
+      await db.query(
+        `INSERT INTO notifications (id, recipient_id, recipient_role, title, message, created_at)
+         VALUES (UUID(), ?, 'vendor', ?, ?, NOW())`,
+        [
+          property[0].vendor_id,
+          "Property Approved",
+          "Your property has been approved and is now live on the platform!",
+        ],
+      );
+    }
+  } catch (notifError) {
+    console.error("Failed to send property status notification:", notifError.message);
   }
 
   sendSuccess(res, null, `Property status updated to ${status}`, 200);

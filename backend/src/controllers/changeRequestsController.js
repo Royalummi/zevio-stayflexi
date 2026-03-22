@@ -50,26 +50,30 @@ export const requestPropertyChange = asyncHandler(async (req, res) => {
     [requestId, id, JSON.stringify(requested_changes)],
   );
 
-  // Send notification to admin
-  const notifId = generateUUID();
-  const [admins] = await db.query(
-    `SELECT id FROM admins WHERE role IN ('admin', 'super_admin') AND status = 'active' LIMIT 1`,
-  );
-
-  if (admins.length > 0) {
-    await db.query(
-      `INSERT INTO notifications (id, recipient_id, recipient_role, title, message) 
-       VALUES (?, ?, 'admin', ?, ?)`,
-      [
-        notifId,
-        admins[0].id,
-        "Property Change Request",
-        `Vendor requested changes for property: ${properties[0].title}`,
-      ],
+  // Send notification to admin (best-effort — don't block on FK mismatch)
+  try {
+    const notifId = generateUUID();
+    const [admins] = await db.query(
+      `SELECT id FROM admins WHERE role IN ('admin', 'super_admin') AND status = 'active' LIMIT 1`,
     );
+
+    if (admins.length > 0) {
+      await db.query(
+        `INSERT INTO notifications (id, recipient_id, recipient_role, title, message) 
+         VALUES (?, ?, 'admin', ?, ?)`,
+        [
+          notifId,
+          admins[0].id,
+          "Property Change Request",
+          `Vendor requested changes for property: ${properties[0].title}`,
+        ],
+      );
+    }
+  } catch (notifError) {
+    console.error("Failed to send change request notification:", notifError.message);
   }
 
-  sendSuccess(res, "Change request submitted successfully", { requestId }, 201);
+  sendSuccess(res, { requestId }, "Change request submitted successfully", 201);
 });
 
 /**
@@ -138,7 +142,7 @@ export const getAllChangeRequests = asyncHandler(async (req, res) => {
      WHERE 1=1 ${statusFilter}`,
   );
 
-  sendSuccess(res, "Change requests retrieved successfully", {
+  sendSuccess(res, {
     requests,
     pagination: {
       total: countResult[0].total,
@@ -146,7 +150,7 @@ export const getAllChangeRequests = asyncHandler(async (req, res) => {
       limit: parseInt(limit),
       totalPages: Math.ceil(countResult[0].total / limit),
     },
-  });
+  }, "Change requests retrieved successfully");
 });
 
 /**
@@ -327,7 +331,7 @@ export const approveChangeRequest = asyncHandler(async (req, res) => {
     console.error("Failed to send notification:", notifError);
   }
 
-  sendSuccess(res, "Change request approved and applied successfully");
+  sendSuccess(res, null, "Change request approved and applied successfully");
 });
 
 /**
@@ -380,5 +384,5 @@ export const rejectChangeRequest = asyncHandler(async (req, res) => {
     console.error("Failed to send notification:", notifError);
   }
 
-  sendSuccess(res, "Change request rejected successfully");
+  sendSuccess(res, null, "Change request rejected successfully");
 });

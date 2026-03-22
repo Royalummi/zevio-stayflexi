@@ -17,6 +17,7 @@ const PropertyImageUpload = ({
   propertyId,
   onImagesChange,
   allowPreUpload = false,
+  apiBasePath = "/admin/properties",
 }) => {
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
@@ -55,7 +56,7 @@ const PropertyImageUpload = ({
   const fetchImages = async () => {
     try {
       console.log("🖼️ Fetching images for property:", propertyId);
-      const response = await api.get(`/admin/properties/${propertyId}/images`);
+      const response = await api.get(`${apiBasePath}/${propertyId}/images`);
       console.log("✅ Images fetched:", response.data.data?.length || 0);
       // Filter out images with undefined/null image_url to prevent rendering errors
       const validImages = (response.data.data || []).filter(
@@ -201,7 +202,7 @@ const PropertyImageUpload = ({
 
       console.log("📤 Uploading images to property:", targetPropertyId);
       const response = await api.post(
-        `/admin/properties/${targetPropertyId}/images`,
+        `${apiBasePath}/${targetPropertyId}/images`,
         formData,
         {
           headers: {

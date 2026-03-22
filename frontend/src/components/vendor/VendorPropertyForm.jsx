@@ -2047,8 +2047,12 @@ const VendorPropertyForm = ({
         <FormSection title="Property Images" icon={ImageIcon}>
           <PropertyImageUpload
             propertyId={propertyId}
-            onImagesChange={(uploadFn) => setPendingImageUpload(() => uploadFn)}
+            onImagesChange={({ uploadPending, hasPendingUploads }) => {
+              setPendingImageUpload(() => uploadPending);
+              setHasSelectedImages(hasPendingUploads);
+            }}
             allowPreUpload={!propertyId}
+            apiBasePath="/vendor/properties"
           />
         </FormSection>
 
