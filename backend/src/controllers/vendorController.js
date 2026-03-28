@@ -262,11 +262,12 @@ const getSettlements = asyncHandler(async (req, res) => {
       vs.status,
       vs.payment_proof,
       vs.created_at,
-      b.id as booking_id,
-      p.title as property_title
+      vs.booking_id,
+      COALESCE(p_booking.title, p_direct.title) as property_title
     FROM vendor_settlements vs
     LEFT JOIN bookings b ON vs.booking_id = b.id
-    LEFT JOIN properties p ON b.property_id = p.id
+    LEFT JOIN properties p_booking ON b.property_id = p_booking.id
+    LEFT JOIN properties p_direct ON vs.property_id = p_direct.id
     WHERE vs.vendor_id = ?
   `;
 
