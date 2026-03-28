@@ -70,7 +70,10 @@ export const requestPropertyChange = asyncHandler(async (req, res) => {
       );
     }
   } catch (notifError) {
-    console.error("Failed to send change request notification:", notifError.message);
+    console.error(
+      "Failed to send change request notification:",
+      notifError.message,
+    );
   }
 
   sendSuccess(res, { requestId }, "Change request submitted successfully", 201);
@@ -142,15 +145,19 @@ export const getAllChangeRequests = asyncHandler(async (req, res) => {
      WHERE 1=1 ${statusFilter}`,
   );
 
-  sendSuccess(res, {
-    requests,
-    pagination: {
-      total: countResult[0].total,
-      page: parseInt(page),
-      limit: parseInt(limit),
-      totalPages: Math.ceil(countResult[0].total / limit),
+  sendSuccess(
+    res,
+    {
+      requests,
+      pagination: {
+        total: countResult[0].total,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        totalPages: Math.ceil(countResult[0].total / limit),
+      },
     },
-  }, "Change requests retrieved successfully");
+    "Change requests retrieved successfully",
+  );
 });
 
 /**

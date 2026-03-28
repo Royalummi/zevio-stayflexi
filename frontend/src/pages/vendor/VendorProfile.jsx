@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import {
   User,
-  Mail,
   Phone,
   MapPin,
   Building2,
@@ -12,6 +11,8 @@ import {
   Shield,
   Calendar,
   Briefcase,
+  Pencil,
+  X,
 } from "lucide-react";
 import {
   Card,
@@ -34,6 +35,11 @@ const VendorProfile = () => {
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // Edit-mode toggles (read-only by default)
+  const [editingProfile, setEditingProfile] = useState(false);
+  const [editingBank, setEditingBank] = useState(false);
 
   // Profile form
   const [profileData, setProfileData] = useState({
@@ -61,9 +67,14 @@ const VendorProfile = () => {
     bank_name: "",
     account_holder_name: "",
     account_number: "",
+    confirm_account_number: "",
     ifsc_code: "",
     branch_name: "",
   });
+
+  // Snapshots for cancel (restore on cancel)
+  const [profileSnapshot, setProfileSnapshot] = useState(null);
+  const [bankSnapshot, setBankSnapshot] = useState(null);
 
   useEffect(() => {
     fetchVendorProfile();
@@ -86,7 +97,7 @@ const VendorProfile = () => {
           gst_number: u.gst_number || "",
           pan_number: u.pan_number || "",
         });
-        // Load bank details from vendor record
+        // Load bank details from vendor record (normalize legacy keys)
         if (u.bank_details) {
           const bd =
             typeof u.bank_details === "object"
@@ -94,9 +105,11 @@ const VendorProfile = () => {
               : JSON.parse(u.bank_details);
           setBankData({
             bank_name: bd.bank_name || "",
-            account_holder_name: bd.account_holder_name || "",
+            account_holder_name:
+              bd.account_holder_name || bd.account_holder || "",
             account_number: bd.account_number || "",
-            ifsc_code: bd.ifsc_code || "",
+            confirm_account_number: bd.account_number || "",
+            ifsc_code: bd.ifsc_code || bd.ifsc || "",
             branch_name: bd.branch_name || "",
           });
         }
@@ -122,20 +135,28 @@ const VendorProfile = () => {
     }
   };
 
+  const handleEditProfile = () => {
+    setProfileSnapshot({ ...profileData });
+    setEditingProfile(true);
+  };
+
+  const handleCancelProfile = () => {
+    if (profileSnapshot) setProfileData(profileSnapshot);
+    setEditingProfile(false);
+  };
+
   const handleProfileUpdate = async (e) => {
     e.preventDefault();
     try {
       setLoading(true);
 
-      // Validate required fields
-      if (!profileData.full_name || !profileData.email) {
-        toast.error("Name and email are required");
+      if (!profileData.full_name) {
+        toast.error("Name is required");
         return;
       }
 
       const response = await api.put("/auth/profile", {
         name: profileData.full_name,
-        full_name: profileData.full_name,
         phone: profileData.phone,
         company_name: profileData.company_name,
         address: profileData.address,
@@ -149,10 +170,11 @@ const VendorProfile = () => {
       if (response.data.success) {
         updateUser({
           ...user,
-          full_name: profileData.full_name,
           name: profileData.full_name,
           phone: profileData.phone,
         });
+        setEditingProfile(false);
+        setProfileSnapshot(null);
         toast.success("Profile updated successfully");
       }
     } catch (error) {
@@ -183,8 +205,8 @@ const VendorProfile = () => {
         return;
       }
 
-      if (passwordData.new_password.length < 6) {
-        toast.error("New password must be at least 6 characters");
+      if (passwordData.new_password.length < 8) {
+        toast.error("New password must be at least 8 characters");
         return;
       }
 
@@ -207,12 +229,21 @@ const VendorProfile = () => {
     }
   };
 
+  const handleEditBank = () => {
+    setBankSnapshot({ ...bankData });
+    setEditingBank(true);
+  };
+
+  const handleCancelBank = () => {
+    if (bankSnapshot) setBankData(bankSnapshot);
+    setEditingBank(false);
+  };
+
   const handleBankDetailsUpdate = async (e) => {
     e.preventDefault();
     try {
       setLoading(true);
 
-      // Validate required fields
       if (
         !bankData.account_number ||
         !bankData.ifsc_code ||
@@ -222,8 +253,16 @@ const VendorProfile = () => {
         return;
       }
 
-      await api.put("/vendor/bank-details", bankData);
+      if (bankData.account_number !== bankData.confirm_account_number) {
+        toast.error("Account numbers do not match");
+        return;
+      }
 
+      const { confirm_account_number, ...payload } = bankData;
+      await api.put("/vendor/bank-details", payload);
+
+      setEditingBank(false);
+      setBankSnapshot(null);
       toast.success("Bank details updated successfully");
     } catch (error) {
       console.error("Error updating bank details:", error);
@@ -281,71 +320,167 @@ const VendorProfile = () => {
           {/* Personal Information */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="h-5 w-5" />
-                Personal Information
+              <CardTitle className="flex items-center justify-between">
+                <span className="flex items-center gap-2">
+                  <User className="h-5 w-5" />
+                  Personal Information
+                </span>
+                {!editingProfile && (
+                  <button
+                    type="button"
+                    onClick={handleEditProfile}
+                    className="text-gray-400 hover:text-blue-600 transition-colors"
+                    title="Edit profile"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </button>
+                )}
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleProfileUpdate} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="full_name">Full Name *</Label>
-                    <Input
-                      id="full_name"
-                      value={profileData.full_name}
-                      onChange={(e) =>
-                        setProfileData({
-                          ...profileData,
-                          full_name: e.target.value,
-                        })
-                      }
-                      placeholder="Enter your full name"
-                      required
-                    />
+              {!editingProfile ? (
+                /* ── READ-ONLY VIEW ── */
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1">Full Name</p>
+                      <p className="font-medium text-gray-900 dark:text-white">
+                        {profileData.full_name || "—"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1">Phone Number</p>
+                      <p className="font-medium text-gray-900 dark:text-white">
+                        {profileData.phone || "—"}
+                      </p>
+                    </div>
+                    <div className="md:col-span-2">
+                      <p className="text-xs text-gray-500 mb-1">
+                        Email Address
+                      </p>
+                      <p className="font-medium text-gray-900 dark:text-white">
+                        {profileData.email || "—"}
+                      </p>
+                      <p className="text-xs text-gray-400 mt-0.5">
+                        Email cannot be changed. Contact admin to update.
+                      </p>
+                    </div>
                   </div>
 
-                  <div>
-                    <Label htmlFor="phone">Phone Number</Label>
-                    <Input
-                      id="phone"
-                      type="tel"
-                      value={profileData.phone}
-                      onChange={(e) =>
-                        setProfileData({
-                          ...profileData,
-                          phone: e.target.value,
-                        })
-                      }
-                      placeholder="Enter phone number"
-                    />
+                  <Separator />
+
+                  <h4 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                    <Briefcase className="h-4 w-4" />
+                    Business Information
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1">Company Name</p>
+                      <p className="font-medium text-gray-900 dark:text-white">
+                        {profileData.company_name || "—"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1">GST Number</p>
+                      <p className="font-medium text-gray-900 dark:text-white">
+                        {profileData.gst_number || "—"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1">PAN Number</p>
+                      <p className="font-medium text-gray-900 dark:text-white">
+                        {profileData.pan_number || "—"}
+                      </p>
+                    </div>
                   </div>
 
-                  <div className="md:col-span-2">
-                    <Label htmlFor="email">Email Address *</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={profileData.email}
-                      onChange={(e) =>
-                        setProfileData({
-                          ...profileData,
-                          email: e.target.value,
-                        })
-                      }
-                      placeholder="Enter email address"
-                      required
-                      disabled
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      Email cannot be changed. Contact admin to update.
-                    </p>
+                  <Separator />
+
+                  <h4 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                    <MapPin className="h-4 w-4" />
+                    Address Details
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="md:col-span-3">
+                      <p className="text-xs text-gray-500 mb-1">
+                        Street Address
+                      </p>
+                      <p className="font-medium text-gray-900 dark:text-white">
+                        {profileData.address || "—"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1">City</p>
+                      <p className="font-medium text-gray-900 dark:text-white">
+                        {profileData.city || "—"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1">State</p>
+                      <p className="font-medium text-gray-900 dark:text-white">
+                        {profileData.state || "—"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1">Pincode</p>
+                      <p className="font-medium text-gray-900 dark:text-white">
+                        {profileData.pincode || "—"}
+                      </p>
+                    </div>
                   </div>
                 </div>
+              ) : (
+                /* ── EDIT FORM ── */
+                <form onSubmit={handleProfileUpdate} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="full_name">Full Name *</Label>
+                      <Input
+                        id="full_name"
+                        value={profileData.full_name}
+                        onChange={(e) =>
+                          setProfileData({
+                            ...profileData,
+                            full_name: e.target.value,
+                          })
+                        }
+                        placeholder="Enter your full name"
+                        required
+                      />
+                    </div>
 
-                <Separator />
+                    <div>
+                      <Label htmlFor="phone">Phone Number</Label>
+                      <Input
+                        id="phone"
+                        type="tel"
+                        value={profileData.phone}
+                        onChange={(e) =>
+                          setProfileData({
+                            ...profileData,
+                            phone: e.target.value,
+                          })
+                        }
+                        placeholder="Enter phone number"
+                      />
+                    </div>
 
-                <div className="space-y-4">
+                    <div className="md:col-span-2">
+                      <Label htmlFor="email">Email Address</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={profileData.email}
+                        disabled
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Email cannot be changed. Contact admin to update.
+                      </p>
+                    </div>
+                  </div>
+
+                  <Separator />
+
                   <h4 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                     <Briefcase className="h-4 w-4" />
                     Business Information
@@ -398,11 +533,9 @@ const VendorProfile = () => {
                       />
                     </div>
                   </div>
-                </div>
 
-                <Separator />
+                  <Separator />
 
-                <div className="space-y-4">
                   <h4 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                     <MapPin className="h-4 w-4" />
                     Address Details
@@ -439,7 +572,6 @@ const VendorProfile = () => {
                           placeholder="City"
                         />
                       </div>
-
                       <div>
                         <Label htmlFor="state">State</Label>
                         <Input
@@ -454,7 +586,6 @@ const VendorProfile = () => {
                           placeholder="State"
                         />
                       </div>
-
                       <div>
                         <Label htmlFor="pincode">Pincode</Label>
                         <Input
@@ -472,111 +603,206 @@ const VendorProfile = () => {
                       </div>
                     </div>
                   </div>
-                </div>
 
-                <div className="flex justify-end">
-                  <Button type="submit" disabled={loading}>
-                    <Save className="h-4 w-4 mr-2" />
-                    {loading ? "Saving..." : "Save Changes"}
-                  </Button>
-                </div>
-              </form>
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleCancelProfile}
+                    >
+                      <X className="h-4 w-4 mr-2" />
+                      Cancel
+                    </Button>
+                    <Button type="submit" disabled={loading}>
+                      <Save className="h-4 w-4 mr-2" />
+                      {loading ? "Saving..." : "Save Changes"}
+                    </Button>
+                  </div>
+                </form>
+              )}
             </CardContent>
           </Card>
-
           {/* Bank Details */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Building2 className="h-5 w-5" />
-                Bank Details
+              <CardTitle className="flex items-center justify-between">
+                <span className="flex items-center gap-2">
+                  <Building2 className="h-5 w-5" />
+                  Bank Details
+                </span>
+                {!editingBank && (
+                  <button
+                    type="button"
+                    onClick={handleEditBank}
+                    className="text-gray-400 hover:text-blue-600 transition-colors"
+                    title="Edit bank details"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </button>
+                )}
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleBankDetailsUpdate} className="space-y-4">
+              {!editingBank ? (
+                /* ── READ-ONLY VIEW ── */
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="bank_name">Bank Name</Label>
-                    <Input
-                      id="bank_name"
-                      value={bankData.bank_name}
-                      onChange={(e) =>
-                        setBankData({ ...bankData, bank_name: e.target.value })
-                      }
-                      placeholder="Enter bank name"
-                    />
+                    <p className="text-xs text-gray-500 mb-1">Bank Name</p>
+                    <p className="font-medium text-gray-900 dark:text-white">
+                      {bankData.bank_name || "—"}
+                    </p>
                   </div>
-
                   <div>
-                    <Label htmlFor="account_holder_name">
-                      Account Holder Name *
-                    </Label>
-                    <Input
-                      id="account_holder_name"
-                      value={bankData.account_holder_name}
-                      onChange={(e) =>
-                        setBankData({
-                          ...bankData,
-                          account_holder_name: e.target.value,
-                        })
-                      }
-                      placeholder="Enter account holder name"
-                    />
+                    <p className="text-xs text-gray-500 mb-1">
+                      Account Holder Name
+                    </p>
+                    <p className="font-medium text-gray-900 dark:text-white">
+                      {bankData.account_holder_name || "—"}
+                    </p>
                   </div>
-
                   <div>
-                    <Label htmlFor="account_number">Account Number *</Label>
-                    <Input
-                      id="account_number"
-                      value={bankData.account_number}
-                      onChange={(e) =>
-                        setBankData({
-                          ...bankData,
-                          account_number: e.target.value,
-                        })
-                      }
-                      placeholder="Enter account number"
-                    />
+                    <p className="text-xs text-gray-500 mb-1">Account Number</p>
+                    <p className="font-medium text-gray-900 dark:text-white">
+                      {bankData.account_number
+                        ? "••••" + bankData.account_number.slice(-4)
+                        : "—"}
+                    </p>
                   </div>
-
                   <div>
-                    <Label htmlFor="ifsc_code">IFSC Code *</Label>
-                    <Input
-                      id="ifsc_code"
-                      value={bankData.ifsc_code}
-                      onChange={(e) =>
-                        setBankData({
-                          ...bankData,
-                          ifsc_code: e.target.value.toUpperCase(),
-                        })
-                      }
-                      placeholder="Enter IFSC code"
-                    />
+                    <p className="text-xs text-gray-500 mb-1">IFSC Code</p>
+                    <p className="font-medium text-gray-900 dark:text-white">
+                      {bankData.ifsc_code || "—"}
+                    </p>
                   </div>
-
                   <div className="md:col-span-2">
-                    <Label htmlFor="branch_name">Branch Name</Label>
-                    <Input
-                      id="branch_name"
-                      value={bankData.branch_name}
-                      onChange={(e) =>
-                        setBankData({
-                          ...bankData,
-                          branch_name: e.target.value,
-                        })
-                      }
-                      placeholder="Enter branch name"
-                    />
+                    <p className="text-xs text-gray-500 mb-1">Branch Name</p>
+                    <p className="font-medium text-gray-900 dark:text-white">
+                      {bankData.branch_name || "—"}
+                    </p>
                   </div>
                 </div>
+              ) : (
+                /* ── EDIT FORM ── */
+                <form onSubmit={handleBankDetailsUpdate} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="bank_name">Bank Name</Label>
+                      <Input
+                        id="bank_name"
+                        value={bankData.bank_name}
+                        onChange={(e) =>
+                          setBankData({
+                            ...bankData,
+                            bank_name: e.target.value,
+                          })
+                        }
+                        placeholder="Enter bank name"
+                      />
+                    </div>
 
-                <div className="flex justify-end">
-                  <Button type="submit" disabled={loading}>
-                    <Save className="h-4 w-4 mr-2" />
-                    {loading ? "Saving..." : "Update Bank Details"}
-                  </Button>
-                </div>
-              </form>
+                    <div>
+                      <Label htmlFor="account_holder_name">
+                        Account Holder Name *
+                      </Label>
+                      <Input
+                        id="account_holder_name"
+                        value={bankData.account_holder_name}
+                        onChange={(e) =>
+                          setBankData({
+                            ...bankData,
+                            account_holder_name: e.target.value,
+                          })
+                        }
+                        placeholder="Enter account holder name"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="account_number">Account Number *</Label>
+                      <Input
+                        id="account_number"
+                        value={bankData.account_number}
+                        onChange={(e) =>
+                          setBankData({
+                            ...bankData,
+                            account_number: e.target.value,
+                          })
+                        }
+                        placeholder="Enter account number"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="confirm_account_number">
+                        Confirm Account Number *
+                      </Label>
+                      <Input
+                        id="confirm_account_number"
+                        value={bankData.confirm_account_number}
+                        onChange={(e) =>
+                          setBankData({
+                            ...bankData,
+                            confirm_account_number: e.target.value,
+                          })
+                        }
+                        placeholder="Re-enter account number"
+                      />
+                      {bankData.confirm_account_number &&
+                        bankData.account_number !==
+                          bankData.confirm_account_number && (
+                          <p className="text-xs text-red-500 mt-1">
+                            Account numbers do not match
+                          </p>
+                        )}
+                    </div>
+
+                    <div>
+                      <Label htmlFor="ifsc_code">IFSC Code *</Label>
+                      <Input
+                        id="ifsc_code"
+                        value={bankData.ifsc_code}
+                        onChange={(e) =>
+                          setBankData({
+                            ...bankData,
+                            ifsc_code: e.target.value.toUpperCase(),
+                          })
+                        }
+                        placeholder="Enter IFSC code"
+                      />
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <Label htmlFor="branch_name">Branch Name</Label>
+                      <Input
+                        id="branch_name"
+                        value={bankData.branch_name}
+                        onChange={(e) =>
+                          setBankData({
+                            ...bankData,
+                            branch_name: e.target.value,
+                          })
+                        }
+                        placeholder="Enter branch name"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleCancelBank}
+                    >
+                      <X className="h-4 w-4 mr-2" />
+                      Cancel
+                    </Button>
+                    <Button type="submit" disabled={loading}>
+                      <Save className="h-4 w-4 mr-2" />
+                      {loading ? "Saving..." : "Update Bank Details"}
+                    </Button>
+                  </div>
+                </form>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -652,24 +878,39 @@ const VendorProfile = () => {
                     </button>
                   </div>
                   <p className="text-xs text-gray-500 mt-1">
-                    Minimum 6 characters
+                    Minimum 8 characters
                   </p>
                 </div>
 
                 <div>
                   <Label htmlFor="confirm_password">Confirm New Password</Label>
-                  <Input
-                    id="confirm_password"
-                    type="password"
-                    value={passwordData.confirm_password}
-                    onChange={(e) =>
-                      setPasswordData({
-                        ...passwordData,
-                        confirm_password: e.target.value,
-                      })
-                    }
-                    placeholder="Confirm new password"
-                  />
+                  <div className="relative">
+                    <Input
+                      id="confirm_password"
+                      type={showConfirmPassword ? "text" : "password"}
+                      value={passwordData.confirm_password}
+                      onChange={(e) =>
+                        setPasswordData({
+                          ...passwordData,
+                          confirm_password: e.target.value,
+                        })
+                      }
+                      placeholder="Confirm new password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setShowConfirmPassword(!showConfirmPassword)
+                      }
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      {showConfirmPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
                 </div>
 
                 <Button

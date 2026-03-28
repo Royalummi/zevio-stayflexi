@@ -265,19 +265,36 @@ export const getProfile = asyncHandler(async (req, res) => {
 // Update Profile
 export const updateProfile = asyncHandler(async (req, res) => {
   const { id, role } = req.user;
-  const updates = req.body;
 
-  // Remove fields that shouldn't be updated
-  delete updates.id;
-  delete updates.email;
-  delete updates.password_hash;
-  delete updates.role;
-  delete updates.status;
-  delete updates.created_at;
-  delete updates.deleted_at;
+  // Per-role whitelist of updatable columns
+  const ALLOWED_FIELDS = {
+    vendor: [
+      "name",
+      "phone",
+      "gst_number",
+      "company_name",
+      "pan_number",
+      "address",
+      "city",
+      "state",
+      "pincode",
+    ],
+    user: ["name", "phone", "address"],
+    admin: ["name", "phone"],
+    super_admin: ["name", "phone"],
+    employee: ["name", "phone"],
+  };
+
+  const allowed = ALLOWED_FIELDS[role] || [];
+  const updates = {};
+  for (const key of allowed) {
+    if (Object.prototype.hasOwnProperty.call(req.body, key)) {
+      updates[key] = req.body[key];
+    }
+  }
 
   if (Object.keys(updates).length === 0) {
-    return sendError(res, "No fields to update", 400);
+    return sendError(res, "No valid fields to update", 400);
   }
 
   let tableName;

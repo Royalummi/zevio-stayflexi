@@ -37,8 +37,10 @@ interface MobileBookingSheetProps {
   maxChildren?: number;
   /** Pass to show per-day pricing inside the calendar */
   propertyId?: string;
-  /** Base nightly rate — shown in price summary */
+  /** Base nightly rate — shown on days without a custom rate */
   pricePerNight: number;
+  /** Per-day custom prices from calendar pricing (keyed by "YYYY-MM-DD") */
+  calendarPriceMap?: Record<string, number>;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -61,6 +63,7 @@ export default function MobileBookingSheet({
   maxChildren = 5,
   propertyId,
   pricePerNight,
+  calendarPriceMap = {},
 }: MobileBookingSheetProps) {
   // Active tab: "dates" | "guests"
   const [activeTab, setActiveTab] = useState<"dates" | "guests">("dates");
@@ -116,6 +119,24 @@ export default function MobileBookingSheet({
           ),
         )
       : 0;
+
+  // Sum per-night prices using calendar custom prices where available
+  const baseTotal = (() => {
+    if (!checkIn || !checkOut || nights === 0) return 0;
+    const toKey = (d: Date) =>
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    let total = 0;
+    const cur = new Date(checkIn);
+    const end = new Date(checkOut);
+    while (cur < end) {
+      total += calendarPriceMap[toKey(cur)] ?? pricePerNight;
+      cur.setDate(cur.getDate() + 1);
+    }
+    return total;
+  })();
+
+  const effectivePricePerNight =
+    nights > 0 ? Math.round(baseTotal / nights) : pricePerNight;
 
   const confirmLabel = !checkIn
     ? "Select Check-in Date"
@@ -304,7 +325,7 @@ export default function MobileBookingSheet({
           <div className={styles.priceSummary}>
             <div>
               <div className={styles.priceSummaryLabel}>
-                ₹{(pricePerNight || 0).toLocaleString("en-IN")} / night
+                ₹{(effectivePricePerNight || 0).toLocaleString("en-IN")} / night
               </div>
               {nights > 0 && (
                 <div className={styles.priceSummaryNights}>
@@ -314,9 +335,7 @@ export default function MobileBookingSheet({
             </div>
             <div>
               <div className={styles.priceSummaryAmount}>
-                {nights > 0
-                  ? `₹${((pricePerNight || 0) * nights).toLocaleString("en-IN")}`
-                  : "—"}
+                {nights > 0 ? `₹${baseTotal.toLocaleString("en-IN")}` : "—"}
               </div>
               {nights > 0 && (
                 <div className={styles.priceSummaryPer}>base total</div>

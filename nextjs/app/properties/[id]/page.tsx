@@ -135,6 +135,11 @@ function PropertyDetailContent() {
       }
     }
   }, [searchParams]);
+  // Calendar pricing map: keyed by "YYYY-MM-DD" → custom nightly price
+  const [calendarPriceMap, setCalendarPriceMap] = useState<
+    Record<string, number>
+  >({});
+
   const [totalPrice, setTotalPrice] = useState(0);
   const [priceBreakdown, setPriceBreakdown] = useState({
     baseAmount: 0,
@@ -350,6 +355,36 @@ function PropertyDetailContent() {
     };
   }, [propertyId]);
 
+  // Fetch calendar pricing for current + next year once the property ID is known
+  useEffect(() => {
+    if (!propertyId) return;
+    const fetchCalendarPricing = async () => {
+      try {
+        const currentYear = new Date().getFullYear();
+        const map: Record<string, number> = {};
+        await Promise.all(
+          [currentYear, currentYear + 1].map(async (yr) => {
+            const res = await fetch(
+              `${process.env.NEXT_PUBLIC_API_URL}/public/properties/${propertyId}/calendar-pricing?year=${yr}`,
+            );
+            const json = await res.json();
+            if (json.success && Array.isArray(json.data)) {
+              (
+                json.data as { price_date: string; price: string | number }[]
+              ).forEach((e) => {
+                map[e.price_date] = Number(e.price);
+              });
+            }
+          }),
+        );
+        setCalendarPriceMap(map);
+      } catch {
+        // Non-critical — will fall back to base price_per_night
+      }
+    };
+    fetchCalendarPricing();
+  }, [propertyId]);
+
   // Calculate pricing when dates or guests change
   useEffect(() => {
     if (checkIn && checkOut && property) {
@@ -362,8 +397,16 @@ function PropertyDetailContent() {
       if (calculatedNights > 0) {
         setNights(calculatedNights);
 
-        // Calculate dynamic pricing with extra guest charges
-        const baseAmount = property.price_per_night * calculatedNights;
+        // Sum per-night prices, using calendar custom prices where available
+        const toKey = (d: Date) =>
+          `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+        let baseAmount = 0;
+        const cur = new Date(start);
+        while (cur < end) {
+          baseAmount +=
+            calendarPriceMap[toKey(cur)] ?? property.price_per_night;
+          cur.setDate(cur.getDate() + 1);
+        }
 
         // Calculate extra guest charges (only if exceeding min_guests)
         // Base price includes up to min_guests, extra charges apply above that
@@ -423,7 +466,15 @@ function PropertyDetailContent() {
         totalAmount: 0,
       });
     }
-  }, [checkIn, checkOut, property, adults, children, propertyPricing]);
+  }, [
+    checkIn,
+    checkOut,
+    property,
+    adults,
+    children,
+    propertyPricing,
+    calendarPriceMap,
+  ]);
 
   const handleBooking = async () => {
     // Validation
@@ -923,8 +974,7 @@ function PropertyDetailContent() {
                             Security Deposit
                           </div>
                           <div className={luxuryStyles.infoValue}>
-                            ₹
-                            {(property.deposit_amount || 0).toLocaleString()}
+                            ₹{(property.deposit_amount || 0).toLocaleString()}
                           </div>
                           <div className={luxuryStyles.infoNote}>
                             Refundable deposit collected at check-in
@@ -946,7 +996,9 @@ function PropertyDetailContent() {
                           </div>
                           <div className={luxuryStyles.infoValue}>
                             ₹
-                            {(property.maintenance_charges || 0).toLocaleString()}
+                            {(
+                              property.maintenance_charges || 0
+                            ).toLocaleString()}
                           </div>
                           <div className={luxuryStyles.infoNote}>
                             One-time maintenance charge
@@ -1621,7 +1673,10 @@ function PropertyDetailContent() {
                         </div>
                         <div className={luxuryStyles.pendingBookingRow}>
                           <span className={luxuryStyles.pendingBookingPrice}>
-                            ₹{(pendingBooking.total_amount || 0).toLocaleString()}
+                            ₹
+                            {(
+                              pendingBooking.total_amount || 0
+                            ).toLocaleString()}
                           </span>
                         </div>
                       </div>
@@ -1849,7 +1904,10 @@ function PropertyDetailContent() {
                           <div className={luxuryStyles.breakdownItem}>
                             <span>Extra Guest Charges</span>
                             <span>
-                              ₹{(priceBreakdown.extraGuestCharges || 0).toLocaleString()}
+                              ₹
+                              {(
+                                priceBreakdown.extraGuestCharges || 0
+                              ).toLocaleString()}
                             </span>
                           </div>
                         )}
@@ -1857,7 +1915,10 @@ function PropertyDetailContent() {
                           <div className={luxuryStyles.breakdownItem}>
                             <span>Extra Children Charges</span>
                             <span>
-                              ₹{(priceBreakdown.extraChildrenCharges || 0).toLocaleString()}
+                              ₹
+                              {(
+                                priceBreakdown.extraChildrenCharges || 0
+                              ).toLocaleString()}
                             </span>
                           </div>
                         )}
@@ -1876,7 +1937,8 @@ function PropertyDetailContent() {
                         <div className={luxuryStyles.breakdownTotal}>
                           <span>Total</span>
                           <span>
-                            ₹{(priceBreakdown.totalAmount || 0).toLocaleString()}
+                            ₹
+                            {(priceBreakdown.totalAmount || 0).toLocaleString()}
                           </span>
                         </div>
                       </div>
@@ -1906,7 +1968,9 @@ function PropertyDetailContent() {
                     {nights} {nights === 1 ? "night" : "nights"} · ₹
                     {priceBreakdown.totalAmount > 0
                       ? (priceBreakdown.totalAmount || 0).toLocaleString()
-                      : ((property.price_per_night || 0) * nights).toLocaleString()}
+                      : (
+                          (property.price_per_night || 0) * nights
+                        ).toLocaleString()}
                   </div>
                   <div className={luxuryStyles.mobilePriceLabel}>
                     {checkIn.toLocaleDateString("en-IN", {
@@ -1966,6 +2030,7 @@ function PropertyDetailContent() {
         maxChildren={propertyPricing.max_children}
         propertyId={property?.id}
         pricePerNight={property?.price_per_night ?? 0}
+        calendarPriceMap={calendarPriceMap}
       />
 
       <ToastContainer toasts={toast.toasts} removeToast={toast.removeToast} />

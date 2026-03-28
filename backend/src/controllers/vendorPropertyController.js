@@ -485,7 +485,9 @@ export const updateProperty = asyncHandler(async (req, res) => {
   const vendorId = req.user.id;
   // Support both flat body `{ title: "..." }` and wrapped body `{ updates: { title: "..." } }`
   const updates =
-    req.body && typeof req.body.updates === "object" && req.body.updates !== null
+    req.body &&
+    typeof req.body.updates === "object" &&
+    req.body.updates !== null
       ? req.body.updates
       : req.body;
 
@@ -793,7 +795,14 @@ export const updateProperty = asyncHandler(async (req, res) => {
       );
       await db.query(
         `INSERT INTO property_contacts (property_id, contact_type_id, name, phone, email, whatsapp, alt_contact, is_active) VALUES (?, 1, ?, ?, ?, ?, ?, 1)`,
-        [id, piName, piPhone, piEmail || null, updates.primary_incharge_whatsapp || null, updates.primary_incharge_alt_contact || null],
+        [
+          id,
+          piName,
+          piPhone,
+          piEmail || null,
+          updates.primary_incharge_whatsapp || null,
+          updates.primary_incharge_alt_contact || null,
+        ],
       );
     }
   }
@@ -813,7 +822,14 @@ export const updateProperty = asyncHandler(async (req, res) => {
       );
       await db.query(
         `INSERT INTO property_contacts (property_id, contact_type_id, name, phone, email, whatsapp, alt_contact, is_active) VALUES (?, 2, ?, ?, ?, ?, ?, 1)`,
-        [id, siName, siPhone, siEmail || null, updates.secondary_incharge_whatsapp || null, updates.secondary_incharge_alt_contact || null],
+        [
+          id,
+          siName,
+          siPhone,
+          siEmail || null,
+          updates.secondary_incharge_whatsapp || null,
+          updates.secondary_incharge_alt_contact || null,
+        ],
       );
     }
   }

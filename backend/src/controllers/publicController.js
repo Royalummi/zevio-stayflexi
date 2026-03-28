@@ -219,7 +219,12 @@ export const getProperties = asyncHandler(async (req, res) => {
 
       // Prefer property_images table (R2 uploads) over legacy photos column
       if (propertyImagesMap[property.id]) {
-        property.photos = [propertyImagesMap[property.id], ...property.photos.filter((u) => u !== propertyImagesMap[property.id])];
+        property.photos = [
+          propertyImagesMap[property.id],
+          ...property.photos.filter(
+            (u) => u !== propertyImagesMap[property.id],
+          ),
+        ];
       }
 
       // Transform photos array into images format expected by frontend

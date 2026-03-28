@@ -137,10 +137,12 @@ const VendorAnalytics = () => {
 
   // Calculate trend (comparing last 2 months)
   const recentTrends = analyticsData.booking_trends.slice(0, 2);
-  const prevRevenue = recentTrends.length === 2 ? parseFloat(recentTrends[1].revenue) : 0;
+  const prevRevenue =
+    recentTrends.length === 2 ? parseFloat(recentTrends[1].revenue) : 0;
   const trendPercentage =
     recentTrends.length === 2 && prevRevenue > 0
-      ? ((parseFloat(recentTrends[0].revenue) - prevRevenue) / prevRevenue) * 100
+      ? ((parseFloat(recentTrends[0].revenue) - prevRevenue) / prevRevenue) *
+        100
       : 0;
 
   if (loading) {
@@ -300,38 +302,38 @@ const VendorAnalytics = () => {
             {analyticsData.revenue_by_property.length > 0 ? (
               <div className="space-y-4">
                 {analyticsData.revenue_by_property.map((property, index) => {
-                    const maxRevenue = Math.max(
-                      ...analyticsData.revenue_by_property.map((p) =>
-                        parseFloat(p.total_revenue),
-                      ),
-                    );
-                    const percentage =
-                      (parseFloat(property.total_revenue) / maxRevenue) * 100;
+                  const maxRevenue = Math.max(
+                    ...analyticsData.revenue_by_property.map((p) =>
+                      parseFloat(p.total_revenue),
+                    ),
+                  );
+                  const percentage =
+                    (parseFloat(property.total_revenue) / maxRevenue) * 100;
 
-                    return (
-                      <div key={index} className="space-y-2">
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="font-medium text-gray-900 dark:text-white truncate">
-                            {property.title}
-                          </span>
-                          <span className="text-green-600 font-bold ml-2">
-                            {formatCurrency(property.total_revenue)}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
-                            <div
-                              className="bg-gradient-to-r from-blue-500 to-blue-600 h-full rounded-full transition-all duration-500"
-                              style={{ width: `${percentage}%` }}
-                            />
-                          </div>
-                          <span className="text-xs text-gray-500 w-16 text-right">
-                            {property.total_bookings} bookings
-                          </span>
-                        </div>
+                  return (
+                    <div key={index} className="space-y-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="font-medium text-gray-900 dark:text-white truncate">
+                          {property.title}
+                        </span>
+                        <span className="text-green-600 font-bold ml-2">
+                          {formatCurrency(property.total_revenue)}
+                        </span>
                       </div>
-                    );
-                  })}
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
+                          <div
+                            className="bg-gradient-to-r from-blue-500 to-blue-600 h-full rounded-full transition-all duration-500"
+                            style={{ width: `${percentage}%` }}
+                          />
+                        </div>
+                        <span className="text-xs text-gray-500 w-16 text-right">
+                          {property.total_bookings} bookings
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             ) : (
               <div className="text-center py-12 text-gray-500">
@@ -368,7 +370,10 @@ const VendorAnalytics = () => {
                     >
                       <div className="flex items-center justify-between mb-2">
                         <span className="font-semibold text-gray-900 dark:text-white">
-                          {new Date(trend.month + "-02").toLocaleDateString("en-IN", { month: "long", year: "numeric" })}
+                          {new Date(trend.month + "-02").toLocaleDateString(
+                            "en-IN",
+                            { month: "long", year: "numeric" },
+                          )}
                         </span>
                         <span className="text-sm text-gray-600">
                           {trend.bookings} bookings

@@ -733,11 +733,13 @@ export const getAllProperties = asyncHandler(async (req, res) => {
         if (property.photos) {
           try {
             const photosArray = JSON.parse(property.photos);
-            property.images = Array.isArray(photosArray) ? photosArray.map((url, index) => ({
-              id: `img-${property.id}-${index}`,
-              image_url: url,
-              sort_order: index,
-            })) : [];
+            property.images = Array.isArray(photosArray)
+              ? photosArray.map((url, index) => ({
+                  id: `img-${property.id}-${index}`,
+                  image_url: url,
+                  sort_order: index,
+                }))
+              : [];
           } catch (error) {
             console.error(
               `Error parsing photos for property ${property.id}:`,
@@ -854,11 +856,13 @@ export const getPropertyDetails = asyncHandler(async (req, res) => {
   if (property.photos) {
     try {
       const photosArray = JSON.parse(property.photos);
-      property.images = Array.isArray(photosArray) ? photosArray.map((url, index) => ({
-        id: `img-${property.id}-${index}`,
-        image_url: url,
-        sort_order: index,
-      })) : [];
+      property.images = Array.isArray(photosArray)
+        ? photosArray.map((url, index) => ({
+            id: `img-${property.id}-${index}`,
+            image_url: url,
+            sort_order: index,
+          }))
+        : [];
     } catch (error) {
       console.error(`Error parsing photos for property ${property.id}:`, error);
       property.images = [];
@@ -1028,7 +1032,10 @@ export const updatePropertyStatus = asyncHandler(async (req, res) => {
       );
     }
   } catch (notifError) {
-    console.error("Failed to send property status notification:", notifError.message);
+    console.error(
+      "Failed to send property status notification:",
+      notifError.message,
+    );
   }
 
   sendSuccess(res, null, `Property status updated to ${status}`, 200);
@@ -3417,11 +3424,13 @@ export const getPropertyImages = asyncHandler(async (req, res) => {
     if (photosData && photosData !== "[]" && photosData !== "") {
       const photosArray = JSON.parse(photosData);
       // Transform array to objects with id (index) and image_url
-      images = Array.isArray(photosArray) ? photosArray.map((url, index) => ({
-        id: index,
-        image_url: url.trim(),
-        order: index,
-      })) : [];
+      images = Array.isArray(photosArray)
+        ? photosArray.map((url, index) => ({
+            id: index,
+            image_url: url.trim(),
+            order: index,
+          }))
+        : [];
       console.log("✅ Parsed images:", images.length);
     } else {
       console.log("ℹ️ No photos found for property:", id);

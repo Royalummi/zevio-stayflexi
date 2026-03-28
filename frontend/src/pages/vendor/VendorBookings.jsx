@@ -12,10 +12,7 @@ import {
   XCircle,
   AlertCircle,
 } from "lucide-react";
-import {
-  Card,
-  CardContent,
-} from "../../components/ui/card";
+import { Card, CardContent } from "../../components/ui/card";
 import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
@@ -221,9 +218,14 @@ const VendorBookings = () => {
       today.setHours(0, 0, 0, 0);
       const checkIn = new Date(b.check_in);
       const checkOut = new Date(b.check_out);
-      if (dateFilter === "upcoming") return checkIn > today && b.status === "confirmed";
-      if (dateFilter === "ongoing") return checkIn <= today && checkOut >= today && b.status === "confirmed";
-      if (dateFilter === "past") return checkOut < today || b.status === "completed";
+      if (dateFilter === "upcoming")
+        return checkIn > today && b.status === "confirmed";
+      if (dateFilter === "ongoing")
+        return (
+          checkIn <= today && checkOut >= today && b.status === "confirmed"
+        );
+      if (dateFilter === "past")
+        return checkOut < today || b.status === "completed";
     }
     return true;
   });

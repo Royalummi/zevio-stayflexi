@@ -76,7 +76,11 @@ export const uploadPropertyImages = asyncHandler(async (req, res) => {
       [imageId, id, imageUrl, sortOrder],
     );
 
-    uploadedImages.push({ id: imageId, image_url: imageUrl, sort_order: sortOrder });
+    uploadedImages.push({
+      id: imageId,
+      image_url: imageUrl,
+      sort_order: sortOrder,
+    });
   }
 
   // Update property photos JSON field
