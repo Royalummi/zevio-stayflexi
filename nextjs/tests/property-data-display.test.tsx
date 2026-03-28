@@ -30,10 +30,7 @@ const mockVillaProperty = {
     "<p>Located in the heart of the city with easy access to shopping malls and restaurants.</p>", // Field 8
   safety_information:
     "<p>24/7 security, CCTV cameras, fire safety equipment available.</p>", // Field 9
-  amenities_guide:
-    "<p><strong>WiFi:</strong> Password will be provided on check-in. <strong>AC:</strong> Set temperature between 18-24°C.</p>", // Field 10
-  check_in_guidelines:
-    "<p>Check-in time: 2:00 PM. Please carry valid ID proof. Early check-in subject to availability.</p>", // Field 11
+
   property_type: "pt-001",
   photos: "test.jpg",
   is_recommended: true,
@@ -344,55 +341,8 @@ describe("Session 66: Property Data Display Completeness", () => {
     });
   });
 
-  describe("Field 10: Amenities Guide (HTML - Expandable)", () => {
-    it("should render amenities_guide in expandable details element", () => {
-      const TestComponent = () => (
-        <div>
-          {mockVillaProperty.amenities_guide && (
-            <details>
-              <summary>Amenities Usage Guide</summary>
-              <div
-                dangerouslySetInnerHTML={{
-                  __html: mockVillaProperty.amenities_guide,
-                }}
-              />
-            </details>
-          )}
-        </div>
-      );
-      render(<TestComponent />);
-      expect(screen.getByText("Amenities Usage Guide")).toBeInTheDocument();
-      // Content is inside details, may need to expand to see
-    });
-  });
-
-  describe("Field 11: Check-in Guidelines (HTML)", () => {
-    it("should render check_in_guidelines HTML content", () => {
-      const TestComponent = () => (
-        <div>
-          {mockVillaProperty.check_in_guidelines && (
-            <section>
-              <h2>Check-in Guidelines</h2>
-              <div
-                dangerouslySetInnerHTML={{
-                  __html: mockVillaProperty.check_in_guidelines,
-                }}
-              />
-            </section>
-          )}
-        </div>
-      );
-      render(<TestComponent />);
-      expect(screen.getByText("Check-in Guidelines")).toBeInTheDocument();
-      expect(screen.getByText(/Check-in time: 2:00 PM/)).toBeInTheDocument();
-      expect(
-        screen.getByText(/Please carry valid ID proof/),
-      ).toBeInTheDocument();
-    });
-  });
-
-  describe("Data Completeness: All 11 Fields Together", () => {
-    it("should render all 11 missing fields when data is complete (Villa)", () => {
+  describe("Data Completeness: All Fields Together", () => {
+    it("should render all fields when data is complete (Villa)", () => {
       const TestComponent = () => (
         <div>
           {/* 1. Pincode */}
@@ -419,18 +369,12 @@ describe("Session 66: Property Data Display Completeness", () => {
             Max: {mockVillaProperty.max_booking_days} days
           </div>
 
-          {/* 8-11. HTML Sections */}
+          {/* 8-9. HTML Sections */}
           {mockVillaProperty.local_area_info && (
             <div data-testid="local-area">Local Area Info</div>
           )}
           {mockVillaProperty.safety_information && (
             <div data-testid="safety">Safety Info</div>
-          )}
-          {mockVillaProperty.amenities_guide && (
-            <div data-testid="amenities-guide">Amenities Guide</div>
-          )}
-          {mockVillaProperty.check_in_guidelines && (
-            <div data-testid="checkin">Check-in Guidelines</div>
           )}
         </div>
       );
@@ -445,8 +389,6 @@ describe("Session 66: Property Data Display Completeness", () => {
       expect(getByTestId("max-booking")).toHaveTextContent("90 days");
       expect(getByTestId("local-area")).toBeInTheDocument();
       expect(getByTestId("safety")).toBeInTheDocument();
-      expect(getByTestId("amenities-guide")).toBeInTheDocument();
-      expect(getByTestId("checkin")).toBeInTheDocument();
     });
 
     it("should render all 11 fields including laundry for service apartments", () => {

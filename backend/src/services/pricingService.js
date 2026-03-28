@@ -26,7 +26,6 @@ export const getPricingSelectClause = (alias = "pr") => {
     ${alias}.long_term_discount_percent,
     ${alias}.allow_corporate_booking,
     ${alias}.corporate_discount_percent,
-    ${alias}.deposit_amount,
     ${alias}.maintenance_charges,
     ${alias}.notice_period_days
   `;
@@ -52,7 +51,6 @@ export const getPricingSelectClauseGrouped = (alias = "pr") => {
     MAX(${alias}.long_term_discount_percent) as long_term_discount_percent,
     MAX(${alias}.allow_corporate_booking) as allow_corporate_booking,
     MAX(${alias}.corporate_discount_percent) as corporate_discount_percent,
-    MAX(${alias}.deposit_amount) as deposit_amount,
     MAX(${alias}.maintenance_charges) as maintenance_charges,
     MAX(${alias}.notice_period_days) as notice_period_days
   `;
@@ -92,7 +90,6 @@ export const getPropertyPricing = async (propertyId) => {
       long_term_discount_percent,
       allow_corporate_booking,
       corporate_discount_percent,
-      deposit_amount,
       maintenance_charges,
       notice_period_days
     FROM property_pricing 
@@ -124,7 +121,6 @@ export const updatePropertyPricing = async (propertyId, pricingData) => {
     "long_term_discount_percent",
     "allow_corporate_booking",
     "corporate_discount_percent",
-    "deposit_amount",
     "maintenance_charges",
     "notice_period_days",
   ];
@@ -177,7 +173,6 @@ export const createPropertyPricing = async (propertyId, pricingData) => {
     long_term_discount_percent: 35.0,
     allow_corporate_booking: 0,
     corporate_discount_percent: 20,
-    deposit_amount: null,
     maintenance_charges: 0.0,
     notice_period_days: 30,
   };
@@ -189,9 +184,9 @@ export const createPropertyPricing = async (propertyId, pricingData) => {
       id, property_id, price_per_night, gst_percentage, min_guests, extra_guest_charge,
       min_children, max_children, extra_child_charge, weekly_discount_percent,
       monthly_discount_percent, quarterly_discount_percent, long_term_discount_percent,
-      allow_corporate_booking, corporate_discount_percent, deposit_amount,
+      allow_corporate_booking, corporate_discount_percent,
       maintenance_charges, notice_period_days
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       id,
       propertyId,
@@ -208,7 +203,6 @@ export const createPropertyPricing = async (propertyId, pricingData) => {
       data.long_term_discount_percent,
       data.allow_corporate_booking,
       data.corporate_discount_percent,
-      data.deposit_amount,
       data.maintenance_charges,
       data.notice_period_days,
     ],

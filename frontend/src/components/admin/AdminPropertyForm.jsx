@@ -62,6 +62,7 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
     pincode: "",
     bedrooms: 1,
     bathrooms: 1,
+    living_area: "",
     max_guests: 2,
     check_in_time: "2:00 PM",
     check_out_time: "11:00 AM",
@@ -86,7 +87,6 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
     long_term_discount_percent: 35,
     allow_corporate_booking: false,
     corporate_discount_percent: 20,
-    deposit_amount: 0,
     maintenance_charges: 0,
     notice_period_days: 30,
     // Session 70: Villa Duration Discount Slabs (admin-only)
@@ -144,10 +144,8 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
       check_out_before: "11:00 AM",
       no_smoking: true,
       no_parties: true,
-      no_events: false,
       pets_allowed: false,
-      pets_approval_required: false,
-      quiet_hours: "10:00 PM - 8:00 AM",
+      quiet_hours: "12:00 PM - 6:00 AM",
       additional_rules: [],
     },
 
@@ -172,9 +170,6 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
 
   // Rich Text Guidelines
   const [guidelines, setGuidelines] = useState({
-    check_in_guidelines: "",
-    house_rules_text: "",
-    amenities_guide: "",
     safety_information: "",
     local_area_info: "",
     emergency_contacts: "",
@@ -196,18 +191,12 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
   const guidelineTemplates = {
     "pt-001": {
       // Villa
-      check_in_guidelines: `<h3>Check-In Guidelines</h3><ul><li><strong>Check-in Time:</strong> 2:00 PM onwards</li><li><strong>Check-out Time:</strong> 11:00 AM</li><li><strong>Key Collection:</strong> Keys will be handed over by our property manager at the villa</li><li><strong>ID Proof:</strong> Please carry a valid government-issued ID</li><li><strong>Parking:</strong> Designated parking available on premises</li></ul>`,
-      house_rules_text: `<h3>House Rules</h3><ul><li>No smoking inside the villa</li><li>Parties and events require prior approval</li><li>Quiet hours: 10:00 PM - 8:00 AM</li><li>Please respect the neighbors</li><li>Maximum occupancy must be maintained</li><li>Pets allowed with prior approval</li></ul>`,
-      amenities_guide: `<h3>Amenities Guide</h3><ul><li><strong>WiFi:</strong> Network name and password will be provided at check-in</li><li><strong>Air Conditioning:</strong> Remote controls available in all bedrooms</li><li><strong>Kitchen:</strong> Fully equipped with basic utensils, gas stove, microwave, and refrigerator</li><li><strong>Swimming Pool:</strong> Pool usage hours 7:00 AM - 8:00 PM. Children must be supervised</li><li><strong>TV:</strong> Smart TV with streaming services access</li><li><strong>Washing Machine:</strong> Available in utility area</li></ul>`,
       safety_information: `<h3>Safety Information</h3><ul><li><strong>Fire Safety:</strong> Fire extinguisher located in the kitchen</li><li><strong>First Aid:</strong> Basic first aid kit available</li><li><strong>Emergency Exits:</strong> Clearly marked exit routes</li><li><strong>Swimming Pool:</strong> No lifeguard on duty - swim at your own risk</li><li><strong>Security:</strong> 24/7 CCTV surveillance for your safety</li></ul>`,
       local_area_info: `<h3>Local Area Information</h3><ul><li><strong>Restaurants:</strong> Several dining options within 2 km</li><li><strong>Grocery:</strong> Supermarket 1.5 km away</li><li><strong>ATM:</strong> Nearest ATM 1 km from the property</li><li><strong>Hospital:</strong> Multi-specialty hospital 5 km away</li><li><strong>Beach/Attractions:</strong> Popular tourist spots nearby</li></ul>`,
       emergency_contacts: `<h3>Emergency Contacts</h3><ul><li><strong>Property Manager:</strong> +91 XXXXX XXXXX</li><li><strong>Local Police:</strong> 100</li><li><strong>Ambulance:</strong> 102 / 108</li><li><strong>Fire Department:</strong> 101</li><li><strong>Nearest Hospital:</strong> +91 XXXXX XXXXX</li></ul>`,
     },
     "pt-002": {
       // Service Apartment
-      check_in_guidelines: `<h3>Check-In Guidelines</h3><ul><li><strong>Check-in Time:</strong> 2:00 PM onwards</li><li><strong>Check-out Time:</strong> 11:00 AM</li><li><strong>Key Collection:</strong> Collect keys from reception desk with valid ID</li><li><strong>ID Proof:</strong> Government-issued photo ID mandatory</li><li><strong>Rent Agreement:</strong> Will be provided for long-term stays</li><li><strong>Parking:</strong> Designated parking slot will be assigned</li></ul>`,
-      house_rules_text: `<h3>House Rules</h3><ul><li>No smoking inside the apartment</li><li>No loud music or parties</li><li>Visitor hours: 8:00 AM - 10:00 PM (register at reception)</li><li>Monthly rent due on 1st of every month</li><li>30 days notice required for vacating</li><li>Pets not allowed</li><li>No alterations to the property without permission</li></ul>`,
-      amenities_guide: `<h3>Amenities Guide</h3><ul><li><strong>WiFi:</strong> High-speed WiFi credentials at reception</li><li><strong>Air Conditioning:</strong> Available in all rooms</li><li><strong>Kitchen:</strong> Fully equipped with modular fittings</li><li><strong>Housekeeping:</strong> Weekly cleaning service included</li><li><strong>Laundry:</strong> Common laundry facilities available</li><li><strong>Gym:</strong> Access card required (obtain from reception)</li><li><strong>Power Backup:</strong> 100% power backup for essential appliances</li></ul>`,
       safety_information: `<h3>Safety Information</h3><ul><li><strong>Fire Safety:</strong> Fire extinguishers on every floor</li><li><strong>First Aid:</strong> First aid available at reception</li><li><strong>Emergency Exits:</strong> Marked on each floor</li><li><strong>Security:</strong> 24/7 security personnel and CCTV</li><li><strong>Elevator:</strong> Regular maintenance schedule followed</li></ul>`,
       local_area_info: `<h3>Local Area Information</h3><ul><li><strong>Public Transport:</strong> Bus stop/Metro within 500m</li><li><strong>Restaurants:</strong> Multiple dining options nearby</li><li><strong>Shopping:</strong> Supermarkets and malls within 2 km</li><li><strong>ATM/Banks:</strong> Within walking distance</li><li><strong>Hospital:</strong> 24/7 emergency care available nearby</li></ul>`,
       emergency_contacts: `<h3>Emergency Contacts</h3><ul><li><strong>Reception:</strong> +91 XXXXX XXXXX (24/7)</li><li><strong>Security:</strong> Extension 100</li><li><strong>Maintenance:</strong> Extension 200</li><li><strong>Police:</strong> 100</li><li><strong>Ambulance:</strong> 102 / 108</li><li><strong>Fire:</strong> 101</li></ul>`,
@@ -411,8 +400,6 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
             pricing.corporate_discount_percent ||
             property.corporate_discount_percent ||
             20,
-          deposit_amount:
-            pricing.deposit_amount || property.deposit_amount || 0,
           maintenance_charges:
             pricing.maintenance_charges || property.maintenance_charges || 0,
           notice_period_days:
@@ -468,9 +455,6 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
         setOriginalFormData(JSON.parse(JSON.stringify(loadedFormData)));
 
         const loadedGuidelines = {
-          check_in_guidelines: property.check_in_guidelines || "",
-          house_rules_text: property.house_rules_text || "",
-          amenities_guide: property.amenities_guide || "",
           safety_information: property.safety_information || "",
           local_area_info: property.local_area_info || "",
           emergency_contacts: property.emergency_contacts || "",
@@ -677,6 +661,10 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
     if (!formData.title.trim()) newErrors.title = "Title is required";
     if (!formData.vendor_id) newErrors.vendor_id = "Vendor is required";
     if (!formData.city_id) newErrors.city_id = "City is required";
+    if (!formData.area?.trim()) newErrors.area = "Area / Locality is required";
+    if (!formData.pincode?.trim()) newErrors.pincode = "Pincode is required";
+    if (!formData.maps_location?.trim())
+      newErrors.maps_location = "Google Maps Location is required";
     if (!formData.property_type_id)
       newErrors.property_type_id = "Property type is required";
     if (
@@ -740,7 +728,7 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
       }
     }
 
-    // Pincode validation
+    // Pincode validation (format check when filled)
     if (formData.pincode && formData.pincode.trim()) {
       const pincodeRegex = /^[0-9]{5,10}$|^[A-Z0-9]{6,10}$/i;
       if (!pincodeRegex.test(formData.pincode.trim())) {
@@ -893,9 +881,6 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
         payload.corporate_discount_percent =
           parseFloat(payload.corporate_discount_percent) || 0;
       }
-      if (payload.deposit_amount !== undefined) {
-        payload.deposit_amount = parseFloat(payload.deposit_amount) || 0;
-      }
       if (payload.maintenance_charges !== undefined) {
         payload.maintenance_charges =
           parseFloat(payload.maintenance_charges) || 0;
@@ -905,6 +890,11 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
       }
       if (payload.bathrooms !== undefined) {
         payload.bathrooms = parseInt(payload.bathrooms) || 0;
+      }
+      if (payload.living_area !== undefined) {
+        payload.living_area = payload.living_area
+          ? parseInt(payload.living_area)
+          : null;
       }
       if (payload.max_guests !== undefined) {
         payload.max_guests = parseInt(payload.max_guests) || 2;
@@ -1268,7 +1258,7 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
 
             <div className="flex flex-col">
               <label className="text-sm font-medium text-foreground mb-2">
-                Area / Locality
+                Area / Locality *
               </label>
               <input
                 type="text"
@@ -1276,18 +1266,25 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
                 value={formData.area}
                 onChange={handleInputChange}
                 placeholder="e.g., Koramangala, Candolim Beach"
+                required
+                aria-required="true"
                 className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
               <small className="text-xs text-muted-foreground mt-1">
                 Specific neighborhood or locality within the city
               </small>
+              {errors.area && (
+                <span className="text-sm text-destructive mt-1" role="alert">
+                  {errors.area}
+                </span>
+              )}
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div className="flex flex-col">
               <label className="text-sm font-medium text-foreground mb-2">
-                Pincode
+                Pincode *
               </label>
               <input
                 type="text"
@@ -1295,6 +1292,8 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
                 value={formData.pincode}
                 onChange={handleInputChange}
                 placeholder="e.g., 560001 or SW1A 1AA"
+                required
+                aria-required="true"
                 maxLength="10"
                 pattern="[0-9]{5,10}|[A-Z0-9]{6,10}"
                 aria-describedby="pincode-help"
@@ -1315,7 +1314,7 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
 
             <div className="flex flex-col">
               <label className="text-sm font-medium text-foreground mb-2">
-                Google Maps Location
+                Google Maps Location *
               </label>
               <input
                 type="text"
@@ -1323,11 +1322,18 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
                 value={formData.maps_location}
                 onChange={handleInputChange}
                 placeholder="https://www.google.com/maps?q=12.9352,77.6245"
+                required
+                aria-required="true"
                 className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
               <small className="text-xs text-muted-foreground mt-1">
                 Google Maps URL or coordinates
               </small>
+              {errors.maps_location && (
+                <span className="text-sm text-destructive mt-1" role="alert">
+                  {errors.maps_location}
+                </span>
+              )}
             </div>
           </div>
         </FormSection>
@@ -1409,6 +1415,26 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
                   {errors.max_guests}
                 </span>
               )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Living Area (sq ft)
+              </label>
+              <input
+                type="number"
+                name="living_area"
+                value={formData.living_area}
+                onChange={handleInputChange}
+                min="0"
+                placeholder="e.g., 1200"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+              />
+              <span className="text-xs text-muted-foreground mt-1">
+                Total living area in square feet
+              </span>
             </div>
           </div>
 
@@ -1718,21 +1744,6 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
                 step="0.01"
                 disabled={!formData.allow_corporate_booking}
                 className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              />
-            </div>
-
-            <div className="flex flex-col">
-              <label className="text-sm font-medium text-foreground mb-2">
-                Security Deposit (₹)
-              </label>
-              <input
-                type="number"
-                name="deposit_amount"
-                value={formData.deposit_amount}
-                onChange={handleInputChange}
-                min="0"
-                step="0.01"
-                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
             </div>
 
@@ -2518,7 +2529,7 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
                     e.target.value,
                   )
                 }
-                placeholder="10:00 PM - 8:00 AM"
+                placeholder="12:00 PM - 6:00 AM"
                 className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
             </div>
@@ -2572,28 +2583,6 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
             <div className="flex items-center gap-3">
               <input
                 type="checkbox"
-                checked={formData.house_rules.no_events}
-                onChange={(e) =>
-                  handleNestedChange(
-                    "house_rules",
-                    "no_events",
-                    e.target.checked,
-                  )
-                }
-                className="h-5 w-5 rounded border-border text-primary focus:ring-2 focus:ring-primary focus:ring-offset-0"
-                id="no_events"
-              />
-              <label
-                htmlFor="no_events"
-                className="text-sm font-medium text-foreground cursor-pointer"
-              >
-                No Events
-              </label>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <input
-                type="checkbox"
                 checked={formData.house_rules.pets_allowed}
                 onChange={(e) =>
                   handleNestedChange(
@@ -2612,30 +2601,6 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
                 Pets Allowed
               </label>
             </div>
-
-            {formData.house_rules.pets_allowed && (
-              <div className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  checked={formData.house_rules.pets_approval_required}
-                  onChange={(e) =>
-                    handleNestedChange(
-                      "house_rules",
-                      "pets_approval_required",
-                      e.target.checked,
-                    )
-                  }
-                  className="h-5 w-5 rounded border-border text-primary focus:ring-2 focus:ring-primary focus:ring-offset-0"
-                  id="pets_approval_required"
-                />
-                <label
-                  htmlFor="pets_approval_required"
-                  className="text-sm font-medium text-foreground cursor-pointer"
-                >
-                  Pets Approval Required
-                </label>
-              </div>
-            )}
           </div>
 
           <div className="mb-6">
@@ -2830,51 +2795,6 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
             <p className="text-sm text-green-900 dark:text-green-200">
               These guidelines will be sent to guests 24 hours before check-in
             </p>
-          </div>
-
-          <div className="mb-6">
-            <label className="text-sm font-medium text-foreground mb-3 block">
-              Check-In Guidelines
-            </label>
-            <ReactQuill
-              value={guidelines.check_in_guidelines}
-              onChange={(value) =>
-                handleGuidelineChange("check_in_guidelines", value)
-              }
-              modules={quillModules}
-              formats={quillFormats}
-              placeholder="Describe check-in process, timing, key collection, parking..."
-            />
-          </div>
-
-          <div className="mb-6">
-            <label className="text-sm font-medium text-foreground mb-3 block">
-              House Rules Text
-            </label>
-            <ReactQuill
-              value={guidelines.house_rules_text}
-              onChange={(value) =>
-                handleGuidelineChange("house_rules_text", value)
-              }
-              modules={quillModules}
-              formats={quillFormats}
-              placeholder="No smoking, parties, quiet hours..."
-            />
-          </div>
-
-          <div className="mb-6">
-            <label className="text-sm font-medium text-foreground mb-3 block">
-              Amenities Guide
-            </label>
-            <ReactQuill
-              value={guidelines.amenities_guide}
-              onChange={(value) =>
-                handleGuidelineChange("amenities_guide", value)
-              }
-              modules={quillModules}
-              formats={quillFormats}
-              placeholder="WiFi details, AC usage, kitchen appliances..."
-            />
           </div>
 
           <div className="mb-6">

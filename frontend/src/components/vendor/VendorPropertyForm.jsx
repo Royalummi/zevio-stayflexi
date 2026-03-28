@@ -44,6 +44,12 @@ const VendorPropertyForm = ({
   const [templatesLoaded, setTemplatesLoaded] = useState(false);
   const [dropdownLoadError, setDropdownLoadError] = useState(false);
 
+  // Terms & Conditions modal state
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [termsContent, setTermsContent] = useState("");
+  const [termsAgreed, setTermsAgreed] = useState(false);
+  const [termsLoading, setTermsLoading] = useState(false);
+
   // Get property type from navigation state (passed from property type modal)
   const preSelectedPropertyType = location.state?.propertyTypeId || null;
   const preSelectedPropertyTypeName = location.state?.propertyTypeName || null;
@@ -62,6 +68,7 @@ const VendorPropertyForm = ({
     maps_location: "",
     bedrooms: 1,
     bathrooms: 1,
+    living_area: "",
     max_guests: 2,
     check_in_time: "2:00 PM",
     check_out_time: "11:00 AM",
@@ -83,7 +90,6 @@ const VendorPropertyForm = ({
     long_term_discount_percent: 35,
     allow_corporate_booking: false,
     corporate_discount_percent: 20,
-    deposit_amount: 0,
     maintenance_charges: 0,
     notice_period_days: 30,
     // Session 70: Villa duration discount slabs (read-only view for vendor)
@@ -130,10 +136,8 @@ const VendorPropertyForm = ({
       check_out_before: "11:00 AM",
       no_smoking: true,
       no_parties: true,
-      no_events: false,
       pets_allowed: false,
-      pets_approval_required: false,
-      quiet_hours: "10:00 PM - 8:00 AM",
+      quiet_hours: "12:00 PM - 6:00 AM",
       additional_rules: [],
     },
 
@@ -165,9 +169,6 @@ const VendorPropertyForm = ({
 
   // Rich Text Guidelines
   const [guidelines, setGuidelines] = useState({
-    check_in_guidelines: "",
-    house_rules_text: "",
-    amenities_guide: "",
     safety_information: "",
     local_area_info: "",
     emergency_contacts: "",
@@ -185,18 +186,12 @@ const VendorPropertyForm = ({
   const guidelineTemplates = {
     "pt-001": {
       // Villa
-      check_in_guidelines: `<h3>Check-In Guidelines</h3><ul><li><strong>Check-in Time:</strong> 2:00 PM onwards</li><li><strong>Check-out Time:</strong> 11:00 AM</li><li><strong>Key Collection:</strong> Keys will be handed over by our property manager at the villa</li><li><strong>ID Proof:</strong> Please carry a valid government-issued ID</li><li><strong>Security Deposit:</strong> Refundable deposit will be collected at check-in</li><li><strong>Parking:</strong> Designated parking available on premises</li></ul>`,
-      house_rules_text: `<h3>House Rules</h3><ul><li>No smoking inside the villa</li><li>Parties and events require prior approval</li><li>Quiet hours: 10:00 PM - 8:00 AM</li><li>Please respect the neighbors</li><li>Maximum occupancy must be maintained</li><li>Pets allowed with prior approval</li></ul>`,
-      amenities_guide: `<h3>Amenities Guide</h3><ul><li><strong>WiFi:</strong> Network name and password will be provided at check-in</li><li><strong>Air Conditioning:</strong> Remote controls available in all bedrooms</li><li><strong>Kitchen:</strong> Fully equipped with basic utensils, gas stove, microwave, and refrigerator</li><li><strong>Swimming Pool:</strong> Pool usage hours 7:00 AM - 8:00 PM. Children must be supervised</li><li><strong>TV:</strong> Smart TV with streaming services access</li><li><strong>Washing Machine:</strong> Available in utility area</li></ul>`,
       safety_information: `<h3>Safety Information</h3><ul><li><strong>Fire Safety:</strong> Fire extinguisher located in the kitchen</li><li><strong>First Aid:</strong> Basic first aid kit available</li><li><strong>Emergency Exits:</strong> Clearly marked exit routes</li><li><strong>Swimming Pool:</strong> No lifeguard on duty - swim at your own risk</li><li><strong>Security:</strong> 24/7 CCTV surveillance for your safety</li></ul>`,
       local_area_info: `<h3>Local Area Information</h3><ul><li><strong>Restaurants:</strong> Several dining options within 2 km</li><li><strong>Grocery:</strong> Supermarket 1.5 km away</li><li><strong>ATM:</strong> Nearest ATM 1 km from the property</li><li><strong>Hospital:</strong> Multi-specialty hospital 5 km away</li><li><strong>Beach/Attractions:</strong> Popular tourist spots nearby</li></ul>`,
       emergency_contacts: `<h3>Emergency Contacts</h3><ul><li><strong>Property Manager:</strong> +91 XXXXX XXXXX</li><li><strong>Local Police:</strong> 100</li><li><strong>Ambulance:</strong> 102 / 108</li><li><strong>Fire Department:</strong> 101</li><li><strong>Nearest Hospital:</strong> +91 XXXXX XXXXX</li></ul>`,
     },
     "pt-002": {
       // Service Apartment
-      check_in_guidelines: `<h3>Check-In Guidelines</h3><ul><li><strong>Check-in Time:</strong> 2:00 PM onwards</li><li><strong>Check-out Time:</strong> 11:00 AM</li><li><strong>Key Collection:</strong> Collect keys from reception desk with valid ID</li><li><strong>ID Proof:</strong> Government-issued photo ID mandatory</li><li><strong>Rent Agreement:</strong> Will be provided for long-term stays</li><li><strong>Security Deposit:</strong> One month rent as refundable deposit</li><li><strong>Parking:</strong> Designated parking slot will be assigned</li></ul>`,
-      house_rules_text: `<h3>House Rules</h3><ul><li>No smoking inside the apartment</li><li>No loud music or parties</li><li>Visitor hours: 8:00 AM - 10:00 PM (register at reception)</li><li>Monthly rent due on 1st of every month</li><li>30 days notice required for vacating</li><li>Pets not allowed</li><li>No alterations to the property without permission</li></ul>`,
-      amenities_guide: `<h3>Amenities Guide</h3><ul><li><strong>WiFi:</strong> High-speed WiFi credentials at reception</li><li><strong>Air Conditioning:</strong> Available in all rooms</li><li><strong>Kitchen:</strong> Fully equipped with modular fittings</li><li><strong>Housekeeping:</strong> Weekly cleaning service included</li><li><strong>Laundry:</strong> Common laundry facilities available</li><li><strong>Gym:</strong> Access card required (obtain from reception)</li><li><strong>Power Backup:</strong> 100% power backup for essential appliances</li></ul>`,
       safety_information: `<h3>Safety Information</h3><ul><li><strong>Fire Safety:</strong> Fire extinguishers on every floor</li><li><strong>First Aid:</strong> First aid available at reception</li><li><strong>Emergency Exits:</strong> Marked on each floor</li><li><strong>Security:</strong> 24/7 security personnel and CCTV</li><li><strong>Elevator:</strong> Regular maintenance schedule followed</li></ul>`,
       local_area_info: `<h3>Local Area Information</h3><ul><li><strong>Public Transport:</strong> Bus stop/Metro within 500m</li><li><strong>Restaurants:</strong> Multiple dining options nearby</li><li><strong>Shopping:</strong> Supermarkets and malls within 2 km</li><li><strong>ATM/Banks:</strong> Within walking distance</li><li><strong>Hospital:</strong> 24/7 emergency care available nearby</li></ul>`,
       emergency_contacts: `<h3>Emergency Contacts</h3><ul><li><strong>Reception:</strong> +91 XXXXX XXXXX (24/7)</li><li><strong>Security:</strong> Extension 100</li><li><strong>Maintenance:</strong> Extension 200</li><li><strong>Police:</strong> 100</li><li><strong>Ambulance:</strong> 102 / 108</li><li><strong>Fire:</strong> 101</li></ul>`,
@@ -325,6 +320,7 @@ const VendorPropertyForm = ({
       if (response.data.success) {
         const property = response.data.data.property || response.data.data;
         const pendingChangeRequest = response.data.data.pendingChangeRequest;
+        const apiAmenities = response.data.data.amenities || [];
 
         if (pendingChangeRequest) {
           toast.warning(
@@ -352,67 +348,72 @@ const VendorPropertyForm = ({
           // Map API field names to form field names
           city: property.city_name || property.city || "",
           state: property.city_state || property.state || "",
-          // Extract pricing from nested object
+          // Extract pricing from nested object (use ?? to preserve 0 values)
           price_per_night:
-            pricing.price_per_night || property.price_per_night || "",
-          min_guests: pricing.min_guests || property.min_guests || 1,
+            pricing.price_per_night ?? property.price_per_night ?? "",
+          min_guests: pricing.min_guests ?? property.min_guests ?? 1,
           extra_guest_charge:
-            pricing.extra_guest_charge || property.extra_guest_charge || 0,
-          min_children: pricing.min_children || property.min_children || 0,
-          max_children: pricing.max_children || property.max_children || 5,
+            pricing.extra_guest_charge ?? property.extra_guest_charge ?? 0,
+          min_children: pricing.min_children ?? property.min_children ?? 0,
+          max_children: pricing.max_children ?? property.max_children ?? 5,
           extra_child_charge:
-            pricing.extra_child_charge || property.extra_child_charge || 0,
+            pricing.extra_child_charge ?? property.extra_child_charge ?? 0,
           weekly_discount_percent:
-            pricing.weekly_discount_percent ||
-            property.weekly_discount_percent ||
-            15,
+            pricing.weekly_discount_percent ??
+            property.weekly_discount_percent ??
+            0,
           monthly_discount_percent:
-            pricing.monthly_discount_percent ||
-            property.monthly_discount_percent ||
-            25,
+            pricing.monthly_discount_percent ??
+            property.monthly_discount_percent ??
+            0,
           quarterly_discount_percent:
-            pricing.quarterly_discount_percent ||
-            property.quarterly_discount_percent ||
-            30,
+            pricing.quarterly_discount_percent ??
+            property.quarterly_discount_percent ??
+            0,
           long_term_discount_percent:
-            pricing.long_term_discount_percent ||
-            property.long_term_discount_percent ||
-            35,
+            pricing.long_term_discount_percent ??
+            property.long_term_discount_percent ??
+            0,
           allow_corporate_booking:
-            pricing.allow_corporate_booking ||
-            property.allow_corporate_booking ||
+            pricing.allow_corporate_booking ??
+            property.allow_corporate_booking ??
             false,
           corporate_discount_percent:
-            pricing.corporate_discount_percent ||
-            property.corporate_discount_percent ||
-            20,
-          deposit_amount:
-            pricing.deposit_amount || property.deposit_amount || 0,
+            pricing.corporate_discount_percent ??
+            property.corporate_discount_percent ??
+            0,
           maintenance_charges:
-            pricing.maintenance_charges || property.maintenance_charges || 0,
+            pricing.maintenance_charges ?? property.maintenance_charges ?? 0,
           notice_period_days:
-            pricing.notice_period_days || property.notice_period_days || 30,
-          // Session 70: Villa duration discount slabs (set by admin, read-only for vendor)
+            pricing.notice_period_days ?? property.notice_period_days ?? 30,
+          // Villa duration discount slabs (set by admin, read-only for vendor)
           discount_3_5_days:
             parseFloat(
-              pricing.discount_3_5_days || property.discount_3_5_days,
+              pricing.discount_3_5_days ?? property.discount_3_5_days,
             ) || 0,
           discount_6_14_days:
             parseFloat(
-              pricing.discount_6_14_days || property.discount_6_14_days,
+              pricing.discount_6_14_days ?? property.discount_6_14_days,
             ) || 0,
           discount_15_plus_days:
             parseFloat(
-              pricing.discount_15_plus_days || property.discount_15_plus_days,
+              pricing.discount_15_plus_days ?? property.discount_15_plus_days,
             ) || 0,
-          // Parse JSON fields — amenities from API are objects {id,name,...}, extract IDs only
-          amenities: Array.isArray(property.amenities)
-            ? property.amenities
-                .map((a) =>
-                  typeof a === "object" && a !== null && a.id ? a.id : a,
-                )
-                .filter(Boolean)
-            : safeJsonParse(property.amenities, []),
+          // Parse JSON fields — amenities from API are returned as sibling array of {id,name,...}, extract IDs
+          amenities:
+            Array.isArray(apiAmenities) && apiAmenities.length > 0
+              ? apiAmenities
+                  .map((a) =>
+                    typeof a === "object" && a !== null && a.id ? a.id : a,
+                  )
+                  .filter(Boolean)
+              : Array.isArray(property.amenities)
+                ? property.amenities
+                    .map((a) =>
+                      typeof a === "object" && a !== null && a.id ? a.id : a,
+                    )
+                    .filter(Boolean)
+                : safeJsonParse(property.amenities, []),
           house_rules: (() => {
             const parsed = safeJsonParse(property.house_rules, {});
             return {
@@ -453,9 +454,6 @@ const VendorPropertyForm = ({
         }));
 
         const loadedGuidelines = {
-          check_in_guidelines: property.check_in_guidelines || "",
-          house_rules_text: property.house_rules_text || "",
-          amenities_guide: property.amenities_guide || "",
           safety_information: property.safety_information || "",
           local_area_info: property.local_area_info || "",
           emergency_contacts: property.emergency_contacts || "",
@@ -576,6 +574,10 @@ const VendorPropertyForm = ({
     // Basic validations
     if (!formData.title.trim()) newErrors.title = "Title is required";
     if (!formData.city_id) newErrors.city_id = "City is required";
+    if (!formData.area?.trim()) newErrors.area = "Area / Locality is required";
+    if (!formData.pincode?.trim()) newErrors.pincode = "Pincode is required";
+    if (!formData.maps_location?.trim())
+      newErrors.maps_location = "Google Maps Location is required";
     if (!formData.price_per_night || formData.price_per_night <= 0) {
       newErrors.price_per_night = "Valid price is required";
     }
@@ -608,6 +610,40 @@ const VendorPropertyForm = ({
     return Object.keys(newErrors).length === 0;
   };
 
+  // Show T&C modal before submitting new property for approval
+  const handleShowTermsModal = async (e) => {
+    e?.preventDefault();
+    if (!validateForm()) {
+      toast.error("Please fix validation errors before submitting");
+      return;
+    }
+    try {
+      setTermsLoading(true);
+      const response = await api.get("/public/vendor-terms");
+      if (response.data.success) {
+        setTermsContent(response.data.data?.content || "");
+      }
+    } catch (error) {
+      console.error("Error fetching vendor terms:", error);
+      setTermsContent(
+        "<p>Please agree to Zevio's vendor terms to proceed with your property listing.</p>",
+      );
+    } finally {
+      setTermsLoading(false);
+    }
+    setTermsAgreed(false);
+    setShowTermsModal(true);
+  };
+
+  const handleTermsConfirm = () => {
+    if (!termsAgreed) {
+      toast.error("Please agree to the Terms & Conditions to proceed");
+      return;
+    }
+    setShowTermsModal(false);
+    handleSubmit(null, true);
+  };
+
   const handleSubmit = async (e, submitForApproval = true) => {
     e?.preventDefault();
 
@@ -627,11 +663,20 @@ const VendorPropertyForm = ({
         amenities: Array.isArray(formData.amenities) ? formData.amenities : [],
         house_rules: JSON.stringify(formData.house_rules),
         cancellation_policy: JSON.stringify(formData.cancellation_policy),
-        photos: JSON.stringify([]),
+        photos: JSON.stringify(
+          photoUrls.length > 0
+            ? photoUrls
+            : Array.isArray(formData.photos)
+              ? formData.photos
+              : [],
+        ),
         // Numeric conversions
         price_per_night: parseFloat(formData.price_per_night) || 0,
         bedrooms: parseInt(formData.bedrooms) || 0,
         bathrooms: parseInt(formData.bathrooms) || 0,
+        living_area: formData.living_area
+          ? parseInt(formData.living_area)
+          : null,
         max_guests: parseInt(formData.max_guests) || 2,
         weekly_discount_percent:
           parseFloat(formData.weekly_discount_percent) || 0,
@@ -643,7 +688,6 @@ const VendorPropertyForm = ({
           parseFloat(formData.long_term_discount_percent) || 0,
         corporate_discount_percent:
           parseFloat(formData.corporate_discount_percent) || 0,
-        deposit_amount: parseFloat(formData.deposit_amount) || 0,
         maintenance_charges: parseFloat(formData.maintenance_charges) || 0,
         notice_period_days: parseInt(formData.notice_period_days) || 30,
         min_stay_days: parseInt(formData.min_stay_days) || 1,
@@ -677,6 +721,8 @@ const VendorPropertyForm = ({
             toast.info(
               "Property will remain live with current data until approved.",
             );
+          } else if (response.data.data?.message === "No changes detected") {
+            toast.info("No changes detected — property is already up to date.");
           } else {
             toast.success("Property updated successfully!");
           }
@@ -949,7 +995,7 @@ const VendorPropertyForm = ({
             {/* Area / Locality */}
             <div className="flex flex-col">
               <label className="text-sm font-medium text-foreground mb-2">
-                Area / Locality
+                Area / Locality *
               </label>
               <input
                 type="text"
@@ -957,17 +1003,24 @@ const VendorPropertyForm = ({
                 value={formData.area || ""}
                 onChange={handleInputChange}
                 placeholder="e.g., Koramangala, Candolim Beach"
+                required
+                aria-required="true"
                 className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
               <small className="text-xs text-muted-foreground mt-1">
                 Specific neighborhood or locality within the city
               </small>
+              {errors.area && (
+                <span className="text-sm text-destructive mt-1" role="alert">
+                  {errors.area}
+                </span>
+              )}
             </div>
 
             {/* Pincode */}
             <div className="flex flex-col">
               <label className="text-sm font-medium text-foreground mb-2">
-                Pincode
+                Pincode *
               </label>
               <input
                 type="text"
@@ -975,16 +1028,23 @@ const VendorPropertyForm = ({
                 value={formData.pincode}
                 onChange={handleInputChange}
                 placeholder="6-digit pincode"
+                required
+                aria-required="true"
                 maxLength="10"
                 className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
+              {errors.pincode && (
+                <span className="text-sm text-destructive mt-1" role="alert">
+                  {errors.pincode}
+                </span>
+              )}
             </div>
           </div>
 
           {/* Google Maps URL */}
           <div className="mb-6">
             <label className="text-sm font-medium text-foreground mb-2 block">
-              Google Maps Location
+              Google Maps Location *
             </label>
             <input
               type="text"
@@ -992,11 +1052,18 @@ const VendorPropertyForm = ({
               value={formData.maps_location || ""}
               onChange={handleInputChange}
               placeholder="https://www.google.com/maps?q=12.9352,77.6245"
+              required
+              aria-required="true"
               className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
             />
             <small className="text-xs text-muted-foreground mt-1">
               Google Maps URL or coordinates for easy guest navigation
             </small>
+            {errors.maps_location && (
+              <span className="text-sm text-destructive mt-1" role="alert">
+                {errors.maps_location}
+              </span>
+            )}
           </div>
         </FormSection>
 
@@ -1053,6 +1120,27 @@ const VendorPropertyForm = ({
                 required
                 className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            {/* Living Area */}
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Living Area (sq ft)
+              </label>
+              <input
+                type="number"
+                name="living_area"
+                value={formData.living_area || ""}
+                onChange={handleInputChange}
+                min="0"
+                placeholder="e.g., 1200"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+              />
+              <span className="text-xs text-muted-foreground mt-1">
+                Total living area in square feet
+              </span>
             </div>
           </div>
 
@@ -1317,26 +1405,12 @@ const VendorPropertyForm = ({
             </div>
           )}
 
-          {/* Corporate & Deposit */}
+          {/* Notice Period */}
           <div>
             <h4 className="text-lg font-semibold text-foreground mb-4">
-              Security Deposit
+              Notice Period
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="flex flex-col">
-                <label className="text-sm font-medium text-foreground mb-2">
-                  Security Deposit (₹)
-                </label>
-                <input
-                  type="number"
-                  name="deposit_amount"
-                  value={formData.deposit_amount}
-                  onChange={handleInputChange}
-                  min="0"
-                  step="0.01"
-                  className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                />
-              </div>
               <div className="flex flex-col">
                 <label className="text-sm font-medium text-foreground mb-2">
                   Notice Period (Days)
@@ -1930,24 +2004,6 @@ const VendorPropertyForm = ({
             <div className="flex items-center space-x-3 p-4 bg-muted/30 border border-border rounded-lg">
               <input
                 type="checkbox"
-                checked={formData.house_rules.no_events}
-                onChange={(e) =>
-                  handleNestedChange(
-                    "house_rules",
-                    "no_events",
-                    e.target.checked,
-                  )
-                }
-                className="h-5 w-5 text-primary border-border rounded focus:ring-2 focus:ring-primary"
-              />
-              <label className="text-sm font-medium text-foreground">
-                No Commercial Events
-              </label>
-            </div>
-
-            <div className="flex items-center space-x-3 p-4 bg-muted/30 border border-border rounded-lg">
-              <input
-                type="checkbox"
                 checked={formData.house_rules.pets_allowed}
                 onChange={(e) =>
                   handleNestedChange(
@@ -1960,25 +2016,6 @@ const VendorPropertyForm = ({
               />
               <label className="text-sm font-medium text-foreground">
                 Pets Allowed
-              </label>
-            </div>
-
-            <div className="flex items-center space-x-3 p-4 bg-muted/30 border border-border rounded-lg">
-              <input
-                type="checkbox"
-                checked={formData.house_rules.pets_approval_required}
-                onChange={(e) =>
-                  handleNestedChange(
-                    "house_rules",
-                    "pets_approval_required",
-                    e.target.checked,
-                  )
-                }
-                disabled={!formData.house_rules.pets_allowed}
-                className="h-5 w-5 text-primary border-border rounded focus:ring-2 focus:ring-primary disabled:opacity-50"
-              />
-              <label className="text-sm font-medium text-foreground">
-                Pets Require Approval
               </label>
             </div>
           </div>
@@ -1994,7 +2031,7 @@ const VendorPropertyForm = ({
               onChange={(e) =>
                 handleNestedChange("house_rules", "quiet_hours", e.target.value)
               }
-              placeholder="10:00 PM - 8:00 AM"
+              placeholder="12:00 PM - 6:00 AM"
               className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
             />
           </div>
@@ -2063,57 +2100,6 @@ const VendorPropertyForm = ({
           defaultOpen={false}
         >
           <div className="space-y-6">
-            {/* Check-in Guidelines */}
-            <div>
-              <label className="text-sm font-medium text-foreground mb-2 block">
-                Check-in Guidelines
-              </label>
-              <ReactQuill
-                value={guidelines.check_in_guidelines}
-                onChange={(value) =>
-                  handleGuidelineChange("check_in_guidelines", value)
-                }
-                modules={quillModules}
-                formats={quillFormats}
-                placeholder="Provide detailed check-in instructions..."
-                className="bg-background border border-border rounded-lg"
-              />
-            </div>
-
-            {/* House Rules Text */}
-            <div>
-              <label className="text-sm font-medium text-foreground mb-2 block">
-                House Rules (Detailed)
-              </label>
-              <ReactQuill
-                value={guidelines.house_rules_text}
-                onChange={(value) =>
-                  handleGuidelineChange("house_rules_text", value)
-                }
-                modules={quillModules}
-                formats={quillFormats}
-                placeholder="Write detailed house rules..."
-                className="bg-background border border-border rounded-lg"
-              />
-            </div>
-
-            {/* Amenities Guide */}
-            <div>
-              <label className="text-sm font-medium text-foreground mb-2 block">
-                Amenities Guide
-              </label>
-              <ReactQuill
-                value={guidelines.amenities_guide}
-                onChange={(value) =>
-                  handleGuidelineChange("amenities_guide", value)
-                }
-                modules={quillModules}
-                formats={quillFormats}
-                placeholder="Describe how to use amenities..."
-                className="bg-background border border-border rounded-lg"
-              />
-            </div>
-
             {/* Safety Information */}
             <div>
               <label className="text-sm font-medium text-foreground mb-2 block">
@@ -2204,14 +2190,14 @@ const VendorPropertyForm = ({
               </button>
               <button
                 type="button"
-                onClick={(e) => handleSubmit(e, true)}
-                disabled={loading || hasPendingChangeRequest}
+                onClick={(e) => handleShowTermsModal(e)}
+                disabled={loading || hasPendingChangeRequest || termsLoading}
                 className="flex-1 px-6 py-3 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
-                {loading ? (
+                {loading || termsLoading ? (
                   <span className="flex items-center justify-center gap-2">
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Submitting...
+                    {termsLoading ? "Loading T&C..." : "Submitting..."}
                   </span>
                 ) : (
                   "Submit for Approval"

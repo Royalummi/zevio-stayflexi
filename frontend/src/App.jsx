@@ -23,6 +23,7 @@ import PropertyChangeRequests from "./pages/admin/PropertyChangeRequests";
 import CouponManagement from "./pages/admin/CouponManagement";
 import ReviewManagement from "./pages/admin/ReviewManagement";
 import CancellationPolicies from "./pages/admin/CancellationPolicies";
+import VendorTermsManagement from "./pages/admin/VendorTermsManagement";
 
 // Vendor Pages
 import VendorDashboard from "./pages/vendor/VendorDashboard";
@@ -84,6 +85,7 @@ function App() {
             path="cancellation-policies"
             element={<CancellationPolicies />}
           />
+          <Route path="vendor-terms" element={<VendorTermsManagement />} />
           <Route path="reports" element={<AdminReports />} />
         </Route>
 

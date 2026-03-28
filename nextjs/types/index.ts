@@ -96,7 +96,6 @@ export interface Property {
   discount_3_5_days?: number | string;
   discount_6_14_days?: number | string;
   discount_15_plus_days?: number | string;
-  deposit_amount?: number | string;
   maintenance_charges?: number | string;
   allow_corporate_booking?: boolean | number;
   corporate_discount_percent?: number | string;

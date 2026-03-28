@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   Upload,
   X,
@@ -36,6 +36,10 @@ const PropertyImageUpload = ({
     "image/webp",
   ];
 
+  // Track which propertyId we've already fetched to avoid duplicate calls
+  // (React strict mode unmounts/remounts in dev, causing double fetches).
+  const fetchedForRef = useRef(null);
+
   // Fetch existing images
   useEffect(() => {
     if (propertyId) {
@@ -47,6 +51,9 @@ const PropertyImageUpload = ({
         setLoading(false);
         return;
       }
+      // Skip if we already fetched for this exact propertyId
+      if (fetchedForRef.current === propertyId) return;
+      fetchedForRef.current = propertyId;
       fetchImages();
     } else {
       setLoading(false);
@@ -55,9 +62,7 @@ const PropertyImageUpload = ({
 
   const fetchImages = async () => {
     try {
-      console.log("🖼️ Fetching images for property:", propertyId);
       const response = await api.get(`${apiBasePath}/${propertyId}/images`);
-      console.log("✅ Images fetched:", response.data.data?.length || 0);
       // Filter out images with undefined/null image_url to prevent rendering errors
       const validImages = (response.data.data || []).filter(
         (img) => img && img.image_url,
@@ -66,7 +71,7 @@ const PropertyImageUpload = ({
     } catch (error) {
       // Silently handle 401 errors - token refresh will handle it
       if (error.response?.status !== 401) {
-        console.error("❌ Error fetching images:", error.message);
+        console.error("Error fetching images:", error.message);
       }
     } finally {
       setLoading(false);
@@ -227,8 +232,8 @@ const PropertyImageUpload = ({
       setSelectedFiles([]);
       setUploadProgress(0);
 
-      // Refresh uploaded images
-      console.log("🔄 Refreshing images after upload...");
+      // Refresh uploaded images (reset guard so fetchImages runs again)
+      fetchedForRef.current = null;
       await fetchImages();
 
       if (onImagesChange) {
@@ -254,7 +259,7 @@ const PropertyImageUpload = ({
     }
 
     try {
-      await api.delete(`/admin/properties/${propertyId}/images/${imageId}`);
+      await api.delete(`${apiBasePath}/${propertyId}/images/${imageId}`);
       toast.success("Image deleted successfully");
       setUploadedImages((prev) => prev.filter((img) => img.id !== imageId));
 
@@ -442,7 +447,6 @@ const PropertyImageUpload = ({
                     }
                     alt={`Property ${index + 1}`}
                     className="w-full h-full object-cover"
-                    crossOrigin="anonymous"
                     onError={(e) => {
                       // Silently handle image load errors with fallback
                       // CORS errors are expected during R2 propagation (takes 1-5 minutes)

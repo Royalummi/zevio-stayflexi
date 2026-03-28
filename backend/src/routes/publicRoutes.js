@@ -12,6 +12,7 @@ import {
 import {
   getAllAmenities,
   getAllPropertyTypes,
+  getVendorTerms,
 } from "../controllers/adminController.js";
 import {
   getActivePoliciesByType,
@@ -26,6 +27,7 @@ router.get("/cities", getCities); // Small dataset - no pagination
 router.get("/areas", getAreas); // Get areas/localities for area-wise search
 router.get("/amenities", getAllAmenities); // For vendor property forms
 router.get("/property-types", getAllPropertyTypes); // For vendor property forms
+router.get("/vendor-terms", getVendorTerms); // Vendor T&C (readable by vendors without auth)
 router.get("/properties", validatePagination, getProperties); // CRITICAL: Paginate property listings
 router.get("/property/:id", getPropertyDetails);
 router.get("/availability", checkAvailability);

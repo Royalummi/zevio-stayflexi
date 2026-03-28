@@ -93,6 +93,7 @@ const getProperties = asyncHandler(async (req, res) => {
       p.title,
       p.description,
       p.status,
+      p.photos,
       p.created_at,
       c.name as city_name,
       e.name as employee_name,
@@ -124,6 +125,24 @@ const getProperties = asyncHandler(async (req, res) => {
 
   const [properties] = await db.query(query, params);
 
+  // Extract thumbnail from photos JSON for each property
+  const propertiesWithThumbnail = properties.map((p) => {
+    let thumbnail = null;
+    try {
+      if (p.photos) {
+        const photosArray =
+          typeof p.photos === "string" ? JSON.parse(p.photos) : p.photos;
+        if (Array.isArray(photosArray) && photosArray.length > 0) {
+          thumbnail = photosArray[0];
+        }
+      }
+    } catch (_) {
+      // ignore parse errors
+    }
+    const { photos, ...rest } = p;
+    return { ...rest, thumbnail };
+  });
+
   // Get total count
   let countQuery = `SELECT COUNT(*) as total FROM properties p LEFT JOIN cities c ON p.city_id = c.id WHERE p.vendor_id = ? AND p.deleted_at IS NULL`;
   const countParams = [vendorId];
@@ -142,7 +161,7 @@ const getProperties = asyncHandler(async (req, res) => {
   const total = countResult[0]?.total || 0;
 
   sendSuccess(res, {
-    properties,
+    properties: propertiesWithThumbnail,
     pagination: {
       page: parseInt(page),
       limit: parseInt(limit),
@@ -263,11 +282,10 @@ const getSettlements = asyncHandler(async (req, res) => {
       vs.payment_proof,
       vs.created_at,
       vs.booking_id,
-      COALESCE(p_booking.title, p_direct.title) as property_title
+      p_booking.title as property_title
     FROM vendor_settlements vs
     LEFT JOIN bookings b ON vs.booking_id = b.id
     LEFT JOIN properties p_booking ON b.property_id = p_booking.id
-    LEFT JOIN properties p_direct ON vs.property_id = p_direct.id
     WHERE vs.vendor_id = ?
   `;
 

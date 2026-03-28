@@ -255,7 +255,7 @@ function PropertyDetailContent() {
           state: data.state,
           pincode: data.pincode,
           maps_location: data.maps_location,
-          price_per_night: data.price_per_night,
+          price_per_night: Number(data.price_per_night),
           max_guests: data.max_guests,
           bedrooms: data.bedrooms,
           bathrooms: data.bathrooms,
@@ -289,10 +289,7 @@ function PropertyDetailContent() {
           cancellation_policy: data.cancellation_policy,
           emergency_contacts: data.emergency_contacts,
           safety_information: data.safety_information,
-          check_in_guidelines: data.check_in_guidelines,
           local_area_info: data.local_area_info,
-          amenities_guide: data.amenities_guide,
-          house_rules_text: data.house_rules_text,
           check_in_time: data.check_in_time,
           check_out_time: data.check_out_time,
           // Phase 3 fields
@@ -312,7 +309,6 @@ function PropertyDetailContent() {
           monthly_discount_percent: data.monthly_discount_percent,
           quarterly_discount_percent: data.quarterly_discount_percent,
           long_term_discount_percent: data.long_term_discount_percent,
-          deposit_amount: data.deposit_amount,
           maintenance_charges: data.maintenance_charges,
           allow_corporate_booking: data.allow_corporate_booking,
           corporate_discount_percent: data.corporate_discount_percent,
@@ -324,12 +320,12 @@ function PropertyDetailContent() {
 
         // Store pricing details for dynamic calculation
         setPropertyPricing({
-          min_guests: data.min_guests || 2,
-          max_guests: data.max_guests || 10,
-          extra_guest_charge: data.extra_guest_charge || 0,
-          min_children: data.min_children || 0,
-          max_children: data.max_children || 5,
-          extra_child_charge: data.extra_child_charge || 0,
+          min_guests: Number(data.min_guests) || 2,
+          max_guests: Number(data.max_guests) || 10,
+          extra_guest_charge: Number(data.extra_guest_charge) || 0,
+          min_children: Number(data.min_children) || 0,
+          max_children: Number(data.max_children) || 5,
+          extra_child_charge: Number(data.extra_child_charge) || 0,
         });
       } catch (error: unknown) {
         if (
@@ -404,7 +400,7 @@ function PropertyDetailContent() {
         const cur = new Date(start);
         while (cur < end) {
           baseAmount +=
-            calendarPriceMap[toKey(cur)] ?? property.price_per_night;
+            calendarPriceMap[toKey(cur)] ?? Number(property.price_per_night);
           cur.setDate(cur.getDate() + 1);
         }
 
@@ -519,13 +515,13 @@ function PropertyDetailContent() {
         extraChildrenCharges: priceBreakdown.extraChildrenCharges,
         gstAmount: priceBreakdown.gstAmount,
         totalAmount: priceBreakdown.totalAmount,
-        pricePerNight: property.price_per_night,
+        pricePerNight: Number(property.price_per_night),
         minGuests: propertyPricing.min_guests,
         maxGuests: propertyPricing.max_guests,
         minChildren: propertyPricing.min_children,
         maxChildren: propertyPricing.max_children,
-        extraGuestCharge: propertyPricing.extra_guest_charge,
-        extraChildCharge: propertyPricing.extra_child_charge,
+        extraGuestCharge: Number(propertyPricing.extra_guest_charge),
+        extraChildCharge: Number(propertyPricing.extra_child_charge),
       });
 
       // SESSION 32: Navigate with URL params to preserve data (Airbnb pattern)
@@ -962,27 +958,6 @@ function PropertyDetailContent() {
                     </div>
                   )}
 
-                  {/* Security Deposit */}
-                  {property.deposit_amount &&
-                    parseFloat(property.deposit_amount.toString()) > 0 && (
-                      <div className={luxuryStyles.infoItem}>
-                        <div className={luxuryStyles.infoIcon}>
-                          <FiShield />
-                        </div>
-                        <div className={luxuryStyles.infoContent}>
-                          <div className={luxuryStyles.infoLabel}>
-                            Security Deposit
-                          </div>
-                          <div className={luxuryStyles.infoValue}>
-                            ₹{(property.deposit_amount || 0).toLocaleString()}
-                          </div>
-                          <div className={luxuryStyles.infoNote}>
-                            Refundable deposit collected at check-in
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
                   {/* Maintenance Charges */}
                   {property.maintenance_charges &&
                     parseFloat(property.maintenance_charges.toString()) > 0 && (
@@ -1077,31 +1052,6 @@ function PropertyDetailContent() {
                         </div>
                         <div className={luxuryStyles.infoNote}>
                           Special rates for corporate clients
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* House Rules Highlight */}
-                  {property.house_rules_text && (
-                    <div className={luxuryStyles.infoItem}>
-                      <div className={luxuryStyles.infoIcon}>
-                        <FiInfo />
-                      </div>
-                      <div className={luxuryStyles.infoContent}>
-                        <div className={luxuryStyles.infoLabel}>
-                          House Rules
-                        </div>
-                        <div className={luxuryStyles.infoValue}>
-                          Please review before booking
-                        </div>
-                        <div className={luxuryStyles.infoNote}>
-                          {property.house_rules_text
-                            .replace(/<[^>]+>/g, " ")
-                            .replace(/\s+/g, " ")
-                            .trim()
-                            .substring(0, 80)}
-                          ...
                         </div>
                       </div>
                     </div>
@@ -1213,48 +1163,6 @@ function PropertyDetailContent() {
                     className={luxuryStyles.descriptionTextLuxury}
                     dangerouslySetInnerHTML={{
                       __html: property.safety_information,
-                    }}
-                  />
-                </details>
-              )}
-
-              {/* Amenities Guide - Accordion */}
-              {property.amenities_guide && (
-                <details className={luxuryStyles.accordionCard}>
-                  <summary className={luxuryStyles.accordionHeader}>
-                    <span className={luxuryStyles.accordionHeaderInner}>
-                      <FiInfo />
-                      Amenities Usage Guide
-                    </span>
-                    <span className={luxuryStyles.accordionChevron}>
-                      &#8250;
-                    </span>
-                  </summary>
-                  <div
-                    className={luxuryStyles.descriptionTextLuxury}
-                    dangerouslySetInnerHTML={{
-                      __html: property.amenities_guide,
-                    }}
-                  />
-                </details>
-              )}
-
-              {/* Check-in Guidelines - Accordion */}
-              {property.check_in_guidelines && (
-                <details className={luxuryStyles.accordionCard}>
-                  <summary className={luxuryStyles.accordionHeader}>
-                    <span className={luxuryStyles.accordionHeaderInner}>
-                      <FiClock />
-                      Check-in Guidelines
-                    </span>
-                    <span className={luxuryStyles.accordionChevron}>
-                      &#8250;
-                    </span>
-                  </summary>
-                  <div
-                    className={luxuryStyles.descriptionTextLuxury}
-                    dangerouslySetInnerHTML={{
-                      __html: property.check_in_guidelines,
                     }}
                   />
                 </details>

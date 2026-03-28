@@ -186,9 +186,9 @@ export const createProperty = asyncHandler(async (req, res) => {
         weekly_discount_percent, monthly_discount_percent,
         quarterly_discount_percent, long_term_discount_percent,
         allow_corporate_booking, corporate_discount_percent,
-        deposit_amount, maintenance_charges, notice_period_days,
+        maintenance_charges, notice_period_days,
         discount_3_5_days, discount_6_14_days, discount_15_plus_days
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const pricingValues = [
@@ -207,7 +207,6 @@ export const createProperty = asyncHandler(async (req, res) => {
       parseFloat(req.body.long_term_discount_percent) || 0,
       req.body.allow_corporate_booking ? 1 : 0,
       parseFloat(req.body.corporate_discount_percent) || 0,
-      parseFloat(req.body.deposit_amount) || 0,
       parseFloat(req.body.maintenance_charges) || 0,
       parseInt(req.body.notice_period_days) || 30,
       parseFloat(discount_3_5_days) || 0,
@@ -293,7 +292,7 @@ export const getPropertyById = asyncHandler(async (req, res) => {
       pr.weekly_discount_percent, pr.monthly_discount_percent,
       pr.quarterly_discount_percent, pr.long_term_discount_percent,
       pr.allow_corporate_booking, pr.corporate_discount_percent,
-      pr.deposit_amount, pr.maintenance_charges, pr.notice_period_days,
+      pr.maintenance_charges, pr.notice_period_days,
       pr.discount_3_5_days, pr.discount_6_14_days, pr.discount_15_plus_days
     FROM properties p
     LEFT JOIN cities c ON p.city_id = c.id
@@ -524,9 +523,6 @@ export const updateProperty = asyncHandler(async (req, res) => {
     // Sanitize rich text fields in updates
     const sanitizedUpdates = { ...updates };
     const richTextFields = [
-      "check_in_guidelines",
-      "house_rules_text",
-      "amenities_guide",
       "safety_information",
       "local_area_info",
       "emergency_contacts",
@@ -538,13 +534,107 @@ export const updateProperty = asyncHandler(async (req, res) => {
       }
     });
 
-    // Create change request
+    // ── Diff: only store fields that actually changed ────────
+    // Fetch current property + pricing data for comparison
+    const [currentProps] = await db.query(
+      `SELECT p.*, pr.price_per_night, pr.gst_percentage, pr.min_guests, pr.extra_guest_charge,
+              pr.min_children, pr.max_children, pr.extra_child_charge,
+              pr.weekly_discount_percent, pr.monthly_discount_percent,
+              pr.quarterly_discount_percent, pr.long_term_discount_percent,
+              pr.allow_corporate_booking, pr.corporate_discount_percent,
+              pr.maintenance_charges, pr.notice_period_days,
+              pr.discount_3_5_days, pr.discount_6_14_days, pr.discount_15_plus_days
+       FROM properties p
+       LEFT JOIN property_pricing pr ON pr.property_id = p.id
+       WHERE p.id = ?`,
+      [id],
+    );
+    const currentData = currentProps[0] || {};
+
+    // Fields that should never be part of a change request
+    const skipFields = new Set([
+      "id",
+      "vendor_id",
+      "employee_id",
+      "created_at",
+      "updated_at",
+      "deleted_at",
+      "rating",
+      "reviews_count",
+      "is_recommended",
+      "recommended_priority",
+      "recommended_at",
+      "recommended_by",
+      "city_name",
+      "city_state",
+      "property_type_name",
+      "status",
+      "slug",
+      "approved_at",
+      "approved_by",
+      // Removed fields
+      "amenities_guide",
+      "house_rules_text",
+      "check_in_guidelines",
+      "deposit_amount",
+      // Contact fields stored in property_contacts table (not property/pricing columns)
+      "primary_incharge_name",
+      "primary_incharge_phone",
+      "primary_incharge_email",
+      "primary_incharge_whatsapp",
+      "primary_incharge_alt_contact",
+      "secondary_incharge_name",
+      "secondary_incharge_phone",
+      "secondary_incharge_email",
+      "secondary_incharge_whatsapp",
+      "secondary_incharge_alt_contact",
+    ]);
+
+    // Compare and keep only changed fields
+    const changedFields = {};
+    for (const [key, newVal] of Object.entries(sanitizedUpdates)) {
+      if (skipFields.has(key)) continue;
+
+      const curVal = currentData[key];
+
+      // Normalize for comparison
+      const normalize = (v) => {
+        if (v === null || v === undefined || v === "") return null;
+        if (typeof v === "boolean") return v ? 1 : 0;
+        // Arrays: compare sorted JSON
+        if (Array.isArray(v)) return JSON.stringify([...v].sort());
+        // Numbers: compare as float
+        const n = Number(v);
+        if (!isNaN(n) && String(v).trim() !== "") return n;
+        return String(v).trim();
+      };
+
+      const normCur = normalize(curVal);
+      const normNew = normalize(newVal);
+
+      if (normCur !== normNew) {
+        changedFields[key] = newVal;
+      }
+    }
+
+    // If nothing actually changed, don't create a change request
+    if (Object.keys(changedFields).length === 0) {
+      return sendSuccess(
+        res,
+        {
+          message: "No changes detected",
+        },
+        "No changes detected — property is already up to date",
+      );
+    }
+
+    // Create change request with only the changed fields
     const requestId = generateUUID();
     await db.query(
       `INSERT INTO property_change_requests 
        (id, property_id, requested_changes, status, created_at) 
        VALUES (?, ?, ?, 'pending', NOW())`,
-      [requestId, id, JSON.stringify(sanitizedUpdates)],
+      [requestId, id, JSON.stringify(changedFields)],
     );
 
     // Notify admin (don't let notification failure block response)
@@ -646,7 +736,6 @@ export const updateProperty = asyncHandler(async (req, res) => {
     "long_term_discount_percent",
     "allow_corporate_booking",
     "corporate_discount_percent",
-    "deposit_amount",
     "maintenance_charges",
     "notice_period_days",
     // Session 70: Villa duration discount slabs

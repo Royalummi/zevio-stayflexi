@@ -85,6 +85,7 @@ const DashboardLayout = () => {
         { name: "Users", icon: Users, path: "/admin/users" },
         { name: "Coupons", icon: Ticket, path: "/admin/coupons" },
         { name: "Reviews", icon: Star, path: "/admin/reviews" },
+        { name: "Vendor T&C", icon: FileText, path: "/admin/vendor-terms" },
         { name: "Reports", icon: BarChart3, path: "/admin/reports" },
       ],
       super_admin: [
@@ -106,6 +107,7 @@ const DashboardLayout = () => {
         { name: "Users", icon: Users, path: "/admin/users" },
         { name: "Coupons", icon: Ticket, path: "/admin/coupons" },
         { name: "Reviews", icon: Star, path: "/admin/reviews" },
+        { name: "Vendor T&C", icon: FileText, path: "/admin/vendor-terms" },
         { name: "Reports", icon: BarChart3, path: "/admin/reports" },
       ],
       user: [

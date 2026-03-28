@@ -191,9 +191,9 @@ export const getPropertyImages = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const vendorId = req.user.id;
 
-  // Check if property belongs to vendor
+  // Check if property belongs to vendor and get photos JSON fallback
   const [properties] = await db.query(
-    `SELECT id FROM properties WHERE id = ? AND vendor_id = ? AND deleted_at IS NULL`,
+    `SELECT id, photos FROM properties WHERE id = ? AND vendor_id = ? AND deleted_at IS NULL`,
     [id, vendorId],
   );
 
@@ -201,7 +201,7 @@ export const getPropertyImages = asyncHandler(async (req, res) => {
     return sendError(res, "Property not found or unauthorized", 404);
   }
 
-  // Get images
+  // Get images from property_images table
   const [images] = await db.query(
     `SELECT id, image_url, sort_order 
      FROM property_images 
@@ -210,7 +210,33 @@ export const getPropertyImages = asyncHandler(async (req, res) => {
     [id],
   );
 
-  sendSuccess(res, images, "Images retrieved successfully");
+  // If property_images table has results, return them
+  if (images.length > 0) {
+    return sendSuccess(res, images, "Images retrieved successfully");
+  }
+
+  // Fallback: read from properties.photos JSON column
+  let fallbackImages = [];
+  try {
+    const photosData = properties[0].photos;
+    if (photosData && photosData !== "[]" && photosData !== "") {
+      const photosArray =
+        typeof photosData === "string" ? JSON.parse(photosData) : photosData;
+      if (Array.isArray(photosArray)) {
+        fallbackImages = photosArray
+          .filter((url) => url && typeof url === "string")
+          .map((url, index) => ({
+            id: index,
+            image_url: url.trim(),
+            sort_order: index,
+          }));
+      }
+    }
+  } catch (parseError) {
+    console.error("Error parsing photos JSON:", parseError.message);
+  }
+
+  sendSuccess(res, fallbackImages, "Images retrieved successfully");
 });
 
 /**

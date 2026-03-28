@@ -41,6 +41,8 @@ import {
   uploadPropertyImages,
   deletePropertyImage,
   clearCache,
+  getVendorTerms,
+  updateVendorTerms,
 } from "../controllers/adminController.js";
 import {
   getCalendarPricing,
@@ -112,6 +114,10 @@ router.post(
 router.get("/vendors", getAllVendors);
 router.get("/property-types", getAllPropertyTypes);
 router.get("/amenities", getAllAmenities);
+
+// Vendor Terms & Conditions
+router.get("/vendor-terms", getVendorTerms);
+router.put("/vendor-terms", updateVendorTerms);
 
 // Cache management
 router.post("/cache/clear", clearCache);

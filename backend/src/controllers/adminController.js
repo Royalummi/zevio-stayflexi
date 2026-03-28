@@ -703,7 +703,6 @@ export const getAllProperties = asyncHandler(async (req, res) => {
         pr.long_term_discount_percent,
         pr.allow_corporate_booking,
         pr.corporate_discount_percent,
-        pr.deposit_amount,
         pr.maintenance_charges,
         pr.notice_period_days,
         pr.discount_3_5_days,
@@ -934,7 +933,7 @@ export const getPropertyDetails = asyncHandler(async (req, res) => {
 
   // Get guidelines from property_guidelines table (fallback for properties created before guidelines were added to properties table)
   const [guidelinesData] = await db.query(
-    `SELECT check_in_guidelines, house_rules_text, amenities_guide, safety_information, local_area_info, emergency_contacts
+    `SELECT safety_information, local_area_info, emergency_contacts
      FROM property_guidelines WHERE property_id = ? LIMIT 1`,
     [id],
   );
@@ -944,14 +943,6 @@ export const getPropertyDetails = asyncHandler(async (req, res) => {
   const propertyDetails = {
     ...property,
     // Merge guidelines: prefer properties columns, fall back to property_guidelines table
-    check_in_guidelines:
-      property.check_in_guidelines ||
-      guidelinesFallback.check_in_guidelines ||
-      "",
-    house_rules_text:
-      property.house_rules_text || guidelinesFallback.house_rules_text || "",
-    amenities_guide:
-      property.amenities_guide || guidelinesFallback.amenities_guide || "",
     safety_information:
       property.safety_information ||
       guidelinesFallback.safety_information ||
@@ -2230,7 +2221,7 @@ export const getAllAmenities = asyncHandler(async (req, res) => {
 
   // Cache miss - fetch from database
   const [amenities] = await db.query(`
-    SELECT id, name, category, icon, description, display_order
+    SELECT id, name, category, icon, description, display_order, apartment_only
     FROM amenities
     WHERE is_active = 1
     ORDER BY category ASC, display_order ASC, name ASC
@@ -2258,6 +2249,54 @@ export const getAllAmenities = asyncHandler(async (req, res) => {
   };
 
   sendSuccess(res, response, "Amenities fetched successfully", 200);
+});
+
+// Get vendor Terms & Conditions (latest version)
+export const getVendorTerms = asyncHandler(async (req, res) => {
+  const [rows] = await db.query(
+    `SELECT id, content, version, updated_at FROM vendor_terms_conditions ORDER BY id DESC LIMIT 1`,
+  );
+  if (rows.length === 0) {
+    return sendSuccess(res, { content: "", version: 0 }, "No terms found", 200);
+  }
+  sendSuccess(res, rows[0], "Terms fetched successfully", 200);
+});
+
+// Update vendor Terms & Conditions (admin only)
+export const updateVendorTerms = asyncHandler(async (req, res) => {
+  const { content } = req.body;
+  if (!content || !content.trim()) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Content is required" });
+  }
+
+  const adminId = req.user?.id || null;
+
+  // Check if any record exists
+  const [existing] = await db.query(
+    `SELECT id, version FROM vendor_terms_conditions ORDER BY id DESC LIMIT 1`,
+  );
+
+  if (existing.length > 0) {
+    const newVersion = (existing[0].version || 1) + 1;
+    await db.query(
+      `UPDATE vendor_terms_conditions SET content = ?, version = ?, updated_by = ? WHERE id = ?`,
+      [content.trim(), newVersion, adminId, existing[0].id],
+    );
+    sendSuccess(
+      res,
+      { version: newVersion },
+      "Terms updated successfully",
+      200,
+    );
+  } else {
+    await db.query(
+      `INSERT INTO vendor_terms_conditions (content, version, updated_by) VALUES (?, 1, ?)`,
+      [content.trim(), adminId],
+    );
+    sendSuccess(res, { version: 1 }, "Terms created successfully", 201);
+  }
 });
 
 // Create new property
@@ -2295,7 +2334,6 @@ export const createProperty = asyncHandler(async (req, res) => {
     long_term_discount_percent,
     allow_corporate_booking,
     corporate_discount_percent,
-    deposit_amount,
     maintenance_charges,
     notice_period_days,
     // Session 70: Villa Duration Discount Slabs
@@ -2327,9 +2365,6 @@ export const createProperty = asyncHandler(async (req, res) => {
     secondary_incharge_email,
     secondary_incharge_whatsapp,
     secondary_incharge_alt_contact,
-    check_in_guidelines,
-    house_rules_text,
-    amenities_guide,
     safety_information,
     local_area_info,
     emergency_contacts,
@@ -2362,15 +2397,6 @@ export const createProperty = asyncHandler(async (req, res) => {
   }
 
   // XSS Protection - Sanitize rich text fields
-  const safeCheckInGuidelines = check_in_guidelines
-    ? sanitizeRichText(check_in_guidelines)
-    : null;
-  const safeHouseRulesText = house_rules_text
-    ? sanitizeRichText(house_rules_text)
-    : null;
-  const safeAmenitiesGuide = amenities_guide
-    ? sanitizeRichText(amenities_guide)
-    : null;
   const safeSafetyInfo = safety_information
     ? sanitizeRichText(safety_information)
     : null;
@@ -2392,7 +2418,7 @@ export const createProperty = asyncHandler(async (req, res) => {
       min_stay_days, max_stay_days, housekeeping_frequency, laundry_frequency,
       utilities_included, parking_slots, floor_number, wifi_speed_mbps, wifi_provider, furnishing_type,
       is_recommended, recommended_priority, recommended_at, recommended_by,
-      check_in_guidelines, house_rules_text, amenities_guide, safety_information, local_area_info, emergency_contacts,
+      safety_information, local_area_info, emergency_contacts,
       same_day_booking_allowed, max_booking_days, check_in_time, check_out_time,
       house_rules, cancellation_policy, photos, status
     ) VALUES (
@@ -2403,7 +2429,7 @@ export const createProperty = asyncHandler(async (req, res) => {
       ?, ?, ?, ?,
       ?, ?, ?, ?, ?, ?,
       ?, ?, ?, ?,
-      ?, ?, ?, ?, ?, ?,
+      ?, ?, ?,
       ?, ?, ?, ?,
       ?, ?, ?, ?
     )
@@ -2444,9 +2470,6 @@ export const createProperty = asyncHandler(async (req, res) => {
     recommended_priority || 0,
     is_recommended ? new Date() : null,
     is_recommended ? req.user.id : null,
-    safeCheckInGuidelines,
-    safeHouseRulesText,
-    safeAmenitiesGuide,
     safeSafetyInfo,
     safeLocalAreaInfo,
     safeEmergencyContacts,
@@ -2471,9 +2494,9 @@ export const createProperty = asyncHandler(async (req, res) => {
         weekly_discount_percent, monthly_discount_percent,
         quarterly_discount_percent, long_term_discount_percent,
         allow_corporate_booking, corporate_discount_percent,
-        deposit_amount, maintenance_charges, notice_period_days,
+        maintenance_charges, notice_period_days,
         discount_3_5_days, discount_6_14_days, discount_15_plus_days
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const pricingValues = [
@@ -2492,7 +2515,6 @@ export const createProperty = asyncHandler(async (req, res) => {
       long_term_discount_percent || 0,
       allow_corporate_booking || false,
       corporate_discount_percent || 0,
-      deposit_amount || 0,
       maintenance_charges || 0,
       notice_period_days || 30,
       parseFloat(discount_3_5_days) || 0,
@@ -2553,27 +2575,17 @@ export const createProperty = asyncHandler(async (req, res) => {
   }
 
   // Insert property guidelines (rich text fields)
-  if (
-    check_in_guidelines ||
-    house_rules_text ||
-    amenities_guide ||
-    safety_information ||
-    local_area_info ||
-    emergency_contacts
-  ) {
+  if (safety_information || local_area_info || emergency_contacts) {
     const guidelinesQuery = `
       INSERT INTO property_guidelines (
-        id, property_id, check_in_guidelines, house_rules_text, amenities_guide,
+        id, property_id,
         safety_information, local_area_info, emergency_contacts
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?)
     `;
 
     const guidelinesValues = [
       generateUUID(),
       propertyId,
-      safeCheckInGuidelines,
-      safeHouseRulesText,
-      safeAmenitiesGuide,
       safeSafetyInfo,
       safeLocalAreaInfo,
       safeEmergencyContacts,
@@ -2660,7 +2672,6 @@ export const updateProperty = asyncHandler(async (req, res) => {
     long_term_discount_percent,
     allow_corporate_booking,
     corporate_discount_percent,
-    deposit_amount,
     maintenance_charges,
     notice_period_days,
     // Session 70: Villa Duration Discount Slabs
@@ -2692,9 +2703,6 @@ export const updateProperty = asyncHandler(async (req, res) => {
     secondary_incharge_email,
     secondary_incharge_whatsapp,
     secondary_incharge_alt_contact,
-    check_in_guidelines,
-    house_rules_text,
-    amenities_guide,
     safety_information,
     local_area_info,
     emergency_contacts,
@@ -2727,18 +2735,6 @@ export const updateProperty = asyncHandler(async (req, res) => {
 
   // XSS Protection for rich text guideline fields
   // Use empty string instead of null for TEXT fields
-  const safeCheckInGuidelines =
-    check_in_guidelines && typeof check_in_guidelines === "string"
-      ? sanitizeRichText(check_in_guidelines)
-      : "";
-  const safeHouseRulesText =
-    house_rules_text && typeof house_rules_text === "string"
-      ? sanitizeRichText(house_rules_text)
-      : "";
-  const safeAmenitiesGuide =
-    amenities_guide && typeof amenities_guide === "string"
-      ? sanitizeRichText(amenities_guide)
-      : "";
   const safeSafetyInfo =
     safety_information && typeof safety_information === "string"
       ? sanitizeRichText(safety_information)
@@ -2793,9 +2789,6 @@ export const updateProperty = asyncHandler(async (req, res) => {
       recommended_priority = ?,
       ${recommendedAt ? "recommended_at = ?," : ""}
       ${recommendedBy ? "recommended_by = ?," : ""}
-      check_in_guidelines = ?,
-      house_rules_text = ?,
-      amenities_guide = ?,
       safety_information = ?,
       local_area_info = ?,
       emergency_contacts = ?,
@@ -2855,9 +2848,6 @@ export const updateProperty = asyncHandler(async (req, res) => {
   }
 
   values.push(
-    safeCheckInGuidelines,
-    safeHouseRulesText,
-    safeAmenitiesGuide,
     safeSafetyInfo,
     safeLocalAreaInfo,
     safeEmergencyContacts,
@@ -2928,7 +2918,6 @@ export const updateProperty = asyncHandler(async (req, res) => {
           long_term_discount_percent = ?,
           allow_corporate_booking = ?,
           corporate_discount_percent = ?,
-          deposit_amount = ?,
           maintenance_charges = ?,
           notice_period_days = ?,
           discount_3_5_days = ?,
@@ -2951,7 +2940,6 @@ export const updateProperty = asyncHandler(async (req, res) => {
         long_term_discount_percent || 0,
         allow_corporate_booking || false,
         corporate_discount_percent || 0,
-        deposit_amount || 0,
         maintenance_charges || 0,
         notice_period_days || 30,
         parseFloat(discount_3_5_days) || 0,
@@ -2972,9 +2960,9 @@ export const updateProperty = asyncHandler(async (req, res) => {
           weekly_discount_percent, monthly_discount_percent,
           quarterly_discount_percent, long_term_discount_percent,
           allow_corporate_booking, corporate_discount_percent,
-          deposit_amount, maintenance_charges, notice_period_days,
+          maintenance_charges, notice_period_days,
           discount_3_5_days, discount_6_14_days, discount_15_plus_days
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `;
 
       const pricingValues = [
@@ -2993,7 +2981,6 @@ export const updateProperty = asyncHandler(async (req, res) => {
         long_term_discount_percent || 0,
         allow_corporate_booking || false,
         corporate_discount_percent || 0,
-        deposit_amount || 0,
         maintenance_charges || 0,
         notice_period_days || 30,
         parseFloat(discount_3_5_days) || 0,
@@ -3104,29 +3091,17 @@ export const updateProperty = asyncHandler(async (req, res) => {
   if (existingGuidelines.length > 0) {
     await db.query(
       `UPDATE property_guidelines SET
-        check_in_guidelines = ?, house_rules_text = ?, amenities_guide = ?,
         safety_information = ?, local_area_info = ?, emergency_contacts = ?
        WHERE property_id = ?`,
-      [
-        safeCheckInGuidelines,
-        safeHouseRulesText,
-        safeAmenitiesGuide,
-        safeSafetyInfo,
-        safeLocalAreaInfo,
-        safeEmergencyContacts,
-        id,
-      ],
+      [safeSafetyInfo, safeLocalAreaInfo, safeEmergencyContacts, id],
     );
   } else {
     await db.query(
-      `INSERT INTO property_guidelines (id, property_id, check_in_guidelines, house_rules_text, amenities_guide, safety_information, local_area_info, emergency_contacts)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO property_guidelines (id, property_id, safety_information, local_area_info, emergency_contacts)
+       VALUES (?, ?, ?, ?, ?)`,
       [
         generateUUID(),
         id,
-        safeCheckInGuidelines,
-        safeHouseRulesText,
-        safeAmenitiesGuide,
         safeSafetyInfo,
         safeLocalAreaInfo,
         safeEmergencyContacts,

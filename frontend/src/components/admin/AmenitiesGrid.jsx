@@ -22,6 +22,8 @@ import {
   Heart,
   Laptop,
   Check,
+  Mountain,
+  BellRing,
 } from "lucide-react";
 import api from "../../lib/api";
 
@@ -48,7 +50,26 @@ const iconMap = {
   tree: Trees,
   paw: Heart,
   monitor: Monitor,
+  "private-pool": Waves,
+  jacuzzi: Bath,
+  mountain: Mountain,
+  "smoke-alarm": BellRing,
 };
+
+// Explicit category rendering order — Facilities first, then others
+const CATEGORY_ORDER = [
+  "facility",
+  "connectivity",
+  "comfort",
+  "entertainment",
+  "appliance",
+  "safety",
+  "service",
+  "feature",
+  "workspace",
+  "policy",
+  "general",
+];
 
 // Category labels
 const categoryLabels = {
@@ -65,7 +86,13 @@ const categoryLabels = {
   general: "General",
 };
 
-const AmenitiesGrid = ({ selectedAmenities = [], onChange }) => {
+const SERVICE_APARTMENT_TYPE_ID = "pt-002";
+
+const AmenitiesGrid = ({
+  selectedAmenities = [],
+  onChange,
+  propertyTypeId,
+}) => {
   const [amenities, setAmenities] = useState({ all: [], grouped: {} });
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
@@ -150,27 +177,44 @@ const AmenitiesGrid = ({ selectedAmenities = [], onChange }) => {
 
   return (
     <div className="space-y-8">
-      {Object.entries(amenities.grouped).map(([category, items]) => (
-        <div key={category}>
-          <h4 className="text-sm font-semibold text-foreground mb-3 uppercase tracking-wide">
-            {categoryLabels[category] || category}
-          </h4>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-            {items.map((amenity) => {
-              // Validate amenity object
-              if (!amenity || typeof amenity !== "object") return null;
+      {[...Object.entries(amenities.grouped)]
+        .sort(([a], [b]) => {
+          const ai = CATEGORY_ORDER.indexOf(a);
+          const bi = CATEGORY_ORDER.indexOf(b);
+          if (ai === -1 && bi === -1) return a.localeCompare(b);
+          if (ai === -1) return 1;
+          if (bi === -1) return -1;
+          return ai - bi;
+        })
+        .map(([category, items]) => {
+          const isServiceApartment =
+            propertyTypeId === SERVICE_APARTMENT_TYPE_ID;
+          const filteredItems = items.filter(
+            (amenity) => !amenity.apartment_only || isServiceApartment,
+          );
+          if (filteredItems.length === 0) return null;
 
-              const amenityName = String(amenity.name || "Unknown");
-              const amenityId = amenity.id || amenityName;
-              const IconComponent = iconMap[amenity.icon] || Monitor;
-              const selected = isSelected(amenityId);
+          return (
+            <div key={category}>
+              <h4 className="text-sm font-semibold text-foreground mb-3 uppercase tracking-wide">
+                {categoryLabels[category] || category}
+              </h4>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                {filteredItems.map((amenity) => {
+                  // Validate amenity object
+                  if (!amenity || typeof amenity !== "object") return null;
 
-              return (
-                <button
-                  key={amenityId}
-                  type="button"
-                  onClick={() => handleToggle(amenityId, amenityName)}
-                  className={`
+                  const amenityName = String(amenity.name || "Unknown");
+                  const amenityId = amenity.id || amenityName;
+                  const IconComponent = iconMap[amenity.icon] || Monitor;
+                  const selected = isSelected(amenityId);
+
+                  return (
+                    <button
+                      key={amenityId}
+                      type="button"
+                      onClick={() => handleToggle(amenityId, amenityName)}
+                      className={`
                     relative flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all
                     ${
                       selected
@@ -178,55 +222,31 @@ const AmenitiesGrid = ({ selectedAmenities = [], onChange }) => {
                         : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
                     }
                   `}
-                >
-                  {selected && (
-                    <div className="absolute top-2 right-2">
-                      <div className="h-5 w-5 bg-primary rounded-full flex items-center justify-center">
-                        <Check className="h-3 w-3 text-white" />
-                      </div>
-                    </div>
-                  )}
-                  <IconComponent
-                    className={`h-6 w-6 ${selected ? "text-primary" : "text-gray-600"}`}
-                  />
-                  <span
-                    className={`text-sm font-medium text-center ${
-                      selected ? "text-primary" : "text-gray-700"
-                    }`}
-                  >
-                    {amenityName}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      ))}
-
-      {selectedAmenities.length > 0 && (
-        <div className="mt-6 p-4 bg-primary/5 rounded-lg border border-primary/20">
-          <p className="text-sm font-medium text-foreground mb-2">
-            Selected Amenities ({selectedAmenities.length}):
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {selectedAmenities.map((amenity, index) => {
-              // Handle both string and object amenities
-              const amenityName =
-                typeof amenity === "string"
-                  ? amenity
-                  : amenity?.name || "Unknown";
-              return (
-                <span
-                  key={index}
-                  className="inline-flex items-center gap-1 px-3 py-1 bg-primary/20 text-primary rounded-full text-xs font-medium"
-                >
-                  {amenityName}
-                </span>
-              );
-            })}
-          </div>
-        </div>
-      )}
+                    >
+                      {selected && (
+                        <div className="absolute top-2 right-2">
+                          <div className="h-5 w-5 bg-primary rounded-full flex items-center justify-center">
+                            <Check className="h-3 w-3 text-white" />
+                          </div>
+                        </div>
+                      )}
+                      <IconComponent
+                        className={`h-6 w-6 ${selected ? "text-primary" : "text-gray-600"}`}
+                      />
+                      <span
+                        className={`text-sm font-medium text-center ${
+                          selected ? "text-primary" : "text-gray-700"
+                        }`}
+                      >
+                        {amenityName}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
     </div>
   );
 };

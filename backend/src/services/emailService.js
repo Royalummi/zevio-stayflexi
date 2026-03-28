@@ -339,7 +339,6 @@ export const sendCheckInReminderEmail = async (
         p.primary_incharge_email, p.primary_incharge_whatsapp, p.primary_incharge_alt_contact,
         p.secondary_incharge_name, p.secondary_incharge_phone,
         p.secondary_incharge_email, p.secondary_incharge_whatsapp,
-        p.check_in_guidelines, p.house_rules_text, p.amenities_guide,
         p.safety_information, p.local_area_info, p.emergency_contacts,
         c.name as city_name
       FROM bookings b
@@ -573,42 +572,6 @@ export const sendCheckInReminderEmail = async (
                 `
                     : ""
                 }
-              </div>
-              `
-                  : ""
-              }
-
-              <!-- Check-in Guidelines -->
-              ${
-                booking.check_in_guidelines
-                  ? `
-              <h2 class="section-title">✅ Check-in Guidelines</h2>
-              <div class="guidelines">
-                <div class="guidelines-content">${booking.check_in_guidelines}</div>
-              </div>
-              `
-                  : ""
-              }
-
-              <!-- House Rules -->
-              ${
-                booking.house_rules_text
-                  ? `
-              <h2 class="section-title">📜 House Rules</h2>
-              <div class="guidelines">
-                <div class="guidelines-content">${booking.house_rules_text}</div>
-              </div>
-              `
-                  : ""
-              }
-
-              <!-- Amenities Guide -->
-              ${
-                booking.amenities_guide
-                  ? `
-              <h2 class="section-title">🏠 Amenities Guide</h2>
-              <div class="guidelines">
-                <div class="guidelines-content">${booking.amenities_guide}</div>
               </div>
               `
                   : ""

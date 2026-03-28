@@ -143,7 +143,6 @@ interface Property {
   max_stay_days?: number;
   min_stay_nights?: number;
   max_stay_nights?: number;
-  deposit_amount?: number | string;
   maintenance_charges?: number | string;
   notice_period_days?: number;
   // Features returned as array from backend
@@ -172,12 +171,9 @@ interface Property {
   // Phase 1: Policy fields
   house_rules?: object | string;
   cancellation_policy?: object | string;
-  house_rules_text?: string;
   emergency_contacts?: string;
   safety_information?: string;
-  check_in_guidelines?: string;
   local_area_info?: string;
-  amenities_guide?: string;
   check_in_time?: string;
   check_out_time?: string;
   // Phase 3: Property info
@@ -609,7 +605,7 @@ function ServiceApartmentDetailContent() {
       propertyLocation: `${property!.city}, ${property!.state}`,
       propertyImage:
         getImageUrl(property!.photos[0]) || "/placeholder-property.jpg",
-      pricePerNight: property!.price_per_night,
+      pricePerNight: Number(property!.price_per_night),
       nights,
       baseAmount,
       extraGuestCharges: 0,
@@ -620,8 +616,8 @@ function ServiceApartmentDetailContent() {
       maxGuests: property!.max_guests || property!.max_occupancy || 4,
       minChildren: 0,
       maxChildren: 2,
-      extraGuestCharge: property!.extra_guest_charge || 0,
-      extraChildCharge: property!.extra_child_charge || 0,
+      extraGuestCharge: Number(property!.extra_guest_charge) || 0,
+      extraChildCharge: Number(property!.extra_child_charge) || 0,
     });
 
     router.push("/booking-review");
@@ -948,26 +944,6 @@ function ServiceApartmentDetailContent() {
                   </div>
                 </div>
 
-                {/* Security Deposit */}
-                {property.deposit_amount &&
-                  parseFloat(property.deposit_amount.toString()) > 0 && (
-                    <div className={styles.infoItem}>
-                      <div className={styles.infoIcon}>
-                        <FiShield />
-                      </div>
-                      <div className={styles.infoContent}>
-                        <div className={styles.infoLabel}>Security Deposit</div>
-                        <div className={styles.infoValue}>
-                          ₹
-                          {(property.deposit_amount || 0).toLocaleString()}
-                        </div>
-                        <div className={styles.infoNote}>
-                          Fully refundable at check-out
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
                 {/* Maintenance Charges */}
                 {property.maintenance_charges &&
                   parseFloat(property.maintenance_charges.toString()) > 0 && (
@@ -1056,29 +1032,6 @@ function ServiceApartmentDetailContent() {
                   </div>
                 )}
 
-                {/* House Rules */}
-                {property.house_rules_text && (
-                  <div className={styles.infoItem}>
-                    <div className={styles.infoIcon}>
-                      <FiInfo />
-                    </div>
-                    <div className={styles.infoContent}>
-                      <div className={styles.infoLabel}>House Rules</div>
-                      <div className={styles.infoValue}>
-                        Please review before booking
-                      </div>
-                      <div className={styles.infoNote}>
-                        {property.house_rules_text
-                          .replace(/<[^>]+>/g, " ")
-                          .replace(/\s+/g, " ")
-                          .trim()
-                          .substring(0, 80)}
-                        ...
-                      </div>
-                    </div>
-                  </div>
-                )}
-
                 {/* Children Policy */}
                 {property.max_children !== undefined &&
                   property.max_children > 0 && (
@@ -1096,7 +1049,10 @@ function ServiceApartmentDetailContent() {
                         parseFloat(property.extra_child_charge.toString()) >
                           0 ? (
                           <div className={styles.infoNote}>
-                            Extra charge: ₹{(property.extra_child_charge || 0).toLocaleString()}{" "}
+                            Extra charge: ₹
+                            {(
+                              property.extra_child_charge || 0
+                            ).toLocaleString()}{" "}
                             per child per night
                           </div>
                         ) : (
@@ -1433,46 +1389,6 @@ function ServiceApartmentDetailContent() {
                   className={styles.sectionContent}
                   dangerouslySetInnerHTML={{
                     __html: property.safety_information,
-                  }}
-                />
-              </div>
-            </details>
-          )}
-
-          {/* Amenities Usage Guide - Accordion */}
-          {property.amenities_guide && (
-            <details className={styles.accordionCard}>
-              <summary className={styles.accordionHeader}>
-                <span className={styles.accordionHeaderInner}>
-                  <FiInfo />
-                  Amenities Usage Guide
-                </span>
-                <span className={styles.accordionChevron}>&#8250;</span>
-              </summary>
-              <div className={styles.accordionBody}>
-                <div
-                  className={styles.sectionContent}
-                  dangerouslySetInnerHTML={{ __html: property.amenities_guide }}
-                />
-              </div>
-            </details>
-          )}
-
-          {/* Check-in Guidelines - Accordion */}
-          {property.check_in_guidelines && (
-            <details className={styles.accordionCard}>
-              <summary className={styles.accordionHeader}>
-                <span className={styles.accordionHeaderInner}>
-                  <FiClock />
-                  Check-in Guidelines
-                </span>
-                <span className={styles.accordionChevron}>&#8250;</span>
-              </summary>
-              <div className={styles.accordionBody}>
-                <div
-                  className={styles.sectionContent}
-                  dangerouslySetInnerHTML={{
-                    __html: property.check_in_guidelines,
                   }}
                 />
               </div>

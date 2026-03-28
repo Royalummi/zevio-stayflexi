@@ -43,7 +43,17 @@ const CityCombobox = ({
     if (!externalCities) {
       fetchCities();
     }
-    detectLocation();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Detect location only once, only when no city is pre-selected,
+  // and with a proper AbortController so strict-mode cleanup cancels the first run.
+  useEffect(() => {
+    if (value) return; // Already has a city selected — skip detection
+
+    const controller = new AbortController();
+    detectLocation(controller.signal);
+
+    return () => controller.abort();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Sync if externalCities prop updates
@@ -80,49 +90,49 @@ const CityCombobox = ({
     }
   };
 
-  // Detect user's location from IP with fallback services
-  const detectLocation = async () => {
-    // Try multiple geolocation services with fallbacks
+  // Detect user's location from IP with fallback services.
+  // Accepts an AbortSignal so React strict-mode cleanup can cancel in-flight requests.
+  const detectLocation = async (signal) => {
     const services = [
-      () => fetch("https://ipapi.co/json/", { timeout: 3000 }),
-      () => fetch("https://ipwho.is/", { timeout: 3000 }),
-      () => fetch("https://api.country.is/", { timeout: 3000 }),
+      {
+        url: "https://ipapi.co/json/",
+        parse: (d) => ({
+          city: d.city,
+          state: d.region,
+          country: d.country_name,
+        }),
+      },
+      {
+        url: "https://ipwho.is/",
+        parse: (d) => ({ city: d.city, state: d.region, country: d.country }),
+      },
     ];
 
-    for (const service of services) {
+    for (const { url, parse } of services) {
+      if (signal?.aborted) return;
       try {
-        const response = await service();
+        const response = await fetch(url, {
+          signal,
+          // Enforce a per-request timeout via AbortSignal.timeout where supported
+          ...(typeof AbortSignal.timeout === "function"
+            ? { signal: AbortSignal.any([signal, AbortSignal.timeout(4000)]) }
+            : {}),
+        });
         if (!response.ok) continue;
 
         const data = await response.json();
+        const loc = parse(data);
 
-        // Different APIs have different field names
-        const city = data.city || data.city_name || null;
-        const state = data.region || data.region_code || data.state || null;
-        const country =
-          data.country_name || data.country || data.country_code || null;
-
-        if (city && state) {
-          console.log("[CityCombobox] Location detected:", {
-            city,
-            state,
-            country,
-          });
-          setDetectedLocation({ city, state, country });
+        if (loc.city && loc.state) {
+          setDetectedLocation(loc);
           return;
         }
-      } catch (error) {
-        console.log(
-          "[CityCombobox] Location service failed, trying next...",
-          error.message,
-        );
+      } catch {
+        // Silently try the next service (or give up)
         continue;
       }
     }
-
-    console.log(
-      "[CityCombobox] All location services failed - skipping auto-detection",
-    );
+    // All services failed — nothing to do, the component works fine without it
   };
 
   // Check if detected location exists in cities and auto-select or show suggestion
@@ -137,10 +147,6 @@ const CityCombobox = ({
 
       if (matchingCity) {
         // Auto-select the matching city — defer to avoid "setState during render" warning
-        console.log(
-          "[CityCombobox] Auto-selecting detected location:",
-          matchingCity,
-        );
         setTimeout(() => {
           onChangeRef.current(matchingCity.id, matchingCity);
           toast.success(
@@ -152,9 +158,6 @@ const CityCombobox = ({
         detectedLocation.country === "IN"
       ) {
         // Show suggestion to add city if it doesn't exist (India only)
-        console.log(
-          "[CityCombobox] City not found in database, showing add suggestion",
-        );
         setShowLocationSuggestion(true);
       }
     }

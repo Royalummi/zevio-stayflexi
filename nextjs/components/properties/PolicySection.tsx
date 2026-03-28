@@ -16,14 +16,12 @@ import styles from "./policy-section.module.css";
 interface PolicySectionProps {
   houseRules?: object | string | null;
   cancellationPolicy?: object | string | null;
-  houseRulesText?: string | null;
   noticePeriodDays?: number | null;
 }
 
 export default function PolicySection({
   houseRules,
   cancellationPolicy,
-  houseRulesText,
   noticePeriodDays,
 }: PolicySectionProps) {
   const [houseRulesExpanded, setHouseRulesExpanded] = useState(false);
@@ -31,12 +29,7 @@ export default function PolicySection({
 
   // Parse house rules
   const parseHouseRules = () => {
-    if (!houseRules && !houseRulesText) return null;
-
-    // If we have house_rules_text (HTML), use it
-    if (houseRulesText) {
-      return <div dangerouslySetInnerHTML={{ __html: houseRulesText }} />;
-    }
+    if (!houseRules) return null;
 
     // If we have house_rules (JSON object)
     try {

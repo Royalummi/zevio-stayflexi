@@ -126,7 +126,9 @@ export const getAllChangeRequests = asyncHandler(async (req, res) => {
   const [requests] = await db.query(
     `SELECT 
       pcr.id, pcr.requested_changes, pcr.status, pcr.created_at, pcr.reviewed_at,
-      p.title as property_title, p.id as property_id, p.status as property_status,
+      pcr.property_id,
+      COALESCE(p.title, '(Deleted Property)') as property_title,
+      p.status as property_status,
       v.name as vendor_name, v.email as vendor_email,
       a.name as reviewed_by_name
     FROM property_change_requests pcr
@@ -185,10 +187,32 @@ export const approveChangeRequest = asyncHandler(async (req, res) => {
   }
 
   const request = requests[0];
-  const changes = JSON.parse(request.requested_changes);
+
+  // Guard: the property must still exist to apply changes
+  if (!request.vendor_id && !request.title) {
+    // Property was deleted — mark the request as rejected automatically
+    await db.query(
+      `UPDATE property_change_requests 
+       SET status = 'rejected', reviewed_by = ?, reviewed_at = NOW() 
+       WHERE id = ?`,
+      [adminId, id],
+    );
+    return sendError(
+      res,
+      "Cannot approve: the associated property no longer exists",
+      400,
+    );
+  }
+
+  let changes = JSON.parse(request.requested_changes);
+
+  // Handle legacy format where changes are nested under "updates" key
+  if (changes.updates && typeof changes.updates === "object") {
+    changes = changes.updates;
+  }
 
   // Define which fields belong to which tables
-  const pricingFields = [
+  const pricingFields = new Set([
     "price_per_night",
     "gst_percentage",
     "min_guests",
@@ -202,25 +226,66 @@ export const approveChangeRequest = asyncHandler(async (req, res) => {
     "long_term_discount_percent",
     "allow_corporate_booking",
     "corporate_discount_percent",
-    "deposit_amount",
     "maintenance_charges",
     "notice_period_days",
-  ];
+    "discount_3_5_days",
+    "discount_6_14_days",
+    "discount_15_plus_days",
+  ]);
+
+  // Whitelist of valid property table columns that can be updated
+  const validPropertyFields = new Set([
+    "title",
+    "description",
+    "address",
+    "area",
+    "state",
+    "pincode",
+    "bedrooms",
+    "bathrooms",
+    "max_guests",
+    "check_in_time",
+    "check_out_time",
+    "house_rules",
+    "cancellation_policy",
+    "photos",
+    "same_day_booking_allowed",
+    "max_booking_days",
+    "min_stay_days",
+    "max_stay_days",
+    "housekeeping_frequency",
+    "laundry_frequency",
+    "utilities_included",
+    "parking_slots",
+    "floor_number",
+    "wifi_speed_mbps",
+    "wifi_provider",
+    "furnishing_type",
+    "maps_location",
+    "pool_type",
+    "garden_type",
+    "pets_allowed",
+    "events_allowed",
+    "event_capacity",
+    "emergency_contacts",
+    "local_area_info",
+    "safety_information",
+  ]);
 
   const propertyFields = {};
   const pricingUpdates = {};
   let amenitiesUpdate = null;
 
-  // Separate changes by table
+  // Separate changes by table — skip non-column keys like "reason"
   Object.keys(changes).forEach((field) => {
     if (field === "amenities") {
       amenitiesUpdate = changes[field]; // Array of amenity IDs
-    } else if (pricingFields.includes(field)) {
+    } else if (pricingFields.has(field)) {
       pricingUpdates[field] = changes[field];
-    } else {
-      // Property table fields
+    } else if (validPropertyFields.has(field)) {
       propertyFields[field] = changes[field];
     }
+    // else: skip non-column metadata fields like "reason"
   });
 
   // Update properties table
@@ -294,14 +359,35 @@ export const approveChangeRequest = asyncHandler(async (req, res) => {
 
   // Update amenities
   if (amenitiesUpdate && Array.isArray(amenitiesUpdate)) {
+    // Resolve amenity names to IDs if needed (some requests use names like "WiFi" instead of UUIDs)
+    let resolvedAmenityIds = amenitiesUpdate;
+    const hasNonUUIDs = amenitiesUpdate.some(
+      (val) =>
+        typeof val === "string" && !/^[0-9a-f]{8}-[0-9a-f]{4}-/i.test(val),
+    );
+    if (hasNonUUIDs) {
+      const [allAmenities] = await db.query(`SELECT id, name FROM amenities`);
+      const nameToId = {};
+      allAmenities.forEach((a) => {
+        nameToId[a.name.toLowerCase()] = a.id;
+      });
+      resolvedAmenityIds = amenitiesUpdate
+        .map((val) => {
+          // If already a UUID, keep it; otherwise look up by name
+          if (/^[0-9a-f]{8}-[0-9a-f]{4}-/i.test(val)) return val;
+          return nameToId[val.toLowerCase()] || null;
+        })
+        .filter(Boolean);
+    }
+
     // Delete existing amenities
     await db.query(`DELETE FROM property_amenities WHERE property_id = ?`, [
       request.property_id,
     ]);
 
     // Insert new amenities
-    if (amenitiesUpdate.length > 0) {
-      const amenityValues = amenitiesUpdate.map((amenityId) => [
+    if (resolvedAmenityIds.length > 0) {
+      const amenityValues = resolvedAmenityIds.map((amenityId) => [
         generateUUID(),
         request.property_id,
         amenityId,
