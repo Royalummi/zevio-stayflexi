@@ -13,6 +13,7 @@ import {
   FiAlertTriangle,
 } from "react-icons/fi";
 import styles from "./safety-section.module.css";
+import { sanitizeHtml } from "@/lib/sanitize";
 
 interface SafetySectionProps {
   emergencyContacts?: string | null;
@@ -60,7 +61,7 @@ export default function SafetySection({
             {emergencyExpanded && (
               <div
                 className={`${styles.accordionContent} ${styles.proseContent}`}
-                dangerouslySetInnerHTML={{ __html: emergencyContacts }}
+                dangerouslySetInnerHTML={{ __html: sanitizeHtml(emergencyContacts) }}
               />
             )}
           </div>
@@ -87,7 +88,7 @@ export default function SafetySection({
             {safetyExpanded && (
               <div
                 className={`${styles.accordionContent} ${styles.proseContent}`}
-                dangerouslySetInnerHTML={{ __html: safetyInformation }}
+                dangerouslySetInnerHTML={{ __html: sanitizeHtml(safetyInformation) }}
               />
             )}
           </div>

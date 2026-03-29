@@ -79,7 +79,11 @@ export default function ImageGallery({
     };
 
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      // Restore body scroll if component unmounts while lightbox is open
+      document.body.style.overflow = "auto";
+    };
   }, [isLightboxOpen, goToPreviousLightbox, goToNextLightbox]);
 
   // Prevent rendering if no images

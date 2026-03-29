@@ -46,7 +46,48 @@ import {
   CheckCircle2,
   XCircle,
   Info,
+  Images,
+  Phone,
+  Star,
+  Shield,
+  Calendar,
+  Tag,
+  BarChart3,
+  ScrollText,
+  Percent,
+  Monitor,
+  Snowflake,
+  Utensils,
+  Tv,
+  Droplet,
+  Box,
+  Zap,
+  Dumbbell,
+  Waves,
+  Battery,
+  MoveVertical,
+  Sparkles,
+  Package,
+  Trees,
+  Heart,
+  Laptop,
+  Mountain,
+  BellRing,
+  CheckCircle,
+  XOctagon,
+  PawPrint,
+  PartyPopper,
 } from "lucide-react";
+
+// Amenity icon-name → Lucide component map (same as AmenitiesGrid)
+const amenityIconMap = {
+  wifi: Wifi, desk: Laptop, snowflake: Snowflake, car: Car, utensils: Utensils,
+  tv: Tv, "washing-machine": Droplet, refrigerator: Box, microwave: Zap,
+  "hot-tub": Bath, dumbbell: Dumbbell, "swimming-pool": Waves, shield: Shield,
+  battery: Battery, elevator: MoveVertical, broom: Sparkles, laundry: Package,
+  balcony: Home, tree: Trees, paw: Heart, monitor: Monitor,
+  "private-pool": Waves, jacuzzi: Bath, mountain: Mountain, "smoke-alarm": BellRing,
+};
 
 /**
  * PropertyViewEditModal Component
@@ -286,6 +327,68 @@ const PropertyViewEditModal = ({
       inactive: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
     };
     return colors[status] || colors.draft;
+  };
+
+  // Helper: render a label-value field (skips if value is null/undefined/"")
+  const Field = ({ label, value, full }) => {
+    if (value === null || value === undefined || value === "") return null;
+    return (
+      <div className={full ? "col-span-full" : ""}>
+        <p className="text-sm text-gray-500 dark:text-gray-400">{label}</p>
+        <p className="font-medium whitespace-pre-line">{value}</p>
+      </div>
+    );
+  };
+
+  const fmtEnum = (v) =>
+    v ? v.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) : null;
+  const fmtBool = (v) => (v ? "Yes" : "No");
+  const fmtPct = (v) => (v && parseFloat(v) > 0 ? `${v}%` : null);
+
+  // Try to parse a JSON-stringified policy field into readable key-value pairs
+  const renderPolicyContent = (raw) => {
+    if (!raw) return null;
+    let str = typeof raw === "string" ? raw : String(raw);
+    // Strip wrapping quotes if double-encoded
+    if (str.startsWith('"') && str.endsWith('"')) {
+      try { str = JSON.parse(str); } catch { /* keep as-is */ }
+    }
+    // Try JSON parse
+    try {
+      const obj = typeof str === "string" ? JSON.parse(str) : str;
+      if (obj && typeof obj === "object" && !Array.isArray(obj)) {
+        const entries = Object.entries(obj).filter(
+          ([, v]) => v !== "" && v !== null && v !== undefined && !(Array.isArray(v) && v.length === 0)
+        );
+        if (entries.length > 0) {
+          return (
+            <div className="space-y-2">
+              {entries.map(([k, v]) => {
+                const label = k.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+                const display = typeof v === "boolean" ? (v ? "Yes" : "No") : String(v);
+                return (
+                  <div key={k} className="flex items-start gap-2">
+                    <span className="text-gray-500 dark:text-gray-400 min-w-[140px] shrink-0">{label}:</span>
+                    <span className="font-medium">{display}</span>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        }
+      }
+    } catch { /* not JSON */ }
+    // If it contains HTML tags, render as HTML
+    if (/<[a-z][\s\S]*>/i.test(str)) {
+      return (
+        <div
+          className="prose prose-sm dark:prose-invert max-w-none"
+          dangerouslySetInnerHTML={{ __html: str }}
+        />
+      );
+    }
+    // Plain text fallback
+    return <span className="whitespace-pre-line">{str}</span>;
   };
 
   if (!fullPropertyData && !loading) {
@@ -764,8 +867,379 @@ const PropertyViewEditModal = ({
                         fullPropertyData.area ||
                         "Address not provided"}
                     </p>
+                    {fullPropertyData.pincode && (
+                      <p className="text-sm text-blue-700 dark:text-blue-300">
+                        PIN: {fullPropertyData.pincode}
+                      </p>
+                    )}
+                    {fullPropertyData.maps_location && (
+                      <a
+                        href={fullPropertyData.maps_location}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-sm text-blue-600 hover:underline mt-1"
+                      >
+                        <ExternalLink className="h-3 w-3" /> View on Google Maps
+                      </a>
+                    )}
                   </div>
                 </div>
+
+                {/* ─── Additional View-Only Sections ─── */}
+                {!isEditMode && fullPropertyData && (
+                  <>
+                    {/* Photos */}
+                    {fullPropertyData.images?.length > 0 && (
+                      <>
+                        <Separator />
+                        <div className="space-y-3">
+                          <h3 className="text-lg font-semibold flex items-center gap-2">
+                            <Images className="h-5 w-5" />
+                            Photos ({fullPropertyData.images.length})
+                          </h3>
+                          <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
+                            {fullPropertyData.images.map((img) => (
+                              <a
+                                key={img.id}
+                                href={img.image_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="aspect-video rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 hover:opacity-80 transition"
+                              >
+                                <img
+                                  src={img.image_url}
+                                  alt=""
+                                  className="w-full h-full object-cover"
+                                  loading="lazy"
+                                />
+                              </a>
+                            ))}
+                          </div>
+                        </div>
+                      </>
+                    )}
+
+                    {/* Vendor & Property Type */}
+                    <Separator />
+                    <div className="space-y-3">
+                      <h3 className="text-lg font-semibold flex items-center gap-2">
+                        <Users className="h-5 w-5" />
+                        Vendor & Property Type
+                      </h3>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-3">
+                        <Field label="Vendor Name" value={fullPropertyData.vendor_name} />
+                        <Field label="Vendor Email" value={fullPropertyData.vendor_email} />
+                        <Field label="Vendor Phone" value={fullPropertyData.vendor_phone} />
+                        <Field label="GST Number" value={fullPropertyData.vendor_gst} />
+                        <Field label="Property Type" value={fullPropertyData.property_type_name} />
+                        <Field label="Stay Type" value={fmtEnum(fullPropertyData.property_stay_type)} />
+                        <Field label="Rating" value={fullPropertyData.rating && parseFloat(fullPropertyData.rating) > 0 ? `${fullPropertyData.rating} ★ (${fullPropertyData.reviews_count} reviews)` : null} />
+                        <Field label="Created" value={fullPropertyData.created_at ? formatDate(fullPropertyData.created_at) : null} />
+                      </div>
+                    </div>
+
+                    {/* Property Details — shown as icon chips for booleans + grid for values */}
+                    <Separator />
+                    <div className="space-y-3">
+                      <h3 className="text-lg font-semibold flex items-center gap-2">
+                        <Home className="h-5 w-5" />
+                        Property Details
+                      </h3>
+
+                      {/* Feature badges row */}
+                      <div className="flex flex-wrap gap-2">
+                        {fullPropertyData.pets_allowed ? (
+                          <Badge className="bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300 border-green-200 dark:border-green-800 gap-1">
+                            <CheckCircle className="h-3 w-3" /> Pets Allowed
+                          </Badge>
+                        ) : null}
+                        {fullPropertyData.events_allowed ? (
+                          <Badge className="bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300 border-green-200 dark:border-green-800 gap-1">
+                            <CheckCircle className="h-3 w-3" /> Events Allowed
+                            {fullPropertyData.event_capacity ? ` (up to ${fullPropertyData.event_capacity})` : ""}
+                          </Badge>
+                        ) : null}
+                        {fullPropertyData.utilities_included ? (
+                          <Badge className="bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300 border-green-200 dark:border-green-800 gap-1">
+                            <CheckCircle className="h-3 w-3" /> Utilities Included
+                          </Badge>
+                        ) : null}
+                        {fullPropertyData.pool_type && fullPropertyData.pool_type !== "none" && (
+                          <Badge className="bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 border-blue-200 dark:border-blue-800 gap-1">
+                            <Waves className="h-3 w-3" /> {fmtEnum(fullPropertyData.pool_type)} Pool
+                          </Badge>
+                        )}
+                        {fullPropertyData.garden_type && fullPropertyData.garden_type !== "none" && (
+                          <Badge className="bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 gap-1">
+                            <Trees className="h-3 w-3" /> {fmtEnum(fullPropertyData.garden_type)} Garden
+                          </Badge>
+                        )}
+                      </div>
+
+                      {/* Key-value grid — only show meaningful values */}
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-3">
+                        <Field label="Living Area (sq ft)" value={fullPropertyData.living_area && fullPropertyData.living_area > 1 ? fullPropertyData.living_area : null} />
+                        <Field label="Furnishing" value={fmtEnum(fullPropertyData.furnishing_type)} />
+                        <Field label="Floor Number" value={fullPropertyData.floor_number} />
+                        <Field label="WiFi Speed" value={fullPropertyData.wifi_speed_mbps ? `${fullPropertyData.wifi_speed_mbps} Mbps` : null} />
+                        <Field label="WiFi Provider" value={fullPropertyData.wifi_provider} />
+                        <Field label="Parking Slots" value={fullPropertyData.parking_slots > 0 ? fullPropertyData.parking_slots : null} />
+                        <Field label="Housekeeping" value={fmtEnum(fullPropertyData.housekeeping_frequency)} />
+                        <Field label="Laundry" value={fmtEnum(fullPropertyData.laundry_frequency)} />
+                      </div>
+                    </div>
+
+                    {/* Booking Settings */}
+                    <Separator />
+                    <div className="space-y-3">
+                      <h3 className="text-lg font-semibold flex items-center gap-2">
+                        <CalendarDays className="h-5 w-5" />
+                        Booking Settings
+                      </h3>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-3">
+                        <Field label="Same-Day Booking" value={fmtBool(fullPropertyData.same_day_booking_allowed)} />
+                        <Field label="Min Stay (days)" value={fullPropertyData.min_stay_days} />
+                        <Field label="Max Stay (days)" value={fullPropertyData.max_stay_days} />
+                        <Field label="Max Booking Days" value={fullPropertyData.max_booking_days} />
+                      </div>
+                    </div>
+
+                    {/* Detailed Pricing */}
+                    {fullPropertyData.pricing && (
+                      <>
+                        <Separator />
+                        <div className="space-y-3">
+                          <h3 className="text-lg font-semibold flex items-center gap-2">
+                            <Percent className="h-5 w-5" />
+                            Detailed Pricing
+                          </h3>
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-3">
+                            <Field label="GST" value={fmtPct(fullPropertyData.pricing.gst_percentage)} />
+                            <Field label="Min Guests (included)" value={fullPropertyData.pricing.min_guests} />
+                            <Field label="Extra Guest Charge" value={parseFloat(fullPropertyData.pricing.extra_guest_charge) > 0 ? formatCurrency(fullPropertyData.pricing.extra_guest_charge) : null} />
+                            <Field label="Children (min–max)" value={`${fullPropertyData.pricing.min_children ?? 0} – ${fullPropertyData.pricing.max_children ?? 0}`} />
+                            <Field label="Extra Child Charge" value={parseFloat(fullPropertyData.pricing.extra_child_charge) > 0 ? formatCurrency(fullPropertyData.pricing.extra_child_charge) : null} />
+                            <Field label="Deposit" value={fullPropertyData.pricing.deposit_amount && parseFloat(fullPropertyData.pricing.deposit_amount) > 0 ? formatCurrency(fullPropertyData.pricing.deposit_amount) : null} />
+                            <Field label="Maintenance Charges" value={parseFloat(fullPropertyData.pricing.maintenance_charges) > 0 ? formatCurrency(fullPropertyData.pricing.maintenance_charges) : null} />
+                            <Field label="Notice Period" value={fullPropertyData.pricing.notice_period_days ? `${fullPropertyData.pricing.notice_period_days} days` : null} />
+                            <Field label="Corporate Booking" value={fullPropertyData.pricing.allow_corporate_booking ? `Yes (${fullPropertyData.pricing.corporate_discount_percent}% discount)` : "No"} />
+                          </div>
+
+                          {/* Discount table */}
+                          {(() => {
+                            const p = fullPropertyData.pricing;
+                            const discounts = [
+                              { label: "3–5 Days", value: fmtPct(p.discount_3_5_days) },
+                              { label: "6–14 Days", value: fmtPct(p.discount_6_14_days) },
+                              { label: "15+ Days", value: fmtPct(p.discount_15_plus_days) },
+                              { label: "Weekly", value: fmtPct(p.weekly_discount_percent) },
+                              { label: "Monthly", value: fmtPct(p.monthly_discount_percent) },
+                              { label: "Quarterly", value: fmtPct(p.quarterly_discount_percent) },
+                              { label: "Long Term", value: fmtPct(p.long_term_discount_percent) },
+                            ].filter((d) => d.value);
+                            if (discounts.length === 0) return null;
+                            return (
+                              <div className="mt-2">
+                                <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Discounts</p>
+                                <div className="flex flex-wrap gap-2">
+                                  {discounts.map((d) => (
+                                    <Badge key={d.label} variant="secondary">
+                                      {d.label}: {d.value}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            );
+                          })()}
+                        </div>
+                      </>
+                    )}
+
+                    {/* Amenities */}
+                    {fullPropertyData.amenities?.length > 0 && (
+                      <>
+                        <Separator />
+                        <div className="space-y-3">
+                          <h3 className="text-lg font-semibold flex items-center gap-2">
+                            <Tag className="h-5 w-5" />
+                            Amenities ({fullPropertyData.amenities.length})
+                          </h3>
+                          <div className="flex flex-wrap gap-2">
+                            {fullPropertyData.amenities.map((a) => {
+                              const Icon = amenityIconMap[a.icon] || Monitor;
+                              return (
+                                <Badge
+                                  key={a.id}
+                                  variant="outline"
+                                  className="px-3 py-1.5 text-sm gap-1.5"
+                                >
+                                  <Icon className="h-3.5 w-3.5 text-primary" />
+                                  {a.name}
+                                </Badge>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </>
+                    )}
+
+                    {/* Contacts */}
+                    {fullPropertyData.contacts?.length > 0 && (
+                      <>
+                        <Separator />
+                        <div className="space-y-3">
+                          <h3 className="text-lg font-semibold flex items-center gap-2">
+                            <Phone className="h-5 w-5" />
+                            Property Contacts
+                          </h3>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {fullPropertyData.contacts.map((c) => (
+                              <div
+                                key={c.id}
+                                className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg space-y-1"
+                              >
+                                <p className="font-medium">{c.name}</p>
+                                {c.contact_type_name && (
+                                  <p className="text-xs text-gray-500">{c.contact_type_name}</p>
+                                )}
+                                {c.phone && <p className="text-sm">📞 {c.phone}</p>}
+                                {c.email && <p className="text-sm">✉️ {c.email}</p>}
+                                {c.whatsapp && <p className="text-sm">💬 {c.whatsapp}</p>}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </>
+                    )}
+
+                    {/* Policies & Guidelines */}
+                    {(fullPropertyData.house_rules ||
+                      fullPropertyData.cancellation_policy ||
+                      fullPropertyData.safety_information ||
+                      fullPropertyData.local_area_info ||
+                      fullPropertyData.emergency_contacts ||
+                      fullPropertyData.check_in_guidelines) && (
+                      <>
+                        <Separator />
+                        <div className="space-y-3">
+                          <h3 className="text-lg font-semibold flex items-center gap-2">
+                            <ScrollText className="h-5 w-5" />
+                            Policies & Guidelines
+                          </h3>
+                          <div className="space-y-4">
+                            {fullPropertyData.house_rules && (
+                              <div>
+                                <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">House Rules</p>
+                                <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg text-sm">
+                                  {renderPolicyContent(fullPropertyData.house_rules)}
+                                </div>
+                              </div>
+                            )}
+                            {fullPropertyData.cancellation_policy && (
+                              <div>
+                                <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Cancellation Policy</p>
+                                <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg text-sm">
+                                  {renderPolicyContent(fullPropertyData.cancellation_policy)}
+                                </div>
+                              </div>
+                            )}
+                            {fullPropertyData.check_in_guidelines && (
+                              <div>
+                                <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Check-in Guidelines</p>
+                                <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg text-sm">
+                                  {renderPolicyContent(fullPropertyData.check_in_guidelines)}
+                                </div>
+                              </div>
+                            )}
+                            {fullPropertyData.safety_information && (
+                              <div>
+                                <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Safety Information</p>
+                                <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg text-sm">
+                                  {renderPolicyContent(fullPropertyData.safety_information)}
+                                </div>
+                              </div>
+                            )}
+                            {fullPropertyData.local_area_info && (
+                              <div>
+                                <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Local Area Info</p>
+                                <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg text-sm">
+                                  {renderPolicyContent(fullPropertyData.local_area_info)}
+                                </div>
+                              </div>
+                            )}
+                            {fullPropertyData.emergency_contacts && (
+                              <div>
+                                <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Emergency Contacts</p>
+                                <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg text-sm">
+                                  {renderPolicyContent(fullPropertyData.emergency_contacts)}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </>
+                    )}
+
+                    {/* Booking Stats */}
+                    {fullPropertyData.booking_stats && (
+                      <>
+                        <Separator />
+                        <div className="space-y-3">
+                          <h3 className="text-lg font-semibold flex items-center gap-2">
+                            <BarChart3 className="h-5 w-5" />
+                            Booking Stats
+                          </h3>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg text-center">
+                              <p className="text-2xl font-bold">{fullPropertyData.booking_stats.total_bookings ?? 0}</p>
+                              <p className="text-xs text-gray-500">Total Bookings</p>
+                            </div>
+                            <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg text-center">
+                              <p className="text-2xl font-bold text-green-600">{fullPropertyData.booking_stats.confirmed_bookings ?? 0}</p>
+                              <p className="text-xs text-gray-500">Confirmed</p>
+                            </div>
+                            <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg text-center">
+                              <p className="text-2xl font-bold text-blue-600">{fullPropertyData.booking_stats.completed_bookings ?? 0}</p>
+                              <p className="text-xs text-gray-500">Completed</p>
+                            </div>
+                            <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg text-center">
+                              <p className="text-2xl font-bold text-primary">{formatCurrency(fullPropertyData.booking_stats.total_revenue ?? 0)}</p>
+                              <p className="text-xs text-gray-500">Revenue</p>
+                            </div>
+                          </div>
+                        </div>
+                      </>
+                    )}
+
+                    {/* Blackout Dates */}
+                    {fullPropertyData.blackout_dates?.length > 0 && (
+                      <>
+                        <Separator />
+                        <div className="space-y-3">
+                          <h3 className="text-lg font-semibold flex items-center gap-2">
+                            <Calendar className="h-5 w-5" />
+                            Blackout Dates ({fullPropertyData.blackout_dates.length})
+                          </h3>
+                          <div className="space-y-2">
+                            {fullPropertyData.blackout_dates.map((bd) => (
+                              <div
+                                key={bd.id}
+                                className="flex items-center justify-between bg-red-50 dark:bg-red-900/20 p-3 rounded-lg text-sm"
+                              >
+                                <span className="font-medium">
+                                  {formatDate(bd.start_date)} → {formatDate(bd.end_date)}
+                                </span>
+                                {bd.reason && (
+                                  <span className="text-gray-500">{bd.reason}</span>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </>
+                )}
 
                 {/* Info about Advanced Editing */}
                 {!isEditMode && (

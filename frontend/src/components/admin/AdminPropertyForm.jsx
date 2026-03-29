@@ -62,7 +62,7 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
     pincode: "",
     bedrooms: 1,
     bathrooms: 1,
-    living_area: "",
+    living_area: 1,
     max_guests: 2,
     check_in_time: "2:00 PM",
     check_out_time: "11:00 AM",
@@ -894,7 +894,7 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
       if (payload.living_area !== undefined) {
         payload.living_area = payload.living_area
           ? parseInt(payload.living_area)
-          : null;
+          : 1;
       }
       if (payload.max_guests !== undefined) {
         payload.max_guests = parseInt(payload.max_guests) || 2;
@@ -1421,19 +1421,19 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div className="flex flex-col">
               <label className="text-sm font-medium text-foreground mb-2">
-                Living Area (sq ft)
+                Living Rooms
               </label>
               <input
                 type="number"
                 name="living_area"
                 value={formData.living_area}
                 onChange={handleInputChange}
-                min="0"
-                placeholder="e.g., 1200"
+                min="1"
+                placeholder="e.g., 2"
                 className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
               <span className="text-xs text-muted-foreground mt-1">
-                Total living area in square feet
+                Number of living rooms
               </span>
             </div>
           </div>

@@ -42,6 +42,7 @@ import { useToast } from "@/hooks/useToast";
 import ToastContainer from "@/components/ui/ToastContainer";
 import { useAuthModals } from "@/contexts/AuthModalContext";
 import { getImageUrl, getPropertyImages } from "@/lib/imageUtils";
+import { sanitizeHtml } from "@/lib/sanitize";
 import ServiceDetailsCard from "@/components/properties/ServiceDetailsCard";
 import FeaturedPropertyBadge from "@/components/properties/FeaturedPropertyBadge";
 import MobileBookingSheet from "@/components/MobileBookingSheet";
@@ -116,6 +117,7 @@ interface Property {
   state: string;
   address: string;
   area?: string;
+  living_area?: number;
   pincode?: string;
   maps_location?: string;
   bedrooms: number;
@@ -751,12 +753,14 @@ function ServiceApartmentDetailContent() {
                 </div>
               </div>
               <div className={styles.statItem}>
-                <div className={styles.statIcon}>⭐</div>
+                <div className={styles.statIcon}>
+                  <FiHome />
+                </div>
                 <div className={styles.statContent}>
-                  <div className={styles.statValue}>{property.rating}</div>
-                  <div className={styles.statLabel}>
-                    ({property.reviews_count || property.total_reviews || 0})
+                  <div className={styles.statValue}>
+                    {property.living_area || 1}
                   </div>
+                  <div className={styles.statLabel}>Living Rooms</div>
                 </div>
               </div>
             </div>
@@ -1368,7 +1372,7 @@ function ServiceApartmentDetailContent() {
               <div className={styles.accordionBody}>
                 <div
                   className={styles.sectionContent}
-                  dangerouslySetInnerHTML={{ __html: property.local_area_info }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(property.local_area_info as string) }}
                 />
               </div>
             </details>
@@ -1388,7 +1392,7 @@ function ServiceApartmentDetailContent() {
                 <div
                   className={styles.sectionContent}
                   dangerouslySetInnerHTML={{
-                    __html: property.safety_information,
+                    __html: sanitizeHtml(property.safety_information as string),
                   }}
                 />
               </div>
@@ -1516,9 +1520,9 @@ function ServiceApartmentDetailContent() {
                         className={styles.counterBtn}
                         onClick={(e) => {
                           e.stopPropagation();
-                          setChildren(Math.min(5, children + 1));
+                          setChildren(Math.min(property?.max_children || 5, children + 1));
                         }}
-                        disabled={children >= 5}
+                        disabled={children >= (property?.max_children || 5)}
                       >
                         +
                       </button>

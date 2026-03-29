@@ -10,7 +10,6 @@ import {
   LogOut,
   Menu,
   X,
-  Bell,
   Search,
   ChevronDown,
   Building2,
@@ -42,6 +41,7 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { cn } from "../../lib/utils";
+import NotificationDropdown from "./NotificationDropdown";
 
 const DashboardLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false); // For mobile only
@@ -284,10 +284,7 @@ const DashboardLayout = () => {
               </Button>
 
               {/* Notifications */}
-              <Button variant="ghost" size="icon" className="relative">
-                <Bell className="h-5 w-5" />
-                <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full" />
-              </Button>
+              <NotificationDropdown />
 
               {/* User Menu Dropdown */}
               <DropdownMenu>

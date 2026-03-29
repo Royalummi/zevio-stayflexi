@@ -45,6 +45,7 @@ import luxuryStyles from "./luxury-property.module.css";
 import PropertyGallery from "./PropertyGallery";
 import DateRangeSelector from "@/components/DateRangeSelector";
 import { getImageUrl } from "@/lib/imageUtils";
+import { sanitizeHtml } from "@/lib/sanitize";
 import FeaturedPropertyBadge from "@/components/properties/FeaturedPropertyBadge";
 import MobileBookingSheet from "@/components/MobileBookingSheet";
 
@@ -284,6 +285,7 @@ function PropertyDetailContent() {
           rating: data.rating || 0,
           reviews_count: data.reviews_count || 0,
           status: data.status,
+          living_area: data.living_area,
           // Phase 1 fields
           house_rules: data.house_rules,
           cancellation_policy: data.cancellation_policy,
@@ -857,13 +859,15 @@ function PropertyDetailContent() {
                   </div>
                   <div className={luxuryStyles.statCardLuxury}>
                     <div className={luxuryStyles.statIconLuxury}>
-                      <FiStar />
+                      <FiHome />
                     </div>
                     <div className={luxuryStyles.statContentLuxury}>
                       <div className={luxuryStyles.statValueLuxury}>
-                        {Number(property.rating).toFixed(1)}
+                        {property.living_area || 1}
                       </div>
-                      <div className={luxuryStyles.statLabelLuxury}>Rating</div>
+                      <div className={luxuryStyles.statLabelLuxury}>
+                        Living Rooms
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1141,7 +1145,7 @@ function PropertyDetailContent() {
                   <div
                     className={luxuryStyles.descriptionTextLuxury}
                     dangerouslySetInnerHTML={{
-                      __html: property.local_area_info,
+                      __html: sanitizeHtml(property.local_area_info as string),
                     }}
                   />
                 </details>
@@ -1162,7 +1166,7 @@ function PropertyDetailContent() {
                   <div
                     className={luxuryStyles.descriptionTextLuxury}
                     dangerouslySetInnerHTML={{
-                      __html: property.safety_information,
+                      __html: sanitizeHtml(property.safety_information as string),
                     }}
                   />
                 </details>

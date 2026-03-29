@@ -50,6 +50,7 @@ export interface Property {
   description: string;
   address: string;
   area?: string; // Specific area/locality within city
+  living_area?: number; // Number of living rooms (default 1)
   city: string;
   state: string;
   pincode: string;

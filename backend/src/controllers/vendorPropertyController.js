@@ -2,6 +2,7 @@ import db from "../config/database.js";
 import { asyncHandler, sendSuccess, sendError } from "../utils/response.js";
 import { generateUUID } from "../utils/helpers.js";
 import { sanitizeRichText } from "../utils/sanitize.js";
+import { notifyAdmin } from "../services/notificationEmailService.js";
 
 /**
  * @route   POST /api/vendor/properties
@@ -23,6 +24,7 @@ export const createProperty = asyncHandler(async (req, res) => {
     bedrooms,
     bathrooms,
     max_guests,
+    living_area,
     min_stay_days,
     max_stay_days,
     housekeeping_frequency,
@@ -105,7 +107,7 @@ export const createProperty = asyncHandler(async (req, res) => {
     INSERT INTO properties (
       id, vendor_id, city_id, property_type_id, title, description,
       address, area, state, pincode, maps_location,
-      bedrooms, bathrooms, max_guests,
+      bedrooms, bathrooms, max_guests, living_area,
       min_stay_days, max_stay_days, housekeeping_frequency, laundry_frequency,
       utilities_included, parking_slots, floor_number, wifi_speed_mbps, wifi_provider, furnishing_type,
       same_day_booking_allowed, max_booking_days, check_in_time, check_out_time,
@@ -117,7 +119,7 @@ export const createProperty = asyncHandler(async (req, res) => {
     ) VALUES (
       ?, ?, ?, ?, ?, ?,
       ?, ?, ?, ?, ?,
-      ?, ?, ?,
+      ?, ?, ?, ?,
       ?, ?, ?, ?,
       ?, ?, ?, ?, ?, ?,
       ?, ?, ?, ?,
@@ -144,6 +146,7 @@ export const createProperty = asyncHandler(async (req, res) => {
     bedrooms || 0,
     bathrooms || 0,
     max_guests || 2,
+    living_area || 1,
     min_stay_days || 1,
     max_stay_days || null,
     housekeeping_frequency || "weekly",
@@ -464,6 +467,18 @@ export const submitProperty = asyncHandler(async (req, res) => {
     // Continue anyway - notification failure shouldn't block submission
   }
 
+  // Send email to admin (fire-and-forget)
+  notifyAdmin({
+    subject: `New Property: ${property.title}`,
+    title: "New Property Submission",
+    message: `A vendor has submitted a new property "${property.title}" for approval.`,
+    details: [["Property", property.title], ["Status", "Pending Approval"]],
+    badgeText: "Needs Approval",
+    badgeClass: "badge-warning",
+    ctaUrl: `${process.env.FRONTEND_URL || "http://localhost:5173"}/admin/properties`,
+    ctaText: "Review Property",
+  }).catch(() => {});
+
   sendSuccess(
     res,
     {
@@ -661,6 +676,18 @@ export const updateProperty = asyncHandler(async (req, res) => {
       // Continue anyway - notification failure shouldn't block change request
     }
 
+    // Send email to admin (fire-and-forget)
+    notifyAdmin({
+      subject: `Change Request: ${property.title}`,
+      title: "Property Change Request",
+      message: `A vendor has submitted changes for property "${property.title}". Please review and approve or reject.`,
+      details: [["Property", property.title], ["Fields Changed", Object.keys(changedFields).join(", ")]],
+      badgeText: "Pending Review",
+      badgeClass: "badge-warning",
+      ctaUrl: `${process.env.FRONTEND_URL || "http://localhost:5173"}/admin/change-requests`,
+      ctaText: "Review Changes",
+    }).catch(() => {});
+
     return sendSuccess(
       res,
       {
@@ -715,6 +742,7 @@ export const updateProperty = asyncHandler(async (req, res) => {
     "pets_allowed",
     "events_allowed",
     "event_capacity",
+    "living_area",
   ]);
 
   // Build update query dynamically

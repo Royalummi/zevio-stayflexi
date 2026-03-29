@@ -1,0 +1,33 @@
+<!--
+  NOTIFICATION EMAIL TEMPLATE
+  ─────────────────────────────
+  Sent via: noreply@notify.zevio.in
+  Used for: Property submissions, change requests, approvals, rejections,
+            status updates, and general system notifications.
+
+  Placeholders (replaced at runtime):
+    {{TITLE}}           – Notification title (e.g. "New Property Submitted")
+    {{MESSAGE}}         – Main notification body text
+    {{CTA_URL}}         – Call-to-action button URL (optional)
+    {{CTA_TEXT}}        – Button label (optional)
+    {{BADGE_TEXT}}      – Status badge text (optional)
+    {{BADGE_CLASS}}     – badge-success | badge-warning | badge-danger | badge-info
+    {{DETAILS_HTML}}    – Extra info-card HTML rows (optional)
+    {{RECIPIENT_NAME}} – "Hi {name},"
+-->
+
+<h2>{{TITLE}}</h2>
+
+<p>Hi {{RECIPIENT_NAME}},</p>
+
+<p>{{MESSAGE}}</p>
+
+{{BADGE_HTML}}
+
+{{DETAILS_HTML}}
+
+{{CTA_HTML}}
+
+<p style="font-size: 13px; color: #6b7280; margin-top: 24px;">
+  If you have any questions, reply to <a href="mailto:hello@zevio.in">hello@zevio.in</a>.
+</p>

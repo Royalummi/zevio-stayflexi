@@ -13,6 +13,7 @@ import {
   FiInfo,
 } from "react-icons/fi";
 import styles from "./check-in-section.module.css";
+import { sanitizeHtml } from "@/lib/sanitize";
 
 interface CheckInSectionProps {
   checkInGuidelines?: string | null;
@@ -84,7 +85,7 @@ export default function CheckInSection({
             {checkInExpanded && (
               <div
                 className={`${styles.accordionContent} ${styles.proseContent}`}
-                dangerouslySetInnerHTML={{ __html: checkInGuidelines }}
+                dangerouslySetInnerHTML={{ __html: sanitizeHtml(checkInGuidelines) }}
               />
             )}
           </div>
@@ -111,7 +112,7 @@ export default function CheckInSection({
             {localAreaExpanded && (
               <div
                 className={`${styles.accordionContent} ${styles.proseContent}`}
-                dangerouslySetInnerHTML={{ __html: localAreaInfo }}
+                dangerouslySetInnerHTML={{ __html: sanitizeHtml(localAreaInfo) }}
               />
             )}
           </div>
@@ -138,7 +139,7 @@ export default function CheckInSection({
             {amenitiesExpanded && (
               <div
                 className={`${styles.accordionContent} ${styles.proseContent}`}
-                dangerouslySetInnerHTML={{ __html: amenitiesGuide }}
+                dangerouslySetInnerHTML={{ __html: sanitizeHtml(amenitiesGuide) }}
               />
             )}
           </div>

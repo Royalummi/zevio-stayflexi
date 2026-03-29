@@ -4,14 +4,27 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-// Create transporter only if credentials are provided
+// ─── Brevo SMTP Transporter ────────────────────────────────────────
+// Single transporter; the "from" address is chosen per-email based on purpose.
 let transporter = null;
 
-if (
+if (process.env.BREVO_SMTP_SERVER && process.env.BREVO_SMTP_KEY) {
+  // Preferred: Brevo SMTP relay
+  transporter = nodemailer.createTransport({
+    host: process.env.BREVO_SMTP_SERVER,
+    port: parseInt(process.env.BREVO_PORT) || 587,
+    secure: false,
+    auth: {
+      user: process.env.BREVO_LOGIN,
+      pass: process.env.BREVO_SMTP_KEY,
+    },
+  });
+} else if (
   process.env.EMAIL_USER &&
   process.env.EMAIL_PASSWORD &&
   process.env.EMAIL_USER !== "your_email@gmail.com"
 ) {
+  // Fallback: legacy Gmail config
   transporter = nodemailer.createTransport({
     service: process.env.EMAIL_SERVICE || "gmail",
     auth: {
@@ -20,6 +33,16 @@ if (
     },
   });
 }
+
+// ─── Sender Addresses (purpose-based) ──────────────────────────────
+export const SENDERS = {
+  SYSTEM:   `"Zevio" <${process.env.SENDER_SYSTEM   || "noreply@notify.zevio.in"}>`,
+  BOOKINGS: `"Zevio Bookings" <${process.env.SENDER_BOOKINGS || "bookings@notify.zevio.in"}>`,
+  ALERTS:   `"Zevio Alerts" <${process.env.SENDER_ALERTS    || "alerts@notify.zevio.in"}>`,
+};
+
+// Admin inbox — all admin notifications go here
+export const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "hello@zevio.in";
 
 // Verify transporter
 export const verifyEmailConfig = async () => {
@@ -967,9 +990,9 @@ export const sendBookingExpiryEmail = async (bookingId) => {
 
 /**
  * Generic send email function
- * @param {Object} options - Email options (to, subject, html, text)
+ * @param {Object} options - Email options (to, subject, html, text, from)
  */
-export const sendEmail = async ({ to, subject, html, text }) => {
+export const sendEmail = async ({ to, subject, html, text, from }) => {
   if (!transporter) {
     console.log("⚠️  Email not sent: Email service not configured");
     return false;
@@ -977,9 +1000,7 @@ export const sendEmail = async ({ to, subject, html, text }) => {
 
   try {
     const mailOptions = {
-      from: `"${process.env.EMAIL_FROM_NAME || "Zevio"}" <${
-        process.env.EMAIL_USER
-      }>`,
+      from: from || SENDERS.SYSTEM,
       to,
       subject,
       html,

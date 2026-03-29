@@ -68,7 +68,7 @@ const VendorPropertyForm = ({
     maps_location: "",
     bedrooms: 1,
     bathrooms: 1,
-    living_area: "",
+    living_area: 1,
     max_guests: 2,
     check_in_time: "2:00 PM",
     check_out_time: "11:00 AM",
@@ -676,7 +676,7 @@ const VendorPropertyForm = ({
         bathrooms: parseInt(formData.bathrooms) || 0,
         living_area: formData.living_area
           ? parseInt(formData.living_area)
-          : null,
+          : 1,
         max_guests: parseInt(formData.max_guests) || 2,
         weekly_discount_percent:
           parseFloat(formData.weekly_discount_percent) || 0,
@@ -1127,19 +1127,19 @@ const VendorPropertyForm = ({
             {/* Living Area */}
             <div className="flex flex-col">
               <label className="text-sm font-medium text-foreground mb-2">
-                Living Area (sq ft)
+                Living Rooms
               </label>
               <input
                 type="number"
                 name="living_area"
-                value={formData.living_area || ""}
+                value={formData.living_area || 1}
                 onChange={handleInputChange}
-                min="0"
-                placeholder="e.g., 1200"
+                min="1"
+                placeholder="e.g., 2"
                 className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
               <span className="text-xs text-muted-foreground mt-1">
-                Total living area in square feet
+                Number of living rooms
               </span>
             </div>
           </div>
@@ -2255,6 +2255,70 @@ const VendorPropertyForm = ({
           </div>
         )}
       </form>
+
+      {/* Terms & Conditions Modal */}
+      {showTermsModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col">
+            <div className="flex items-center justify-between p-6 border-b border-border">
+              <h2 className="text-xl font-bold text-foreground">Vendor Terms & Conditions</h2>
+              <button type="button" onClick={() => setShowTermsModal(false)} className="text-muted-foreground hover:text-foreground transition-colors">
+                ✕
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-6">
+              {termsLoading ? (
+                <div className="flex items-center justify-center h-32 text-muted-foreground">
+                  <Loader2 className="h-6 w-6 animate-spin mr-2" />
+                  Loading Terms & Conditions...
+                </div>
+              ) : (
+                <div
+                  className="prose prose-sm dark:prose-invert max-w-none text-foreground"
+                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(termsContent) }}
+                />
+              )}
+            </div>
+            <div className="p-6 border-t border-border space-y-4">
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={termsAgreed}
+                  onChange={(e) => setTermsAgreed(e.target.checked)}
+                  className="h-5 w-5 mt-0.5 rounded border-border text-primary focus:ring-primary"
+                />
+                <span className="text-sm text-foreground">
+                  I have read and agree to the Terms & Conditions
+                </span>
+              </label>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowTermsModal(false)}
+                  className="flex-1 px-4 py-2.5 bg-muted text-foreground border border-border rounded-lg font-semibold hover:bg-muted/80 transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleTermsConfirm}
+                  disabled={!termsAgreed || loading}
+                  className="flex-1 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                >
+                  {loading ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Submitting...
+                    </span>
+                  ) : (
+                    "Agree & Submit"
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

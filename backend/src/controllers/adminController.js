@@ -8,6 +8,7 @@ import {
   sendPasswordResetEmail,
 } from "../services/emailService.js";
 import { sanitizeRichText } from "../utils/sanitize.js";
+import { notifyVendor } from "../services/notificationEmailService.js";
 import cashfreeService from "../services/cashfree.service.js";
 import {
   uploadMultipleToR2,
@@ -1027,6 +1028,25 @@ export const updatePropertyStatus = asyncHandler(async (req, res) => {
       "Failed to send property status notification:",
       notifError.message,
     );
+  }
+
+  // Send email to vendor (fire-and-forget)
+  if (status === "approved") {
+    notifyVendor(property[0].vendor_id, {
+      subject: `Property Approved: ${property[0].title}`,
+      title: "Property Approved",
+      message: `Great news! Your property "${property[0].title}" has been approved and is now live on Zevio.`,
+      alertType: "success",
+      details: [["Property", property[0].title], ["Status", "Approved & Live"]],
+    }).catch(() => {});
+  } else if (status === "inactive" && rejection_reason) {
+    notifyVendor(property[0].vendor_id, {
+      subject: `Property Marked Inactive: ${property[0].title}`,
+      title: "Property Status Updated",
+      message: `Your property "${property[0].title}" has been marked as inactive.`,
+      alertType: "danger",
+      details: [["Property", property[0].title], ["Status", "Inactive"], ["Reason", rejection_reason]],
+    }).catch(() => {});
   }
 
   sendSuccess(res, null, `Property status updated to ${status}`, 200);
@@ -2322,6 +2342,7 @@ export const createProperty = asyncHandler(async (req, res) => {
     bedrooms,
     bathrooms,
     max_guests,
+    living_area,
     min_guests,
     extra_guest_charge,
     min_children,
@@ -2414,7 +2435,7 @@ export const createProperty = asyncHandler(async (req, res) => {
       id, vendor_id, employee_id, city_id, property_type_id, title, description,
       address, area, state, pincode, maps_location,
       pool_type, garden_type, pets_allowed, events_allowed, event_capacity,
-      bedrooms, bathrooms, max_guests,
+      bedrooms, bathrooms, max_guests, living_area,
       min_stay_days, max_stay_days, housekeeping_frequency, laundry_frequency,
       utilities_included, parking_slots, floor_number, wifi_speed_mbps, wifi_provider, furnishing_type,
       is_recommended, recommended_priority, recommended_at, recommended_by,
@@ -2425,7 +2446,7 @@ export const createProperty = asyncHandler(async (req, res) => {
       ?, ?, ?, ?, ?, ?, ?,
       ?, ?, ?, ?, ?,
       ?, ?, ?, ?, ?,
-      ?, ?, ?,
+      ?, ?, ?, ?,
       ?, ?, ?, ?,
       ?, ?, ?, ?, ?, ?,
       ?, ?, ?, ?,
@@ -2456,6 +2477,7 @@ export const createProperty = asyncHandler(async (req, res) => {
     bedrooms || 0,
     bathrooms || 0,
     max_guests || 2,
+    living_area || 1,
     min_stay_days || 1,
     max_stay_days || null,
     housekeeping_frequency || "weekly",
@@ -2660,6 +2682,7 @@ export const updateProperty = asyncHandler(async (req, res) => {
     bedrooms,
     bathrooms,
     max_guests,
+    living_area,
     min_guests,
     extra_guest_charge,
     min_children,
@@ -2775,6 +2798,7 @@ export const updateProperty = asyncHandler(async (req, res) => {
       bedrooms = ?,
       bathrooms = ?,
       max_guests = ?,
+      living_area = ?,
       min_stay_days = ?,
       max_stay_days = ?,
       housekeeping_frequency = ?,
@@ -2822,6 +2846,7 @@ export const updateProperty = asyncHandler(async (req, res) => {
     bedrooms || 0,
     bathrooms || 0,
     max_guests || 2,
+    living_area || 1,
     min_stay_days || 1,
     max_stay_days || null,
     housekeeping_frequency || "weekly",

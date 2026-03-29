@@ -361,7 +361,7 @@ export default function PropertyCard({
                 {Number(property.rating).toFixed(1)}
               </span>
               <span className={styles.ratingCount}>
-                ({property.reviews_count})
+                ({property.reviews_count || 0})
               </span>
             </div>
           )}
