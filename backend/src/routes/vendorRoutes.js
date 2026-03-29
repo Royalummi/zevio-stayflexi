@@ -1,4 +1,5 @@
 import express from "express";
+import { body } from "express-validator";
 import vendorController from "../controllers/vendorController.js";
 import vendorPropertyController from "../controllers/vendorPropertyController.js";
 import {
@@ -8,6 +9,8 @@ import {
 } from "../controllers/blackoutController.js";
 import { authenticate, authorize } from "../middlewares/auth.js";
 import { validatePagination } from "../middlewares/pagination.js";
+import { validate } from "../middlewares/validator.js";
+import { createCity, getAllCities } from "../controllers/adminController.js";
 import {
   getCalendarPricing,
   setCalendarPricing,
@@ -60,5 +63,17 @@ router.get("/analytics", vendorController.getAnalytics);
 
 // Bank details
 router.put("/bank-details", vendorController.updateBankDetails);
+
+// Cities (vendors can list & add cities for their properties)
+router.get("/cities", getAllCities);
+router.post(
+  "/cities",
+  [
+    body("name").trim().notEmpty().withMessage("City name is required"),
+    body("state").trim().notEmpty().withMessage("State is required"),
+    validate,
+  ],
+  createCity,
+);
 
 export default router;

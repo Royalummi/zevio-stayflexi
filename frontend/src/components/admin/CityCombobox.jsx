@@ -66,7 +66,7 @@ const CityCombobox = ({
 
   const fetchCities = async () => {
     try {
-      // Try admin endpoint first; fall back to public endpoint for non-admin users
+      // Try admin → vendor → public endpoint based on user role
       let response;
       try {
         response = await api.get("/admin/cities");
@@ -75,7 +75,18 @@ const CityCombobox = ({
           adminErr.response?.status === 401 ||
           adminErr.response?.status === 403
         ) {
-          response = await api.get("/public/cities");
+          try {
+            response = await api.get("/vendor/cities");
+          } catch (vendorErr) {
+            if (
+              vendorErr.response?.status === 401 ||
+              vendorErr.response?.status === 403
+            ) {
+              response = await api.get("/public/cities");
+            } else {
+              throw vendorErr;
+            }
+          }
         } else {
           throw adminErr;
         }
@@ -171,11 +182,26 @@ const CityCombobox = ({
       stateName,
     });
     try {
-      console.log("[CityCombobox] Sending API request to /admin/cities");
-      const response = await api.post("/admin/cities", {
-        name: cityName,
-        state: stateName,
-      });
+      // Try admin → vendor endpoint based on user role
+      let response;
+      try {
+        response = await api.post("/admin/cities", {
+          name: cityName,
+          state: stateName,
+        });
+      } catch (adminErr) {
+        if (
+          adminErr.response?.status === 401 ||
+          adminErr.response?.status === 403
+        ) {
+          response = await api.post("/vendor/cities", {
+            name: cityName,
+            state: stateName,
+          });
+        } else {
+          throw adminErr;
+        }
+      }
 
       console.log("[CityCombobox] API Response:", response.data);
       const newCity = response.data.data;

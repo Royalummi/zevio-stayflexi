@@ -184,7 +184,7 @@ router.post(
       .withMessage("Valid email is required")
       .normalizeEmail(),
     body("phone")
-      .optional()
+      .optional({ values: "falsy" })
       .trim()
       .matches(/^[0-9]{10}$/)
       .withMessage("Phone must be 10 digits"),
