@@ -39,9 +39,6 @@ export const createProperty = asyncHandler(async (req, res) => {
     max_booking_days,
     check_in_time,
     check_out_time,
-    check_in_guidelines,
-    house_rules_text,
-    amenities_guide,
     safety_information,
     local_area_info,
     emergency_contacts,
@@ -81,15 +78,6 @@ export const createProperty = asyncHandler(async (req, res) => {
   }
 
   // XSS Protection - Sanitize rich text fields
-  const safeCheckInGuidelines = check_in_guidelines
-    ? sanitizeRichText(check_in_guidelines)
-    : null;
-  const safeHouseRulesText = house_rules_text
-    ? sanitizeRichText(house_rules_text)
-    : null;
-  const safeAmenitiesGuide = amenities_guide
-    ? sanitizeRichText(amenities_guide)
-    : null;
   const safeSafetyInfo = safety_information
     ? sanitizeRichText(safety_information)
     : null;
@@ -111,7 +99,6 @@ export const createProperty = asyncHandler(async (req, res) => {
       min_stay_days, max_stay_days, housekeeping_frequency, laundry_frequency,
       utilities_included, parking_slots, floor_number, wifi_speed_mbps, wifi_provider, furnishing_type,
       same_day_booking_allowed, max_booking_days, check_in_time, check_out_time,
-      check_in_guidelines, house_rules_text, amenities_guide,
       safety_information, local_area_info, emergency_contacts,
       house_rules, cancellation_policy, photos,
       pool_type, garden_type, pets_allowed, events_allowed, event_capacity,
@@ -123,7 +110,6 @@ export const createProperty = asyncHandler(async (req, res) => {
       ?, ?, ?, ?,
       ?, ?, ?, ?, ?, ?,
       ?, ?, ?, ?,
-      ?, ?, ?,
       ?, ?, ?,
       ?, ?, ?,
       ?, ?, ?, ?, ?,
@@ -161,9 +147,6 @@ export const createProperty = asyncHandler(async (req, res) => {
     max_booking_days || null,
     check_in_time || "2:00 PM",
     check_out_time || "11:00 AM",
-    safeCheckInGuidelines,
-    safeHouseRulesText,
-    safeAmenitiesGuide,
     safeSafetyInfo,
     safeLocalAreaInfo,
     safeEmergencyContacts,
@@ -340,8 +323,7 @@ export const getPropertyById = asyncHandler(async (req, res) => {
 
   // Get property guidelines (stored separately for rich text)
   const [guidelinesRows] = await db.query(
-    `SELECT check_in_guidelines, house_rules_text, amenities_guide,
-            safety_information, local_area_info, emergency_contacts
+    `SELECT safety_information, local_area_info, emergency_contacts
      FROM property_guidelines
      WHERE property_id = ?
      LIMIT 1`,
@@ -588,9 +570,6 @@ export const updateProperty = asyncHandler(async (req, res) => {
       "approved_at",
       "approved_by",
       // Removed fields
-      "amenities_guide",
-      "house_rules_text",
-      "check_in_guidelines",
       "deposit_amount",
       // Contact fields stored in property_contacts table (not property/pricing columns)
       "primary_incharge_name",
@@ -728,9 +707,6 @@ export const updateProperty = asyncHandler(async (req, res) => {
     "max_booking_days",
     "city_id",
     "property_type_id",
-    "check_in_guidelines",
-    "house_rules_text",
-    "amenities_guide",
     "safety_information",
     "local_area_info",
     "emergency_contacts",
@@ -774,9 +750,6 @@ export const updateProperty = asyncHandler(async (req, res) => {
 
   // Sanitize rich text fields
   const richTextFields = [
-    "check_in_guidelines",
-    "house_rules_text",
-    "amenities_guide",
     "safety_information",
     "local_area_info",
     "emergency_contacts",
