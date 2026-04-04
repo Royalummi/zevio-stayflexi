@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Apr 04, 2026 at 04:52 PM
+-- Generation Time: Apr 04, 2026 at 09:47 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -382,6 +382,7 @@ INSERT INTO `cron_jobs_log` (`id`, `job_name`, `run_date`, `status`, `remarks`) 
 ('0b28c8cb-f910-4b88-a2fc-d912400b6e4a', 'daily_cleanup', '2026-02-14', 'success', 'Cancelled 0 expired bookings'),
 ('0fbfdcc5-d87d-4542-b33d-3ced967abded', 'check_out_reminder', '2026-01-24', 'success', 'Sent 0 reminders, 0 failed'),
 ('1048eca0-bd8d-4f6a-83f4-e2cd154046a4', 'check_in_reminder_24h', '2026-02-25', 'success', 'Sent 0 reminders, 0 failed'),
+('21379069-b132-414b-a7cb-c5c7935b9734', 'check_in_reminder_24h', '2026-04-04', 'success', 'Sent 0 reminders, 0 failed'),
 ('2bcd0a3c-a8af-424c-bb44-f95f1ccd0d0d', 'check_in_reminder_24h', '2026-02-22', 'success', 'Sent 0 reminders, 0 failed'),
 ('31fb7be5-ded2-4527-8891-c4da7ba0811f', 'daily_booking_processor', '2026-03-17', 'success', 'Processed 0 settlements'),
 ('393ab217-4124-4485-b450-61eb13473535', 'daily_booking_processor', '2026-03-04', 'success', 'Processed 0 settlements'),
@@ -1212,7 +1213,7 @@ CREATE TABLE `refresh_tokens` (
 INSERT INTO `refresh_tokens` (`id`, `user_id`, `user_table`, `token_hash`, `expires_at`, `created_at`) VALUES
 ('05e3b3e4-c829-4364-8d20-b6fa25f78691', 'bb60817d-e418-11f0-9f30-00410e2b5e6e', 'vendors', '72f8131f7edfbeb3f600148d09b9334f90d949d3cb8af91d555150012b69adca', '2026-04-11 13:14:38', '2026-04-04 07:44:38'),
 ('072dc1e7-6b64-4c49-8006-21c6c1af04d8', 'bb6097e5-e418-11f0-9f30-00410e2b5e6e', 'vendors', 'd87cd89e2529df545162278fafa49f44160c13b66b9d6de596d54a938e25f805', '2026-04-11 14:11:41', '2026-04-04 08:41:41'),
-('0a1dff1a-8853-42f3-a068-e17c6fbd57e3', 'bb60817d-e418-11f0-9f30-00410e2b5e6e', 'vendors', '5244a386a45d6493ce360c47ef294317e8bccff560b8ceb8af94ddbb904ccee6', '2026-04-11 20:17:59', '2026-04-04 14:47:59'),
+('0fe7893d-1970-456e-93f3-ae1e75bca395', 'bb5898f8-e418-11f0-9f30-00410e2b5e6e', 'admins', '0180006492dd39a863f91e42f397818735fb1d628e8d237bffa9fae0c5389e83', '2026-04-12 01:03:08', '2026-04-04 19:33:08'),
 ('10d5cc52-8fc8-4b2f-ab0b-d354d2e75325', 'bb5898f8-e418-11f0-9f30-00410e2b5e6e', 'admins', '6e62b0631ab7435f0f272df6ad46fba273fe27de8123e07543ed86c87fd9d8d1', '2026-04-11 14:11:18', '2026-04-04 08:41:18'),
 ('231a98c2-4abb-4891-b341-400329f74b37', 'bb5898f8-e418-11f0-9f30-00410e2b5e6e', 'admins', '2ee6e3b31ec2f3d08ff436b17b5d4502b3120aa65a3a73ba5eb859c52623a520', '2026-04-11 14:12:31', '2026-04-04 08:42:31'),
 ('23e8ba96-3524-447a-a417-6fca5a29b979', 'bb60817d-e418-11f0-9f30-00410e2b5e6e', 'vendors', '7ccfd1ad913c3ccafc946d235dd8e9cfe1233e626bde905d79111f5f2b18d56b', '2026-04-11 13:10:28', '2026-04-04 07:40:28'),
@@ -1222,13 +1223,13 @@ INSERT INTO `refresh_tokens` (`id`, `user_id`, `user_table`, `token_hash`, `expi
 ('58a5cb7c-0f28-4863-9925-8a698cd9de96', 'bb60817d-e418-11f0-9f30-00410e2b5e6e', 'vendors', '910d8ffe31774a9641cb9fbd51c47dadbe4b71ae72751822969ed106fd789b0a', '2026-04-11 13:16:42', '2026-04-04 07:46:42'),
 ('61bf47ce-a980-41a0-b4aa-fff725d5863f', 'bb6097e5-e418-11f0-9f30-00410e2b5e6e', 'vendors', 'b1a7c322063bbe1b7d0b9288467b101160fcc728347f32910d89f29cfd653c62', '2026-04-10 23:05:55', '2026-04-03 17:35:55'),
 ('78986112-9a7e-4d33-8cc2-403baa39d045', 'bb5898f8-e418-11f0-9f30-00410e2b5e6e', 'admins', 'b7118e6156ad15fb6135dd98edb3ffc1fc798e071aac05e33176cd5b5ab86137', '2026-04-11 14:14:08', '2026-04-04 08:44:08'),
-('85ba89e2-19a2-4533-bd94-184a4efd1e6d', 'bb5898f8-e418-11f0-9f30-00410e2b5e6e', 'admins', 'bc94c8b4e2f946658a6a72be45bfc8b956db24987f9e583dee77f35683eeeba2', '2026-04-11 20:14:59', '2026-04-04 14:44:59'),
 ('871b400d-c8f9-4adc-a920-da029f0a639a', 'bb60817d-e418-11f0-9f30-00410e2b5e6e', 'vendors', '31382ad0ae2932a3826fee83577cb79c996a046dd77b18804ab6c2b1fd251c98', '2026-04-11 13:13:59', '2026-04-04 07:43:59'),
 ('8f46b386-64f2-4362-9632-4f30a598983d', 'bb5898f8-e418-11f0-9f30-00410e2b5e6e', 'admins', '61ecfb83c6186de836de2aee149952a7060a50a562fbc01badfccf555abc3ab4', '2026-04-11 14:13:25', '2026-04-04 08:43:25'),
 ('a0138df8-9f3f-4927-8988-a92a2ad79e7c', 'bb6097e5-e418-11f0-9f30-00410e2b5e6e', 'vendors', '76678d5ab266af0802aa646487e7b632c4084d3683f72432e75a41bbef8e0dcc', '2026-04-11 14:14:08', '2026-04-04 08:44:08'),
 ('af0231c7-e02d-415c-9ea5-86c9a6e83b05', 'bb5898f8-e418-11f0-9f30-00410e2b5e6e', 'admins', '597f0dddb87446471bf6229fb372113f5240508d2f371aae2448ad4a4fb5f86c', '2026-04-11 14:11:41', '2026-04-04 08:41:41'),
 ('b16bb600-b0bb-4930-8fb4-80d1970da6f9', 'bb5898f8-e418-11f0-9f30-00410e2b5e6e', 'admins', '8d5470c6145a803da3b80cd77cf3674f6810c5f2a9f325ad63a9c94baa4af9de', '2026-04-11 14:12:09', '2026-04-04 08:42:09'),
 ('b220422b-a0cb-4945-84e4-a67072797863', 'bb5898f8-e418-11f0-9f30-00410e2b5e6e', 'admins', 'a4801c344fdd2c5a2b2e803f17a6ebc0784ec29caf115424c9ef0baca73f36a0', '2026-04-11 16:32:55', '2026-04-04 11:02:55'),
+('bdc041d5-c8bc-4970-835a-ae7e14a7fba5', 'bb60817d-e418-11f0-9f30-00410e2b5e6e', 'vendors', '5dabef61f6d8da4abc4e7ae471595dd160b45c14de2dcb0919e92ffd8da87325', '2026-04-11 21:32:59', '2026-04-04 16:02:59'),
 ('c0dafbd2-2c10-42b3-bbb6-7636b086a5e6', 'bb6097e5-e418-11f0-9f30-00410e2b5e6e', 'vendors', '165bc80ec415571eed98e28ba27c132d966340e628b2abff38bdcb60169bfe5e', '2026-04-11 14:13:25', '2026-04-04 08:43:25'),
 ('d7615930-aa23-4069-9493-54bbca5be793', 'bb5898f8-e418-11f0-9f30-00410e2b5e6e', 'admins', '398dcccf5950e12bcc4cdcb4e8162e24c2c680db7745a1a68c2c7a52c4a18f2a', '2026-04-11 14:14:22', '2026-04-04 08:44:22'),
 ('d925caa3-9cf4-4a7b-b544-f036774c034a', 'bb5898f8-e418-11f0-9f30-00410e2b5e6e', 'admins', '6d407e6d745c91dd32972478ea9bd089df047e5692c996b08f1a334d4f3b7c90', '2026-04-11 14:11:55', '2026-04-04 08:41:55'),

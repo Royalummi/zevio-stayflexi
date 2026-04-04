@@ -93,30 +93,43 @@ const PropertyImageUpload = ({
   const handleFileSelect = (e) => {
     const files = Array.from(e.target.files);
     addFiles(files);
+    // Reset input so the same files can be re-selected if removed
+    e.target.value = "";
   };
 
-  const addFiles = (files) => {
-    const totalImages =
-      uploadedImages.length + selectedFiles.length + files.length;
+  const addFiles = useCallback(
+    (files) => {
+      setSelectedFiles((prev) => {
+        const slotsAvailable = MAX_IMAGES - uploadedImages.length - prev.length;
 
-    if (totalImages > MAX_IMAGES) {
-      toast.error(
-        `Maximum ${MAX_IMAGES} images allowed. You can upload ${MAX_IMAGES - uploadedImages.length - selectedFiles.length} more.`,
-      );
-      return;
-    }
+        if (slotsAvailable <= 0) {
+          toast.error(
+            `Maximum ${MAX_IMAGES} images allowed. Remove some images to upload new ones.`,
+          );
+          return prev;
+        }
 
-    const validFiles = files.filter(validateFile);
+        const validFiles = files.filter(validateFile);
+        if (validFiles.length === 0) return prev;
 
-    if (validFiles.length > 0) {
-      const filesWithPreview = validFiles.map((file) => ({
-        file,
-        preview: URL.createObjectURL(file),
-        id: Math.random().toString(36).substr(2, 9),
-      }));
-      setSelectedFiles((prev) => [...prev, ...filesWithPreview]);
-    }
-  };
+        // Accept as many files as will fit instead of rejecting the entire batch
+        const filesToAdd = validFiles.slice(0, slotsAvailable);
+        if (filesToAdd.length < validFiles.length) {
+          toast.warning(
+            `Only ${filesToAdd.length} of ${validFiles.length} images added. Maximum ${MAX_IMAGES} images allowed.`,
+          );
+        }
+
+        const filesWithPreview = filesToAdd.map((file) => ({
+          file,
+          preview: URL.createObjectURL(file),
+          id: Math.random().toString(36).substr(2, 9),
+        }));
+        return [...prev, ...filesWithPreview];
+      });
+    },
+    [uploadedImages.length],
+  );
 
   const handleDrag = useCallback((e) => {
     e.preventDefault();
@@ -139,7 +152,7 @@ const PropertyImageUpload = ({
         addFiles(files);
       }
     },
-    [uploadedImages, selectedFiles],
+    [addFiles],
   );
 
   const removeSelectedFile = (id) => {
@@ -154,8 +167,8 @@ const PropertyImageUpload = ({
 
   // Expose upload function via callback when images are ready
   useEffect(() => {
-    if (onImagesChange && selectedFiles.length > 0) {
-      // Pass selected files and upload function to parent
+    if (onImagesChange) {
+      // Always notify parent of current state — including when files are cleared
       onImagesChange({
         selectedFiles,
         uploadPending: handleUpload,
@@ -285,125 +298,123 @@ const PropertyImageUpload = ({
 
   return (
     <div className="space-y-4">
-      {/* Upload Area */}
+      {/* Upload Area — hidden when max images reached */}
       {canUploadMore && (
-        <div className="space-y-4">
-          <div
-            className={`
-              relative border-2 border-dashed rounded-lg p-8 text-center transition-colors
-              ${dragActive ? "border-primary bg-primary/5" : "border-gray-300 hover:border-primary/50"}
-              ${uploading ? "opacity-50 pointer-events-none" : ""}
-            `}
-            onDragEnter={handleDrag}
-            onDragLeave={handleDrag}
-            onDragOver={handleDrag}
-            onDrop={handleDrop}
+        <div
+          className={`
+            relative border-2 border-dashed rounded-lg p-8 text-center transition-colors
+            ${dragActive ? "border-primary bg-primary/5" : "border-gray-300 hover:border-primary/50"}
+            ${uploading ? "opacity-50 pointer-events-none" : ""}
+          `}
+          onDragEnter={handleDrag}
+          onDragLeave={handleDrag}
+          onDragOver={handleDrag}
+          onDrop={handleDrop}
+        >
+          <input
+            type="file"
+            id="image-upload"
+            className="hidden"
+            multiple
+            accept={ALLOWED_TYPES.join(",")}
+            onChange={handleFileSelect}
+            disabled={uploading || !canUploadMore}
+          />
+          <label
+            htmlFor="image-upload"
+            className="cursor-pointer flex flex-col items-center gap-2"
           >
-            <input
-              type="file"
-              id="image-upload"
-              className="hidden"
-              multiple
-              accept={ALLOWED_TYPES.join(",")}
-              onChange={handleFileSelect}
-              disabled={uploading || !canUploadMore}
-            />
-            <label
-              htmlFor="image-upload"
-              className="cursor-pointer flex flex-col items-center gap-2"
+            <div className="p-3 bg-primary/10 rounded-full">
+              <Upload className="h-8 w-8 text-primary" />
+            </div>
+            <div>
+              <p className="text-lg font-semibold text-gray-700">
+                Click to upload or drag and drop
+              </p>
+              <p className="text-sm text-gray-500 mt-1">
+                JPG, PNG, GIF, WEBP (max 5MB per image)
+              </p>
+              <p className="text-xs text-gray-400 mt-1">
+                {uploadedImages.length + selectedFiles.length} / {MAX_IMAGES}{" "}
+                images
+              </p>
+            </div>
+          </label>
+        </div>
+      )}
+
+      {/* Selected Files Preview — always visible when files are selected */}
+      {selectedFiles.length > 0 && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-gray-700">
+              Selected Images ({selectedFiles.length})
+            </h3>
+            <Button
+              type="button"
+              onClick={() => handleUpload()}
+              disabled={uploading}
+              size="sm"
             >
-              <div className="p-3 bg-primary/10 rounded-full">
-                <Upload className="h-8 w-8 text-primary" />
-              </div>
-              <div>
-                <p className="text-lg font-semibold text-gray-700">
-                  Click to upload or drag and drop
-                </p>
-                <p className="text-sm text-gray-500 mt-1">
-                  JPG, PNG, GIF, WEBP (max 5MB per image)
-                </p>
-                <p className="text-xs text-gray-400 mt-1">
-                  {uploadedImages.length + selectedFiles.length} / {MAX_IMAGES}{" "}
-                  images
-                </p>
-              </div>
-            </label>
+              {uploading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Uploading...
+                </>
+              ) : propertyId ? (
+                <>
+                  <Upload className="h-4 w-4 mr-2" />
+                  Upload {selectedFiles.length} Image
+                  {selectedFiles.length > 1 ? "s" : ""}
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="h-4 w-4 mr-2" />
+                  Ready
+                </>
+              )}
+            </Button>
           </div>
 
-          {/* Selected Files Preview */}
-          {selectedFiles.length > 0 && (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-gray-700">
-                  Selected Images ({selectedFiles.length})
-                </h3>
-                <Button
-                  type="button"
-                  onClick={() => handleUpload()}
-                  disabled={uploading}
-                  size="sm"
-                >
-                  {uploading ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Uploading...
-                    </>
-                  ) : propertyId ? (
-                    <>
-                      <Upload className="h-4 w-4 mr-2" />
-                      Upload {selectedFiles.length} Image
-                      {selectedFiles.length > 1 ? "s" : ""}
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle2 className="h-4 w-4 mr-2" />
-                      Ready
-                    </>
-                  )}
-                </Button>
-              </div>
-
-              {uploading && (
-                <div className="space-y-2">
-                  <Progress value={uploadProgress} className="h-2" />
-                  <p className="text-xs text-center text-gray-500">
-                    {uploadProgress}% uploaded
-                  </p>
-                </div>
-              )}
-
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                {selectedFiles.map((fileObj) => (
-                  <div
-                    key={fileObj.id}
-                    className="relative group aspect-square rounded-lg overflow-hidden border-2 border-gray-200"
-                  >
-                    <img
-                      src={fileObj.preview}
-                      alt="Preview"
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        console.error("Failed to load preview:", fileObj);
-                        e.target.src =
-                          'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200"%3E%3Crect width="200" height="200" fill="%23e0e0e0"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="14" fill="%23999"%3EError%3C/text%3E%3C/svg%3E';
-                      }}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeSelectedFile(fileObj.id)}
-                      className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                      disabled={uploading}
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                    <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs p-1 truncate">
-                      {fileObj.file.name}
-                    </div>
-                  </div>
-                ))}
-              </div>
+          {uploading && (
+            <div className="space-y-2">
+              <Progress value={uploadProgress} className="h-2" />
+              <p className="text-xs text-center text-gray-500">
+                {uploadProgress}% uploaded
+              </p>
             </div>
           )}
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            {selectedFiles.map((fileObj) => (
+              <div
+                key={fileObj.id}
+                className="relative group aspect-square rounded-lg overflow-hidden border-2 border-gray-200"
+              >
+                <img
+                  src={fileObj.preview}
+                  alt="Preview"
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    console.error("Failed to load preview:", fileObj);
+                    e.target.src =
+                      'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200"%3E%3Crect width="200" height="200" fill="%23e0e0e0"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="14" fill="%23999"%3EError%3C/text%3E%3C/svg%3E';
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => removeSelectedFile(fileObj.id)}
+                  className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                  disabled={uploading}
+                >
+                  <X className="h-4 w-4" />
+                </button>
+                <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs p-1 truncate">
+                  {fileObj.file.name}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 

@@ -44,10 +44,13 @@ const FormSection = ({
         </div>
       </button>
 
-      {/* Section Content - Collapsible */}
-      {isOpen && (
-        <div className="px-6 py-5 border-t border-border">{children}</div>
-      )}
+      {/* Section Content - Collapsible (kept mounted to preserve state) */}
+      <div
+        className={`px-6 py-5 ${isOpen ? "border-t border-border" : ""}`}
+        style={{ display: isOpen ? "block" : "none" }}
+      >
+        {children}
+      </div>
     </section>
   );
 };

@@ -299,21 +299,21 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
   }, [propertyId, preSelectedPropertyType]);
 
   // Auto-load guideline templates when property type is selected (only for new properties)
-  useEffect(() => {
-    if (!propertyId && formData.property_type_id && !templatesLoaded) {
-      const templates = guidelineTemplates[formData.property_type_id];
-      if (templates) {
-        setGuidelines(templates);
-        setTemplatesLoaded(true);
-        // Use setTimeout to avoid setState during render warning
-        setTimeout(() => {
-          toast.success(
-            "Default guidelines loaded! You can customize them as needed.",
-          );
-        }, 0);
-      }
-    }
-  }, [formData.property_type_id, propertyId, templatesLoaded]);
+  // useEffect(() => {
+  //   if (!propertyId && formData.property_type_id && !templatesLoaded) {
+  //     const templates = guidelineTemplates[formData.property_type_id];
+  //     if (templates) {
+  //       setGuidelines(templates);
+  //       setTemplatesLoaded(true);
+  //       // Use setTimeout to avoid setState during render warning
+  //       setTimeout(() => {
+  //         toast.success(
+  //           "Default guidelines loaded! You can customize them as needed.",
+  //         );
+  //       }, 0);
+  //     }
+  //   }
+  // }, [formData.property_type_id, propertyId, templatesLoaded]);
 
   const fetchDropdownData = async () => {
     try {
@@ -756,6 +756,15 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
     ) {
       newErrors.primary_incharge_phone = "Invalid phone format";
     }
+
+    // Guidelines validation (mandatory)
+    const stripHtml = (html) => (html || "").replace(/<[^>]*>/g, "").trim();
+    if (!stripHtml(guidelines.safety_information))
+      newErrors.safety_information = "Safety Information is required";
+    if (!stripHtml(guidelines.local_area_info))
+      newErrors.local_area_info = "Local Area Information is required";
+    if (!stripHtml(guidelines.emergency_contacts))
+      newErrors.emergency_contacts = "Emergency Contacts is required";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -2773,7 +2782,7 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
 
           <div className="mb-6">
             <label className="text-sm font-medium text-foreground mb-3 block">
-              Safety Information
+              Safety Information <span className="text-destructive">*</span>
             </label>
             <ReactQuill
               value={guidelines.safety_information}
@@ -2784,11 +2793,16 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
               formats={quillFormats}
               placeholder="Fire extinguisher, first aid, emergency exits..."
             />
+            {errors.safety_information && (
+              <span className="text-sm text-destructive mt-1 block">
+                {errors.safety_information}
+              </span>
+            )}
           </div>
 
           <div className="mb-6">
             <label className="text-sm font-medium text-foreground mb-3 block">
-              Local Area Information
+              Local Area Information <span className="text-destructive">*</span>
             </label>
             <ReactQuill
               value={guidelines.local_area_info}
@@ -2799,11 +2813,16 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
               formats={quillFormats}
               placeholder="Nearby restaurants, ATMs, hospitals, attractions..."
             />
+            {errors.local_area_info && (
+              <span className="text-sm text-destructive mt-1 block">
+                {errors.local_area_info}
+              </span>
+            )}
           </div>
 
           <div className="mb-6">
             <label className="text-sm font-medium text-foreground mb-3 block">
-              Emergency Contacts
+              Emergency Contacts <span className="text-destructive">*</span>
             </label>
             <ReactQuill
               value={guidelines.emergency_contacts}
@@ -2814,6 +2833,11 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
               formats={quillFormats}
               placeholder="Police, ambulance, fire, property manager..."
             />
+            {errors.emergency_contacts && (
+              <span className="text-sm text-destructive mt-1 block">
+                {errors.emergency_contacts}
+              </span>
+            )}
           </div>
         </FormSection>
 
@@ -2832,7 +2856,7 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
                 setPendingImageUpload(() => data.uploadPending);
                 setHasSelectedImages(true);
                 setSelectedImageCount(data.selectedFiles?.length || 0);
-              } else if (data.uploadedImages) {
+              } else {
                 setHasSelectedImages(false);
                 setPendingImageUpload(null);
                 setSelectedImageCount(0);
