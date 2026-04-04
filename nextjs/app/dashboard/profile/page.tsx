@@ -13,10 +13,19 @@ import {
   FiCalendar,
   FiCheckCircle,
   FiShield,
+  FiCreditCard,
 } from "react-icons/fi";
 import Image from "next/image";
 import { api } from "@/lib/axios";
 import styles from "./profile.module.css";
+
+type BankDetails = {
+  bank_name: string;
+  account_holder_name: string;
+  account_number: string;
+  ifsc_code: string;
+  branch_name: string;
+};
 
 // Extended user type
 type ProfileUser = {
@@ -30,6 +39,7 @@ type ProfileUser = {
   avatar?: string;
   address?: string;
   bio?: string;
+  bank_details?: BankDetails | null;
 };
 
 export default function ProfileRedesign() {
@@ -37,6 +47,7 @@ export default function ProfileRedesign() {
   const router = useRouter();
 
   const [saving, setSaving] = useState(false);
+  const [bankSaving, setBankSaving] = useState(false);
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -52,6 +63,14 @@ export default function ProfileRedesign() {
     phone: "",
     address: "",
     bio: "",
+  });
+
+  const [bankForm, setBankForm] = useState<BankDetails>({
+    bank_name: "",
+    account_holder_name: "",
+    account_number: "",
+    ifsc_code: "",
+    branch_name: "",
   });
 
   const [isInitialized, setIsInitialized] = useState(false);
@@ -73,6 +92,16 @@ export default function ProfileRedesign() {
         address: profileUser.address || "",
         bio: profileUser.bio || "",
       });
+      if (profileUser.bank_details) {
+        setBankForm({
+          bank_name: profileUser.bank_details.bank_name || "",
+          account_holder_name:
+            profileUser.bank_details.account_holder_name || "",
+          account_number: profileUser.bank_details.account_number || "",
+          ifsc_code: profileUser.bank_details.ifsc_code || "",
+          branch_name: profileUser.bank_details.branch_name || "",
+        });
+      }
       setIsInitialized(true);
     }
   }, [user, isInitialized]);
@@ -142,6 +171,31 @@ export default function ProfileRedesign() {
       });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleBankChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setBankForm({ ...bankForm, [e.target.name]: e.target.value });
+  };
+
+  const handleBankSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBankSaving(true);
+    try {
+      await api.put("/auth/profile", { bank_details: bankForm });
+      setToast({
+        message: "Bank details saved successfully!",
+        type: "success",
+      });
+      if (refreshUser) await refreshUser();
+    } catch (error) {
+      const err = error as { response?: { data?: { message?: string } } };
+      setToast({
+        message: err.response?.data?.message || "Failed to save bank details.",
+        type: "error",
+      });
+    } finally {
+      setBankSaving(false);
     }
   };
 
@@ -422,10 +476,119 @@ export default function ProfileRedesign() {
             </div>
           </div>
 
-          {/* Right Column - Security */}
+          {/* Right Column - Bank Details + Security */}
           <div
             style={{ display: "flex", flexDirection: "column", gap: "2rem" }}
           >
+            {/* Bank Details Card */}
+            <div className={styles.settingsCard}>
+              <div className={styles.cardHeader}>
+                <div className={styles.cardIcon}>
+                  <FiCreditCard size={24} />
+                </div>
+                <h3 className={styles.cardTitle}>Bank Details</h3>
+              </div>
+              <p
+                style={{
+                  fontSize: "0.85rem",
+                  color: "#6b7280",
+                  marginBottom: "1.25rem",
+                }}
+              >
+                Used for refunds and settlements. Your details are kept secure.
+              </p>
+              <form onSubmit={handleBankSubmit}>
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel} htmlFor="bank_name">
+                    <FiCreditCard size={16} />
+                    <span>Bank Name</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="bank_name"
+                    name="bank_name"
+                    value={bankForm.bank_name}
+                    onChange={handleBankChange}
+                    className={styles.formInput}
+                    placeholder="e.g. State Bank of India"
+                  />
+                </div>
+                <div className={styles.formGroup}>
+                  <label
+                    className={styles.formLabel}
+                    htmlFor="account_holder_name"
+                  >
+                    <FiUser size={16} />
+                    <span>Account Holder Name</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="account_holder_name"
+                    name="account_holder_name"
+                    value={bankForm.account_holder_name}
+                    onChange={handleBankChange}
+                    className={styles.formInput}
+                    placeholder="As per bank records"
+                  />
+                </div>
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel} htmlFor="account_number">
+                    <FiCreditCard size={16} />
+                    <span>Account Number</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="account_number"
+                    name="account_number"
+                    value={bankForm.account_number}
+                    onChange={handleBankChange}
+                    className={styles.formInput}
+                    placeholder="e.g. 1234567890"
+                  />
+                </div>
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel} htmlFor="ifsc_code">
+                    <FiCreditCard size={16} />
+                    <span>IFSC Code</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="ifsc_code"
+                    name="ifsc_code"
+                    value={bankForm.ifsc_code}
+                    onChange={handleBankChange}
+                    className={styles.formInput}
+                    placeholder="e.g. SBIN0001234"
+                  />
+                </div>
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel} htmlFor="branch_name">
+                    <FiMapPin size={16} />
+                    <span>Branch Name</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="branch_name"
+                    name="branch_name"
+                    value={bankForm.branch_name}
+                    onChange={handleBankChange}
+                    className={styles.formInput}
+                    placeholder="e.g. Koramangala, Bengaluru"
+                  />
+                </div>
+                <div className={styles.formActions}>
+                  <button
+                    type="submit"
+                    className={styles.btnPrimary}
+                    disabled={bankSaving}
+                    style={{ width: "100%", justifyContent: "center" }}
+                  >
+                    {bankSaving ? "Saving..." : "Save Bank Details"}
+                  </button>
+                </div>
+              </form>
+            </div>
+
             {/* Security Settings Card */}
             <div className={styles.settingsCard}>
               <div className={styles.cardHeader}>

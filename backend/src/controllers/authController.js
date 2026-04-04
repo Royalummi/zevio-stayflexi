@@ -10,6 +10,81 @@ import { generateUUID } from "../utils/helpers.js";
 import { asyncHandler, sendSuccess, sendError } from "../utils/response.js";
 import { sendForgotPasswordLinkEmail } from "../services/emailService.js";
 
+const MAX_LOGIN_ATTEMPTS = 5;
+const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutes
+
+// Helper: hash a token with SHA-256
+const hashToken = (token) =>
+  crypto.createHash("sha256").update(token).digest("hex");
+
+// Helper: store refresh token in DB
+const storeRefreshToken = async (userId, userTable, refreshToken) => {
+  const tokenHash = hashToken(refreshToken);
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+  const id = generateUUID();
+  await db.query(
+    "INSERT INTO refresh_tokens (id, user_id, user_table, token_hash, expires_at) VALUES (?, ?, ?, ?, ?)",
+    [id, userId, userTable, tokenHash, expiresAt],
+  );
+};
+
+// Helper: check & update login attempts (account lockout)
+const checkLoginAttempts = async (email) => {
+  const [rows] = await db.query(
+    "SELECT attempts, locked_until FROM login_attempts WHERE email = ?",
+    [email],
+  );
+  if (rows.length === 0) return { locked: false };
+  const { attempts, locked_until } = rows[0];
+  if (locked_until && new Date(locked_until) > new Date()) {
+    const minutesLeft = Math.ceil(
+      (new Date(locked_until) - new Date()) / 60000,
+    );
+    return { locked: true, minutesLeft };
+  }
+  // If lock expired, reset
+  if (locked_until && new Date(locked_until) <= new Date()) {
+    await db.query(
+      "UPDATE login_attempts SET attempts = 0, locked_until = NULL WHERE email = ?",
+      [email],
+    );
+    return { locked: false };
+  }
+  return { locked: false, attempts };
+};
+
+const recordFailedAttempt = async (email) => {
+  const [rows] = await db.query(
+    "SELECT attempts FROM login_attempts WHERE email = ?",
+    [email],
+  );
+  if (rows.length === 0) {
+    await db.query(
+      "INSERT INTO login_attempts (email, attempts) VALUES (?, 1)",
+      [email],
+    );
+    return 1;
+  }
+  const newAttempts = rows[0].attempts + 1;
+  if (newAttempts >= MAX_LOGIN_ATTEMPTS) {
+    const lockedUntil = new Date(Date.now() + LOCKOUT_DURATION_MS);
+    await db.query(
+      "UPDATE login_attempts SET attempts = ?, locked_until = ? WHERE email = ?",
+      [newAttempts, lockedUntil, email],
+    );
+  } else {
+    await db.query("UPDATE login_attempts SET attempts = ? WHERE email = ?", [
+      newAttempts,
+      email,
+    ]);
+  }
+  return newAttempts;
+};
+
+const clearLoginAttempts = async (email) => {
+  await db.query("DELETE FROM login_attempts WHERE email = ?", [email]);
+};
+
 // Login (Multi-role) - Auto-detect user type
 export const login = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
@@ -18,14 +93,24 @@ export const login = asyncHandler(async (req, res) => {
     return sendError(res, "Email and password are required", 400);
   }
 
+  // Check account lockout
+  const lockStatus = await checkLoginAttempts(email);
+  if (lockStatus.locked) {
+    return sendError(
+      res,
+      `Account temporarily locked. Try again in ${lockStatus.minutesLeft} minute(s).`,
+      429,
+    );
+  }
+
   let user = null;
   let roleValue = null;
+  let tableName = null;
 
   // Check in all user tables to auto-detect role
   const tables = [
     { name: "admins", roleField: "role" }, // admin or super_admin
     { name: "users", roleField: null, defaultRole: "user" },
-    { name: "employees", roleField: null, defaultRole: "employee" },
     { name: "vendors", roleField: null, defaultRole: "vendor" },
   ];
 
@@ -37,6 +122,7 @@ export const login = asyncHandler(async (req, res) => {
 
     if (rows.length > 0) {
       user = rows[0];
+      tableName = table.name;
 
       // Verify password
       const isPasswordValid = await comparePassword(
@@ -45,7 +131,20 @@ export const login = asyncHandler(async (req, res) => {
       );
 
       if (!isPasswordValid) {
-        return sendError(res, "Invalid email or password", 401);
+        const attempts = await recordFailedAttempt(email);
+        const remaining = MAX_LOGIN_ATTEMPTS - attempts;
+        if (remaining <= 0) {
+          return sendError(
+            res,
+            "Account locked due to too many failed attempts. Try again in 15 minutes.",
+            429,
+          );
+        }
+        return sendError(
+          res,
+          `Invalid email or password. ${remaining} attempt(s) remaining.`,
+          401,
+        );
       }
 
       // Block unverified corporate users from logging in
@@ -76,17 +175,19 @@ export const login = asyncHandler(async (req, res) => {
 
   // If no user found in any table
   if (!user) {
+    await recordFailedAttempt(email);
     return sendError(res, "Invalid email or password", 401);
   }
+
+  // Clear failed attempts on successful login
+  await clearLoginAttempts(email);
 
   // Check if password change is required (for temp passwords)
   if (user.password_change_required === 1) {
     // Generate temporary token valid for 15 minutes
     const tempToken = generateTokens({
       id: user.id,
-      email: user.email,
       role: roleValue,
-      name: user.name || user.full_name,
       isTemporary: true,
     });
 
@@ -110,13 +211,16 @@ export const login = asyncHandler(async (req, res) => {
   // Generate tokens
   const tokens = generateTokens({
     id: user.id,
-    email: user.email,
     role: roleValue,
-    name: user.name || user.full_name,
   });
+
+  // Store refresh token hash in DB
+  await storeRefreshToken(user.id, tableName, tokens.refreshToken);
 
   // Remove sensitive data
   delete user.password_hash;
+  delete user.reset_token;
+  delete user.reset_token_expiry;
 
   sendSuccess(
     res,
@@ -171,10 +275,11 @@ export const register = asyncHandler(async (req, res) => {
   // Generate tokens
   const tokens = generateTokens({
     id: user.id,
-    email: user.email,
     role: "user",
-    name: user.full_name,
   });
+
+  // Store refresh token in DB
+  await storeRefreshToken(user.id, "users", tokens.refreshToken);
 
   sendSuccess(
     res,
@@ -190,7 +295,7 @@ export const register = asyncHandler(async (req, res) => {
   );
 });
 
-// Refresh Token
+// Refresh Token (with rotation)
 export const refreshToken = asyncHandler(async (req, res) => {
   const { refreshToken } = req.body;
 
@@ -201,13 +306,34 @@ export const refreshToken = asyncHandler(async (req, res) => {
   try {
     const decoded = verifyRefreshToken(refreshToken);
 
-    // Generate new tokens
+    // Verify refresh token exists in DB
+    const tokenHash = hashToken(refreshToken);
+    const [tokenRows] = await db.query(
+      "SELECT id, user_table FROM refresh_tokens WHERE token_hash = ? AND user_id = ? AND expires_at > NOW()",
+      [tokenHash, decoded.id],
+    );
+
+    if (tokenRows.length === 0) {
+      return sendError(res, "Refresh token has been revoked", 401);
+    }
+
+    // Delete the used refresh token (rotation: one-time use)
+    await db.query("DELETE FROM refresh_tokens WHERE id = ?", [
+      tokenRows[0].id,
+    ]);
+
+    // Generate new token pair
     const tokens = generateTokens({
       id: decoded.id,
-      email: decoded.email,
       role: decoded.role,
-      name: decoded.name,
     });
+
+    // Store new refresh token in DB
+    await storeRefreshToken(
+      decoded.id,
+      tokenRows[0].user_table,
+      tokens.refreshToken,
+    );
 
     sendSuccess(res, tokens, "Token refreshed successfully", 200);
   } catch (error) {
@@ -215,11 +341,25 @@ export const refreshToken = asyncHandler(async (req, res) => {
   }
 });
 
-// Logout
+// Logout - Invalidate refresh token
 export const logout = asyncHandler(async (req, res) => {
-  // In a production app, you might want to blacklist the token
-  // For now, we'll just send a success response
-  // The client should remove tokens from storage
+  const { refreshToken } = req.body;
+
+  if (refreshToken) {
+    // Delete the specific refresh token from DB
+    const tokenHash = hashToken(refreshToken);
+    await db.query("DELETE FROM refresh_tokens WHERE token_hash = ?", [
+      tokenHash,
+    ]);
+  }
+
+  // Also clean up expired tokens for this user
+  if (req.user?.id) {
+    await db.query(
+      "DELETE FROM refresh_tokens WHERE user_id = ? AND expires_at < NOW()",
+      [req.user.id],
+    );
+  }
 
   sendSuccess(res, null, "Logout successful", 200);
 });
@@ -236,9 +376,6 @@ export const getProfile = asyncHandler(async (req, res) => {
     case "admin":
     case "super_admin":
       tableName = "admins";
-      break;
-    case "employee":
-      tableName = "employees";
       break;
     case "vendor":
       tableName = "vendors";
@@ -258,6 +395,20 @@ export const getProfile = asyncHandler(async (req, res) => {
 
   const user = rows[0];
   delete user.password_hash;
+  delete user.reset_token;
+  delete user.reset_token_expiry;
+
+  // Parse bank_details JSON if present
+  if (user.bank_details) {
+    try {
+      user.bank_details =
+        typeof user.bank_details === "string"
+          ? JSON.parse(user.bank_details)
+          : user.bank_details;
+    } catch (_) {
+      user.bank_details = null;
+    }
+  }
 
   sendSuccess(res, { ...user, role }, "Profile fetched successfully", 200);
 });
@@ -272,24 +423,30 @@ export const updateProfile = asyncHandler(async (req, res) => {
       "name",
       "phone",
       "gst_number",
+      "is_gst_registered",
       "company_name",
       "pan_number",
       "address",
       "city",
       "state",
       "pincode",
+      "bank_details",
     ],
-    user: ["name", "phone", "address"],
+    user: ["full_name", "phone", "address", "bio", "bank_details"],
     admin: ["name", "phone"],
     super_admin: ["name", "phone"],
-    employee: ["name", "phone"],
   };
 
   const allowed = ALLOWED_FIELDS[role] || [];
   const updates = {};
   for (const key of allowed) {
     if (Object.prototype.hasOwnProperty.call(req.body, key)) {
-      updates[key] = req.body[key];
+      // Serialize JSON fields
+      if (key === "bank_details") {
+        updates[key] = req.body[key] ? JSON.stringify(req.body[key]) : null;
+      } else {
+        updates[key] = req.body[key];
+      }
     }
   }
 
@@ -305,9 +462,6 @@ export const updateProfile = asyncHandler(async (req, res) => {
     case "admin":
     case "super_admin":
       tableName = "admins";
-      break;
-    case "employee":
-      tableName = "employees";
       break;
     case "vendor":
       tableName = "vendors";
@@ -333,6 +487,18 @@ export const updateProfile = asyncHandler(async (req, res) => {
 
   const user = rows[0];
   delete user.password_hash;
+
+  // Parse bank_details JSON if present
+  if (user.bank_details) {
+    try {
+      user.bank_details =
+        typeof user.bank_details === "string"
+          ? JSON.parse(user.bank_details)
+          : user.bank_details;
+    } catch (_) {
+      user.bank_details = null;
+    }
+  }
 
   sendSuccess(res, { ...user, role }, "Profile updated successfully", 200);
 });
@@ -362,9 +528,6 @@ export const changePassword = asyncHandler(async (req, res) => {
     case "admin":
     case "super_admin":
       tableName = "admins";
-      break;
-    case "employee":
-      tableName = "employees";
       break;
     case "vendor":
       tableName = "vendors";
@@ -496,10 +659,11 @@ export const forceResetPassword = asyncHandler(async (req, res) => {
   // Generate regular tokens
   const tokens = generateTokens({
     id: user.id,
-    email: user.email,
     role: role,
-    name: user.name || user.full_name,
   });
+
+  // Store refresh token in DB
+  await storeRefreshToken(user.id, tableName, tokens.refreshToken);
 
   sendSuccess(
     res,
@@ -536,9 +700,6 @@ export const uploadAvatar = asyncHandler(async (req, res) => {
     case "super_admin":
       tableName = "admins";
       break;
-    case "employee":
-      tableName = "employees";
-      break;
     case "vendor":
       tableName = "vendors";
       break;
@@ -572,7 +733,32 @@ export const uploadAvatar = asyncHandler(async (req, res) => {
 
 // Get user settings
 export const getSettings = asyncHandler(async (req, res) => {
-  const { id } = req.user;
+  const { id, role } = req.user;
+
+  // Admins and vendors are not in the users table,
+  // so user_settings FK would fail. Return defaults for them.
+  const nonUserRoles = ["super_admin", "admin", "vendor"];
+  if (nonUserRoles.includes(role)) {
+    return sendSuccess(
+      res,
+      {
+        settings: {
+          email_notifications: true,
+          email_promotions: true,
+          email_reminders: true,
+          sms_notifications: false,
+          sms_reminders: false,
+          push_notifications: true,
+          profile_visibility: "private",
+          show_wishlist: false,
+          share_activity: false,
+          newsletter_subscription: true,
+        },
+      },
+      "Settings retrieved successfully",
+      200,
+    );
+  }
 
   const [settings] = await db.query(
     "SELECT * FROM user_settings WHERE user_id = ?",
@@ -612,7 +798,14 @@ export const getSettings = asyncHandler(async (req, res) => {
 
 // Update user settings
 export const updateSettings = asyncHandler(async (req, res) => {
-  const { id } = req.user;
+  const { id, role } = req.user;
+
+  // Admins and vendors are not in the users table
+  const nonUserRoles = ["super_admin", "admin", "vendor"];
+  if (nonUserRoles.includes(role)) {
+    return sendSuccess(res, {}, "Settings updated successfully", 200);
+  }
+
   const {
     email_notifications,
     email_promotions,
@@ -737,13 +930,29 @@ export const forgotPassword = asyncHandler(async (req, res) => {
     return sendError(res, "Email is required", 400);
   }
 
-  // Check if user exists
-  const [users] = await db.query(
-    "SELECT id, full_name, email FROM users WHERE email = ? AND status = 'active' AND deleted_at IS NULL",
-    [email],
-  );
+  // Check all user tables for this email
+  const tablesToCheck = [
+    { name: "users", nameField: "full_name" },
+    { name: "admins", nameField: "name" },
+    { name: "vendors", nameField: "name" },
+  ];
 
-  if (users.length === 0) {
+  let foundUser = null;
+  let foundTable = null;
+
+  for (const table of tablesToCheck) {
+    const [rows] = await db.query(
+      `SELECT id, ${table.nameField} as display_name, email FROM ${table.name} WHERE email = ? AND status = 'active' AND deleted_at IS NULL`,
+      [email],
+    );
+    if (rows.length > 0) {
+      foundUser = rows[0];
+      foundTable = table.name;
+      break;
+    }
+  }
+
+  if (!foundUser) {
     // Don't reveal if email exists or not for security
     return sendSuccess(
       res,
@@ -753,20 +962,23 @@ export const forgotPassword = asyncHandler(async (req, res) => {
     );
   }
 
-  const user = users[0];
-
   // Generate a cryptographically secure reset token
   const resetToken = crypto.randomBytes(32).toString("hex");
   const resetTokenExpiry = new Date(Date.now() + 3600000); // 1 hour from now
 
-  // Store token in database
+  // Store HASHED token in database (so DB leak doesn't expose tokens)
+  const hashedToken = hashToken(resetToken);
   await db.query(
-    "UPDATE users SET reset_token = ?, reset_token_expiry = ? WHERE id = ?",
-    [resetToken, resetTokenExpiry, user.id],
+    `UPDATE ${foundTable} SET reset_token = ?, reset_token_expiry = ? WHERE id = ?`,
+    [hashedToken, resetTokenExpiry, foundUser.id],
   );
 
-  // Send reset link via email
-  await sendForgotPasswordLinkEmail(user.email, user.full_name, resetToken);
+  // Send reset link via email (send the RAW token — user will present it back)
+  await sendForgotPasswordLinkEmail(
+    foundUser.email,
+    foundUser.display_name,
+    resetToken,
+  );
 
   sendSuccess(res, {}, "If the email exists, a reset link has been sent", 200);
 });
@@ -783,25 +995,36 @@ export const resetPassword = asyncHandler(async (req, res) => {
     return sendError(res, "Password must be at least 6 characters", 400);
   }
 
-  // Find user with valid token
-  const [users] = await db.query(
-    "SELECT id, email FROM users WHERE reset_token = ? AND reset_token_expiry > NOW() AND deleted_at IS NULL",
-    [token],
-  );
+  // Hash the presented token and look it up in all tables
+  const hashedToken = hashToken(token);
 
-  if (users.length === 0) {
-    return sendError(res, "Invalid or expired reset token", 400);
+  const tablesToCheck = ["users", "admins", "vendors"];
+  let foundUser = null;
+  let foundTable = null;
+
+  for (const table of tablesToCheck) {
+    const [rows] = await db.query(
+      `SELECT id, email FROM ${table} WHERE reset_token = ? AND reset_token_expiry > NOW() AND deleted_at IS NULL`,
+      [hashedToken],
+    );
+    if (rows.length > 0) {
+      foundUser = rows[0];
+      foundTable = table;
+      break;
+    }
   }
 
-  const user = users[0];
+  if (!foundUser) {
+    return sendError(res, "Invalid or expired reset token", 400);
+  }
 
   // Hash new password
   const hashedPassword = await hashPassword(newPassword);
 
   // Update password and clear reset token
   await db.query(
-    "UPDATE users SET password_hash = ?, reset_token = NULL, reset_token_expiry = NULL WHERE id = ?",
-    [hashedPassword, user.id],
+    `UPDATE ${foundTable} SET password_hash = ?, reset_token = NULL, reset_token_expiry = NULL WHERE id = ?`,
+    [hashedPassword, foundUser.id],
   );
 
   sendSuccess(

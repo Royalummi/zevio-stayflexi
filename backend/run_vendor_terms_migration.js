@@ -15,7 +15,9 @@ try {
   `);
   console.log("✅ vendor_terms_conditions table created (or already exists)");
 
-  const [rows] = await db.query("SELECT COUNT(*) as cnt FROM vendor_terms_conditions");
+  const [rows] = await db.query(
+    "SELECT COUNT(*) as cnt FROM vendor_terms_conditions",
+  );
   if (rows[0].cnt === 0) {
     const defaultContent = `<h2>Vendor Terms and Conditions</h2>
 <p>By listing your property on Zevio and clicking "Submit for Approval", you agree to the following terms and conditions. Please read them carefully before proceeding.</p>
@@ -36,7 +38,7 @@ try {
 
     await db.query(
       "INSERT INTO vendor_terms_conditions (content, version) VALUES (?, 1)",
-      [defaultContent]
+      [defaultContent],
     );
     console.log("✅ Default T&C content inserted");
   } else {

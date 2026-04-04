@@ -298,7 +298,6 @@ export const getPropertyDetails = asyncHandler(async (req, res) => {
       p.status,
       c.id as city_id,
       v.name as vendor_name,
-      e.name as employee_name,
       p.min_stay_days,
       p.max_stay_days,
       p.same_day_booking_allowed,
@@ -309,7 +308,6 @@ export const getPropertyDetails = asyncHandler(async (req, res) => {
     INNER JOIN cities c ON p.city_id = c.id
     LEFT JOIN property_types pt ON p.property_type_id = pt.id
     LEFT JOIN vendors v ON p.vendor_id = v.id
-    LEFT JOIN employees e ON p.employee_id = e.id
     ${getPricingJoinClause("p", "pr")}
     ${getAmenitiesJoinClause("p", "pa", "a")}
     ${featuresService.getFeaturesJoinClause("p", "pf", "f")}

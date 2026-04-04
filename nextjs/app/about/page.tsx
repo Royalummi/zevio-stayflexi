@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   FiHeart,
@@ -9,6 +9,7 @@ import {
   FiAward,
   FiTrendingUp,
   FiMapPin,
+  FiChevronDown,
 } from "react-icons/fi";
 import styles from "./about.module.css";
 
@@ -41,28 +42,46 @@ const values = [
 
 const milestones = [
   {
-    year: "2024",
+    year: "2025",
     title: "Zevio Founded",
     description:
-      "Started with a vision to make luxury villa stays accessible across India.",
-  },
-  {
-    year: "2024",
-    title: "50+ Properties",
-    description:
-      "Expanded our portfolio across Goa, Rajasthan, Himachal Pradesh, and more.",
-  },
-  {
-    year: "2024",
-    title: "1000+ Bookings",
-    description:
-      "Crossed our first thousand happy customers who trusted Zevio for their vacations.",
+      "Built to simplify the discovery of trusted villas and service apartments across Bangalore.",
   },
   {
     year: "2025",
-    title: "Pan-India Presence",
+    title: "50+ Properties",
     description:
-      "Operating in 20+ destinations with 150+ verified luxury properties.",
+      "Expanded our portfolio to 10 different locations in Bangalore.",
+  },
+  {
+    year: "2025",
+    title: "150+ Happy Customers",
+    description:
+      "Crossed our first 150 happy customers who trusted Zevio for their vacations.",
+  },
+  {
+    year: "2026",
+    title: "All Over Bangalore Presence",
+    description:
+      "Operating in 10+ destinations with 50+ verified luxury properties.",
+  },
+];
+
+const faqs = [
+  {
+    question: "Are properties verified?",
+    answer:
+      "Yes! Every property undergoes rigorous safety and quality checks by our team. We ensure secure locks on all entry points. Host identity is also verified.",
+  },
+  {
+    question: "What if I face issues during my stay?",
+    answer:
+      "Our 24/7 support team is always available to assist you. Contact us immediately if you face any issues. We'll work with the host to resolve problems quickly.",
+  },
+  {
+    question: "Can I cancel or modify my booking? Do you offer refunds?",
+    answer:
+      "Yes, you can cancel or modify your booking. A 5% cancellation fee applies on all cancellations. If you cancel 10 or more days before check-in, you receive a full refund. If you cancel 7–9 days before check-in, you receive a partial refund. Cancellations within 48 hours of check-in are non-refundable.",
   },
 ];
 
@@ -84,6 +103,45 @@ const team = [
   },
 ];
 
+function FaqSection() {
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
+
+  return (
+    <section className={styles.faqSection}>
+      <div className={styles.faqContainer}>
+        <div className={styles.sectionHeader}>
+          <h2 className={styles.sectionTitle}>Frequently Asked Questions</h2>
+          <p className={styles.sectionSubtitle}>
+            Got questions? We&apos;ve got answers
+          </p>
+        </div>
+
+        <div className={styles.faqList}>
+          {faqs.map((faq, index) => (
+            <div
+              key={index}
+              className={`${styles.faqItem} ${openIndex === index ? styles.faqOpen : ""}`}
+            >
+              <button
+                className={styles.faqQuestion}
+                onClick={() => setOpenIndex(openIndex === index ? null : index)}
+              >
+                <span>{faq.question}</span>
+                <FiChevronDown className={styles.faqIcon} />
+              </button>
+              {openIndex === index && (
+                <div className={styles.faqAnswer}>
+                  <p>{faq.answer}</p>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default function AboutPage() {
   const router = useRouter();
 
@@ -94,7 +152,8 @@ export default function AboutPage() {
         <div className={styles.heroContent}>
           <h1 className={styles.heroTitle}>About Zevio</h1>
           <p className={styles.heroSubtitle}>
-            Redefining Luxury Villa Experiences Across India
+            Redefining Villa &amp; Service Apartment Experiences Across
+            Bangalore
           </p>
         </div>
       </section>
@@ -108,8 +167,9 @@ export default function AboutPage() {
               <p>
                 Zevio was born from a simple observation: travelers deserved
                 better. Better properties, better service, and better
-                experiences. We noticed that finding reliable, luxury villas in
-                India was complicated, time-consuming, and often disappointing.
+                experiences. We realized that discovering reliable villas and
+                service apartments in Bangalore was unnecessarily complicated,
+                time-consuming, and often disappointing.
               </p>
               <p>
                 Our founders, passionate travelers themselves, experienced
@@ -119,19 +179,30 @@ export default function AboutPage() {
                 foundation.
               </p>
               <p>
-                Today, Zevio is India&apos;s fastest-growing luxury villa
-                booking platform. We personally inspect every property, verify
-                every host, and ensure every booking meets our rigorous quality
-                standards. From serene beaches in Goa to majestic palaces in
-                Rajasthan, from mountain retreats in Manali to backwater havens
-                in Kerala - we bring you the finest accommodations with
-                unmatched service.
+                Zevio is a next-generation villa booking platform built for
+                modern travellers who want more than just a stay. We bring
+                together villas and service apartments with verified hosts on
+                one trusted platform, making holiday planning smooth and
+                stress-free.
               </p>
               <p>
-                Our commitment goes beyond bookings. We&apos;re building a
-                community of travelers who value authenticity, property owners
-                who take pride in hospitality, and local partners who share our
-                vision of sustainable tourism.
+                Today, Zevio is one of Bengaluru&apos;s fastest-growing master
+                brands for experiencing truly verified villas and service
+                apartments. We personally inspect every property and verify each
+                host to ensure every booking meets our highest quality
+                standards. With 10+ locations across Bangalore, Zevio delivers
+                exactly what you see — and exactly what you experience.
+              </p>
+              <p>
+                Our commitment goes beyond bookings. We&apos;re nurturing a
+                community of travelers who seek authenticity, hosts who take
+                pride in genuine hospitality, and local partners who share our
+                vision for sustainable tourism.
+              </p>
+              <p>
+                Our goal is to become the most loved villa booking platform by
+                offering handpicked properties, transparent pricing, and
+                personalised support for both guests and hosts.
               </p>
             </div>
           </div>
@@ -216,21 +287,21 @@ export default function AboutPage() {
           <div className={styles.statItem}>
             <FiMapPin className={styles.statIcon} />
             <div className={styles.statContent}>
-              <div className={styles.statNumber}>20+</div>
-              <div className={styles.statLabel}>Destinations</div>
+              <div className={styles.statNumber}>10+</div>
+              <div className={styles.statLabel}>Locations</div>
             </div>
           </div>
           <div className={styles.statItem}>
             <FiShield className={styles.statIcon} />
             <div className={styles.statContent}>
-              <div className={styles.statNumber}>150+</div>
+              <div className={styles.statNumber}>50+</div>
               <div className={styles.statLabel}>Verified Properties</div>
             </div>
           </div>
           <div className={styles.statItem}>
             <FiUsers className={styles.statIcon} />
             <div className={styles.statContent}>
-              <div className={styles.statNumber}>1000+</div>
+              <div className={styles.statNumber}>150+</div>
               <div className={styles.statLabel}>Happy Customers</div>
             </div>
           </div>
@@ -244,12 +315,15 @@ export default function AboutPage() {
         </div>
       </section>
 
+      {/* FAQ Section */}
+      <FaqSection />
+
       {/* CTA Section */}
       <section className={styles.aboutCta}>
         <div className={styles.ctaContent}>
           <h2 className={styles.ctaTitle}>Join the Zevio Community</h2>
           <p className={styles.ctaDescription}>
-            Experience the difference of luxury villa stays curated with care.
+            Experience the difference of verified villa stays curated with care.
             Start planning your perfect getaway today.
           </p>
           <div className={styles.ctaButtons}>

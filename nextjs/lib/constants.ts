@@ -131,7 +131,6 @@ export const USER_STATUS = {
 export const USER_ROLES = {
   USER: "user",
   ADMIN: "admin",
-  EMPLOYEE: "employee",
   VENDOR: "vendor",
 } as const;
 

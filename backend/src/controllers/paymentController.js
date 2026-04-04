@@ -239,13 +239,7 @@ export const verifyPayment = asyncHandler(async (req, res) => {
       [booking_id],
     );
 
-    // 9. Confirm employee points
-    await connection.query(
-      'UPDATE employee_points SET status = "confirmed" WHERE booking_id = ?',
-      [booking_id],
-    );
-
-    // 10. Generate invoice
+    // 9. Generate invoice
     const invoiceId = generateUUID();
     const calculatedBaseAmount =
       (parseFloat(booking.base_amount) || 0) +
@@ -552,12 +546,6 @@ async function handlePaymentSuccess(data) {
     // Update booking status
     await connection.query(
       'UPDATE bookings SET status = "confirmed" WHERE id = ?',
-      [orderId],
-    );
-
-    // Confirm employee points
-    await connection.query(
-      'UPDATE employee_points SET status = "confirmed" WHERE booking_id = ?',
       [orderId],
     );
 

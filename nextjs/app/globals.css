@@ -755,32 +755,38 @@ button {
 .footer {
   background: var(--brand-navy-darker);
   color: var(--brand-grey-light);
-  padding: 80px 0 40px;
+  padding: 48px 0 0;
+  font-size: 14px;
 }
 
 .footer-grid {
   display: grid;
-  gap: 48px;
-  margin-bottom: 48px;
+  gap: 32px;
+  margin-bottom: 32px;
 }
 
 @media (min-width: 768px) {
   .footer-grid {
-    grid-template-columns: 2fr 1fr 1fr 1fr;
+    grid-template-columns: 2fr 1fr 1fr 1.2fr;
+    gap: 40px;
   }
 }
 
 .footer-title {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: var(--font-bold);
   color: white;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .footer-description {
-  line-height: 1.8;
-  margin-bottom: 24px;
-  max-width: 400px;
+  line-height: 1.7;
+  margin-bottom: 16px;
+  max-width: 340px;
+  font-size: 13px;
+  opacity: 0.85;
 }
 
 .footer-subtitle {
@@ -795,21 +801,76 @@ button {
 .footer-links {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 }
 
 .footer-link {
   transition: color 0.2s;
+  font-size: 13px;
 }
 
 .footer-link:hover {
   color: var(--brand-teal-light);
 }
 
+.footer-contact-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.footer-social-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  transition: all 0.2s;
+}
+
+.footer-social-icon:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--brand-teal-light);
+  color: var(--brand-teal-light);
+}
+
 .footer-bottom {
-  padding-top: 32px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 20px 0;
+  margin-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 12px;
+  opacity: 0.75;
+}
+
+.footer-credit {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.footer-credit a {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  transition: opacity 0.2s;
+}
+
+.footer-credit a:hover {
+  opacity: 0.8;
+}
+
+@media (max-width: 767px) {
+  .footer-bottom {
+    justify-content: center;
+    text-align: center;
+  }
 }
 
 /* Utilities */

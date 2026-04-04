@@ -607,9 +607,9 @@ export default function SearchBar() {
                 {sortedCitiesForNav.length === 0 ? (
                   <div className={styles.dropdownEmptyModern}>
                     <FiMapPin className={styles.emptyIcon} />
-                    <div>No destinations found</div>
+                    <div>Coming Soon</div>
                     <div className={styles.emptySubtitle}>
-                      Try searching for a different city
+                      We&apos;re not in this area yet, but stay tuned!
                     </div>
                   </div>
                 ) : (

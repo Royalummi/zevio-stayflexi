@@ -146,7 +146,6 @@ interface Property {
   min_stay_nights?: number;
   max_stay_nights?: number;
   maintenance_charges?: number | string;
-  notice_period_days?: number;
   // Features returned as array from backend
   features?: string[];
   features_list?: string;
@@ -181,7 +180,6 @@ interface Property {
   // Phase 3: Property info
   property_type?: string;
   vendor_name?: string;
-  employee_name?: string;
   // Phase 4: Booking flexibility
   same_day_booking_allowed?: boolean | number;
   max_booking_days?: number | null;
@@ -968,28 +966,6 @@ function ServiceApartmentDetailContent() {
                     </div>
                   )}
 
-                {/* Cancellation Policy */}
-                {property.notice_period_days && (
-                  <div className={styles.infoItem}>
-                    <div className={styles.infoIcon}>
-                      <FiAlertCircle />
-                    </div>
-                    <div className={styles.infoContent}>
-                      <div className={styles.infoLabel}>
-                        Cancellation Policy
-                      </div>
-                      <div className={styles.infoValue}>
-                        {property.notice_period_days}{" "}
-                        {property.notice_period_days === 1 ? "day" : "days"}{" "}
-                        notice required
-                      </div>
-                      <div className={styles.infoNote}>
-                        Free cancellation before notice period
-                      </div>
-                    </div>
-                  </div>
-                )}
-
                 {/* Emergency Contacts */}
                 {property.emergency_contacts && (
                   <div className={styles.infoItem}>
@@ -1294,7 +1270,7 @@ function ServiceApartmentDetailContent() {
           )}
 
           {/* Cancellation Policy - Structured tiers display */}
-          {(property.cancellation_policy || property.notice_period_days) && (
+          {property.cancellation_policy && (
             <div className={styles.section}>
               <div className={styles.sectionHeader}>
                 <h2>
@@ -1305,17 +1281,6 @@ function ServiceApartmentDetailContent() {
                 </h2>
                 <div className={styles.sectionDivider}></div>
               </div>
-              {property.notice_period_days && (
-                <div className={styles.cancelPolicySummary}>
-                  <FiCheckCircle className={styles.ruleAllowIcon} />
-                  <span>
-                    Free cancellation if cancelled{" "}
-                    <strong>{property.notice_period_days}</strong>{" "}
-                    {property.notice_period_days === 1 ? "day" : "days"} before
-                    check-in
-                  </span>
-                </div>
-              )}
               {property.cancellation_policy &&
                 Array.isArray(
                   (property.cancellation_policy as Record<string, unknown>)
@@ -1372,7 +1337,9 @@ function ServiceApartmentDetailContent() {
               <div className={styles.accordionBody}>
                 <div
                   className={styles.sectionContent}
-                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(property.local_area_info as string) }}
+                  dangerouslySetInnerHTML={{
+                    __html: sanitizeHtml(property.local_area_info as string),
+                  }}
                 />
               </div>
             </details>
@@ -1520,7 +1487,9 @@ function ServiceApartmentDetailContent() {
                         className={styles.counterBtn}
                         onClick={(e) => {
                           e.stopPropagation();
-                          setChildren(Math.min(property?.max_children || 5, children + 1));
+                          setChildren(
+                            Math.min(property?.max_children || 5, children + 1),
+                          );
                         }}
                         disabled={children >= (property?.max_children || 5)}
                       >

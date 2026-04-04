@@ -226,7 +226,6 @@ export const listServiceApartments = async (req, res) => {
         p.wifi_provider,
         p.furnishing_type,
         v.name as vendor_name,
-        e.name as employee_name,
         p.same_day_booking_allowed,
         p.max_booking_days,
         p.is_recommended,
@@ -239,7 +238,6 @@ export const listServiceApartments = async (req, res) => {
       LEFT JOIN cities c ON p.city_id = c.id
       LEFT JOIN property_types pt ON p.property_type_id = pt.id
       LEFT JOIN vendors v ON p.vendor_id = v.id
-      LEFT JOIN employees e ON p.employee_id = e.id
       WHERE ${whereClause}
       GROUP BY p.id, c.name, c.state
       ORDER BY ${
@@ -802,7 +800,6 @@ export const getServiceApartmentDetails = async (req, res) => {
         p.status,
         c.id as city_id,
         v.name as vendor_name,
-        e.name as employee_name,
         ${getPricingSelectClause("pr")},
         ${getAmenitiesSelectClause("p", "pa", "a")},
         ${featuresService.getFeaturesSelectClause("p", "pf", "f")}
@@ -810,7 +807,6 @@ export const getServiceApartmentDetails = async (req, res) => {
       INNER JOIN cities c ON p.city_id = c.id
       LEFT JOIN property_types pt ON p.property_type_id = pt.id
       LEFT JOIN vendors v ON p.vendor_id = v.id
-      LEFT JOIN employees e ON p.employee_id = e.id
       ${getPricingJoinClause("p", "pr")}
       ${getAmenitiesJoinClause("p", "pa", "a")}
       ${featuresService.getFeaturesJoinClause("p", "pf", "f")}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
@@ -36,6 +36,8 @@ const VendorPropertyForm = ({
   onCancel,
   propertyStatus = "draft", // draft, pending_approval, approved, inactive
   hasPendingChangeRequest = false,
+  locationState = null, // resolved location state (survives browser refresh)
+  onDirtyChange = null, // callback(isDirty: boolean) — lets parent react to unsaved changes
 }) => {
   const location = useLocation();
   const [loading, setLoading] = useState(false);
@@ -51,8 +53,10 @@ const VendorPropertyForm = ({
   const [termsLoading, setTermsLoading] = useState(false);
 
   // Get property type from navigation state (passed from property type modal)
-  const preSelectedPropertyType = location.state?.propertyTypeId || null;
-  const preSelectedPropertyTypeName = location.state?.propertyTypeName || null;
+  // locationState prop takes priority (handles browser refresh via sessionStorage fallback)
+  const resolvedState = locationState || location.state;
+  const preSelectedPropertyType = resolvedState?.propertyTypeId || null;
+  const preSelectedPropertyTypeName = resolvedState?.propertyTypeName || null;
 
   // Basic Information
   const [formData, setFormData] = useState({
@@ -91,7 +95,6 @@ const VendorPropertyForm = ({
     allow_corporate_booking: false,
     corporate_discount_percent: 20,
     maintenance_charges: 0,
-    notice_period_days: 30,
     // Session 70: Villa duration discount slabs (read-only view for vendor)
     discount_3_5_days: 0,
     discount_6_14_days: 0,
@@ -181,6 +184,8 @@ const VendorPropertyForm = ({
   const [pendingCalendarPrices, setPendingCalendarPrices] = useState([]);
   const [hasSelectedImages, setHasSelectedImages] = useState(false);
   const [selectedImageCount, setSelectedImageCount] = useState(0);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const isInitialLoad = useRef(true);
 
   // Default guideline templates by property type (same as admin)
   const guidelineTemplates = {
@@ -384,8 +389,6 @@ const VendorPropertyForm = ({
             0,
           maintenance_charges:
             pricing.maintenance_charges ?? property.maintenance_charges ?? 0,
-          notice_period_days:
-            pricing.notice_period_days ?? property.notice_period_days ?? 30,
           // Villa duration discount slabs (set by admin, read-only for vendor)
           discount_3_5_days:
             parseFloat(
@@ -500,6 +503,36 @@ const VendorPropertyForm = ({
       }
     }
   }, [formData.property_type_id, propertyId, templatesLoaded]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Mark form as dirty after initial data load
+  useEffect(() => {
+    if (isInitialLoad.current) {
+      isInitialLoad.current = false;
+      return;
+    }
+    setHasUnsavedChanges(true);
+  }, [formData, guidelines]);
+
+  // Warn user before leaving with unsaved changes (browser refresh / tab close)
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue =
+          "You have unsaved changes. Are you sure you want to leave?";
+        return e.returnValue;
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [hasUnsavedChanges]);
+
+  // Notify parent of dirty state changes
+  useEffect(() => {
+    onDirtyChange?.(hasUnsavedChanges);
+  }, [hasUnsavedChanges, onDirtyChange]);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -674,9 +707,7 @@ const VendorPropertyForm = ({
         price_per_night: parseFloat(formData.price_per_night) || 0,
         bedrooms: parseInt(formData.bedrooms) || 0,
         bathrooms: parseInt(formData.bathrooms) || 0,
-        living_area: formData.living_area
-          ? parseInt(formData.living_area)
-          : 1,
+        living_area: formData.living_area ? parseInt(formData.living_area) : 1,
         max_guests: parseInt(formData.max_guests) || 2,
         weekly_discount_percent:
           parseFloat(formData.weekly_discount_percent) || 0,
@@ -689,7 +720,6 @@ const VendorPropertyForm = ({
         corporate_discount_percent:
           parseFloat(formData.corporate_discount_percent) || 0,
         maintenance_charges: parseFloat(formData.maintenance_charges) || 0,
-        notice_period_days: parseInt(formData.notice_period_days) || 30,
         min_stay_days: parseInt(formData.min_stay_days) || 1,
         max_stay_days: formData.max_stay_days
           ? parseInt(formData.max_stay_days)
@@ -726,6 +756,7 @@ const VendorPropertyForm = ({
           } else {
             toast.success("Property updated successfully!");
           }
+          setHasUnsavedChanges(false);
           if (onSuccess) onSuccess(response.data);
         } else {
           toast.error(response.data.message || "Failed to update property");
@@ -778,6 +809,7 @@ const VendorPropertyForm = ({
             }
           }
 
+          setHasUnsavedChanges(false);
           if (onSuccess) onSuccess(createResponse.data);
         } else {
           toast.error(
@@ -1404,31 +1436,6 @@ const VendorPropertyForm = ({
               </div>
             </div>
           )}
-
-          {/* Notice Period */}
-          <div>
-            <h4 className="text-lg font-semibold text-foreground mb-4">
-              Notice Period
-            </h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="flex flex-col">
-                <label className="text-sm font-medium text-foreground mb-2">
-                  Notice Period (Days)
-                </label>
-                <input
-                  type="number"
-                  name="notice_period_days"
-                  value={formData.notice_period_days}
-                  onChange={handleInputChange}
-                  min="0"
-                  className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                />
-                <small className="text-xs text-muted-foreground mt-1">
-                  Required notice for cancellation/checkout
-                </small>
-              </div>
-            </div>
-          </div>
 
           {/* Villa Duration Discount Slabs – read-only for vendor */}
           {isVilla &&
@@ -2235,7 +2242,17 @@ const VendorPropertyForm = ({
           {onCancel && (
             <button
               type="button"
-              onClick={onCancel}
+              onClick={() => {
+                if (
+                  hasUnsavedChanges &&
+                  !window.confirm(
+                    "You have unsaved changes. Are you sure you want to cancel?",
+                  )
+                ) {
+                  return;
+                }
+                onCancel();
+              }}
               className="px-6 py-3 bg-muted text-foreground border border-border rounded-lg font-semibold hover:bg-muted/80 transition-all"
             >
               Cancel
@@ -2261,8 +2278,14 @@ const VendorPropertyForm = ({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
           <div className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col">
             <div className="flex items-center justify-between p-6 border-b border-border">
-              <h2 className="text-xl font-bold text-foreground">Vendor Terms & Conditions</h2>
-              <button type="button" onClick={() => setShowTermsModal(false)} className="text-muted-foreground hover:text-foreground transition-colors">
+              <h2 className="text-xl font-bold text-foreground">
+                Vendor Terms & Conditions
+              </h2>
+              <button
+                type="button"
+                onClick={() => setShowTermsModal(false)}
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
                 ✕
               </button>
             </div>
@@ -2275,7 +2298,9 @@ const VendorPropertyForm = ({
               ) : (
                 <div
                   className="prose prose-sm dark:prose-invert max-w-none text-foreground"
-                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(termsContent) }}
+                  dangerouslySetInnerHTML={{
+                    __html: DOMPurify.sanitize(termsContent),
+                  }}
                 />
               )}
             </div>

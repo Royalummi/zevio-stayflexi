@@ -79,7 +79,6 @@ const FIELD_LABELS = {
   quarterly_discount_percent: "Quarterly Discount",
   long_term_discount_percent: "Long-term Discount",
   maintenance_charges: "Maintenance Charges",
-  notice_period_days: "Notice Period (days)",
   allow_corporate_booking: "Corporate Booking",
   corporate_discount_percent: "Corporate Discount",
   house_rules: "House Rules",
@@ -131,7 +130,6 @@ const FIELD_LABELS = {
 const SKIP_FIELDS = new Set([
   "id",
   "vendor_id",
-  "employee_id",
   "created_at",
   "updated_at",
   "deleted_at",
@@ -203,11 +201,7 @@ const FIELD_CATEGORIES = [
   },
   {
     label: "Corporate",
-    fields: [
-      "allow_corporate_booking",
-      "corporate_discount_percent",
-      "notice_period_days",
-    ],
+    fields: ["allow_corporate_booking", "corporate_discount_percent"],
   },
   {
     label: "Rules & Policies",

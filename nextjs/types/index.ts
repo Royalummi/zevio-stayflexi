@@ -13,7 +13,7 @@ export interface User {
   email: string;
   phone: string | null;
   status: "active" | "inactive" | "blocked";
-  role?: "user" | "vendor" | "employee" | "admin";
+  role?: "user" | "vendor" | "admin";
   corporate_verified?: boolean;
   // Actual DB column names returned by the backend
   is_corporate_user?: number | boolean;
@@ -80,7 +80,6 @@ export interface Property {
   check_out_time?: string;
   property_type?: string;
   vendor_name?: string;
-  employee_name?: string;
   // Phase 4: Booking flexibility and featured property fields
   min_stay_days?: number;
   max_stay_days?: number;
@@ -100,7 +99,6 @@ export interface Property {
   maintenance_charges?: number | string;
   allow_corporate_booking?: boolean | number;
   corporate_discount_percent?: number | string;
-  notice_period_days?: number;
   features_list?: string;
 }
 

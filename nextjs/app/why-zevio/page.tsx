@@ -9,7 +9,6 @@ import {
   FiHome,
   FiStar,
   FiClock,
-  FiHeart,
   FiCheckCircle,
 } from "react-icons/fi";
 import styles from "./why-zevio.module.css";
@@ -41,9 +40,9 @@ const features = [
   },
   {
     icon: <FiStar />,
-    title: "Trusted by Thousands",
+    title: "Trusted by Guests",
     description:
-      "Join thousands of satisfied customers who've experienced unforgettable stays with Zevio.",
+      "Join our growing community of 150+ satisfied customers who've experienced unforgettable stays with Zevio.",
   },
   {
     icon: <FiClock />,
@@ -52,10 +51,10 @@ const features = [
       "Book your dream villa in minutes with our simple and secure online booking system.",
   },
   {
-    icon: <FiHeart />,
-    title: "Personalized Service",
+    icon: <FiHome />,
+    title: "Service Apartments",
     description:
-      "Dedicated concierge service to help you plan activities, meals, and special occasions.",
+      "Find the best service apartments at the best prices — where price meets quality for extended stays and corporate bookings.",
   },
   {
     icon: <FiCheckCircle />,
@@ -67,15 +66,15 @@ const features = [
 
 const benefits = [
   {
-    number: "1000+",
+    number: "150+",
     label: "Happy Customers",
   },
   {
-    number: "150+",
-    label: "Luxury Villas",
+    number: "50+",
+    label: "Verified Properties",
   },
   {
-    number: "20+",
+    number: "10+",
     label: "Destinations",
   },
   {

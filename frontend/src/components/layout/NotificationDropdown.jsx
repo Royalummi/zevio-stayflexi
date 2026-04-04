@@ -14,11 +14,7 @@ import {
   Inbox,
 } from "lucide-react";
 import { Button } from "../ui/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "../ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Badge } from "../ui/badge";
 import { Separator } from "../ui/separator";
 import api from "../../lib/api";
@@ -28,15 +24,35 @@ function getNotificationMeta(title) {
   const t = (title || "").toLowerCase();
 
   if (t.includes("property change request") || t.includes("change request"))
-    return { icon: FileEdit, path: "/admin/change-requests", color: "text-amber-500" };
+    return {
+      icon: FileEdit,
+      path: "/admin/change-requests",
+      color: "text-amber-500",
+    };
   if (t.includes("new property") || t.includes("property submission"))
-    return { icon: Building2, path: "/admin/properties", color: "text-blue-500" };
+    return {
+      icon: Building2,
+      path: "/admin/properties",
+      color: "text-blue-500",
+    };
   if (t.includes("property approved") || t.includes("property status"))
-    return { icon: Building2, path: "/vendor/properties", color: "text-green-500" };
+    return {
+      icon: Building2,
+      path: "/vendor/properties",
+      color: "text-green-500",
+    };
   if (t.includes("booking") || t.includes("cancellation"))
-    return { icon: CreditCard, path: "/admin/bookings", color: "text-purple-500" };
+    return {
+      icon: CreditCard,
+      path: "/admin/bookings",
+      color: "text-purple-500",
+    };
   if (t.includes("settlement") || t.includes("refund"))
-    return { icon: CreditCard, path: "/admin/settlements", color: "text-emerald-500" };
+    return {
+      icon: CreditCard,
+      path: "/admin/settlements",
+      color: "text-emerald-500",
+    };
   if (t.includes("account"))
     return { icon: AlertTriangle, path: "/admin/users", color: "text-red-500" };
 
@@ -52,7 +68,10 @@ function timeAgo(dateStr) {
   if (hrs < 24) return `${hrs}h ago`;
   const days = Math.floor(hrs / 24);
   if (days < 7) return `${days}d ago`;
-  return new Date(dateStr).toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+  return new Date(dateStr).toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short",
+  });
 }
 
 const NotificationDropdown = () => {
@@ -103,7 +122,7 @@ const NotificationDropdown = () => {
     try {
       await api.put(`/notifications/${id}/read`);
       setNotifications((prev) =>
-        prev.map((n) => (n.id === id ? { ...n, is_read: 1 } : n))
+        prev.map((n) => (n.id === id ? { ...n, is_read: 1 } : n)),
       );
       setUnreadCount((c) => Math.max(0, c - 1));
     } catch {}
@@ -131,7 +150,7 @@ const NotificationDropdown = () => {
     if (!notif.is_read) {
       api.put(`/notifications/${notif.id}/read`).catch(() => {});
       setNotifications((prev) =>
-        prev.map((n) => (n.id === notif.id ? { ...n, is_read: 1 } : n))
+        prev.map((n) => (n.id === notif.id ? { ...n, is_read: 1 } : n)),
       );
       setUnreadCount((c) => Math.max(0, c - 1));
     }
@@ -206,9 +225,7 @@ const NotificationDropdown = () => {
                   key={notif.id}
                   onClick={() => handleNotificationClick(notif)}
                   className={`flex items-start gap-3 px-4 py-3 cursor-pointer transition-colors border-b border-gray-100 dark:border-gray-800 last:border-b-0 hover:bg-gray-50 dark:hover:bg-gray-800/50 ${
-                    isUnread
-                      ? "bg-blue-50/50 dark:bg-blue-950/20"
-                      : ""
+                    isUnread ? "bg-blue-50/50 dark:bg-blue-950/20" : ""
                   }`}
                 >
                   {/* Icon */}
@@ -219,7 +236,9 @@ const NotificationDropdown = () => {
                   {/* Content */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
-                      <p className={`text-sm leading-tight ${isUnread ? "font-semibold text-gray-900 dark:text-white" : "text-gray-700 dark:text-gray-300"}`}>
+                      <p
+                        className={`text-sm leading-tight ${isUnread ? "font-semibold text-gray-900 dark:text-white" : "text-gray-700 dark:text-gray-300"}`}
+                      >
                         {notif.title}
                       </p>
                       {isUnread && (

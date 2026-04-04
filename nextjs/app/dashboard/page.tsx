@@ -129,10 +129,10 @@ export default function Dashboard() {
   };
 
   const upcomingBookings = bookings.filter(
-    (b) => new Date(b.check_in) > new Date()
+    (b) => new Date(b.check_in) > new Date(),
   );
   const pastBookings = bookings.filter(
-    (b) => new Date(b.check_out) < new Date()
+    (b) => new Date(b.check_out) < new Date(),
   );
 
   return (
@@ -332,7 +332,7 @@ export default function Dashboard() {
                               ).toString(),
                             });
                             router.push(
-                              `/booking-review?${queryParams.toString()}`
+                              `/booking-review?${queryParams.toString()}`,
                             );
                           }}
                         >
@@ -366,7 +366,7 @@ export default function Dashboard() {
                                 month: "short",
                                 day: "numeric",
                                 year: "numeric",
-                              }
+                              },
                             )}
                           </p>
                         </div>
@@ -383,7 +383,7 @@ export default function Dashboard() {
                                 month: "short",
                                 day: "numeric",
                                 year: "numeric",
-                              }
+                              },
                             )}
                           </p>
                         </div>

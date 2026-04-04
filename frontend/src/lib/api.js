@@ -37,6 +37,24 @@ api.interceptors.request.use(
   (error) => Promise.reject(error),
 );
 
+// Concurrent refresh queuing: only one refresh request at a time
+let isRefreshing = false;
+let refreshSubscribers = [];
+
+const onRefreshed = (newAccessToken) => {
+  refreshSubscribers.forEach((cb) => cb(newAccessToken));
+  refreshSubscribers = [];
+};
+
+const onRefreshFailed = (error) => {
+  refreshSubscribers.forEach((cb) => cb(null, error));
+  refreshSubscribers = [];
+};
+
+const addRefreshSubscriber = (callback) => {
+  refreshSubscribers.push(callback);
+};
+
 // Response interceptor to handle token refresh
 api.interceptors.response.use(
   (response) => response,
@@ -45,6 +63,19 @@ api.interceptors.response.use(
 
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
+
+      // If already refreshing, queue this request
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          addRefreshSubscriber((newToken, err) => {
+            if (err) return reject(err);
+            originalRequest.headers.Authorization = `Bearer ${newToken}`;
+            resolve(api(originalRequest));
+          });
+        });
+      }
+
+      isRefreshing = true;
 
       try {
         // Get refresh token from Zustand store
@@ -68,30 +99,42 @@ api.interceptors.response.use(
           throw new Error("No refresh token available");
         }
 
-        const response = await axios.post(
-          `${API_BASE_URL}/api/auth/refresh`,
-          { refreshToken },
-        );
+        const response = await axios.post(`${API_BASE_URL}/api/auth/refresh`, {
+          refreshToken,
+        });
 
-        const { accessToken } = response.data.data;
+        const { accessToken, refreshToken: newRefreshToken } =
+          response.data.data;
 
         // Update both localStorage and Zustand storage
         localStorage.setItem("accessToken", accessToken);
+        if (newRefreshToken) {
+          localStorage.setItem("refreshToken", newRefreshToken);
+        }
 
         // Update Zustand store
         if (authStorage) {
           try {
             const parsed = JSON.parse(authStorage);
             parsed.state.accessToken = accessToken;
+            if (newRefreshToken) {
+              parsed.state.refreshToken = newRefreshToken;
+            }
             localStorage.setItem("auth-storage", JSON.stringify(parsed));
           } catch (e) {
             console.error("Error updating auth storage:", e);
           }
         }
 
+        isRefreshing = false;
+        onRefreshed(accessToken);
+
         originalRequest.headers.Authorization = `Bearer ${accessToken}`;
         return api(originalRequest);
       } catch (refreshError) {
+        isRefreshing = false;
+        onRefreshFailed(refreshError);
+
         // Clear all auth data
         localStorage.removeItem("accessToken");
         localStorage.removeItem("refreshToken");

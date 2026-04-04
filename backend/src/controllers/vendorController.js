@@ -30,7 +30,7 @@ const getDashboardStats = asyncHandler(async (req, res) => {
       COALESCE(SUM(CASE WHEN b.status IN ('confirmed', 'completed') THEN b.total_amount ELSE 0 END), 0) as total_revenue
     FROM bookings b
     INNER JOIN properties p ON b.property_id = p.id
-    WHERE p.vendor_id = ?`,
+    WHERE p.vendor_id = ? AND p.deleted_at IS NULL`,
     [vendorId],
   );
 
@@ -41,7 +41,7 @@ const getDashboardStats = asyncHandler(async (req, res) => {
       COUNT(r.id) as total_reviews
     FROM reviews r
     INNER JOIN properties p ON r.property_id = p.id
-    WHERE p.vendor_id = ? AND r.status = 'approved'`,
+    WHERE p.vendor_id = ? AND p.deleted_at IS NULL AND r.status = 'approved'`,
     [vendorId],
   );
 
@@ -96,14 +96,12 @@ const getProperties = asyncHandler(async (req, res) => {
       p.photos,
       p.created_at,
       c.name as city_name,
-      e.name as employee_name,
       pr.price_per_night,
       pr.gst_percentage,
       (SELECT COUNT(*) FROM bookings WHERE property_id = p.id AND status IN ('confirmed', 'completed')) as total_bookings,
       (SELECT COALESCE(SUM(total_amount), 0) FROM bookings WHERE property_id = p.id AND status IN ('confirmed', 'completed')) as total_revenue
     FROM properties p
     LEFT JOIN cities c ON p.city_id = c.id
-    LEFT JOIN employees e ON p.employee_id = e.id
     LEFT JOIN property_pricing pr ON p.id = pr.property_id
     WHERE p.vendor_id = ? AND p.deleted_at IS NULL
   `;
@@ -282,6 +280,15 @@ const getSettlements = asyncHandler(async (req, res) => {
       vs.payment_proof,
       vs.created_at,
       vs.booking_id,
+      vs.booking_base_amount,
+      vs.booking_gst_amount,
+      vs.booking_service_charge,
+      vs.booking_total_amount,
+      vs.vendor_gross_amount,
+      vs.platform_fee,
+      vs.platform_fee_gst,
+      vs.total_deduction,
+      vs.is_vendor_gst,
       p_booking.title as property_title
     FROM vendor_settlements vs
     LEFT JOIN bookings b ON vs.booking_id = b.id
@@ -367,7 +374,7 @@ const getAnalytics = asyncHandler(async (req, res) => {
       AND b.status IN ('confirmed', 'completed')
       ${start_date ? "AND b.created_at >= ?" : ""}
       ${end_date ? "AND b.created_at <= ?" : ""}
-    WHERE p.vendor_id = ?
+    WHERE p.vendor_id = ? AND p.deleted_at IS NULL
     GROUP BY p.id, p.title
     ORDER BY total_revenue DESC`,
     [
@@ -385,7 +392,7 @@ const getAnalytics = asyncHandler(async (req, res) => {
       COALESCE(SUM(b.total_amount), 0) as revenue
     FROM bookings b
     INNER JOIN properties p ON b.property_id = p.id
-    WHERE p.vendor_id = ? AND b.status IN ('confirmed', 'completed')
+    WHERE p.vendor_id = ? AND p.deleted_at IS NULL AND b.status IN ('confirmed', 'completed')
   `;
   const trendsParams = [vendorId];
 

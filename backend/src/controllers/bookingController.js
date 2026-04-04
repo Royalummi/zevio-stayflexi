@@ -90,9 +90,7 @@ export const createBooking = asyncHandler(async (req, res) => {
         403,
       );
     }
-    console.log(
-      `Corporate booking validated for user ${userId} (${req.user.email})`,
-    );
+    console.log(`Corporate booking validated for user ${userId}`);
   }
 
   // Validate dates
@@ -113,7 +111,6 @@ export const createBooking = asyncHandler(async (req, res) => {
   const [properties] = await db.query(
     `SELECT 
       p.id, 
-      p.employee_id,
       p.max_guests,
       p.same_day_booking_allowed, 
       p.max_booking_days,
@@ -442,23 +439,6 @@ export const createBooking = asyncHandler(async (req, res) => {
       "INSERT INTO coupon_usages (id, coupon_id, booking_id, user_id) VALUES (?, ?, ?, ?)",
       [generateUUID(), couponId, bookingId, userId],
     );
-  }
-
-  // Create pending employee points (will be confirmed after payment)
-  if (property.employee_id) {
-    const [employee] = await db.query(
-      "SELECT incentive_percentage FROM employees WHERE id = ?",
-      [property.employee_id],
-    );
-
-    if (employee.length > 0 && employee[0].incentive_percentage) {
-      const points =
-        (amounts.baseAmount * employee[0].incentive_percentage) / 100;
-      await db.query(
-        'INSERT INTO employee_points (id, employee_id, booking_id, points, status) VALUES (?, ?, ?, ?, "pending")',
-        [generateUUID(), property.employee_id, bookingId, points],
-      );
-    }
   }
 
   // Fetch created booking

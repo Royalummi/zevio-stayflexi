@@ -1,7 +1,10 @@
 import db from "../config/database.js";
 import { asyncHandler, sendSuccess, sendError } from "../utils/response.js";
 import { generateUUID } from "../utils/helpers.js";
-import { notifyAdmin, notifyVendor } from "../services/notificationEmailService.js";
+import {
+  notifyAdmin,
+  notifyVendor,
+} from "../services/notificationEmailService.js";
 
 /**
  * @route   POST /api/vendor/properties/:id/request-change
@@ -82,7 +85,10 @@ export const requestPropertyChange = asyncHandler(async (req, res) => {
     subject: `Change Request: ${properties[0].title}`,
     title: "Property Change Request",
     message: `A vendor has submitted changes for property "${properties[0].title}". Please review and approve or reject.`,
-    details: [["Property", properties[0].title], ["Fields Changed", Object.keys(requested_changes).join(", ")]],
+    details: [
+      ["Property", properties[0].title],
+      ["Fields Changed", Object.keys(requested_changes).join(", ")],
+    ],
     badgeText: "Pending Review",
     badgeClass: "badge-warning",
     ctaUrl: `${process.env.FRONTEND_URL || "http://localhost:5173"}/admin/change-requests`,
@@ -240,7 +246,6 @@ export const approveChangeRequest = asyncHandler(async (req, res) => {
     "allow_corporate_booking",
     "corporate_discount_percent",
     "maintenance_charges",
-    "notice_period_days",
     "discount_3_5_days",
     "discount_6_14_days",
     "discount_15_plus_days",
@@ -443,7 +448,10 @@ export const approveChangeRequest = asyncHandler(async (req, res) => {
     title: "Change Request Approved",
     message: `Your requested changes for "${request.title}" have been approved and applied to the live listing.`,
     alertType: "success",
-    details: [["Property", request.title], ["Status", "Approved & Applied"]],
+    details: [
+      ["Property", request.title],
+      ["Status", "Approved & Applied"],
+    ],
   }).catch(() => {});
 
   sendSuccess(res, null, "Change request approved and applied successfully");
@@ -507,7 +515,11 @@ export const rejectChangeRequest = asyncHandler(async (req, res) => {
       ? `Your requested changes for "${request.title}" were rejected. Reason: ${rejection_reason}`
       : `Your requested changes for "${request.title}" were rejected.`,
     alertType: "danger",
-    details: [["Property", request.title], ["Status", "Rejected"], ...(rejection_reason ? [["Reason", rejection_reason]] : [])],
+    details: [
+      ["Property", request.title],
+      ["Status", "Rejected"],
+      ...(rejection_reason ? [["Reason", rejection_reason]] : []),
+    ],
   }).catch(() => {});
 
   sendSuccess(res, null, "Change request rejected successfully");

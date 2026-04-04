@@ -1,15 +1,7 @@
 import { useState, useEffect, useRef } from "react";
-import { Check, ChevronsUpDown, MapPin, Plus } from "lucide-react";
+import { Check, ChevronsUpDown, MapPin, Plus, Search } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { Button } from "../ui/button";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "../ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import api from "../../lib/api";
 import { toast } from "sonner";
@@ -31,13 +23,6 @@ const CityCombobox = ({
   const [suggestedState, setSuggestedState] = useState("");
   const [detectedLocation, setDetectedLocation] = useState(null);
   const [showLocationSuggestion, setShowLocationSuggestion] = useState(false);
-
-  // Keep a stable ref to onChange so the location-detection effect doesn't
-  // re-run every time the parent re-renders (inline arrow functions change each render)
-  const onChangeRef = useRef(onChange);
-  useEffect(() => {
-    onChangeRef.current = onChange;
-  }, [onChange]);
 
   useEffect(() => {
     if (!externalCities) {
@@ -157,13 +142,8 @@ const CityCombobox = ({
       );
 
       if (matchingCity) {
-        // Auto-select the matching city — defer to avoid "setState during render" warning
-        setTimeout(() => {
-          onChangeRef.current(matchingCity.id, matchingCity);
-          toast.success(
-            `Location detected: ${matchingCity.name}, ${matchingCity.state}`,
-          );
-        }, 0);
+        // Show suggestion banner — let user decide to select it
+        setShowLocationSuggestion(true);
       } else if (
         detectedLocation.country === "India" ||
         detectedLocation.country === "IN"
@@ -172,7 +152,7 @@ const CityCombobox = ({
         setShowLocationSuggestion(true);
       }
     }
-  }, [detectedLocation, cities, value]); // onChange intentionally omitted — accessed via stable ref
+  }, [detectedLocation, cities, value]);
 
   const selectedCity = cities.find((city) => city.id === value);
 
@@ -247,46 +227,80 @@ const CityCombobox = ({
     : cities;
 
   const showAddOption = searchValue && filteredCities.length === 0;
+  const searchInputRef = useRef(null);
 
   return (
     <div className="flex flex-col">
       {/* Location suggestion banner */}
-      {showLocationSuggestion && detectedLocation && (
-        <div className="mb-2 p-3 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg flex items-start gap-2">
-          <MapPin className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0" />
-          <div className="flex-1 min-w-0">
-            <p className="text-sm text-blue-900 dark:text-blue-100">
-              We detected you're in{" "}
-              <strong>
-                {detectedLocation.city}, {detectedLocation.state}
-              </strong>
-            </p>
-            <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
-              This city is not in our list yet.
-            </p>
-          </div>
-          <Button
-            type="button"
-            size="sm"
-            variant="default"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              console.log("[CityCombobox] Add it button clicked");
-              handleOpenAddDialog(
-                detectedLocation.city,
-                detectedLocation.state,
-              );
-              setShowLocationSuggestion(false);
-            }}
-            className="shrink-0"
-          >
-            Add it
-          </Button>
-        </div>
-      )}
+      {showLocationSuggestion &&
+        detectedLocation &&
+        (() => {
+          const matchingCity = cities.find(
+            (city) =>
+              city.name.toLowerCase() === detectedLocation.city.toLowerCase() &&
+              city.state.toLowerCase() === detectedLocation.state.toLowerCase(),
+          );
+          return (
+            <div className="mb-2 p-3 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg flex items-start gap-2">
+              <MapPin className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm text-blue-900 dark:text-blue-100">
+                  We detected you're in{" "}
+                  <strong>
+                    {detectedLocation.city}, {detectedLocation.state}
+                  </strong>
+                </p>
+                {!matchingCity && (
+                  <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                    This city is not in our list yet.
+                  </p>
+                )}
+              </div>
+              {matchingCity ? (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="default"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onChange(matchingCity.id, matchingCity);
+                    setShowLocationSuggestion(false);
+                  }}
+                  className="shrink-0"
+                >
+                  Select it
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="default"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleOpenAddDialog(
+                      detectedLocation.city,
+                      detectedLocation.state,
+                    );
+                    setShowLocationSuggestion(false);
+                  }}
+                  className="shrink-0"
+                >
+                  Add it
+                </Button>
+              )}
+            </div>
+          );
+        })()}
 
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover
+        open={open}
+        onOpenChange={(isOpen) => {
+          setOpen(isOpen);
+          if (!isOpen) setSearchValue("");
+        }}
+      >
         <PopoverTrigger asChild>
           <Button
             variant="outline"
@@ -304,73 +318,85 @@ const CityCombobox = ({
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[400px] p-0">
-          <Command>
-            <CommandInput
+        <PopoverContent
+          className="w-[400px] p-0"
+          onOpenAutoFocus={(e) => {
+            e.preventDefault();
+            searchInputRef.current?.focus();
+          }}
+        >
+          {/* Search input */}
+          <div className="flex items-center border-b px-3">
+            <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+            <input
+              ref={searchInputRef}
+              type="text"
               placeholder="Search city..."
               value={searchValue}
-              onValueChange={setSearchValue}
+              onChange={(e) => setSearchValue(e.target.value)}
+              className="flex h-11 w-full bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground"
             />
-            <CommandList>
-              {loading ? (
-                <div className="py-6 text-center text-sm text-muted-foreground">
-                  Loading cities...
+          </div>
+
+          {/* City list */}
+          <div className="max-h-[300px] overflow-y-auto overflow-x-hidden p-1">
+            {loading ? (
+              <div className="py-6 text-center text-sm text-muted-foreground">
+                Loading cities...
+              </div>
+            ) : filteredCities.length > 0 ? (
+              <>
+                <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
+                  Cities
                 </div>
-              ) : (
-                <>
-                  {filteredCities.length > 0 ? (
-                    <CommandGroup heading="Cities">
-                      {filteredCities.map((city) => (
-                        <CommandItem
-                          key={city.id}
-                          value={`${city.name} ${city.state}`}
-                          onSelect={() => {
-                            onChange(city.id, city);
-                            setOpen(false);
-                            setSearchValue("");
-                          }}
-                        >
-                          <Check
-                            className={cn(
-                              "mr-2 h-4 w-4",
-                              value === city.id ? "opacity-100" : "opacity-0",
-                            )}
-                          />
-                          {city.name}, {city.state}
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  ) : (
-                    <CommandEmpty>
-                      {showAddOption ? (
-                        <div className="text-center py-4">
-                          <p className="text-sm text-muted-foreground mb-3">
-                            City not found
-                          </p>
-                          <Button
-                            type="button"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              handleOpenAddDialog(searchValue, "");
-                            }}
-                            size="sm"
-                            variant="default"
-                            className="gap-2"
-                          >
-                            <Plus className="h-4 w-4" />
-                            Add "{searchValue}"
-                          </Button>
-                        </div>
-                      ) : (
-                        <p className="text-center py-6">No cities found</p>
+                {filteredCities.map((city) => (
+                  <div
+                    key={city.id}
+                    role="option"
+                    aria-selected={value === city.id}
+                    className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground"
+                    onClick={() => {
+                      onChange(city.id, city);
+                      setOpen(false);
+                      setSearchValue("");
+                    }}
+                  >
+                    <Check
+                      className={cn(
+                        "mr-2 h-4 w-4",
+                        value === city.id ? "opacity-100" : "opacity-0",
                       )}
-                    </CommandEmpty>
-                  )}
-                </>
-              )}
-            </CommandList>
-          </Command>
+                    />
+                    {city.name}, {city.state}
+                  </div>
+                ))}
+              </>
+            ) : showAddOption ? (
+              <div className="text-center py-4">
+                <p className="text-sm text-muted-foreground mb-3">
+                  City not found
+                </p>
+                <Button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleOpenAddDialog(searchValue, "");
+                  }}
+                  size="sm"
+                  variant="default"
+                  className="gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add "{searchValue}"
+                </Button>
+              </div>
+            ) : (
+              <p className="text-center py-6 text-sm text-muted-foreground">
+                No cities found
+              </p>
+            )}
+          </div>
         </PopoverContent>
       </Popover>
 

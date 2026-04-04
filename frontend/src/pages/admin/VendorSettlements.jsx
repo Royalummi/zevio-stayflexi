@@ -281,7 +281,19 @@ export default function VendorSettlements() {
                       Booking Info
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Amount
+                      Guest Paid
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      Vendor Gross
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      Deductions
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      Settlement Amount
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      GST Status
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                       Status
@@ -329,9 +341,61 @@ export default function VendorSettlements() {
                         </div>
                       </td>
                       <td className="px-4 py-4 text-sm">
-                        <div className="font-semibold text-gray-900 dark:text-white">
+                        <div className="text-gray-700 dark:text-gray-300">
+                          {formatCurrency(
+                            settlement.booking_total_amount ||
+                              settlement.booking_total,
+                          )}
+                        </div>
+                        {settlement.booking_base_amount != null && (
+                          <div className="text-xs text-gray-400">
+                            Base:{" "}
+                            {formatCurrency(settlement.booking_base_amount)} +
+                            GST: {formatCurrency(settlement.booking_gst_amount)}
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-4 py-4 text-sm">
+                        <div className="font-medium text-blue-600">
+                          {formatCurrency(
+                            settlement.vendor_gross_amount || settlement.amount,
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-4 py-4 text-sm">
+                        {settlement.platform_fee != null ? (
+                          <div>
+                            <div className="text-red-500 text-xs">
+                              Fee: -{formatCurrency(settlement.platform_fee)}
+                            </div>
+                            <div className="text-red-500 text-xs">
+                              GST: -
+                              {formatCurrency(settlement.platform_fee_gst)}
+                            </div>
+                            <div className="font-medium text-red-600 text-xs border-t border-gray-200 pt-1 mt-1">
+                              Total: -
+                              {formatCurrency(settlement.total_deduction)}
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="text-gray-400 text-xs">Legacy</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-4 text-sm">
+                        <div className="font-semibold text-green-600">
                           {formatCurrency(settlement.amount)}
                         </div>
+                      </td>
+                      <td className="px-4 py-4 text-sm">
+                        <Badge
+                          className={
+                            settlement.is_vendor_gst
+                              ? "bg-green-50 text-green-700 border-green-300"
+                              : "bg-gray-50 text-gray-600 border-gray-300"
+                          }
+                        >
+                          {settlement.is_vendor_gst ? "GST" : "Non-GST"}
+                        </Badge>
                       </td>
                       <td className="px-4 py-4 text-sm">
                         {getStatusBadge(settlement.status)}
@@ -434,6 +498,20 @@ export default function VendorSettlements() {
                       </span>
                     </div>
                     <div className="flex justify-between">
+                      <span className="text-gray-600">GST Status:</span>
+                      <Badge
+                        className={
+                          selectedSettlement.is_vendor_gst
+                            ? "bg-green-50 text-green-700"
+                            : "bg-gray-50 text-gray-600"
+                        }
+                      >
+                        {selectedSettlement.is_vendor_gst
+                          ? "GST Registered"
+                          : "Non-GST"}
+                      </Badge>
+                    </div>
+                    <div className="flex justify-between">
                       <span className="text-gray-600">Bank:</span>
                       <span>{selectedSettlement.bank_name || "N/A"}</span>
                     </div>
@@ -443,6 +521,47 @@ export default function VendorSettlements() {
                         {selectedSettlement.account_number || "N/A"}
                       </span>
                     </div>
+                    {selectedSettlement.vendor_gross_amount != null && (
+                      <>
+                        <div className="border-t pt-2 mt-2 space-y-1">
+                          <div className="flex justify-between text-xs">
+                            <span className="text-gray-500">Guest Paid:</span>
+                            <span>
+                              {formatCurrency(
+                                selectedSettlement.booking_total_amount,
+                              )}
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-xs">
+                            <span className="text-gray-500">Vendor Gross:</span>
+                            <span className="text-blue-600">
+                              {formatCurrency(
+                                selectedSettlement.vendor_gross_amount,
+                              )}
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-xs">
+                            <span className="text-gray-500">
+                              Platform Fee (3%):
+                            </span>
+                            <span className="text-red-500">
+                              -{formatCurrency(selectedSettlement.platform_fee)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-xs">
+                            <span className="text-gray-500">
+                              GST on Fee (18%):
+                            </span>
+                            <span className="text-red-500">
+                              -
+                              {formatCurrency(
+                                selectedSettlement.platform_fee_gst,
+                              )}
+                            </span>
+                          </div>
+                        </div>
+                      </>
+                    )}
                     <div className="flex justify-between border-t pt-2 mt-2">
                       <span className="text-gray-600 font-medium">
                         Amount to Pay:

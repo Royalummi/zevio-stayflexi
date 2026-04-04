@@ -36,9 +36,9 @@ if (process.env.BREVO_SMTP_SERVER && process.env.BREVO_SMTP_KEY) {
 
 // ─── Sender Addresses (purpose-based) ──────────────────────────────
 export const SENDERS = {
-  SYSTEM:   `"Zevio" <${process.env.SENDER_SYSTEM   || "noreply@notify.zevio.in"}>`,
+  SYSTEM: `"Zevio" <${process.env.SENDER_SYSTEM || "noreply@notify.zevio.in"}>`,
   BOOKINGS: `"Zevio Bookings" <${process.env.SENDER_BOOKINGS || "bookings@notify.zevio.in"}>`,
-  ALERTS:   `"Zevio Alerts" <${process.env.SENDER_ALERTS    || "alerts@notify.zevio.in"}>`,
+  ALERTS: `"Zevio Alerts" <${process.env.SENDER_ALERTS || "alerts@notify.zevio.in"}>`,
 };
 
 // Admin inbox — all admin notifications go here
@@ -1343,7 +1343,7 @@ export const sendForgotPasswordLinkEmail = async (email, name, resetToken) => {
   }
 
   try {
-    const resetUrl = `${process.env.NEXTJS_URL || "http://localhost:3000"}/reset-password?token=${resetToken}`;
+    const resetUrl = `${process.env.VITE_FRONTEND_URL || "http://localhost:5173"}/reset-password?token=${resetToken}`;
 
     const html = `
 <!DOCTYPE html>

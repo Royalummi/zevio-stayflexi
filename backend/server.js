@@ -44,50 +44,16 @@ const limiter = rateLimit({
 // Startup mode: Users can browse and use platform freely without restrictions
 // Only keeping rate limits on auth endpoints (brute force protection)
 
-// TEMPORARILY DISABLED - Rate limiting for authentication endpoints
+// Rate limiting for authentication endpoints (brute force protection)
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 1000, // TEMPORARILY INCREASED: 1000 attempts per 15 minutes (effectively disabled)
+  max: 20, // 20 attempts per 15 minutes per IP
   message: {
     success: false,
     message: "Too many login attempts. Please try again after 15 minutes.",
   },
   standardHeaders: true,
   legacyHeaders: false,
-  // Skip rate limiting for admin users
-  skip: async (req) => {
-    // TEMPORARILY: Skip for all users
-    return true;
-
-    // Check if this is a login request with admin email
-    const isLoginRequest = req.path === "/login" || req.path.endsWith("/login");
-
-    if (isLoginRequest && req.body && req.body.email) {
-      const email = req.body.email;
-      console.log(`🔍 Checking rate limit skip for email: ${email}`);
-
-      try {
-        const [adminRows] = await db.query(
-          "SELECT id FROM admins WHERE email = ? AND status = 'active'",
-          [email],
-        );
-
-        // Skip rate limiting if user is an admin
-        if (adminRows.length > 0) {
-          console.log(`✅ Admin detected: ${email} - Skipping rate limit`);
-          return true;
-        } else {
-          console.log(`⚠️ Not an admin: ${email} - Applying rate limit`);
-        }
-      } catch (error) {
-        console.error(
-          "❌ Error checking admin status for rate limiting:",
-          error,
-        );
-      }
-    }
-    return false;
-  },
 });
 
 // Middleware

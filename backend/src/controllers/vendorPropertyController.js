@@ -172,9 +172,9 @@ export const createProperty = asyncHandler(async (req, res) => {
         weekly_discount_percent, monthly_discount_percent,
         quarterly_discount_percent, long_term_discount_percent,
         allow_corporate_booking, corporate_discount_percent,
-        maintenance_charges, notice_period_days,
+        maintenance_charges,
         discount_3_5_days, discount_6_14_days, discount_15_plus_days
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const pricingValues = [
@@ -194,7 +194,6 @@ export const createProperty = asyncHandler(async (req, res) => {
       req.body.allow_corporate_booking ? 1 : 0,
       parseFloat(req.body.corporate_discount_percent) || 0,
       parseFloat(req.body.maintenance_charges) || 0,
-      parseInt(req.body.notice_period_days) || 30,
       parseFloat(discount_3_5_days) || 0,
       parseFloat(discount_6_14_days) || 0,
       parseFloat(discount_15_plus_days) || 0,
@@ -278,7 +277,7 @@ export const getPropertyById = asyncHandler(async (req, res) => {
       pr.weekly_discount_percent, pr.monthly_discount_percent,
       pr.quarterly_discount_percent, pr.long_term_discount_percent,
       pr.allow_corporate_booking, pr.corporate_discount_percent,
-      pr.maintenance_charges, pr.notice_period_days,
+      pr.maintenance_charges,
       pr.discount_3_5_days, pr.discount_6_14_days, pr.discount_15_plus_days
     FROM properties p
     LEFT JOIN cities c ON p.city_id = c.id
@@ -454,7 +453,10 @@ export const submitProperty = asyncHandler(async (req, res) => {
     subject: `New Property: ${property.title}`,
     title: "New Property Submission",
     message: `A vendor has submitted a new property "${property.title}" for approval.`,
-    details: [["Property", property.title], ["Status", "Pending Approval"]],
+    details: [
+      ["Property", property.title],
+      ["Status", "Pending Approval"],
+    ],
     badgeText: "Needs Approval",
     badgeClass: "badge-warning",
     ctaUrl: `${process.env.FRONTEND_URL || "http://localhost:5173"}/admin/properties`,
@@ -539,7 +541,7 @@ export const updateProperty = asyncHandler(async (req, res) => {
               pr.weekly_discount_percent, pr.monthly_discount_percent,
               pr.quarterly_discount_percent, pr.long_term_discount_percent,
               pr.allow_corporate_booking, pr.corporate_discount_percent,
-              pr.maintenance_charges, pr.notice_period_days,
+              pr.maintenance_charges,
               pr.discount_3_5_days, pr.discount_6_14_days, pr.discount_15_plus_days
        FROM properties p
        LEFT JOIN property_pricing pr ON pr.property_id = p.id
@@ -552,7 +554,6 @@ export const updateProperty = asyncHandler(async (req, res) => {
     const skipFields = new Set([
       "id",
       "vendor_id",
-      "employee_id",
       "created_at",
       "updated_at",
       "deleted_at",
@@ -660,7 +661,10 @@ export const updateProperty = asyncHandler(async (req, res) => {
       subject: `Change Request: ${property.title}`,
       title: "Property Change Request",
       message: `A vendor has submitted changes for property "${property.title}". Please review and approve or reject.`,
-      details: [["Property", property.title], ["Fields Changed", Object.keys(changedFields).join(", ")]],
+      details: [
+        ["Property", property.title],
+        ["Fields Changed", Object.keys(changedFields).join(", ")],
+      ],
       badgeText: "Pending Review",
       badgeClass: "badge-warning",
       ctaUrl: `${process.env.FRONTEND_URL || "http://localhost:5173"}/admin/change-requests`,
@@ -741,7 +745,6 @@ export const updateProperty = asyncHandler(async (req, res) => {
     "allow_corporate_booking",
     "corporate_discount_percent",
     "maintenance_charges",
-    "notice_period_days",
     // Session 70: Villa duration discount slabs
     "discount_3_5_days",
     "discount_6_14_days",

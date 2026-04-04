@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { ArrowLeft, Save, X, Send, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "../../components/ui/button";
@@ -16,10 +16,39 @@ import api from "../../lib/api";
 const AddEditVendorProperty = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const location = useLocation();
   const [loading, setLoading] = useState(false);
   const [property, setProperty] = useState(null);
   const [pendingChangeRequest, setPendingChangeRequest] = useState(null);
+  const [isFormDirty, setIsFormDirty] = useState(false);
   const isEditMode = Boolean(id);
+
+  // Persist location.state to sessionStorage so it survives browser refresh.
+  // On hard refresh location.state is null (React Router doesn't persist it).
+  const SESSION_KEY = "vendor_property_type_state";
+  useEffect(() => {
+    if (location.state?.propertyTypeId) {
+      try {
+        sessionStorage.setItem(SESSION_KEY, JSON.stringify(location.state));
+      } catch {
+        // sessionStorage may be unavailable (private browsing restrictions) — ignore
+      }
+    }
+  }, [location.state]);
+
+  // Read property-type state: from navigation state first, then sessionStorage fallback
+  const resolvedLocationState = (() => {
+    if (location.state?.propertyTypeId) return location.state;
+    if (!isEditMode) {
+      try {
+        const saved = sessionStorage.getItem(SESSION_KEY);
+        return saved ? JSON.parse(saved) : null;
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  })();
 
   useEffect(() => {
     if (isEditMode) {
@@ -57,6 +86,13 @@ const AddEditVendorProperty = () => {
   };
 
   const handleSuccess = (data) => {
+    // Clear persisted property type state so it doesn't leak to future sessions
+    try {
+      sessionStorage.removeItem(SESSION_KEY);
+    } catch {
+      // ignore
+    }
+
     const isApproved = property?.status === "approved";
 
     if (isApproved && isEditMode) {
@@ -74,6 +110,14 @@ const AddEditVendorProperty = () => {
   };
 
   const handleCancel = () => {
+    if (
+      isFormDirty &&
+      !window.confirm(
+        "You have unsaved changes. Are you sure you want to leave?",
+      )
+    ) {
+      return;
+    }
     navigate("/vendor/properties");
   };
 
@@ -116,7 +160,7 @@ const AddEditVendorProperty = () => {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => navigate("/vendor/properties")}
+            onClick={handleCancel}
             className="hover:bg-gray-100 dark:hover:bg-gray-800"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -205,6 +249,8 @@ const AddEditVendorProperty = () => {
             onCancel={handleCancel}
             propertyStatus={property?.status}
             hasPendingChangeRequest={!!pendingChangeRequest}
+            locationState={resolvedLocationState}
+            onDirtyChange={setIsFormDirty}
           />
         </CardContent>
       </Card>

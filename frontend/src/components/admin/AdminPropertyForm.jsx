@@ -88,7 +88,6 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
     allow_corporate_booking: false,
     corporate_discount_percent: 20,
     maintenance_charges: 0,
-    notice_period_days: 30,
     // Session 70: Villa Duration Discount Slabs (admin-only)
     discount_3_5_days: 0,
     discount_6_14_days: 0,
@@ -402,8 +401,6 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
             20,
           maintenance_charges:
             pricing.maintenance_charges || property.maintenance_charges || 0,
-          notice_period_days:
-            pricing.notice_period_days || property.notice_period_days || 30,
           // Session 70: Villa duration discount slabs
           discount_3_5_days:
             parseFloat(
@@ -924,10 +921,6 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
         payload.recommended_priority =
           parseInt(payload.recommended_priority) || 0;
       }
-      if (payload.notice_period_days !== undefined) {
-        payload.notice_period_days = parseInt(payload.notice_period_days) || 30;
-      }
-
       // Use api.js module for consistent error handling
       let response;
       if (sanitizedPropertyId) {
@@ -1760,25 +1753,6 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
                 step="0.01"
                 className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div className="flex flex-col">
-              <label className="text-sm font-medium text-foreground mb-2">
-                Notice Period (Days)
-              </label>
-              <input
-                type="number"
-                name="notice_period_days"
-                value={formData.notice_period_days}
-                onChange={handleInputChange}
-                min="0"
-                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-              />
-              <small className="text-xs text-muted-foreground mt-1">
-                Required notice for cancellation/checkout
-              </small>
             </div>
           </div>
 

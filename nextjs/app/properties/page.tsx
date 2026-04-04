@@ -24,6 +24,7 @@ function PropertiesContent() {
   // Initialize filters from URL search params (from SearchBar)
   const [filters, setFilters] = useState<PropertyFiltersState>(() => {
     const cityParam = searchParams.get("city");
+    const areaParam = searchParams.get("area");
     const guestsParam = searchParams.get("guests");
     const childrenParam = searchParams.get("children");
     const checkinParam = searchParams.get("checkin");
@@ -43,6 +44,7 @@ function PropertiesContent() {
 
     return {
       city: formattedCity,
+      area: areaParam || "",
       minPrice: "",
       maxPrice: "",
       guests: guestsParam || "",
@@ -84,6 +86,7 @@ function PropertiesContent() {
         // and guest-capacity filtering; everything else stays client-side.
         const apiParams: Record<string, string> = {};
         if (filters.city) apiParams.city = filters.city.toLowerCase();
+        if (filters.area) apiParams.area = filters.area;
         if (filters.checkin) apiParams.checkin = filters.checkin;
         if (filters.checkout) apiParams.checkout = filters.checkout;
         // Send combined guest count (adults + children) for max_guests comparison
@@ -201,6 +204,7 @@ function PropertiesContent() {
   const clearFilters = () => {
     setFilters({
       city: "",
+      area: "",
       minPrice: "",
       maxPrice: "",
       guests: "",

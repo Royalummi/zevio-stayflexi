@@ -6,7 +6,6 @@ import {
   DollarSign,
   Calendar,
   TrendingUp,
-  Eye,
   Clock,
   Plus,
   Edit,
@@ -26,7 +25,6 @@ const VendorDashboard = () => {
   const navigate = useNavigate();
   const [properties, setProperties] = useState([]);
   const [bookings, setBookings] = useState([]);
-  const [settlements, setSettlements] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -47,12 +45,6 @@ const VendorDashboard = () => {
       // Fetch recent bookings
       const bookingsResponse = await api.get("/vendor/bookings?limit=5");
       setBookings(bookingsResponse.data.data.bookings);
-
-      // Fetch pending settlements
-      const settlementsResponse = await api.get(
-        "/vendor/settlements?status=pending&limit=5",
-      );
-      setSettlements(settlementsResponse.data.data.settlements);
     } catch (error) {
       console.error("Error fetching vendor data:", error);
       toast.error("Failed to load dashboard data");
@@ -72,7 +64,7 @@ const VendorDashboard = () => {
   const statCards = [
     {
       title: "Total Properties",
-      value: stats?.total_properties || 0,
+      value: stats?.total || 0,
       icon: Building2,
       color: "text-blue-600",
       bgColor: "bg-blue-100",
@@ -153,48 +145,54 @@ const VendorDashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {properties.map((property) => (
-                <div
-                  key={property.id}
-                  className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg"
-                >
-                  <div className="flex-1">
-                    <h4 className="font-medium text-gray-900 dark:text-white">
-                      {property.title}
-                    </h4>
-                    <div className="flex items-center space-x-4 mt-2 text-sm text-gray-500">
-                      <span className="flex items-center">
-                        <Eye className="h-4 w-4 mr-1" />
-                        {property.views} views
-                      </span>
-                      <span className="flex items-center">
-                        <Calendar className="h-4 w-4 mr-1" />
-                        {property.bookings} bookings
-                      </span>
+              {properties.length === 0 ? (
+                <p className="text-center text-gray-500 dark:text-gray-400 py-8">
+                  No properties yet. Add your first property to get started.
+                </p>
+              ) : (
+                properties.map((property) => (
+                  <div
+                    key={property.id}
+                    className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg"
+                  >
+                    <div className="flex-1">
+                      <h4 className="font-medium text-gray-900 dark:text-white">
+                        {property.title}
+                      </h4>
+                      <div className="flex items-center space-x-4 mt-2 text-sm text-gray-500">
+                        <span className="flex items-center">
+                          <Calendar className="h-4 w-4 mr-1" />
+                          {property.total_bookings || 0} bookings
+                        </span>
+                        <span className="flex items-center">
+                          <TrendingUp className="h-4 w-4 mr-1" />
+                          {formatCurrency(property.total_revenue || 0)}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() =>
+                          navigate(`/vendor/properties/${property.id}/edit`)
+                        }
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Badge
+                        className={
+                          property.status === "approved"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-yellow-100 text-yellow-800"
+                        }
+                      >
+                        {property.status?.replace("_", " ") || "draft"}
+                      </Badge>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() =>
-                        navigate(`/vendor/properties/${property.id}/edit`)
-                      }
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Badge
-                      className={
-                        property.status === "approved"
-                          ? "bg-green-100 text-green-800"
-                          : "bg-yellow-100 text-yellow-800"
-                      }
-                    >
-                      {property.status.replace("_", " ")}
-                    </Badge>
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </CardContent>
         </Card>
@@ -205,33 +203,40 @@ const VendorDashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {bookings.map((booking) => (
-                <div
-                  key={booking.id}
-                  className="flex items-start justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg"
-                >
-                  <div className="flex-1">
-                    <h4 className="font-medium text-gray-900 dark:text-white">
-                      {booking.property}
-                    </h4>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                      Guest: {booking.guest}
-                    </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {formatDate(booking.check_in)} -{" "}
-                      {formatDate(booking.check_out)}
-                    </p>
+              {bookings.length === 0 ? (
+                <p className="text-center text-gray-500 dark:text-gray-400 py-8">
+                  No bookings yet. Bookings will appear here once guests book
+                  your properties.
+                </p>
+              ) : (
+                bookings.map((booking) => (
+                  <div
+                    key={booking.id}
+                    className="flex items-start justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg"
+                  >
+                    <div className="flex-1">
+                      <h4 className="font-medium text-gray-900 dark:text-white">
+                        {booking.property_title}
+                      </h4>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                        Guest: {booking.guest_name}
+                      </p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        {formatDate(booking.check_in)} -{" "}
+                        {formatDate(booking.check_out)}
+                      </p>
+                    </div>
+                    <div className="flex flex-col items-end">
+                      <Badge className="bg-blue-100 text-blue-800 mb-2">
+                        {booking.status}
+                      </Badge>
+                      <span className="font-bold text-gray-900 dark:text-white">
+                        {formatCurrency(booking.total_amount)}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex flex-col items-end">
-                    <Badge className="bg-blue-100 text-blue-800 mb-2">
-                      {booking.status}
-                    </Badge>
-                    <span className="font-bold text-gray-900 dark:text-white">
-                      {formatCurrency(booking.amount)}
-                    </span>
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </CardContent>
         </Card>

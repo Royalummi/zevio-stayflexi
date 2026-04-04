@@ -86,6 +86,7 @@ function ServiceApartmentsContent() {
   // Initialize filters from URL search params
   const [filters, setFilters] = useState<ServiceApartmentFiltersState>(() => {
     const cityParam = searchParams.get("city");
+    const areaParam = searchParams.get("area");
     const guestsParam = searchParams.get("guests");
     const childrenParam = searchParams.get("children");
     const checkinParam = searchParams.get("checkin");
@@ -98,6 +99,7 @@ function ServiceApartmentsContent() {
 
     return {
       city: formattedCity,
+      area: areaParam || "",
       minPrice: "",
       maxPrice: "",
       guests: guestsParam || "",
@@ -136,6 +138,7 @@ function ServiceApartmentsContent() {
         // and guest-capacity filtering; everything else stays client-side.
         const apiParams: Record<string, string> = {};
         if (filters.city) apiParams.city = filters.city;
+        if (filters.area) apiParams.area = filters.area;
         if (filters.checkin) apiParams.checkin = filters.checkin;
         if (filters.checkout) apiParams.checkout = filters.checkout;
         // Send combined guest count (adults + children) for max_guests comparison
@@ -254,6 +257,7 @@ function ServiceApartmentsContent() {
   const clearFilters = () => {
     setFilters({
       city: "",
+      area: "",
       minPrice: "",
       maxPrice: "",
       guests: "",

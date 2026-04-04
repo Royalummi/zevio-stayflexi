@@ -7,7 +7,8 @@ import DashboardLayout from "./components/layout/DashboardLayout";
 
 // Pages
 import Login from "./pages/Login";
-import Register from "./pages/Register";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 
 // Admin Pages
 import AdminDashboardNew from "./pages/admin/AdminDashboardNew";
@@ -23,7 +24,8 @@ import PropertyChangeRequests from "./pages/admin/PropertyChangeRequests";
 import CouponManagement from "./pages/admin/CouponManagement";
 import ReviewManagement from "./pages/admin/ReviewManagement";
 import CancellationPolicies from "./pages/admin/CancellationPolicies";
-import VendorTermsManagement from "./pages/admin/VendorTermsManagement";
+import AdminProfile from "./pages/admin/AdminProfile";
+import AdminSettings from "./pages/admin/AdminSettings";
 
 // Vendor Pages
 import VendorDashboard from "./pages/vendor/VendorDashboard";
@@ -33,10 +35,35 @@ import VendorBookings from "./pages/vendor/VendorBookings";
 import VendorSettlementsPage from "./pages/vendor/VendorSettlements";
 import VendorAnalytics from "./pages/vendor/VendorAnalytics";
 import VendorProfile from "./pages/vendor/VendorProfile";
+import VendorSettings from "./pages/vendor/VendorSettings";
+import VendorTerms from "./pages/vendor/VendorTerms";
 
 // Protected Route Component
+const isJwtExpired = (token) => {
+  if (!token) return true;
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    // exp is in seconds; Date.now() is in ms
+    return payload.exp * 1000 < Date.now();
+  } catch {
+    return true;
+  }
+};
+
 const ProtectedRoute = ({ children, allowedRoles }) => {
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated, user, accessToken, refreshToken, clearAuth } =
+    useAuthStore();
+
+  // If both tokens are expired the user cannot be silently refreshed —
+  // clear stale auth state immediately and redirect to login.
+  if (
+    isAuthenticated &&
+    isJwtExpired(accessToken) &&
+    isJwtExpired(refreshToken)
+  ) {
+    clearAuth();
+    return <Navigate to="/login" replace />;
+  }
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
@@ -55,7 +82,8 @@ function App() {
       <Routes>
         {/* Public Routes - Auth Only */}
         <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
 
         {/* Admin Dashboard with Layout */}
         <Route
@@ -85,8 +113,13 @@ function App() {
             path="cancellation-policies"
             element={<CancellationPolicies />}
           />
-          <Route path="vendor-terms" element={<VendorTermsManagement />} />
+          <Route
+            path="vendor-terms"
+            element={<Navigate to="/admin/settings" replace />}
+          />
           <Route path="reports" element={<AdminReports />} />
+          <Route path="profile" element={<AdminProfile />} />
+          <Route path="settings" element={<AdminSettings />} />
         </Route>
 
         {/* Vendor Dashboard with Layout */}
@@ -118,6 +151,8 @@ function App() {
           <Route path="settlements" element={<VendorSettlementsPage />} />
           <Route path="analytics" element={<VendorAnalytics />} />
           <Route path="profile" element={<VendorProfile />} />
+          <Route path="terms" element={<VendorTerms />} />
+          <Route path="settings" element={<VendorSettings />} />
         </Route>
 
         {/* Default Route - Redirect to Login */}

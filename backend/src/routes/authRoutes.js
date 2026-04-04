@@ -24,10 +24,9 @@ import {
 const router = express.Router();
 
 // Rate limiter for refresh token endpoint
-// TEMPORARILY DISABLED - Limit: 5 refresh attempts per minute per IP
 const refreshTokenLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
-  max: 1000, // TEMPORARILY INCREASED: 1000 requests per windowMs (effectively disabled)
+  max: 10, // 10 refresh attempts per minute per IP
   message: {
     success: false,
     message:
@@ -35,7 +34,6 @@ const refreshTokenLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  skip: () => true, // TEMPORARILY: Skip rate limiting for all requests
 });
 
 // Validation rules

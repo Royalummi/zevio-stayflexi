@@ -61,7 +61,9 @@ export default function SafetySection({
             {emergencyExpanded && (
               <div
                 className={`${styles.accordionContent} ${styles.proseContent}`}
-                dangerouslySetInnerHTML={{ __html: sanitizeHtml(emergencyContacts) }}
+                dangerouslySetInnerHTML={{
+                  __html: sanitizeHtml(emergencyContacts),
+                }}
               />
             )}
           </div>
@@ -88,7 +90,9 @@ export default function SafetySection({
             {safetyExpanded && (
               <div
                 className={`${styles.accordionContent} ${styles.proseContent}`}
-                dangerouslySetInnerHTML={{ __html: sanitizeHtml(safetyInformation) }}
+                dangerouslySetInnerHTML={{
+                  __html: sanitizeHtml(safetyInformation),
+                }}
               />
             )}
           </div>

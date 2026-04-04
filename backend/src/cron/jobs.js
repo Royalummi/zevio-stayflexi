@@ -1,6 +1,7 @@
 import cron from "node-cron";
 import db from "../config/database.js";
 import { generateUUID } from "../utils/helpers.js";
+import { calculateSettlement } from "../utils/settlementCalculator.js";
 import {
   sendCheckInReminderEmail,
   sendCheckOutReminderEmail,
@@ -124,11 +125,15 @@ export const dailyBookingProcessor = cron.schedule(
       const [completedBookings] = await db.query(
         `SELECT 
         b.id as booking_id,
+        b.base_amount,
+        b.gst_amount,
+        b.service_charge,
         b.total_amount,
         p.vendor_id,
-        ROUND(b.total_amount * 0.85, 2) as settlement_amount
+        v.is_gst_registered
        FROM bookings b
        INNER JOIN properties p ON b.property_id = p.id
+       INNER JOIN vendors v ON p.vendor_id = v.id
        WHERE b.status = 'completed'
        AND b.check_out = ?
        AND p.vendor_id IS NOT NULL
@@ -140,14 +145,35 @@ export const dailyBookingProcessor = cron.schedule(
       );
 
       for (const booking of completedBookings) {
+        const settlement = calculateSettlement({
+          baseAmount: parseFloat(booking.base_amount) || 0,
+          gstAmount: parseFloat(booking.gst_amount) || 0,
+          serviceCharge: parseFloat(booking.service_charge) || 0,
+          totalAmount: parseFloat(booking.total_amount) || 0,
+          isVendorGst: !!booking.is_gst_registered,
+        });
+
         await db.query(
-          `INSERT INTO vendor_settlements (id, vendor_id, booking_id, amount, status) 
-         VALUES (?, ?, ?, ?, 'pending')`,
+          `INSERT INTO vendor_settlements (
+            id, vendor_id, booking_id,
+            booking_base_amount, booking_gst_amount, booking_service_charge, booking_total_amount,
+            vendor_gross_amount, platform_fee, platform_fee_gst, total_deduction, is_vendor_gst,
+            amount, status
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
           [
             generateUUID(),
             booking.vendor_id,
             booking.booking_id,
-            booking.settlement_amount,
+            booking.base_amount,
+            booking.gst_amount,
+            booking.service_charge,
+            booking.total_amount,
+            settlement.vendorGrossAmount,
+            settlement.platformFee,
+            settlement.platformFeeGst,
+            settlement.totalDeduction,
+            settlement.isVendorGst ? 1 : 0,
+            settlement.settlementAmount,
           ],
         );
 
@@ -159,7 +185,7 @@ export const dailyBookingProcessor = cron.schedule(
             booking.vendor_id,
             "vendor",
             "New Settlement",
-            `A new settlement of ₹${booking.settlement_amount} is ready for booking ${booking.booking_id}`,
+            `A new settlement of ₹${settlement.settlementAmount} is ready for booking ${booking.booking_id}`,
           ],
         );
       }

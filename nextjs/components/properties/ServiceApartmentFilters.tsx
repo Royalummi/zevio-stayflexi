@@ -23,6 +23,7 @@ import styles from "./ServiceApartmentFilters.module.css";
 
 export interface ServiceApartmentFiltersState {
   city: string;
+  area: string;
   minPrice: string;
   maxPrice: string;
   guests: string;

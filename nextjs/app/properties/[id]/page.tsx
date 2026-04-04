@@ -297,7 +297,6 @@ function PropertyDetailContent() {
           // Phase 3 fields
           property_type: data.property_type,
           vendor_name: data.vendor_name,
-          employee_name: data.employee_name,
           // Phase 4 fields
           min_stay_days: data.min_stay_days,
           max_stay_days: data.max_stay_days,
@@ -314,7 +313,6 @@ function PropertyDetailContent() {
           maintenance_charges: data.maintenance_charges,
           allow_corporate_booking: data.allow_corporate_booking,
           corporate_discount_percent: data.corporate_discount_percent,
-          notice_period_days: data.notice_period_days,
           features_list: data.features_list,
         };
 
@@ -986,28 +984,6 @@ function PropertyDetailContent() {
                       </div>
                     )}
 
-                  {/* Cancellation Policy */}
-                  {property.notice_period_days && (
-                    <div className={luxuryStyles.infoItem}>
-                      <div className={luxuryStyles.infoIcon}>
-                        <FiAlertCircle />
-                      </div>
-                      <div className={luxuryStyles.infoContent}>
-                        <div className={luxuryStyles.infoLabel}>
-                          Cancellation Policy
-                        </div>
-                        <div className={luxuryStyles.infoValue}>
-                          {property.notice_period_days}{" "}
-                          {property.notice_period_days === 1 ? "day" : "days"}{" "}
-                          notice required
-                        </div>
-                        <div className={luxuryStyles.infoNote}>
-                          Free cancellation before notice period
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
                   {/* Emergency Contacts */}
                   {property.emergency_contacts && (
                     <div className={luxuryStyles.infoItem}>
@@ -1166,7 +1142,9 @@ function PropertyDetailContent() {
                   <div
                     className={luxuryStyles.descriptionTextLuxury}
                     dangerouslySetInnerHTML={{
-                      __html: sanitizeHtml(property.safety_information as string),
+                      __html: sanitizeHtml(
+                        property.safety_information as string,
+                      ),
                     }}
                   />
                 </details>
@@ -1372,23 +1350,11 @@ function PropertyDetailContent() {
                 )}
 
               {/* Cancellation Policy */}
-              {(property.cancellation_policy ||
-                property.notice_period_days) && (
+              {property.cancellation_policy && (
                 <section className={luxuryStyles.aboutSectionLuxury}>
                   <h2 className={luxuryStyles.sectionTitleLuxury}>
                     <FiAlertCircle /> Cancellation Policy
                   </h2>
-                  {property.notice_period_days && (
-                    <div className={luxuryStyles.cancelPolicySummary}>
-                      <FiCheckCircle className={luxuryStyles.ruleAllowIcon} />
-                      <span>
-                        Free cancellation if cancelled{" "}
-                        <strong>{property.notice_period_days}</strong>{" "}
-                        {property.notice_period_days === 1 ? "day" : "days"}{" "}
-                        before check-in
-                      </span>
-                    </div>
-                  )}
                   {property.cancellation_policy &&
                     Array.isArray(
                       (property.cancellation_policy as Record<string, unknown>)
@@ -1482,11 +1448,7 @@ function PropertyDetailContent() {
                       <h3 className={luxuryStyles.hostName}>
                         {property.vendor_name || "Zevio Villas"}
                       </h3>
-                      <p className={luxuryStyles.hostJoined}>
-                        {property.employee_name
-                          ? `Managed by ${property.employee_name}`
-                          : "Joined in 2024"}
-                      </p>
+                      <p className={luxuryStyles.hostJoined}>Joined in 2024</p>
                     </div>
                     {property.rating >= 4.8 && (
                       <div className={luxuryStyles.superhostBadge}>

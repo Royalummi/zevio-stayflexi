@@ -1,7 +1,15 @@
 import { verifyAccessToken } from "../config/jwt.js";
 import { sendError } from "../utils/response.js";
+import db from "../config/database.js";
 
-export const authenticate = (req, res, next) => {
+const TABLE_MAP = {
+  user: "users",
+  admin: "admins",
+  super_admin: "admins",
+  vendor: "vendors",
+};
+
+export const authenticate = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
 
@@ -11,6 +19,21 @@ export const authenticate = (req, res, next) => {
 
     const token = authHeader.split(" ")[1];
     const decoded = verifyAccessToken(token);
+
+    // Verify user still exists and is active in DB
+    const tableName = TABLE_MAP[decoded.role];
+    if (!tableName) {
+      return sendError(res, "Invalid role in token", 401);
+    }
+
+    const [rows] = await db.query(
+      `SELECT id, status FROM ${tableName} WHERE id = ? AND deleted_at IS NULL`,
+      [decoded.id],
+    );
+
+    if (rows.length === 0 || rows[0].status !== "active") {
+      return sendError(res, "Account is inactive or deleted", 401);
+    }
 
     req.user = decoded;
     next();

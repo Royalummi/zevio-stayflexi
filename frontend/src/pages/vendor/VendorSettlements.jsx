@@ -102,7 +102,15 @@ const VendorSettlements = () => {
       "Settlement ID": s.id,
       "Booking ID": s.booking_id || "N/A",
       Property: s.property_title || "N/A",
-      Amount: s.amount,
+      "Guest Paid": s.booking_total_amount || "N/A",
+      "Base Amount": s.booking_base_amount || "N/A",
+      "GST Amount": s.booking_gst_amount || "N/A",
+      "Vendor Gross": s.vendor_gross_amount || "N/A",
+      "Platform Fee": s.platform_fee || "N/A",
+      "Platform Fee GST": s.platform_fee_gst || "N/A",
+      "Total Deduction": s.total_deduction || "N/A",
+      "Settlement Amount": s.amount,
+      "GST Registered": s.is_vendor_gst ? "Yes" : "No",
       Status: s.status,
       "Created On": formatDate(s.created_at),
       "Payment Proof": s.payment_proof || "N/A",
@@ -329,7 +337,7 @@ const VendorSettlements = () => {
                       {getStatusBadge(settlement.status)}
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                       {/* Property & Booking */}
                       <div>
                         <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
@@ -345,7 +353,7 @@ const VendorSettlements = () => {
                         )}
                       </div>
 
-                      {/* Amount */}
+                      {/* Settlement Amount */}
                       <div>
                         <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
                           Settlement Amount
@@ -386,6 +394,87 @@ const VendorSettlements = () => {
                         )}
                       </div>
                     </div>
+
+                    {/* Settlement Breakdown */}
+                    {settlement.vendor_gross_amount != null && (
+                      <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                        <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wide">
+                          Settlement Breakdown
+                        </p>
+                        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 text-sm">
+                          <div>
+                            <p className="text-gray-500 dark:text-gray-400 text-xs">
+                              Guest Paid
+                            </p>
+                            <p className="font-medium">
+                              {formatCurrency(settlement.booking_total_amount)}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-gray-500 dark:text-gray-400 text-xs">
+                              Base Price
+                            </p>
+                            <p className="font-medium">
+                              {formatCurrency(settlement.booking_base_amount)}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-gray-500 dark:text-gray-400 text-xs">
+                              GST
+                            </p>
+                            <p className="font-medium">
+                              {formatCurrency(settlement.booking_gst_amount)}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-gray-500 dark:text-gray-400 text-xs">
+                              Your Gross
+                            </p>
+                            <p className="font-semibold text-blue-600">
+                              {formatCurrency(settlement.vendor_gross_amount)}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-gray-500 dark:text-gray-400 text-xs">
+                              Platform Fee (3%)
+                            </p>
+                            <p className="font-medium text-red-500">
+                              -{formatCurrency(settlement.platform_fee)}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-gray-500 dark:text-gray-400 text-xs">
+                              GST on Fee (18%)
+                            </p>
+                            <p className="font-medium text-red-500">
+                              -{formatCurrency(settlement.platform_fee_gst)}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-gray-500 dark:text-gray-400 text-xs">
+                              You Receive
+                            </p>
+                            <p className="font-bold text-green-600">
+                              {formatCurrency(settlement.amount)}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="mt-2">
+                          <Badge
+                            variant="outline"
+                            className={
+                              settlement.is_vendor_gst
+                                ? "bg-green-50 text-green-700 border-green-300"
+                                : "bg-gray-50 text-gray-600 border-gray-300"
+                            }
+                          >
+                            {settlement.is_vendor_gst
+                              ? "GST Registered Owner"
+                              : "Non-GST Owner"}
+                          </Badge>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </CardContent>

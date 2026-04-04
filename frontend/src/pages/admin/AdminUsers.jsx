@@ -12,6 +12,7 @@ import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Badge } from "../../components/ui/badge";
 import { Skeleton } from "../../components/ui/skeleton";
+import { Separator } from "../../components/ui/separator";
 import {
   Table,
   TableBody,
@@ -35,6 +36,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../../components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "../../components/ui/dropdown-menu";
 import { Textarea } from "../../components/ui/textarea";
 import {
   Users,
@@ -55,6 +63,13 @@ import {
   MapPin,
   UserPlus,
   KeyRound,
+  MoreHorizontal,
+  Building2,
+  FileText,
+  CreditCard,
+  Landmark,
+  CheckCircle,
+  XCircle,
 } from "lucide-react";
 import { formatCurrency, formatDate } from "../../lib/utils";
 import CreateUserDialog from "../../components/admin/CreateUserDialog";
@@ -106,12 +121,13 @@ const AdminUsers = () => {
   const fetchStats = async () => {
     try {
       const response = await api.get("/admin/users/stats");
+      const d = response.data.data;
       setStats({
-        total: response.data.data.total_users || 0,
-        customers: response.data.data.customers || 0,
-        vendors: response.data.data.vendors || 0,
-        active: response.data.data.active_users || 0,
-        blocked: response.data.data.blocked_users || 0,
+        total: d.total_users || 0,
+        customers: d.customers || 0,
+        vendors: d.vendors || 0,
+        active: d.active_users || 0,
+        blocked: d.blocked_users || 0,
       });
     } catch (error) {
       console.error("Error fetching stats:", error);
@@ -558,45 +574,50 @@ const AdminUsers = () => {
                           </div>
                         </TableCell>
                         <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleViewDetails(user.id)}
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            {user.status === "active" ? (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleBlockClick(user)}
-                                className="text-red-600 hover:text-red-700"
-                              >
-                                <ShieldBan className="h-4 w-4" />
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <MoreHorizontal className="h-4 w-4" />
                               </Button>
-                            ) : (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleUnblockClick(user)}
-                                className="text-green-600 hover:text-green-700"
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                onClick={() => handleViewDetails(user.id)}
                               >
-                                <ShieldCheck className="h-4 w-4" />
-                              </Button>
-                            )}
-                            {["customer", "vendor"].includes(user.role) && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleResetPasswordClick(user)}
-                                className="text-amber-600 hover:text-amber-700"
-                                title="Reset temporary password"
-                              >
-                                <KeyRound className="h-4 w-4" />
-                              </Button>
-                            )}
-                          </div>
+                                <Eye className="h-4 w-4 mr-2" />
+                                View Details
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              {user.status === "active" ? (
+                                <DropdownMenuItem
+                                  onClick={() => handleBlockClick(user)}
+                                  className="text-red-600 focus:text-red-600"
+                                >
+                                  <ShieldBan className="h-4 w-4 mr-2" />
+                                  Block User
+                                </DropdownMenuItem>
+                              ) : (
+                                <DropdownMenuItem
+                                  onClick={() => handleUnblockClick(user)}
+                                  className="text-green-600 focus:text-green-600"
+                                >
+                                  <ShieldCheck className="h-4 w-4 mr-2" />
+                                  Unblock User
+                                </DropdownMenuItem>
+                              )}
+                              {["customer", "vendor"].includes(user.role) && (
+                                <DropdownMenuItem
+                                  onClick={() =>
+                                    handleResetPasswordClick(user)
+                                  }
+                                  className="text-amber-600 focus:text-amber-600"
+                                >
+                                  <KeyRound className="h-4 w-4 mr-2" />
+                                  Reset Password
+                                </DropdownMenuItem>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -673,198 +694,302 @@ const AdminUsers = () => {
       {/* User Details Modal */}
       {selectedUser && (
         <Dialog open={showDetailsModal} onOpenChange={setShowDetailsModal}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>User Details</DialogTitle>
-              <DialogDescription>
-                Complete information about the user
-              </DialogDescription>
-            </DialogHeader>
+          <DialogContent className="max-w-3xl p-0 gap-0 overflow-hidden">
+            <DialogDescription className="sr-only">
+              Complete information about {selectedUser.user?.name}
+            </DialogDescription>
 
-            <div className="space-y-6">
-              {/* User Info */}
-              <div className="grid gap-4 md:grid-cols-2">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base">
-                      Basic Information
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="flex items-center gap-2">
-                      <Users className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <p className="text-sm font-medium">Name</p>
-                        <p className="text-sm text-muted-foreground">
-                          {selectedUser.user?.name}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Mail className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <p className="text-sm font-medium">Email</p>
-                        <p className="text-sm text-muted-foreground">
-                          {selectedUser.user?.email}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Phone className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <p className="text-sm font-medium">Phone</p>
-                        <p className="text-sm text-muted-foreground">
-                          {selectedUser.user?.phone || "N/A"}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <p className="text-sm font-medium">City</p>
-                        <p className="text-sm text-muted-foreground">
-                          {selectedUser.user?.city_name || "N/A"}
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+            {/* Profile Header */}
+            <div className="bg-gradient-to-br from-slate-800 to-slate-700 px-6 py-5">
+              <div className="flex items-start gap-4">
+                {/* Avatar */}
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-white/15 text-xl font-bold text-white ring-2 ring-white/20">
+                  {(selectedUser.user?.name || "?").charAt(0).toUpperCase()}
+                </div>
+                {/* Name + meta */}
+                <div className="flex-1 min-w-0">
+                  <DialogTitle className="text-white text-xl font-semibold leading-tight truncate">
+                    {selectedUser.user?.name || "—"}
+                  </DialogTitle>
+                  <p className="mt-0.5 text-sm text-slate-300 truncate">
+                    {selectedUser.user?.email}
+                  </p>
+                  <div className="mt-2.5 flex flex-wrap items-center gap-2">
+                    <Badge className={`${getRoleColor(selectedUser.user?.role).bg} ${getRoleColor(selectedUser.user?.role).text} border-0`}>
+                      {getRoleLabel(selectedUser.user?.role)}
+                    </Badge>
+                    <Badge className={`${getStatusColor(selectedUser.user?.status).bg} ${getStatusColor(selectedUser.user?.status).text} border-0`}>
+                      {getStatusLabel(selectedUser.user?.status)}
+                    </Badge>
+                    <span className="flex items-center gap-1 text-xs text-slate-300">
+                      <Calendar className="h-3 w-3" />
+                      Joined {formatDate(selectedUser.user?.created_at)}
+                    </span>
+                    {selectedUser.user?.profile_completed ? (
+                      <span className="flex items-center gap-1 text-xs text-emerald-300">
+                        <CheckCircle className="h-3 w-3" /> Profile complete
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-1 text-xs text-slate-400">
+                        <XCircle className="h-3 w-3" /> Profile incomplete
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
 
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base">Account Details</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div>
-                      <p className="text-sm font-medium">Role</p>
-                      <Badge
-                        className={`mt-1 ${
-                          getRoleColor(selectedUser.user?.role).bg
-                        } ${getRoleColor(selectedUser.user?.role).text} ${
-                          getRoleColor(selectedUser.user?.role).dark
-                        }`}
-                      >
-                        {getRoleLabel(selectedUser.user?.role)}
-                      </Badge>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">Status</p>
-                      <Badge
-                        className={`mt-1 ${
-                          getStatusColor(selectedUser.user?.status).bg
-                        } ${getStatusColor(selectedUser.user?.status).text} ${
-                          getStatusColor(selectedUser.user?.status).dark
-                        }`}
-                      >
-                        {getStatusLabel(selectedUser.user?.status)}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Award className="h-4 w-4 text-muted-foreground" />
+            {/* Stats Strip */}
+            <div className="grid grid-cols-4 divide-x border-b bg-muted/30">
+              {selectedUser.user?.role === "vendor" ? (
+                <>
+                  <div className="flex flex-col items-center py-3">
+                    <span className="text-2xl font-bold text-indigo-600">{selectedUser.stats?.total_properties || 0}</span>
+                    <span className="text-[11px] text-muted-foreground mt-0.5">Properties</span>
+                  </div>
+                  <div className="flex flex-col items-center py-3">
+                    <span className="text-2xl font-bold text-teal-600">{selectedUser.stats?.active_properties || 0}</span>
+                    <span className="text-[11px] text-muted-foreground mt-0.5">Active</span>
+                  </div>
+                  <div className="flex flex-col items-center py-3">
+                    <span className="text-2xl font-bold text-blue-600">{selectedUser.stats?.total_bookings || 0}</span>
+                    <span className="text-[11px] text-muted-foreground mt-0.5">Bookings</span>
+                  </div>
+                  <div className="flex flex-col items-center py-3">
+                    <span className="text-2xl font-bold text-purple-600">{selectedUser.stats?.completed_bookings || 0}</span>
+                    <span className="text-[11px] text-muted-foreground mt-0.5">Completed</span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="flex flex-col items-center py-3">
+                    <span className="text-2xl font-bold text-blue-600">{selectedUser.stats?.total_bookings || 0}</span>
+                    <span className="text-[11px] text-muted-foreground mt-0.5">Total</span>
+                  </div>
+                  <div className="flex flex-col items-center py-3">
+                    <span className="text-2xl font-bold text-yellow-600">{selectedUser.stats?.confirmed_bookings || 0}</span>
+                    <span className="text-[11px] text-muted-foreground mt-0.5">Confirmed</span>
+                  </div>
+                  <div className="flex flex-col items-center py-3">
+                    <span className="text-2xl font-bold text-green-600">{selectedUser.stats?.completed_bookings || 0}</span>
+                    <span className="text-[11px] text-muted-foreground mt-0.5">Completed</span>
+                  </div>
+                  <div className="flex flex-col items-center py-3">
+                    <span className="text-2xl font-bold text-purple-600">{formatCurrency(selectedUser.stats?.total_spent || 0)}</span>
+                    <span className="text-[11px] text-muted-foreground mt-0.5">Spent</span>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Body */}
+            <div className="px-6 py-5 space-y-5">
+
+              {/* Contact & Account row */}
+              <div className="grid gap-6 md:grid-cols-2">
+                {/* Contact Info */}
+                <div>
+                  <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Contact Information
+                  </p>
+                  <div className="space-y-2.5">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600 dark:bg-blue-950">
+                        <Mail className="h-3.5 w-3.5" />
+                      </div>
                       <div>
-                        <p className="text-sm font-medium">Points</p>
-                        <p className="text-sm text-muted-foreground">
-                          {selectedUser.user?.points || 0} points
-                        </p>
+                        <p className="text-[11px] text-muted-foreground">Email</p>
+                        <p className="text-sm font-medium">{selectedUser.user?.email || "—"}</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-green-50 text-green-600 dark:bg-green-950">
+                        <Phone className="h-3.5 w-3.5" />
+                      </div>
                       <div>
-                        <p className="text-sm font-medium">Joined</p>
-                        <p className="text-sm text-muted-foreground">
-                          {formatDate(selectedUser.user?.created_at)}
-                        </p>
+                        <p className="text-[11px] text-muted-foreground">Phone</p>
+                        <p className="text-sm font-medium">{selectedUser.user?.phone || "—"}</p>
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
+                    {(selectedUser.user?.address || selectedUser.user?.city) && (
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-orange-50 text-orange-600 dark:bg-orange-950">
+                          <MapPin className="h-3.5 w-3.5" />
+                        </div>
+                        <div>
+                          <p className="text-[11px] text-muted-foreground">Address</p>
+                          <p className="text-sm font-medium">
+                            {[selectedUser.user.address, selectedUser.user.city, selectedUser.user.state].filter(Boolean).join(", ")}
+                            {selectedUser.user.pincode && ` – ${selectedUser.user.pincode}`}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    {selectedUser.user?.bio && (
+                      <div className="rounded-md bg-muted/50 px-3 py-2 text-sm text-muted-foreground italic">
+                        "{selectedUser.user.bio}"
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Account Info */}
+                <div>
+                  <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Account Information
+                  </p>
+                  <div className="space-y-2">
+                    {selectedUser.user?.role === "customer" && selectedUser.user?.is_corporate_user === 1 && (
+                      <div className="flex items-center justify-between rounded-md bg-muted/40 px-3 py-2">
+                        <span className="text-sm text-muted-foreground">Account type</span>
+                        <span className="text-sm font-medium text-indigo-600">Corporate</span>
+                      </div>
+                    )}
+                    <div className="flex items-center justify-between rounded-md bg-muted/40 px-3 py-2">
+                      <span className="text-sm text-muted-foreground">Profile</span>
+                      <span className={`text-sm font-medium ${selectedUser.user?.profile_completed ? "text-green-600" : "text-gray-400"}`}>
+                        {selectedUser.user?.profile_completed ? "Complete" : "Incomplete"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              {/* Booking Statistics */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">
-                    Booking Statistics
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid gap-4 md:grid-cols-4">
-                    <div className="text-center">
-                      <div className="mb-1 text-2xl font-bold text-blue-600">
-                        {selectedUser.stats?.total_bookings || 0}
+              {/* Customer Corporate Details */}
+              {selectedUser.user?.role === "customer" && selectedUser.user?.is_corporate_user === 1 && (
+                <>
+                  <Separator />
+                  <div>
+                    <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                      <Building2 className="h-3.5 w-3.5" /> Corporate Details
+                    </p>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div className="rounded-md border bg-card px-4 py-3">
+                        <p className="text-[11px] text-muted-foreground">Company Name</p>
+                        <p className="mt-0.5 text-sm font-medium">{selectedUser.user.company_name || "—"}</p>
                       </div>
-                      <div className="text-sm text-muted-foreground">
-                        Total Bookings
-                      </div>
-                    </div>
-                    <div className="text-center">
-                      <div className="mb-1 text-2xl font-bold text-yellow-600">
-                        {selectedUser.stats?.confirmed_bookings || 0}
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        Confirmed
-                      </div>
-                    </div>
-                    <div className="text-center">
-                      <div className="mb-1 text-2xl font-bold text-green-600">
-                        {selectedUser.stats?.completed_bookings || 0}
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        Completed
-                      </div>
-                    </div>
-                    <div className="text-center">
-                      <div className="mb-1 text-2xl font-bold text-purple-600">
-                        {formatCurrency(selectedUser.stats?.total_spent || 0)}
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        Total Spent
+                      <div className="rounded-md border bg-card px-4 py-3">
+                        <p className="text-[11px] text-muted-foreground">Company GST</p>
+                        <p className="mt-0.5 text-sm font-medium font-mono">{selectedUser.user.company_gst || "—"}</p>
                       </div>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+                </>
+              )}
+
+              {/* Customer Bank Details */}
+              {selectedUser.user?.role === "customer" && selectedUser.user?.bank_details && (
+                <>
+                  <Separator />
+                  <div>
+                    <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                      <Landmark className="h-3.5 w-3.5" /> Bank Details
+                    </p>
+                    <div className="space-y-2">
+                      {[
+                        { label: "Bank", value: selectedUser.user.bank_details.bank_name },
+                        { label: "Account Holder", value: selectedUser.user.bank_details.account_holder_name },
+                        { label: "Account No.", value: selectedUser.user.bank_details.account_number, mono: true },
+                        { label: "IFSC", value: selectedUser.user.bank_details.ifsc_code, mono: true },
+                        { label: "Branch", value: selectedUser.user.bank_details.branch_name },
+                      ].map(({ label, value, mono }) => (
+                        <div key={label} className="flex items-center justify-between rounded-md bg-muted/40 px-3 py-2">
+                          <span className="text-sm text-muted-foreground">{label}</span>
+                          <span className={`text-sm font-medium ${mono ? "font-mono" : ""}`}>{value || "—"}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Vendor Business & Bank Details */}
+              {selectedUser.user?.role === "vendor" && (
+                <>
+                  <Separator />
+                  <div className="grid gap-5 md:grid-cols-2">
+                    {/* Business */}
+                    <div>
+                      <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                        <Building2 className="h-3.5 w-3.5" /> Business Information
+                      </p>
+                      <div className="space-y-2">
+                        {[
+                          { label: "Company", value: selectedUser.user.company_name },
+                          { label: "GST Number", value: selectedUser.user.gst_number, mono: true },
+                          { label: "PAN Number", value: selectedUser.user.pan_number, mono: true },
+                        ].map(({ label, value, mono }) => (
+                          <div key={label} className="flex items-center justify-between rounded-md bg-muted/40 px-3 py-2">
+                            <span className="text-sm text-muted-foreground">{label}</span>
+                            <span className={`text-sm font-medium ${mono ? "font-mono" : ""}`}>{value || "—"}</span>
+                          </div>
+                        ))}
+                        <div className="flex items-center justify-between rounded-md bg-muted/40 px-3 py-2">
+                          <span className="text-sm text-muted-foreground">GST Registered</span>
+                          <Badge variant="outline" className={`text-xs ${selectedUser.user.is_gst_registered ? "border-green-300 bg-green-50 text-green-700" : "border-gray-200 text-gray-500"}`}>
+                            {selectedUser.user.is_gst_registered ? "Yes" : "No"}
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Bank */}
+                    {selectedUser.user.bank_details && (
+                      <div>
+                        <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                          <Landmark className="h-3.5 w-3.5" /> Bank Details
+                        </p>
+                        <div className="space-y-2">
+                          {[
+                            { label: "Bank", value: selectedUser.user.bank_details.bank_name },
+                            { label: "Account Holder", value: selectedUser.user.bank_details.account_holder_name || selectedUser.user.bank_details.account_holder },
+                            { label: "Account No.", value: selectedUser.user.bank_details.account_number, mono: true },
+                            { label: "IFSC", value: selectedUser.user.bank_details.ifsc_code || selectedUser.user.bank_details.ifsc, mono: true },
+                            { label: "Branch", value: selectedUser.user.bank_details.branch_name },
+                          ].map(({ label, value, mono }) => (
+                            <div key={label} className="flex items-center justify-between rounded-md bg-muted/40 px-3 py-2">
+                              <span className="text-sm text-muted-foreground">{label}</span>
+                              <span className={`text-sm font-medium ${mono ? "font-mono" : ""}`}>{value || "—"}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
 
               {/* Recent Bookings */}
               {selectedUser.bookings && selectedUser.bookings.length > 0 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base">Recent Bookings</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      {selectedUser.bookings.map((booking) => (
-                        <div
-                          key={booking.id}
-                          className="flex items-center justify-between border-b pb-3 last:border-0"
-                        >
-                          <div className="flex-1">
-                            <p className="font-medium">
-                              {booking.property_title}
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                              {booking.city_name}
-                            </p>
+                <>
+                  <Separator />
+                  <div>
+                    <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      Recent Bookings
+                    </p>
+                    <div className="space-y-2">
+                      {selectedUser.bookings.slice(0, 4).map((booking) => (
+                        <div key={booking.id} className="flex items-center gap-3 rounded-md border bg-card px-4 py-3">
+                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-50 text-indigo-600 dark:bg-indigo-950">
+                            <ShoppingBag className="h-4 w-4" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="truncate text-sm font-medium">{booking.property_title}</p>
                             <p className="text-xs text-muted-foreground">
-                              {formatDate(booking.check_in)} -{" "}
-                              {formatDate(booking.check_out)}
+                              {formatDate(booking.check_in)} — {formatDate(booking.check_out)}
                             </p>
                           </div>
-                          <div className="text-right">
-                            <div className="font-medium">
-                              {formatCurrency(booking.total_amount)}
-                            </div>
-                            <Badge variant="outline" className="mt-1 text-xs">
-                              {booking.status}
-                            </Badge>
+                          <div className="text-right shrink-0">
+                            <p className="text-sm font-semibold">{formatCurrency(booking.total_amount)}</p>
+                            <Badge variant="outline" className="mt-0.5 text-[10px] capitalize">{booking.status}</Badge>
                           </div>
                         </div>
                       ))}
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </>
               )}
+
             </div>
           </DialogContent>
         </Dialog>

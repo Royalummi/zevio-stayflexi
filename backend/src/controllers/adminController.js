@@ -363,6 +363,8 @@ export const getVendorSettlements = asyncHandler(async (req, res) => {
       v.email as vendor_email,
       v.phone as vendor_phone,
       v.bank_details,
+      v.is_gst_registered as vendor_gst_status,
+      v.gst_number as vendor_gst_number,
       b.id as booking_id,
       b.total_amount as booking_total,
       p.title as property_title
@@ -705,7 +707,6 @@ export const getAllProperties = asyncHandler(async (req, res) => {
         pr.allow_corporate_booking,
         pr.corporate_discount_percent,
         pr.maintenance_charges,
-        pr.notice_period_days,
         pr.discount_3_5_days,
         pr.discount_6_14_days,
         pr.discount_15_plus_days
@@ -1037,7 +1038,10 @@ export const updatePropertyStatus = asyncHandler(async (req, res) => {
       title: "Property Approved",
       message: `Great news! Your property "${property[0].title}" has been approved and is now live on Zevio.`,
       alertType: "success",
-      details: [["Property", property[0].title], ["Status", "Approved & Live"]],
+      details: [
+        ["Property", property[0].title],
+        ["Status", "Approved & Live"],
+      ],
     }).catch(() => {});
   } else if (status === "inactive" && rejection_reason) {
     notifyVendor(property[0].vendor_id, {
@@ -1045,7 +1049,11 @@ export const updatePropertyStatus = asyncHandler(async (req, res) => {
       title: "Property Status Updated",
       message: `Your property "${property[0].title}" has been marked as inactive.`,
       alertType: "danger",
-      details: [["Property", property[0].title], ["Status", "Inactive"], ["Reason", rejection_reason]],
+      details: [
+        ["Property", property[0].title],
+        ["Status", "Inactive"],
+        ["Reason", rejection_reason],
+      ],
     }).catch(() => {});
   }
 
@@ -1258,6 +1266,13 @@ export const getUserDetails = asyncHandler(async (req, res) => {
       u.phone,
       u.status,
       u.created_at,
+      u.address,
+      u.bio,
+      u.bank_details,
+      u.is_corporate_user,
+      u.company_name,
+      u.company_gst,
+      u.profile_completed,
       'customer' as role
     FROM users u
     WHERE u.id = ? AND u.deleted_at IS NULL`,
@@ -1266,6 +1281,17 @@ export const getUserDetails = asyncHandler(async (req, res) => {
 
   if (customers.length > 0) {
     user = customers[0];
+    // Parse bank_details JSON
+    if (user.bank_details) {
+      try {
+        user.bank_details =
+          typeof user.bank_details === "string"
+            ? JSON.parse(user.bank_details)
+            : user.bank_details;
+      } catch (_) {
+        user.bank_details = null;
+      }
+    }
     role = "customer";
   } else {
     // If not found in users, try vendors table
@@ -1278,6 +1304,15 @@ export const getUserDetails = asyncHandler(async (req, res) => {
         v.status,
         v.created_at,
         v.gst_number,
+        v.is_gst_registered,
+        v.pan_number,
+        v.company_name,
+        v.address,
+        v.city,
+        v.state,
+        v.pincode,
+        v.bank_details,
+        v.profile_completed,
         'vendor' as role
       FROM vendors v
       WHERE v.id = ? AND v.deleted_at IS NULL`,
@@ -1285,7 +1320,19 @@ export const getUserDetails = asyncHandler(async (req, res) => {
     );
 
     if (vendors.length > 0) {
-      user = vendors[0];
+      const vendor = vendors[0];
+      // Parse bank_details JSON
+      if (vendor.bank_details) {
+        try {
+          vendor.bank_details =
+            typeof vendor.bank_details === "string"
+              ? JSON.parse(vendor.bank_details)
+              : vendor.bank_details;
+        } catch (_) {
+          vendor.bank_details = null;
+        }
+      }
+      user = vendor;
       role = "vendor";
     }
   }
@@ -1388,13 +1435,30 @@ export const updateUserStatus = asyncHandler(async (req, res) => {
     return sendError(res, "Invalid status. Must be 'active' or 'blocked'", 400);
   }
 
-  // Check if user exists
-  const [user] = await db.query(
-    "SELECT id, name, email, status FROM users WHERE id = ? AND deleted_at IS NULL",
+  // Check if user exists in users table first, then vendors
+  let userRecord = null;
+  let userTable = null;
+
+  const [customerResult] = await db.query(
+    "SELECT id, full_name as name, email, status FROM users WHERE id = ? AND deleted_at IS NULL",
     [id],
   );
 
-  if (user.length === 0) {
+  if (customerResult.length > 0) {
+    userRecord = customerResult[0];
+    userTable = "users";
+  } else {
+    const [vendorResult] = await db.query(
+      "SELECT id, name, email, status FROM vendors WHERE id = ? AND deleted_at IS NULL",
+      [id],
+    );
+    if (vendorResult.length > 0) {
+      userRecord = vendorResult[0];
+      userTable = "vendors";
+    }
+  }
+
+  if (!userRecord) {
     return sendError(res, "User not found", 404);
   }
 
@@ -1405,17 +1469,19 @@ export const updateUserStatus = asyncHandler(async (req, res) => {
 
   // Update user status
   await db.query(
-    "UPDATE users SET status = ?, updated_at = NOW() WHERE id = ?",
+    `UPDATE ${userTable} SET status = ?, updated_at = NOW() WHERE id = ?`,
     [status, id],
   );
+
+  const recipientRole = userTable === "vendors" ? "vendor" : "customer";
 
   // Create activity log
   const action =
     status === "blocked"
-      ? `Blocked user: ${user[0].name} (${user[0].email})${
+      ? `Blocked ${recipientRole}: ${userRecord.name} (${userRecord.email})${
           reason ? `. Reason: ${reason}` : ""
         }`
-      : `Unblocked user: ${user[0].name} (${user[0].email})`;
+      : `Unblocked ${recipientRole}: ${userRecord.name} (${userRecord.email})`;
 
   await db.query(
     `INSERT INTO activity_logs (id, actor_id, actor_role, action, entity_type, entity_id, created_at)
@@ -1427,9 +1493,10 @@ export const updateUserStatus = asyncHandler(async (req, res) => {
   if (status === "blocked") {
     await db.query(
       `INSERT INTO notifications (id, recipient_id, recipient_role, title, message, created_at)
-       VALUES (UUID(), ?, 'customer', ?, ?, NOW())`,
+       VALUES (UUID(), ?, ?, ?, ?, NOW())`,
       [
         id,
+        recipientRole,
         "Account Blocked",
         reason
           ? `Your account has been blocked. Reason: ${reason}`
@@ -1439,9 +1506,10 @@ export const updateUserStatus = asyncHandler(async (req, res) => {
   } else if (status === "active") {
     await db.query(
       `INSERT INTO notifications (id, recipient_id, recipient_role, title, message, created_at)
-       VALUES (UUID(), ?, 'customer', ?, ?, NOW())`,
+       VALUES (UUID(), ?, ?, ?, ?, NOW())`,
       [
         id,
+        recipientRole,
         "Account Activated",
         "Your account has been reactivated. You can now access the platform.",
       ],
@@ -1650,16 +1718,26 @@ export const getUserStats = asyncHandler(async (req, res) => {
   `);
 
   const [vendorStats] = await db.query(`
-    SELECT COUNT(*) as total_vendors
+    SELECT 
+      COUNT(*) as total_vendors,
+      SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active_vendors,
+      SUM(CASE WHEN status = 'blocked' THEN 1 ELSE 0 END) as blocked_vendors
     FROM vendors
     WHERE deleted_at IS NULL
   `);
 
   const stats = {
-    total_users: userStats[0].total_users,
-    active_users: userStats[0].active_users,
-    blocked_users: userStats[0].blocked_users,
-    vendors: vendorStats[0].total_vendors,
+    total_users:
+      (parseInt(userStats[0].total_users) || 0) +
+      (parseInt(vendorStats[0].total_vendors) || 0),
+    customers: parseInt(userStats[0].total_users) || 0,
+    vendors: parseInt(vendorStats[0].total_vendors) || 0,
+    active_users:
+      (parseInt(userStats[0].active_users) || 0) +
+      (parseInt(vendorStats[0].active_vendors) || 0),
+    blocked_users:
+      (parseInt(userStats[0].blocked_users) || 0) +
+      (parseInt(vendorStats[0].blocked_vendors) || 0),
   };
 
   sendSuccess(res, stats, "User statistics fetched successfully", 200);
@@ -2323,7 +2401,6 @@ export const updateVendorTerms = asyncHandler(async (req, res) => {
 export const createProperty = asyncHandler(async (req, res) => {
   const {
     vendor_id,
-    employee_id,
     city_id,
     property_type_id,
     title,
@@ -2356,7 +2433,6 @@ export const createProperty = asyncHandler(async (req, res) => {
     allow_corporate_booking,
     corporate_discount_percent,
     maintenance_charges,
-    notice_period_days,
     // Session 70: Villa Duration Discount Slabs
     discount_3_5_days,
     discount_6_14_days,
@@ -2432,7 +2508,7 @@ export const createProperty = asyncHandler(async (req, res) => {
 
   const query = `
     INSERT INTO properties (
-      id, vendor_id, employee_id, city_id, property_type_id, title, description,
+      id, vendor_id, city_id, property_type_id, title, description,
       address, area, state, pincode, maps_location,
       pool_type, garden_type, pets_allowed, events_allowed, event_capacity,
       bedrooms, bathrooms, max_guests, living_area,
@@ -2443,7 +2519,7 @@ export const createProperty = asyncHandler(async (req, res) => {
       same_day_booking_allowed, max_booking_days, check_in_time, check_out_time,
       house_rules, cancellation_policy, photos, status
     ) VALUES (
-      ?, ?, ?, ?, ?, ?, ?,
+      ?, ?, ?, ?, ?, ?,
       ?, ?, ?, ?, ?,
       ?, ?, ?, ?, ?,
       ?, ?, ?, ?,
@@ -2459,7 +2535,6 @@ export const createProperty = asyncHandler(async (req, res) => {
   const values = [
     propertyId,
     vendor_id,
-    employee_id || null,
     city_id,
     property_type_id,
     title,
@@ -2516,9 +2591,9 @@ export const createProperty = asyncHandler(async (req, res) => {
         weekly_discount_percent, monthly_discount_percent,
         quarterly_discount_percent, long_term_discount_percent,
         allow_corporate_booking, corporate_discount_percent,
-        maintenance_charges, notice_period_days,
+        maintenance_charges,
         discount_3_5_days, discount_6_14_days, discount_15_plus_days
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const pricingValues = [
@@ -2538,7 +2613,6 @@ export const createProperty = asyncHandler(async (req, res) => {
       allow_corporate_booking || false,
       corporate_discount_percent || 0,
       maintenance_charges || 0,
-      notice_period_days || 30,
       parseFloat(discount_3_5_days) || 0,
       parseFloat(discount_6_14_days) || 0,
       parseFloat(discount_15_plus_days) || 0,
@@ -2663,7 +2737,6 @@ export const updateProperty = asyncHandler(async (req, res) => {
 
   const {
     vendor_id,
-    employee_id,
     city_id,
     property_type_id, // Changed from property_type (now UUID)
     title,
@@ -2696,7 +2769,6 @@ export const updateProperty = asyncHandler(async (req, res) => {
     allow_corporate_booking,
     corporate_discount_percent,
     maintenance_charges,
-    notice_period_days,
     // Session 70: Villa Duration Discount Slabs
     discount_3_5_days,
     discount_6_14_days,
@@ -2780,7 +2852,6 @@ export const updateProperty = asyncHandler(async (req, res) => {
   const query = `
     UPDATE properties SET
       vendor_id = ?,
-      employee_id = ?,
       city_id = ?,
       property_type_id = ?,
       title = ?,
@@ -2828,7 +2899,6 @@ export const updateProperty = asyncHandler(async (req, res) => {
 
   const values = [
     vendor_id,
-    employee_id || null,
     city_id,
     property_type_id,
     title,
@@ -2944,7 +3014,6 @@ export const updateProperty = asyncHandler(async (req, res) => {
           allow_corporate_booking = ?,
           corporate_discount_percent = ?,
           maintenance_charges = ?,
-          notice_period_days = ?,
           discount_3_5_days = ?,
           discount_6_14_days = ?,
           discount_15_plus_days = ?
@@ -2966,7 +3035,6 @@ export const updateProperty = asyncHandler(async (req, res) => {
         allow_corporate_booking || false,
         corporate_discount_percent || 0,
         maintenance_charges || 0,
-        notice_period_days || 30,
         parseFloat(discount_3_5_days) || 0,
         parseFloat(discount_6_14_days) || 0,
         parseFloat(discount_15_plus_days) || 0,
@@ -2985,9 +3053,9 @@ export const updateProperty = asyncHandler(async (req, res) => {
           weekly_discount_percent, monthly_discount_percent,
           quarterly_discount_percent, long_term_discount_percent,
           allow_corporate_booking, corporate_discount_percent,
-          maintenance_charges, notice_period_days,
+          maintenance_charges,
           discount_3_5_days, discount_6_14_days, discount_15_plus_days
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `;
 
       const pricingValues = [
@@ -3007,7 +3075,6 @@ export const updateProperty = asyncHandler(async (req, res) => {
         allow_corporate_booking || false,
         corporate_discount_percent || 0,
         maintenance_charges || 0,
-        notice_period_days || 30,
         parseFloat(discount_3_5_days) || 0,
         parseFloat(discount_6_14_days) || 0,
         parseFloat(discount_15_plus_days) || 0,

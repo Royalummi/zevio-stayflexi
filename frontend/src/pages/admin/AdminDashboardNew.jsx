@@ -6,8 +6,6 @@ import {
   Building2,
   Calendar,
   DollarSign,
-  ArrowUpRight,
-  ArrowDownRight,
 } from "lucide-react";
 import {
   Card,
@@ -38,6 +36,7 @@ const AdminDashboardNew = () => {
   const [loading, setLoading] = useState(true);
   const [revenueData, setRevenueData] = useState([]);
   const [bookingData, setBookingData] = useState([]);
+  const [recentBookings, setRecentBookings] = useState([]);
 
   useEffect(() => {
     fetchDashboardData();
@@ -45,26 +44,66 @@ const AdminDashboardNew = () => {
 
   const fetchDashboardData = async () => {
     try {
-      const response = await api.get("/admin/dashboard/stats");
-      setStats(response.data.data);
+      const [statsRes, revenueRes, bookingStatsRes, recentRes] =
+        await Promise.allSettled([
+          api.get("/admin/dashboard/stats"),
+          api.get("/admin/reports/revenue?period=monthly"),
+          api.get("/admin/bookings/stats"),
+          api.get("/admin/bookings?limit=5"),
+        ]);
 
-      // Mock revenue data (replace with real API data)
-      setRevenueData([
-        { month: "Jan", revenue: 45000, bookings: 12 },
-        { month: "Feb", revenue: 52000, bookings: 15 },
-        { month: "Mar", revenue: 48000, bookings: 13 },
-        { month: "Apr", revenue: 61000, bookings: 18 },
-        { month: "May", revenue: 55000, bookings: 16 },
-        { month: "Jun", revenue: 67000, bookings: 20 },
-      ]);
+      // Dashboard stats
+      if (statsRes.status === "fulfilled") {
+        setStats(statsRes.value.data.data);
+      }
 
-      // Mock booking status data
-      setBookingData([
-        { name: "Confirmed", value: 45, color: "#3b82f6" },
-        { name: "Pending", value: 15, color: "#f59e0b" },
-        { name: "Cancelled", value: 8, color: "#ef4444" },
-        { name: "Completed", value: 32, color: "#10b981" },
-      ]);
+      // Revenue chart — use revenue_by_period from reports API
+      if (revenueRes.status === "fulfilled") {
+        const periods = revenueRes.value.data.data?.revenue_by_period || [];
+        setRevenueData(
+          periods.map((p) => ({
+            month: new Date(p.period).toLocaleDateString("en-IN", {
+              month: "short",
+            }),
+            revenue: Number(p.revenue) || 0,
+            bookings: Number(p.bookings) || 0,
+          })),
+        );
+      }
+
+      // Booking status pie chart
+      if (bookingStatsRes.status === "fulfilled") {
+        const bs = bookingStatsRes.value.data.data;
+        setBookingData([
+          {
+            name: "Confirmed",
+            value: Number(bs.confirmed_bookings) || 0,
+            color: "#3b82f6",
+          },
+          {
+            name: "Cancel Requested",
+            value: Number(bs.cancel_requested) || 0,
+            color: "#f59e0b",
+          },
+          {
+            name: "Cancelled",
+            value: Number(bs.cancelled_bookings) || 0,
+            color: "#ef4444",
+          },
+          {
+            name: "Completed",
+            value: Number(bs.completed_bookings) || 0,
+            color: "#10b981",
+          },
+        ]);
+      }
+
+      // Recent bookings
+      if (recentRes.status === "fulfilled") {
+        setRecentBookings(
+          recentRes.value.data.data?.bookings?.slice(0, 5) || [],
+        );
+      }
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
     } finally {
@@ -83,9 +122,7 @@ const AdminDashboardNew = () => {
   const statCards = [
     {
       title: "Total Revenue",
-      value: formatCurrency(stats?.total_revenue || 0),
-      change: "+12.5%",
-      trend: "up",
+      value: formatCurrency(stats?.revenue || 0),
       icon: DollarSign,
       color: "text-green-600",
       bgColor: "bg-green-100",
@@ -93,8 +130,6 @@ const AdminDashboardNew = () => {
     {
       title: "Total Bookings",
       value: stats?.total_bookings || 0,
-      change: "+8.2%",
-      trend: "up",
       icon: Calendar,
       color: "text-blue-600",
       bgColor: "bg-blue-100",
@@ -102,17 +137,14 @@ const AdminDashboardNew = () => {
     {
       title: "Active Properties",
       value: stats?.total_properties || 0,
-      change: "+3.1%",
-      trend: "up",
       icon: Building2,
       color: "text-purple-600",
       bgColor: "bg-purple-100",
+      subtitle: `${stats?.approved_properties || 0} approved, ${stats?.pending_properties || 0} pending`,
     },
     {
       title: "Total Users",
       value: stats?.total_users || 0,
-      change: "+15.3%",
-      trend: "up",
       icon: Users,
       color: "text-orange-600",
       bgColor: "bg-orange-100",
@@ -135,7 +167,6 @@ const AdminDashboardNew = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {statCards.map((stat, index) => {
           const Icon = stat.icon;
-          const TrendIcon = stat.trend === "up" ? ArrowUpRight : ArrowDownRight;
           return (
             <Card key={index}>
               <CardContent className="p-6">
@@ -143,14 +174,6 @@ const AdminDashboardNew = () => {
                   <div className={`p-3 rounded-lg ${stat.bgColor}`}>
                     <Icon className={`h-6 w-6 ${stat.color}`} />
                   </div>
-                  <span
-                    className={`flex items-center text-sm font-medium ${
-                      stat.trend === "up" ? "text-green-600" : "text-red-600"
-                    }`}
-                  >
-                    <TrendIcon className="h-4 w-4 mr-1" />
-                    {stat.change}
-                  </span>
                 </div>
                 <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
                   {stat.value}
@@ -158,6 +181,11 @@ const AdminDashboardNew = () => {
                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                   {stat.title}
                 </p>
+                {stat.subtitle && (
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                    {stat.subtitle}
+                  </p>
+                )}
               </CardContent>
             </Card>
           );
@@ -285,59 +313,59 @@ const AdminDashboardNew = () => {
           </CardContent>
         </Card>
 
-        {/* Recent Activity */}
+        {/* Recent Bookings */}
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
+            <CardTitle>Recent Bookings</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {[
-                {
-                  action: "New booking",
-                  user: "Rajesh Kumar",
-                  property: "Luxury Beach Villa - Goa",
-                  time: "2 minutes ago",
-                  amount: "₹25,000",
-                },
-                {
-                  action: "Refund processed",
-                  user: "Priya Sharma",
-                  property: "Mountain View Villa",
-                  time: "15 minutes ago",
-                  amount: "₹18,000",
-                },
-                {
-                  action: "Property approved",
-                  user: "Vendor: ABC Resorts",
-                  property: "Riverside Cottage",
-                  time: "1 hour ago",
-                  amount: "-",
-                },
-              ].map((activity, index) => (
-                <div
-                  key={index}
-                  className="flex items-start space-x-3 pb-4 border-b border-gray-100 dark:border-gray-700 last:border-0"
-                >
-                  <div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center flex-shrink-0">
-                    <Calendar className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              {recentBookings.length === 0 ? (
+                <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
+                  No recent bookings
+                </p>
+              ) : (
+                recentBookings.map((booking) => (
+                  <div
+                    key={booking.id}
+                    className="flex items-start space-x-3 pb-4 border-b border-gray-100 dark:border-gray-700 last:border-0"
+                  >
+                    <div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center flex-shrink-0">
+                      <Calendar className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">
+                        {booking.property_title || "Property"}
+                      </p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        {booking.user_name || "Guest"} &bull;{" "}
+                        <span className="capitalize">
+                          {booking.status?.replace(/_/g, " ") || "—"}
+                        </span>
+                      </p>
+                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                        {booking.created_at
+                          ? new Date(booking.created_at).toLocaleDateString(
+                              "en-IN",
+                              {
+                                day: "2-digit",
+                                month: "short",
+                                year: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              },
+                            )
+                          : ""}
+                      </p>
+                    </div>
+                    <div className="text-sm font-medium text-gray-900 dark:text-white">
+                      {booking.total_amount
+                        ? formatCurrency(booking.total_amount)
+                        : "—"}
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">
-                      {activity.action}
-                    </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {activity.user} • {activity.property}
-                    </p>
-                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                      {activity.time}
-                    </p>
-                  </div>
-                  <div className="text-sm font-medium text-gray-900 dark:text-white">
-                    {activity.amount}
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </CardContent>
         </Card>

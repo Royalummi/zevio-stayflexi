@@ -25,6 +25,7 @@ import styles from "./PropertyFilters.module.css";
 
 export interface PropertyFiltersState {
   city: string;
+  area: string;
   minPrice: string;
   maxPrice: string;
   guests: string;

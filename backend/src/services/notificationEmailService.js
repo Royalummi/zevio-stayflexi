@@ -22,7 +22,16 @@ function renderBase(subject, subtitle, innerHtml) {
   return base;
 }
 
-function renderNotification({ title, message, recipientName, badgeText, badgeClass, ctaUrl, ctaText, detailsHtml }) {
+function renderNotification({
+  title,
+  message,
+  recipientName,
+  badgeText,
+  badgeClass,
+  ctaUrl,
+  ctaText,
+  detailsHtml,
+}) {
   let tpl = loadTemplate("notification.html");
   tpl = tpl.replace(/\{\{TITLE\}\}/g, title || "");
   tpl = tpl.replace(/\{\{MESSAGE\}\}/g, message || "");
@@ -32,7 +41,7 @@ function renderNotification({ title, message, recipientName, badgeText, badgeCla
   if (badgeText) {
     tpl = tpl.replace(
       /\{\{BADGE_HTML\}\}/g,
-      `<p><span class="badge ${badgeClass || "badge-info"}">${badgeText}</span></p>`
+      `<p><span class="badge ${badgeClass || "badge-info"}">${badgeText}</span></p>`,
     );
   } else {
     tpl = tpl.replace(/\{\{BADGE_HTML\}\}/g, "");
@@ -45,7 +54,7 @@ function renderNotification({ title, message, recipientName, badgeText, badgeCla
   if (ctaUrl && ctaText) {
     tpl = tpl.replace(
       /\{\{CTA_HTML\}\}/g,
-      `<div class="cta-wrap"><a href="${ctaUrl}" class="cta">${ctaText}</a></div>`
+      `<div class="cta-wrap"><a href="${ctaUrl}" class="cta">${ctaText}</a></div>`,
     );
   } else {
     tpl = tpl.replace(/\{\{CTA_HTML\}\}/g, "");
@@ -54,19 +63,35 @@ function renderNotification({ title, message, recipientName, badgeText, badgeCla
   return tpl;
 }
 
-function renderAlert({ title, message, recipientName, alertType, ctaUrl, ctaText, detailsHtml }) {
-  const colorMap = { success: "#22c55e", warning: "#f59e0b", danger: "#ef4444", info: "#3b82f6" };
+function renderAlert({
+  title,
+  message,
+  recipientName,
+  alertType,
+  ctaUrl,
+  ctaText,
+  detailsHtml,
+}) {
+  const colorMap = {
+    success: "#22c55e",
+    warning: "#f59e0b",
+    danger: "#ef4444",
+    info: "#3b82f6",
+  };
   let tpl = loadTemplate("alert.html");
   tpl = tpl.replace(/\{\{TITLE\}\}/g, title || "");
   tpl = tpl.replace(/\{\{MESSAGE\}\}/g, message || "");
   tpl = tpl.replace(/\{\{RECIPIENT_NAME\}\}/g, recipientName || "there");
-  tpl = tpl.replace(/\{\{ALERT_COLOR\}\}/g, colorMap[alertType] || colorMap.info);
+  tpl = tpl.replace(
+    /\{\{ALERT_COLOR\}\}/g,
+    colorMap[alertType] || colorMap.info,
+  );
   tpl = tpl.replace(/\{\{DETAILS_HTML\}\}/g, detailsHtml || "");
 
   if (ctaUrl && ctaText) {
     tpl = tpl.replace(
       /\{\{CTA_HTML\}\}/g,
-      `<div class="cta-wrap"><a href="${ctaUrl}" class="cta">${ctaText}</a></div>`
+      `<div class="cta-wrap"><a href="${ctaUrl}" class="cta">${ctaText}</a></div>`,
     );
   } else {
     tpl = tpl.replace(/\{\{CTA_HTML\}\}/g, "");
@@ -78,7 +103,10 @@ function renderAlert({ title, message, recipientName, alertType, ctaUrl, ctaText
 function buildDetailsCard(rows) {
   if (!rows || rows.length === 0) return "";
   const rowsHtml = rows
-    .map(([label, value]) => `<div class="info-row"><span class="info-label">${label}</span><span class="info-value">${value}</span></div>`)
+    .map(
+      ([label, value]) =>
+        `<div class="info-row"><span class="info-label">${label}</span><span class="info-value">${value}</span></div>`,
+    )
     .join("\n");
   return `<div class="info-card">${rowsHtml}</div>`;
 }
@@ -104,8 +132,17 @@ export async function sendNotificationEmail(opts) {
   try {
     const detailsHtml = buildDetailsCard(opts.details);
     const inner = renderNotification({ ...opts, detailsHtml });
-    const html = renderBase(opts.subject, opts.subtitle || "Notification", inner);
-    await sendEmail({ to: opts.to, subject: opts.subject, html, from: SENDERS.SYSTEM });
+    const html = renderBase(
+      opts.subject,
+      opts.subtitle || "Notification",
+      inner,
+    );
+    await sendEmail({
+      to: opts.to,
+      subject: opts.subject,
+      html,
+      from: SENDERS.SYSTEM,
+    });
     return true;
   } catch (err) {
     console.error("sendNotificationEmail failed:", err.message);
@@ -131,7 +168,12 @@ export async function sendAlertEmail(opts) {
     const detailsHtml = buildDetailsCard(opts.details);
     const inner = renderAlert({ ...opts, detailsHtml });
     const html = renderBase(opts.subject, opts.subtitle || "Alert", inner);
-    await sendEmail({ to: opts.to, subject: opts.subject, html, from: SENDERS.ALERTS });
+    await sendEmail({
+      to: opts.to,
+      subject: opts.subject,
+      html,
+      from: SENDERS.ALERTS,
+    });
     return true;
   } catch (err) {
     console.error("sendAlertEmail failed:", err.message);
@@ -141,7 +183,16 @@ export async function sendAlertEmail(opts) {
 
 // ─── Convenience: Send to admin ────────────────────────────────────
 
-export async function notifyAdmin({ subject, title, message, details, ctaUrl, ctaText, badgeText, badgeClass }) {
+export async function notifyAdmin({
+  subject,
+  title,
+  message,
+  details,
+  ctaUrl,
+  ctaText,
+  badgeText,
+  badgeClass,
+}) {
   return sendNotificationEmail({
     to: ADMIN_EMAIL,
     recipientName: "Admin",
@@ -159,14 +210,17 @@ export async function notifyAdmin({ subject, title, message, details, ctaUrl, ct
 
 // ─── Convenience: Send to vendor by vendorId ───────────────────────
 
-export async function notifyVendor(vendorId, { subject, title, message, alertType, details, ctaUrl, ctaText }) {
+export async function notifyVendor(
+  vendorId,
+  { subject, title, message, alertType, details, ctaUrl, ctaText },
+) {
   try {
     const [vendors] = await db.query(
       `SELECT v.business_name, u.email, u.full_name
        FROM vendors v
        INNER JOIN users u ON u.id = v.user_id
        WHERE v.id = ?`,
-      [vendorId]
+      [vendorId],
     );
     if (!vendors.length) {
       console.error(`notifyVendor: vendor ${vendorId} not found`);

@@ -52,6 +52,7 @@ const VendorProfile = () => {
     state: "",
     pincode: "",
     gst_number: "",
+    is_gst_registered: false,
     pan_number: "",
   });
 
@@ -95,9 +96,9 @@ const VendorProfile = () => {
           state: u.state || "",
           pincode: u.pincode || "",
           gst_number: u.gst_number || "",
+          is_gst_registered: !!u.is_gst_registered,
           pan_number: u.pan_number || "",
         });
-        // Load bank details from vendor record (normalize legacy keys)
         if (u.bank_details) {
           const bd =
             typeof u.bank_details === "object"
@@ -128,6 +129,7 @@ const VendorProfile = () => {
           state: user.state || "",
           pincode: user.pincode || "",
           gst_number: user.gst_number || "",
+          is_gst_registered: !!user.is_gst_registered,
           pan_number: user.pan_number || "",
         });
       }
@@ -164,6 +166,7 @@ const VendorProfile = () => {
         state: profileData.state,
         pincode: profileData.pincode,
         gst_number: profileData.gst_number,
+        is_gst_registered: profileData.is_gst_registered ? 1 : 0,
         pan_number: profileData.pan_number,
       });
 
@@ -515,6 +518,27 @@ const VendorProfile = () => {
                         }
                         placeholder="Enter GST number"
                       />
+                    </div>
+
+                    <div className="flex items-center gap-3 md:col-span-2">
+                      <input
+                        type="checkbox"
+                        id="is_gst_registered"
+                        checked={profileData.is_gst_registered}
+                        onChange={(e) =>
+                          setProfileData({
+                            ...profileData,
+                            is_gst_registered: e.target.checked,
+                          })
+                        }
+                        className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
+                      />
+                      <Label
+                        htmlFor="is_gst_registered"
+                        className="mb-0 cursor-pointer"
+                      >
+                        I am a GST registered property owner
+                      </Label>
                     </div>
 
                     <div>

@@ -9,7 +9,7 @@ interface User {
   email: string;
   phone: string | null;
   status: string;
-  role?: "user" | "vendor" | "employee" | "admin";
+  role?: "user" | "vendor" | "admin";
   corporate_verified?: boolean;
   // Actual DB column names returned by the backend
   is_corporate_user?: number | boolean;

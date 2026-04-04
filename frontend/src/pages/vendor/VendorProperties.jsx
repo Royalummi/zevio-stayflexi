@@ -696,9 +696,6 @@ const VendorProperties = () => {
 
                         <p className="text-sm text-gray-500 dark:text-gray-400 mt-3">
                           Created on {formatDate(property.created_at)}
-                          {property.employee_name && (
-                            <span> • Managed by {property.employee_name}</span>
-                          )}
                         </p>
                       </div>
 

@@ -55,10 +55,10 @@ const DashboardLayout = () => {
     initializeTheme();
   }, [initializeTheme]);
 
-  const handleLogout = () => {
-    logout();
-    // Redirect to Astro homepage after logout
-    window.location.href = "http://localhost:8000/";
+  const handleLogout = async () => {
+    await logout();
+    // Redirect to homepage after logout (uses env var for production; falls back to same origin)
+    window.location.href = import.meta.env.VITE_HOMEPAGE_URL || "/";
   };
 
   // Navigation items based on user role
@@ -85,8 +85,9 @@ const DashboardLayout = () => {
         { name: "Users", icon: Users, path: "/admin/users" },
         { name: "Coupons", icon: Ticket, path: "/admin/coupons" },
         { name: "Reviews", icon: Star, path: "/admin/reviews" },
-        { name: "Vendor T&C", icon: FileText, path: "/admin/vendor-terms" },
         { name: "Reports", icon: BarChart3, path: "/admin/reports" },
+        { name: "Profile", icon: UserCircle, path: "/admin/profile" },
+        { name: "Settings", icon: Settings, path: "/admin/settings" },
       ],
       super_admin: [
         { name: "Dashboard", icon: LayoutDashboard, path: "/admin" },
@@ -107,8 +108,9 @@ const DashboardLayout = () => {
         { name: "Users", icon: Users, path: "/admin/users" },
         { name: "Coupons", icon: Ticket, path: "/admin/coupons" },
         { name: "Reviews", icon: Star, path: "/admin/reviews" },
-        { name: "Vendor T&C", icon: FileText, path: "/admin/vendor-terms" },
         { name: "Reports", icon: BarChart3, path: "/admin/reports" },
+        { name: "Profile", icon: UserCircle, path: "/admin/profile" },
+        { name: "Settings", icon: Settings, path: "/admin/settings" },
       ],
       user: [
         { name: "Dashboard", icon: Home, path: "/dashboard" },
@@ -124,7 +126,9 @@ const DashboardLayout = () => {
         { name: "Bookings", icon: Calendar, path: "/vendor/bookings" },
         { name: "Settlements", icon: Wallet, path: "/vendor/settlements" },
         { name: "Analytics", icon: BarChart3, path: "/vendor/analytics" },
+        { name: "Vendor T&C", icon: FileText, path: "/vendor/terms" },
         { name: "Profile", icon: UserCircle, path: "/vendor/profile" },
+        { name: "Settings", icon: Settings, path: "/vendor/settings" },
       ],
     };
 
@@ -155,7 +159,7 @@ const DashboardLayout = () => {
       {/* Sidebar - Always visible on desktop, toggle on mobile */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 shadow-xl transition-transform duration-300 ease-in-out",
+          "fixed inset-y-0 left-0 z-50 w-64 flex flex-col bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 shadow-xl transition-transform duration-300 ease-in-out",
           "lg:translate-x-0", // Always visible on desktop
           sidebarOpen ? "translate-x-0" : "-translate-x-full", // Toggle on mobile
         )}
@@ -206,7 +210,7 @@ const DashboardLayout = () => {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto scrollbar-none">
           {navItems.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.path);
@@ -320,12 +324,26 @@ const DashboardLayout = () => {
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
-                    onClick={() => navigate("/dashboard/profile")}
+                    onClick={() => {
+                      const role = user?.role;
+                      if (role === "admin" || role === "super_admin")
+                        navigate("/admin/profile");
+                      else if (role === "vendor") navigate("/vendor/profile");
+                      else navigate("/dashboard/profile");
+                    }}
                   >
                     <UserCircle className="mr-2 h-4 w-4" />
                     <span>Profile</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate("/settings")}>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      const role = user?.role;
+                      if (role === "admin" || role === "super_admin")
+                        navigate("/admin/settings");
+                      else if (role === "vendor") navigate("/vendor/settings");
+                      else navigate("/dashboard/settings");
+                    }}
+                  >
                     <Settings className="mr-2 h-4 w-4" />
                     <span>Settings</span>
                   </DropdownMenuItem>
