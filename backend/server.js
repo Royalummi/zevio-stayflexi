@@ -70,9 +70,14 @@ const corsOptions = {
     "http://localhost:3000", // React dev server
     "http://localhost:8000", // Next.js
     "http://localhost:4321", // Astro
+    "https://zevio.in",
+    "https://www.zevio.in",
+    "https://api.zevio.in",
+    "https://admin.zevio.in",
     "https://zevio.cloud",
     "https://www.zevio.cloud",
     "https://api.zevio.cloud",
+    "https://admin.zevio.cloud",
   ],
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],

@@ -908,7 +908,7 @@ const AdminProperties = () => {
                                     property.thumbnail.startsWith("http://") ||
                                     property.thumbnail.startsWith("https://")
                                       ? property.thumbnail
-                                      : `${import.meta.env.VITE_API_URL || "https://api.zevio.cloud"}${property.thumbnail}`
+                                      : `${import.meta.env.VITE_API_URL || "https://api.zevio.in"}${property.thumbnail}`
                                   }
                                   alt={property.title}
                                   className="h-full w-full object-cover"
@@ -1072,7 +1072,7 @@ const AdminProperties = () => {
                             property.thumbnail.startsWith("http://") ||
                             property.thumbnail.startsWith("https://")
                               ? property.thumbnail
-                              : `${import.meta.env.VITE_API_URL || "https://api.zevio.cloud"}${property.thumbnail}`
+                              : `${import.meta.env.VITE_API_URL || "https://api.zevio.in"}${property.thumbnail}`
                           }
                           alt={property.title}
                           className="w-full h-full object-cover"
