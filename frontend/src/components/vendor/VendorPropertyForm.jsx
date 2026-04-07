@@ -489,20 +489,20 @@ const VendorPropertyForm = ({
   }, [propertyId, preSelectedPropertyType]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-load guideline templates when property type is selected (only for new properties)
-  // useEffect(() => {
-  //   if (!propertyId && formData.property_type_id && !templatesLoaded) {
-  //     const templates = guidelineTemplates[formData.property_type_id];
-  //     if (templates) {
-  //       setGuidelines(templates);
-  //       setTemplatesLoaded(true);
-  //       setTimeout(() => {
-  //         toast.success(
-  //           "Default guidelines loaded! You can customize them as needed.",
-  //         );
-  //       }, 0);
-  //     }
-  //   }
-  // }, [formData.property_type_id, propertyId, templatesLoaded]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!propertyId && formData.property_type_id && !templatesLoaded) {
+      const templates = guidelineTemplates[formData.property_type_id];
+      if (templates) {
+        setGuidelines(templates);
+        setTemplatesLoaded(true);
+        setTimeout(() => {
+          toast.success(
+            "Default guidelines loaded! You can customize them as needed.",
+          );
+        }, 0);
+      }
+    }
+  }, [formData.property_type_id, propertyId, templatesLoaded]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Mark form as dirty after initial data load
   useEffect(() => {
@@ -638,15 +638,6 @@ const VendorPropertyForm = ({
     ) {
       newErrors.primary_incharge_phone = "Invalid phone format";
     }
-
-    // Guidelines validation (mandatory)
-    const stripHtml = (html) => (html || "").replace(/<[^>]*>/g, "").trim();
-    if (!stripHtml(guidelines.safety_information))
-      newErrors.safety_information = "Safety Information is required";
-    if (!stripHtml(guidelines.local_area_info))
-      newErrors.local_area_info = "Local Area Information is required";
-    if (!stripHtml(guidelines.emergency_contacts))
-      newErrors.emergency_contacts = "Emergency Contacts is required";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -1316,7 +1307,7 @@ const VendorPropertyForm = ({
               {/* Min Children */}
               <div className="flex flex-col">
                 <label className="text-sm font-medium text-foreground mb-2">
-                  Min Children (Included in Base Price)
+                  Min Children
                 </label>
                 <input
                   type="number"
@@ -2114,13 +2105,12 @@ const VendorPropertyForm = ({
           title="Property Guidelines & Information"
           icon={FileText}
           defaultOpen={false}
-          required
         >
           <div className="space-y-6">
             {/* Safety Information */}
             <div>
               <label className="text-sm font-medium text-foreground mb-2 block">
-                Safety Information <span className="text-destructive">*</span>
+                Safety Information
               </label>
               <ReactQuill
                 value={guidelines.safety_information}
@@ -2132,18 +2122,12 @@ const VendorPropertyForm = ({
                 placeholder="Fire safety, emergency exits, first aid..."
                 className="bg-background border border-border rounded-lg"
               />
-              {errors.safety_information && (
-                <span className="text-sm text-destructive mt-1 block">
-                  {errors.safety_information}
-                </span>
-              )}
             </div>
 
             {/* Local Area Information */}
             <div>
               <label className="text-sm font-medium text-foreground mb-2 block">
-                Local Area Information{" "}
-                <span className="text-destructive">*</span>
+                Local Area Information
               </label>
               <ReactQuill
                 value={guidelines.local_area_info}
@@ -2155,17 +2139,12 @@ const VendorPropertyForm = ({
                 placeholder="Nearby restaurants, ATMs, hospitals..."
                 className="bg-background border border-border rounded-lg"
               />
-              {errors.local_area_info && (
-                <span className="text-sm text-destructive mt-1 block">
-                  {errors.local_area_info}
-                </span>
-              )}
             </div>
 
             {/* Emergency Contacts */}
             <div>
               <label className="text-sm font-medium text-foreground mb-2 block">
-                Emergency Contacts <span className="text-destructive">*</span>
+                Emergency Contacts
               </label>
               <ReactQuill
                 value={guidelines.emergency_contacts}
@@ -2177,11 +2156,6 @@ const VendorPropertyForm = ({
                 placeholder="Police, ambulance, fire, property manager..."
                 className="bg-background border border-border rounded-lg"
               />
-              {errors.emergency_contacts && (
-                <span className="text-sm text-destructive mt-1 block">
-                  {errors.emergency_contacts}
-                </span>
-              )}
             </div>
           </div>
         </FormSection>

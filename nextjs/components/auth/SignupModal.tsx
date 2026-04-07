@@ -199,8 +199,11 @@ export default function SignupModal({
       const error = err as Error & {
         response?: { data?: { message?: string } };
       };
+      // AuthContext.register() rethrows as plain Error — .response is stripped,
+      // but .message already contains the extracted backend text
       setError(
-        error.response?.data?.message ||
+        error.message ||
+          error.response?.data?.message ||
           "Registration failed. Please try again.",
       );
     } finally {

@@ -745,15 +745,30 @@ export default function BookingDetailsPage() {
               )}
 
               {booking.invoice && (
-                <a
-                  href={booking.invoice.invoice_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  onClick={async () => {
+                    try {
+                      const res = await api.get(
+                        `/payments/invoice/${booking.id}/pdf`,
+                        { responseType: "blob" },
+                      );
+                      const url = window.URL.createObjectURL(
+                        new Blob([res.data], { type: "application/pdf" }),
+                      );
+                      const link = document.createElement("a");
+                      link.href = url;
+                      link.download = `Zevio_Invoice_${booking.id.substring(0, 8).toUpperCase()}.pdf`;
+                      link.click();
+                      window.URL.revokeObjectURL(url);
+                    } catch {
+                      alert("Failed to download invoice. Please try again.");
+                    }
+                  }}
                   className={`${styles.actionButton} ${styles.downloadButton}`}
                 >
                   <FiArrowLeft style={{ transform: "rotate(-90deg)" }} />
                   Download Invoice
-                </a>
+                </button>
               )}
 
               <Link

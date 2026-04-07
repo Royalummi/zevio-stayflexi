@@ -864,8 +864,7 @@ export default function BookingsEnhanced() {
                         <p className={styles.detailValue}>
                           {booking.guest_count}{" "}
                           {booking.guest_count === 1 ? "Guest" : "Guests"}
-                          {booking.children_count &&
-                            booking.children_count > 0 &&
+                          {(booking.children_count ?? 0) > 0 &&
                             ` + ${booking.children_count} Children`}
                         </p>
                       </div>

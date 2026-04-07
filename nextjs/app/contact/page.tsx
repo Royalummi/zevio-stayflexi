@@ -26,7 +26,7 @@ export default function ContactPage() {
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
+    >,
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -101,17 +101,6 @@ export default function ContactPage() {
               <h3 className={styles.infoTitle}>Visit Us</h3>
               <p className={styles.infoText}>Mumbai, Maharashtra</p>
               <p className={styles.infoDescription}>India</p>
-            </div>
-
-            <div className={styles.infoCard}>
-              <div className={styles.infoIcon}>
-                <FiMessageCircle />
-              </div>
-              <h3 className={styles.infoTitle}>Live Chat</h3>
-              <p className={styles.infoText}>Chat with our team</p>
-              <p className={styles.infoDescription}>
-                Instant responses during business hours
-              </p>
             </div>
           </div>
 

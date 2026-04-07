@@ -7,6 +7,7 @@ import { api } from "@/lib/axios";
 import Link from "next/link";
 import {
   FiCheckCircle,
+  FiClock,
   FiCalendar,
   FiMapPin,
   FiUsers,
@@ -33,13 +34,19 @@ interface Booking {
 function BookingSuccessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const bookingId = searchParams.get("bookingId");
+  // orderId is appended to returnUrl so we can call verifyPayment after external redirect
+  const orderId = searchParams.get("orderId");
 
   const [booking, setBooking] = useState<Booking | null>(null);
   const [loading, setLoading] = useState(true);
+  const [verifying, setVerifying] = useState(false);
 
   useEffect(() => {
+    // Wait for AuthContext to finish loading before checking user
+    if (authLoading) return;
+
     if (!user) {
       router.push("/");
       return;
@@ -50,8 +57,25 @@ function BookingSuccessContent() {
       return;
     }
 
-    const fetchBookingDetails = async () => {
+    const initPage = async () => {
       try {
+        // If orderId is present we arrived from a Cashfree external redirect —
+        // call verifyPayment first before fetching booking details
+        if (orderId) {
+          setVerifying(true);
+          try {
+            await api.post("/payments/verify", {
+              order_id: orderId,
+              booking_id: bookingId,
+            });
+          } catch (verifyError) {
+            // Verification may fail if already verified (idempotent) — continue
+            console.warn("verifyPayment on redirect:", verifyError);
+          } finally {
+            setVerifying(false);
+          }
+        }
+
         const response = await api.get(`/bookings/${bookingId}`);
         setBooking(response.data.data);
       } catch (error) {
@@ -61,15 +85,15 @@ function BookingSuccessContent() {
       }
     };
 
-    fetchBookingDetails();
-  }, [user, bookingId, router]);
+    initPage();
+  }, [authLoading, user, bookingId, orderId, router]);
 
-  if (loading) {
+  if (authLoading || loading || verifying) {
     return (
       <div className={styles.pageContainer}>
         <div className={styles.loadingContainer}>
           <div className={styles.spinner}></div>
-          <p>Loading booking details...</p>
+          <p>{verifying ? "Confirming your payment..." : "Loading booking details..."}</p>
         </div>
       </div>
     );
@@ -88,18 +112,23 @@ function BookingSuccessContent() {
     );
   }
 
+  const isConfirmed = booking.status === "confirmed";
+
   return (
     <div className={styles.pageContainer}>
       <div className={styles.innerContainer}>
-        {/* Success Header */}
+        {/* Success Header — content depends on actual booking status */}
         <div className={styles.successHeader}>
           <div className={styles.successIcon}>
-            <FiCheckCircle />
+            {isConfirmed ? <FiCheckCircle /> : <FiClock />}
           </div>
-          <h1 className={styles.successTitle}>Booking Confirmed!</h1>
+          <h1 className={styles.successTitle}>
+            {isConfirmed ? "Booking Confirmed!" : "Payment Pending"}
+          </h1>
           <p className={styles.successSubtitle}>
-            Your booking has been successfully confirmed. We&apos;ve sent a
-            confirmation email to <strong>{user?.email}</strong>
+            {isConfirmed
+              ? <>Your booking has been successfully confirmed. We&apos;ve sent a confirmation email to <strong>{user?.email}</strong></>
+              : "Your payment is being processed. This page will update once confirmation is received."}
           </p>
           <p className={styles.bookingId}>
             Booking ID: <strong>{bookingId}</strong>
@@ -174,8 +203,8 @@ function BookingSuccessContent() {
               </p>
               <p className={styles.paymentStatus}>
                 Status:{" "}
-                <span className={styles.statusPaid}>
-                  {booking.status === "confirmed" ? "Paid" : booking.status}
+                <span className={isConfirmed ? styles.statusPaid : styles.statusPending}>
+                  {isConfirmed ? "Paid" : "Pending"}
                 </span>
               </p>
             </div>

@@ -7,6 +7,7 @@ import db from "../config/database.js";
 import { asyncHandler, sendSuccess, sendError } from "../utils/response.js";
 import { generateUUID } from "../utils/helpers.js";
 import { sendBookingConfirmationEmail } from "../services/emailService.js";
+import { generateInvoicePDF } from "../services/invoiceService.js";
 import cashfreeService from "../services/cashfree.service.js";
 
 /**
@@ -178,9 +179,9 @@ export const verifyPayment = asyncHandler(async (req, res) => {
   try {
     await connection.beginTransaction();
 
-    // 1. Get booking details
+    // 1. Get booking details (FOR UPDATE prevents double-payment race condition)
     const [bookings] = await connection.query(
-      "SELECT * FROM bookings WHERE id = ? AND deleted_at IS NULL",
+      "SELECT * FROM bookings WHERE id = ? AND deleted_at IS NULL FOR UPDATE",
       [booking_id],
     );
 
@@ -260,46 +261,56 @@ export const verifyPayment = asyncHandler(async (req, res) => {
       ],
     );
 
-    // 11. Create user notification
-    await connection.query(
-      "INSERT INTO notifications (id, recipient_id, recipient_role, title, message) VALUES (?, ?, ?, ?, ?)",
-      [
-        generateUUID(),
-        booking.user_id,
-        "user",
-        "Booking Confirmed",
-        `Your booking has been confirmed. Booking ID: ${booking_id}`,
-      ],
-    );
-
-    // 12. Create vendor notification
-    const [properties] = await connection.query(
-      "SELECT vendor_id FROM properties WHERE id = ?",
-      [booking.property_id],
-    );
-
-    if (properties.length > 0 && properties[0].vendor_id) {
-      await connection.query(
-        "INSERT INTO notifications (id, recipient_id, recipient_role, title, message) VALUES (?, ?, ?, ?, ?)",
-        [
-          generateUUID(),
-          properties[0].vendor_id,
-          "vendor",
-          "New Booking Received",
-          `You have a new booking. Booking ID: ${booking_id}`,
-        ],
-      );
-    }
-
-    // COMMIT TRANSACTION - All operations successful
+    // COMMIT TRANSACTION - Payment + invoice are the only critical operations
     await connection.commit();
     connection.release();
 
-    // Send confirmation email (outside transaction)
+    // Send confirmation email (outside transaction - non-critical)
     try {
       await sendBookingConfirmationEmail(booking_id);
     } catch (error) {
       console.error("Failed to send confirmation email:", error);
+    }
+
+    // 11. Create user notification (outside transaction - non-critical)
+    try {
+      await db.query(
+        "INSERT INTO notifications (id, recipient_id, recipient_role, title, message) VALUES (?, ?, ?, ?, ?)",
+        [
+          generateUUID(),
+          booking.user_id,
+          "user",
+          "Booking Confirmed",
+          `Your booking has been confirmed. Booking ID: ${booking_id}`,
+        ],
+      );
+    } catch (notifError) {
+      console.error("Failed to create user notification:", notifError.message);
+    }
+
+    // 12. Create vendor notification (outside transaction - non-critical)
+    try {
+      const [properties] = await db.query(
+        "SELECT vendor_id FROM properties WHERE id = ?",
+        [booking.property_id],
+      );
+      if (properties.length > 0 && properties[0].vendor_id) {
+        await db.query(
+          "INSERT INTO notifications (id, recipient_id, recipient_role, title, message) VALUES (?, ?, ?, ?, ?)",
+          [
+            generateUUID(),
+            properties[0].vendor_id,
+            "vendor",
+            "New Booking Received",
+            `You have a new booking. Booking ID: ${booking_id}`,
+          ],
+        );
+      }
+    } catch (notifError) {
+      console.error(
+        "Failed to create vendor notification:",
+        notifError.message,
+      );
     }
 
     sendSuccess(
@@ -417,6 +428,41 @@ export const getInvoice = asyncHandler(async (req, res) => {
     "Invoice fetched successfully",
     200,
   );
+});
+
+/**
+ * @route   GET /api/payments/invoice/:bookingId/pdf
+ * @desc    Download invoice as PDF
+ * @access  Private (User/Admin)
+ */
+export const downloadInvoicePDF = asyncHandler(async (req, res) => {
+  const { bookingId } = req.params;
+  const userId = req.user.id;
+  const userRole = req.user.role;
+
+  // Verify user owns the booking or is admin
+  const [bookings] = await db.query(
+    "SELECT id, user_id FROM bookings WHERE id = ? AND deleted_at IS NULL",
+    [bookingId],
+  );
+
+  if (bookings.length === 0) {
+    return sendError(res, "Booking not found", 404);
+  }
+
+  if (userRole === "user" && bookings[0].user_id !== userId) {
+    return sendError(res, "Unauthorized", 403);
+  }
+
+  const pdfBuffer = await generateInvoicePDF(bookingId);
+
+  res.setHeader("Content-Type", "application/pdf");
+  res.setHeader(
+    "Content-Disposition",
+    `attachment; filename="Zevio_Invoice_${bookingId.substring(0, 8).toUpperCase()}.pdf"`,
+  );
+  res.setHeader("Content-Length", pdfBuffer.length);
+  res.send(pdfBuffer);
 });
 
 /**

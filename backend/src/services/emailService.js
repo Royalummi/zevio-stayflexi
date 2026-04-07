@@ -1,6 +1,7 @@
 import nodemailer from "nodemailer";
 import db from "../config/database.js";
 import dotenv from "dotenv";
+import { generateInvoicePDF } from "./invoiceService.js";
 
 dotenv.config();
 
@@ -61,7 +62,7 @@ export const verifyEmailConfig = async () => {
   }
 };
 
-// Send booking confirmation email
+// Send booking confirmation email with PDF invoice attachment
 export const sendBookingConfirmationEmail = async (bookingId) => {
   if (!transporter) {
     console.log("⚠️  Email not sent: Email service not configured");
@@ -75,7 +76,9 @@ export const sendBookingConfirmationEmail = async (bookingId) => {
         b.*,
         u.full_name, u.email,
         p.title as property_title,
-        c.name as city_name
+        p.area as property_area,
+        c.name as city_name,
+        c.state as city_state
       FROM bookings b
       INNER JOIN users u ON b.user_id = u.id
       INNER JOIN properties p ON b.property_id = p.id
@@ -90,107 +93,178 @@ export const sendBookingConfirmationEmail = async (bookingId) => {
 
     const booking = bookings[0];
 
+    const formatDate = (d) =>
+      d
+        ? new Date(d).toLocaleDateString("en-IN", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+          })
+        : "N/A";
+    const formatCurrency = (amt) =>
+      `₹${parseFloat(amt || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+    // Generate PDF invoice
+    let pdfBuffer = null;
+    try {
+      pdfBuffer = await generateInvoicePDF(bookingId);
+      console.log(`✅ Invoice PDF generated for booking ${bookingId}`);
+    } catch (pdfErr) {
+      console.error(
+        "⚠️  PDF generation failed, sending email without attachment:",
+        pdfErr.message,
+      );
+    }
+
+    const locationParts = [
+      booking.property_area,
+      booking.city_name,
+      booking.city_state,
+    ].filter(Boolean);
+
     const mailOptions = {
-      from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
+      from: SENDERS.BOOKINGS,
       to: booking.email,
-      subject: "Booking Confirmation - Zevio Villa Booking",
+      subject: `Booking Confirmed - ${booking.property_title} | Zevio`,
       html: `
         <!DOCTYPE html>
         <html>
         <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: #4F46E5; color: white; padding: 20px; text-align: center; }
-            .content { padding: 20px; background: #f9f9f9; }
-            .booking-details { background: white; padding: 15px; margin: 15px 0; border-radius: 5px; }
-            .detail-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; }
-            .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
-            .button { display: inline-block; padding: 10px 20px; background: #4F46E5; color: white; text-decoration: none; border-radius: 5px; margin: 10px 0; }
+            body { margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; color: #1a1a1a; }
+            .wrapper { max-width: 600px; margin: 0 auto; background: #ffffff; }
+            .header { background: #1F3A5F; padding: 28px 32px; }
+            .header h1 { margin: 0; color: #ffffff; font-size: 26px; font-weight: 700; letter-spacing: 2px; }
+            .header-sub { color: #2FA4A9; font-size: 11px; letter-spacing: 1px; margin-top: 4px; }
+            .banner { background: #2FA4A9; padding: 16px 32px; }
+            .banner h2 { margin: 0; color: #ffffff; font-size: 18px; font-weight: 600; }
+            .banner p { margin: 4px 0 0; color: rgba(255,255,255,0.9); font-size: 13px; }
+            .body-content { padding: 28px 32px; }
+            .greeting { font-size: 15px; color: #5F6B7A; margin-bottom: 20px; }
+            .detail-grid { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
+            .detail-grid td { padding: 10px 14px; font-size: 13px; border-bottom: 1px solid #E6E9EE; }
+            .detail-label { color: #5F6B7A; font-weight: 600; width: 40%; }
+            .detail-value { color: #1a1a1a; }
+            .section-title { font-size: 13px; font-weight: 700; color: #1F3A5F; text-transform: uppercase; letter-spacing: 0.5px; margin: 24px 0 12px; padding-bottom: 8px; border-bottom: 2px solid #2FA4A9; }
+            .total-row td { background: #1F3A5F; color: #ffffff !important; font-weight: 700; font-size: 15px; border: none; padding: 14px; }
+            .discount-row td { color: #16a34a !important; }
+            .badge { display: inline-block; padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: 700; }
+            .badge-paid { background: #16a34a; color: #fff; }
+            .badge-pending { background: #dc2626; color: #fff; }
+            .cta-btn { display: inline-block; padding: 12px 32px; background: #2FA4A9; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 14px; margin: 16px 0; }
+            .note { background: #E6E9EE; padding: 14px 18px; border-radius: 6px; font-size: 12px; color: #5F6B7A; margin: 20px 0; }
+            .footer { background: #1F3A5F; padding: 20px 32px; }
+            .footer p { margin: 4px 0; font-size: 11px; color: #E6E9EE; }
+            .footer a { color: #2FA4A9; text-decoration: none; }
+            .footer .copy { color: #5F6B7A; font-size: 10px; margin-top: 12px; }
           </style>
         </head>
         <body>
-          <div class="container">
+          <div class="wrapper">
             <div class="header">
-              <h1>🎉 Booking Confirmed!</h1>
+              <h1>ZEVIO</h1>
+              <div class="header-sub">BOOKING INVOICE</div>
             </div>
-            <div class="content">
-              <p>Dear ${booking.full_name},</p>
-              <p>Your booking has been confirmed successfully. Here are your booking details:</p>
-              
-              <div class="booking-details">
-                <h3>${booking.property_title}</h3>
-                <p><strong>Location:</strong> ${booking.city_name}</p>
-                
-                <div class="detail-row">
-                  <span><strong>Booking ID:</strong></span>
-                  <span>${booking.id}</span>
-                </div>
-                
-                <div class="detail-row">
-                  <span><strong>Check-in:</strong></span>
-                  <span>${new Date(booking.check_in).toLocaleDateString(
-                    "en-IN",
-                  )}</span>
-                </div>
-                
-                <div class="detail-row">
-                  <span><strong>Check-out:</strong></span>
-                  <span>${new Date(booking.check_out).toLocaleDateString(
-                    "en-IN",
-                  )}</span>
-                </div>
-                
-                <div class="detail-row">
-                  <span><strong>Nights:</strong></span>
-                  <span>${booking.nights}</span>
-                </div>
-                
-                <div class="detail-row">
-                  <span><strong>Base Amount:</strong></span>
-                  <span>₹${parseFloat(booking.base_amount || 0).toFixed(2)}</span>
-                </div>
-                
-                <div class="detail-row">
-                  <span><strong>GST:</strong></span>
-                  <span>₹${parseFloat(booking.gst_amount || 0).toFixed(2)}</span>
-                </div>
-                
-                ${
-                  booking.discount_amount > 0
-                    ? `
-                <div class="detail-row">
-                  <span><strong>Discount:</strong></span>
-                  <span>-₹${parseFloat(booking.discount_amount || 0).toFixed(2)}</span>
-                </div>
-                `
-                    : ""
-                }
-                
-                <div class="detail-row" style="border-bottom: none; font-size: 18px; color: #4F46E5;">
-                  <span><strong>Total Amount:</strong></span>
-                  <span><strong>₹${parseFloat(booking.total_amount || 0).toFixed(2)}</strong></span>
-                </div>
+
+            <div class="banner">
+              <h2>Booking Confirmed!</h2>
+              <p>Your reservation has been confirmed successfully.</p>
+            </div>
+
+            <div class="body-content">
+              <p class="greeting">Dear ${booking.full_name},</p>
+
+              <div class="section-title">Stay Details</div>
+              <table class="detail-grid">
+                <tr>
+                  <td class="detail-label">Property</td>
+                  <td class="detail-value"><strong>${booking.property_title}</strong></td>
+                </tr>
+                <tr>
+                  <td class="detail-label">Location</td>
+                  <td class="detail-value">${locationParts.join(", ")}</td>
+                </tr>
+                <tr>
+                  <td class="detail-label">Check-in</td>
+                  <td class="detail-value">${formatDate(booking.check_in)}</td>
+                </tr>
+                <tr>
+                  <td class="detail-label">Check-out</td>
+                  <td class="detail-value">${formatDate(booking.check_out)}</td>
+                </tr>
+                <tr>
+                  <td class="detail-label">Duration</td>
+                  <td class="detail-value">${booking.nights} Night${booking.nights !== 1 ? "s" : ""}</td>
+                </tr>
+                <tr>
+                  <td class="detail-label">Guests</td>
+                  <td class="detail-value">${booking.guest_count || 0} Adult${(booking.guest_count || 0) !== 1 ? "s" : ""}${booking.children_count > 0 ? `, ${booking.children_count} Children` : ""}${booking.infants_count > 0 ? `, ${booking.infants_count} Infant${booking.infants_count !== 1 ? "s" : ""}` : ""}</td>
+                </tr>
+                <tr>
+                  <td class="detail-label">Booking ID</td>
+                  <td class="detail-value" style="font-family: monospace; font-size: 12px;">${booking.id.substring(0, 8).toUpperCase()}</td>
+                </tr>
+              </table>
+
+              <div class="section-title">Price Breakdown</div>
+              <table class="detail-grid">
+                <tr>
+                  <td class="detail-label">Base Amount (${booking.nights} night${booking.nights !== 1 ? "s" : ""})</td>
+                  <td class="detail-value" style="text-align:right;">${formatCurrency(booking.base_amount)}</td>
+                </tr>
+                ${parseFloat(booking.extra_guest_charges || 0) > 0 ? `<tr><td class="detail-label">Extra Guest Charges</td><td class="detail-value" style="text-align:right;">${formatCurrency(booking.extra_guest_charges)}</td></tr>` : ""}
+                ${parseFloat(booking.extra_children_charges || 0) > 0 ? `<tr><td class="detail-label">Extra Children Charges</td><td class="detail-value" style="text-align:right;">${formatCurrency(booking.extra_children_charges)}</td></tr>` : ""}
+                ${parseFloat(booking.service_charge || 0) > 0 ? `<tr><td class="detail-label">Service Charge (5%)</td><td class="detail-value" style="text-align:right;">${formatCurrency(booking.service_charge)}</td></tr>` : ""}
+                <tr>
+                  <td class="detail-label">GST</td>
+                  <td class="detail-value" style="text-align:right;">${formatCurrency(booking.gst_amount)}</td>
+                </tr>
+                ${parseFloat(booking.coupon_discount || 0) > 0 ? `<tr class="discount-row"><td class="detail-label">Coupon Discount${booking.coupon_code ? ` (${booking.coupon_code})` : ""}</td><td class="detail-value" style="text-align:right; color:#16a34a;">-${formatCurrency(booking.coupon_discount)}</td></tr>` : ""}
+                ${parseFloat(booking.discount_amount || 0) > 0 && parseFloat(booking.coupon_discount || 0) === 0 ? `<tr class="discount-row"><td class="detail-label">Discount</td><td class="detail-value" style="text-align:right; color:#16a34a;">-${formatCurrency(booking.discount_amount)}</td></tr>` : ""}
+                <tr class="total-row">
+                  <td>TOTAL AMOUNT</td>
+                  <td style="text-align:right;">${formatCurrency(booking.total_amount)}</td>
+                </tr>
+              </table>
+
+              <p style="margin: 12px 0;">
+                Payment Status: <span class="badge ${booking.payment_status === "completed" ? "badge-paid" : "badge-pending"}">${booking.payment_status === "completed" ? "PAID" : "PENDING"}</span>
+              </p>
+
+              <div class="note">
+                📎 Your detailed booking invoice is attached as a PDF. Please save it for your records.
               </div>
-              
-              <p>We look forward to hosting you!</p>
-              
+
               <center>
-                <a href="${process.env.FRONTEND_URL}/bookings/${
-                  booking.id
-                }" class="button">View Booking Details</a>
+                <a href="${process.env.FRONTEND_URL || "https://zevio.in"}/bookings/${booking.id}" class="cta-btn">View Booking Details</a>
               </center>
+
+              <p style="font-size: 13px; color: #5F6B7A; margin-top: 20px;">
+                We look forward to hosting you!<br>
+                — Team Zevio
+              </p>
             </div>
+
             <div class="footer">
-              <p>Need help? Contact us at ${
-                process.env.COMPANY_EMAIL || "support@zevio.com"
-              }</p>
-              <p>© 2025 Zevio Villa Booking. All rights reserved.</p>
+              <p><strong>Company Address:</strong> Navarathna Agrahara, Bettahalasur Post, Bangalore North - 562157</p>
+              <p><strong>Support:</strong> <a href="mailto:support@zevio.com">support@zevio.com</a> &nbsp;|&nbsp; <a href="https://zevio.in">www.zevio.in</a></p>
+              <p class="copy">© ${new Date().getFullYear()} Zevio. All rights reserved. This is a computer-generated email.</p>
             </div>
           </div>
         </body>
         </html>
       `,
+      attachments: pdfBuffer
+        ? [
+            {
+              filename: `Zevio_Invoice_${booking.id.substring(0, 8).toUpperCase()}.pdf`,
+              content: pdfBuffer,
+              contentType: "application/pdf",
+            },
+          ]
+        : [],
     };
 
     await transporter.sendMail(mailOptions);
@@ -1343,7 +1417,7 @@ export const sendForgotPasswordLinkEmail = async (email, name, resetToken) => {
   }
 
   try {
-    const resetUrl = `${process.env.VITE_FRONTEND_URL || "http://localhost:5173"}/reset-password?token=${resetToken}`;
+    const resetUrl = `${process.env.NEXTJS_URL || process.env.VITE_FRONTEND_URL || "http://localhost:8000"}/reset-password?token=${resetToken}`;
 
     const html = `
 <!DOCTYPE html>

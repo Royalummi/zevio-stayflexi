@@ -200,6 +200,12 @@
     text-transform: capitalize;
 }
 
+.statusPending {
+    color: #f59e0b;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
 /* Next Steps */
 .stepsList {
     display: flex;

@@ -24,7 +24,7 @@ import PriceBreakdown from "@/components/booking/PriceBreakdown";
 // Declare Cashfree global for TypeScript
 declare global {
   interface Window {
-    Cashfree: (config: { mode: string }) => {
+    Cashfree?: (config: { mode: string }) => {
       checkout: (options: {
         paymentSessionId: string;
         returnUrl: string;
@@ -41,8 +41,11 @@ declare global {
   }
 }
 
-// Load Cashfree SDK script
-const loadCashfreeScript = () => {
+// Load Cashfree SDK script — idempotent: resolves immediately if SDK is already available
+const loadCashfreeScript = (): Promise<boolean> => {
+  if (typeof window !== "undefined" && window.Cashfree) {
+    return Promise.resolve(true);
+  }
   return new Promise((resolve) => {
     const script = document.createElement("script");
     script.src = "https://sdk.cashfree.com/js/v3/cashfree.js";
@@ -67,6 +70,16 @@ function BookingReviewContent() {
   const [earlyCheckIn, setEarlyCheckIn] = useState(false);
   const [lateCheckOut, setLateCheckOut] = useState(false);
   const [agreeToTerms, setAgreeToTerms] = useState(false);
+
+  // Sync guest info when auth finishes loading (user may be null on first render)
+  useEffect(() => {
+    if (user) {
+      if (!fullName) setFullName(user.full_name || "");
+      if (!email) setEmail(user.email || "");
+      if (!phone) setPhone(user.phone || "");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   // SESSION 64: Coupon system state
   const [appliedCouponCode, setAppliedCouponCode] = useState<string>("");
@@ -120,27 +133,28 @@ function BookingReviewContent() {
             children: booking.children_count || 0,
             infants: booking.infants_count || 0,
             nights: booking.nights,
-            baseAmount: booking.base_amount,
-            extraGuestCharges: booking.extra_guest_charges || 0,
-            extraChildrenCharges: booking.extra_children_charges || 0,
-            gstAmount: booking.gst_amount,
-            totalAmount: booking.total_amount,
-            pricePerNight: Math.round(booking.base_amount / booking.nights),
+            // MySQL2 returns DECIMAL columns as strings — parse to avoid NaN in arithmetic
+            baseAmount: parseFloat(booking.base_amount) || 0,
+            extraGuestCharges: parseFloat(booking.extra_guest_charges) || 0,
+            extraChildrenCharges: parseFloat(booking.extra_children_charges) || 0,
+            gstAmount: parseFloat(booking.gst_amount) || 0,
+            totalAmount: parseFloat(booking.total_amount) || 0,
+            pricePerNight: Math.round((parseFloat(booking.base_amount) || 0) / (booking.nights || 1)),
             minGuests: booking.min_guests || 2,
             maxGuests: booking.max_guests || 10,
             minChildren: booking.min_children || 0,
             maxChildren: booking.max_children || 5,
-            extraGuestCharge: booking.extra_guest_charge || 0,
-            extraChildCharge: booking.extra_child_charge || 0,
+            extraGuestCharge: parseFloat(booking.extra_guest_charge) || 0,
+            extraChildCharge: parseFloat(booking.extra_child_charge) || 0,
             // SESSION 64: Restore coupon data if present
             couponCode: booking.coupon_code,
-            couponDiscount: booking.discount_amount || 0,
+            couponDiscount: parseFloat(booking.discount_amount) || 0,
           });
 
           // SESSION 64: Set coupon state if coupon was applied
           if (booking.coupon_code) {
             setAppliedCouponCode(booking.coupon_code);
-            setCouponDiscount(booking.discount_amount || 0);
+            setCouponDiscount(parseFloat(booking.discount_amount) || 0);
           }
         } catch (error: unknown) {
           console.error("Error fetching booking:", error);
@@ -215,9 +229,9 @@ function BookingReviewContent() {
   };
 
   const handlePayment = async () => {
-    // Validation
-    if (!fullName || !email || !phone) {
-      toast.error("Please fill all required fields");
+    // Validation — phone is optional (backend falls back to 9999999999 for Cashfree)
+    if (!fullName || !email) {
+      toast.error("Please fill in your name and email");
       return;
     }
 
@@ -309,14 +323,16 @@ function BookingReviewContent() {
 
       const { order_id, payment_session_id } = paymentResponse.data.data;
 
-      // Initialize Cashfree Drop-in checkout @ts-ignore - Cashfree SDK is loaded dynamically from CDN
-      const cashfree = window.Cashfree({
+      // Initialize Cashfree Drop-in checkout — SDK is loaded dynamically from CDN
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const cashfree = window.Cashfree!({
         mode: "sandbox", // Use "sandbox" for TEST, "production" for PROD
       });
 
       const checkoutOptions = {
         paymentSessionId: payment_session_id,
-        returnUrl: `${window.location.origin}/booking-success?bookingId=${booking_id}`,
+        // Include orderId so the success page can call verifyPayment on external redirect
+        returnUrl: `${window.location.origin}/booking-success?bookingId=${booking_id}&orderId=${order_id}`,
         redirectTarget: "_modal", // Open in modal instead of redirect
         customerDetails: {
           customerName: fullName,
@@ -383,6 +399,10 @@ function BookingReviewContent() {
                 toast.error(errorMsg);
                 setLoading(false);
               }
+            } else {
+              // Modal closed without completed payment (cancelled or incomplete OTP)
+              toast.info("Payment was not completed. You can try again.");
+              setLoading(false);
             }
           },
         )
@@ -622,7 +642,7 @@ function BookingReviewContent() {
                 </div>
                 <div className={styles.formGroup}>
                   <label className={styles.label}>
-                    Phone Number <span className={styles.required}>*</span>
+                    Phone Number
                   </label>
                   <input
                     type="tel"
@@ -702,7 +722,7 @@ function BookingReviewContent() {
               {/* Payment Button */}
               <button
                 onClick={handlePayment}
-                disabled={loading || !agreeToTerms}
+                disabled={loading}
                 className={styles.paymentButton}
               >
                 {loading ? (

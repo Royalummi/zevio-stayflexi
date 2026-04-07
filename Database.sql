@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Apr 04, 2026 at 09:47 PM
+-- Generation Time: Apr 07, 2026 at 05:36 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -218,6 +218,14 @@ CREATE TABLE `bookings` (
   `deleted_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 
+--
+-- Dumping data for table `bookings`
+--
+
+INSERT INTO `bookings` (`id`, `user_id`, `property_id`, `check_in`, `check_out`, `nights`, `guest_count`, `children_count`, `infants_count`, `base_amount`, `extra_guest_charges`, `extra_children_charges`, `gst_amount`, `service_charge`, `coupon_id`, `coupon_code`, `coupon_discount`, `discount_amount`, `total_amount`, `status`, `payment_status`, `created_at`, `expires_at`, `payment_expires_at`, `deleted_at`) VALUES
+('d5133df0-cec7-48eb-9eb0-af30118d3001', 'bb5538d1-e418-11f0-9f30-00410e2b5e6e', 'bb927936-e418-11f0-9f30-00410e2b5e6e', '2026-05-11', '2026-05-12', 1, 2, 0, 0, 16000.00, 0.00, 0.00, 2880.00, 800.00, NULL, NULL, 0.00, 0.00, 19680.00, 'cancelled', 'failed', '2026-04-05 18:02:00', '2026-04-06 00:14:26', '2026-04-06 00:14:26', NULL),
+('f17ef3fd-7ed9-432a-9912-a03a4c84889c', 'bb5538d1-e418-11f0-9f30-00410e2b5e6e', 'bb927936-e418-11f0-9f30-00410e2b5e6e', '2026-04-10', '2026-04-16', 6, 4, 0, 0, 96000.00, 0.00, 0.00, 17280.00, 4800.00, NULL, NULL, 0.00, 0.00, 118080.00, 'confirmed', 'pending', '2026-04-05 20:23:23', '2026-04-06 02:11:25', '2026-04-06 02:11:25', NULL);
+
 -- --------------------------------------------------------
 
 --
@@ -386,6 +394,7 @@ INSERT INTO `cron_jobs_log` (`id`, `job_name`, `run_date`, `status`, `remarks`) 
 ('2bcd0a3c-a8af-424c-bb44-f95f1ccd0d0d', 'check_in_reminder_24h', '2026-02-22', 'success', 'Sent 0 reminders, 0 failed'),
 ('31fb7be5-ded2-4527-8891-c4da7ba0811f', 'daily_booking_processor', '2026-03-17', 'success', 'Processed 0 settlements'),
 ('393ab217-4124-4485-b450-61eb13473535', 'daily_booking_processor', '2026-03-04', 'success', 'Processed 0 settlements'),
+('3a359083-c8c2-4656-b59d-a15764489aab', 'daily_booking_processor', '2026-04-05', 'success', 'Processed 0 settlements'),
 ('3e2e27ab-923d-4a80-a3c8-dc22537cc210', 'review_request', '2026-02-15', 'success', 'Sent 0 review requests, 0 failed'),
 ('41380528-58cf-439e-bd65-03e5e4e655db', 'check_in_reminder_24h', '2026-03-03', 'success', 'Sent 0 reminders, 0 failed'),
 ('4e4f6494-4b55-4a62-8c18-2fdca9d49b5c', 'daily_booking_processor', '2026-01-19', 'success', 'Processed 0 settlements'),
@@ -417,6 +426,7 @@ INSERT INTO `cron_jobs_log` (`id`, `job_name`, `run_date`, `status`, `remarks`) 
 ('e59c888e-1c81-43cc-841c-c0f7cad833e2', 'check_out_reminder', '2026-02-14', 'success', 'Sent 0 reminders, 0 failed'),
 ('e9cfbfc4-b67e-4cc9-b23b-7747e38bdd7e', 'check_in_reminder_24h', '2026-01-16', 'success', 'Sent 0 reminders, 0 failed'),
 ('ee0a50ca-95dc-4163-b146-983df8ce3db8', 'check_in_reminder_24h', '2026-01-17', 'success', 'Sent 0 reminders, 0 failed'),
+('efd3e848-c056-4212-a1ec-3ef2e687951c', 'check_in_reminder_24h', '2026-04-05', 'success', 'Sent 0 reminders, 0 failed'),
 ('f0ad2938-2014-42d6-833e-26591a07fd34', 'check_in_reminder_24h', '2026-01-19', 'success', 'Sent 0 reminders, 0 failed'),
 ('f20afc7d-858c-4cd9-b891-1cb73082f62d', 'check_out_reminder', '2026-02-20', 'success', 'Sent 0 reminders, 0 failed'),
 ('fe848a12-bf5b-4904-af22-ecb4b6fe844f', 'check_out_reminder', '2026-03-22', 'success', 'Sent 0 reminders, 0 failed'),
@@ -505,6 +515,7 @@ CREATE TABLE `invoices` (
 
 INSERT INTO `invoices` (`id`, `invoice_number`, `booking_id`, `user_id`, `base_amount`, `gst_amount`, `total_amount`, `invoice_type`, `created_at`) VALUES
 ('3ed7a7cc-d180-4c81-bfd5-c9a2f519c49d', 100012, '3c5e8c53-794f-4820-a5ac-ee46aa587004', '244c2909-85ef-4d38-8a0a-2723ff145942', 45000.00, 8100.00, 55350.00, 'invoice', '2026-02-22 03:24:20'),
+('f2a18607-7858-4d55-8367-54891b1d4484', 100016, 'f17ef3fd-7ed9-432a-9912-a03a4c84889c', 'bb5538d1-e418-11f0-9f30-00410e2b5e6e', 96000.00, 17280.00, 118080.00, 'invoice', '2026-04-05 20:27:24'),
 ('fcba624e-8264-43e6-b0be-e3f3bb20474f', 100011, '82b4cf48-b0bd-49e8-acfb-4ff3d2c3507e', '244c2909-85ef-4d38-8a0a-2723ff145942', 45000.00, 8100.00, 55350.00, 'invoice', '2026-02-22 03:17:41'),
 ('invoice-001', 100001, 'booking-test-001', 'bb551978-e418-11f0-9f30-00410e2b5e6e', 51600.00, 9468.00, 61068.00, 'invoice', '2026-01-08 05:05:00'),
 ('invoice-002', 100002, 'booking-test-002', 'user-test-001', 21200.00, 3816.00, 25016.00, 'invoice', '2026-01-09 05:35:00'),
@@ -564,7 +575,7 @@ CREATE TABLE `login_attempts` (
 --
 
 INSERT INTO `login_attempts` (`email`, `attempts`, `locked_until`, `last_attempt`) VALUES
-('ranjithgopafy@gmail.com', 2, NULL, '2026-04-04 07:46:42');
+('wrong@email.com', 1, NULL, '2026-04-05 19:37:13');
 
 -- --------------------------------------------------------
 
@@ -581,6 +592,13 @@ CREATE TABLE `notifications` (
   `is_read` tinyint(1) DEFAULT 0,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+
+--
+-- Dumping data for table `notifications`
+--
+
+INSERT INTO `notifications` (`id`, `recipient_id`, `recipient_role`, `title`, `message`, `is_read`, `created_at`) VALUES
+('ffb4fa16-688d-48a2-a021-89d38351ff17', 'bb5538d1-e418-11f0-9f30-00410e2b5e6e', 'user', 'Booking Confirmed', 'Your booking has been confirmed. Booking ID: f17ef3fd-7ed9-432a-9912-a03a4c84889c', 0, '2026-04-05 20:27:25');
 
 -- --------------------------------------------------------
 
@@ -603,9 +621,17 @@ CREATE TABLE `payments` (
 --
 
 INSERT INTO `payments` (`id`, `booking_id`, `gateway`, `gateway_payment_id`, `amount`, `status`, `created_at`) VALUES
+('07a95efd-8331-4509-af51-45093dd64a9a', 'f17ef3fd-7ed9-432a-9912-a03a4c84889c', 'cashfree', '5114926894326', 118080.00, 'success', '2026-04-05 20:23:23'),
+('29789049-a094-4de6-a595-566d00ebad7e', 'd5133df0-cec7-48eb-9eb0-af30118d3001', 'cashfree', 'd5133df0-cec7-48eb-9eb0-af30118d3001_1775413384097', 19680.00, 'pending', '2026-04-05 18:23:04'),
+('8d849a61-53cb-48b5-9f72-3fddb36fd172', 'd5133df0-cec7-48eb-9eb0-af30118d3001', 'cashfree', 'd5133df0-cec7-48eb-9eb0-af30118d3001_1775413101902', 19680.00, 'pending', '2026-04-05 18:18:22'),
 ('8e595c87-4258-4abd-974a-c65833be2338', '3c5e8c53-794f-4820-a5ac-ee46aa587004', 'cashfree', '3c5e8c53-794f-4820-a5ac-ee46aa587004_1771730659999', 55350.00, 'success', '2026-02-22 03:24:20'),
+('b0dd0063-8775-452d-a69d-9ca3373feab4', 'd5133df0-cec7-48eb-9eb0-af30118d3001', 'cashfree', 'd5133df0-cec7-48eb-9eb0-af30118d3001_1775413497024', 19680.00, 'pending', '2026-04-05 18:24:57'),
 ('bbd7cb58-e418-11f0-9f30-00410e2b5e6e', 'bbc94743-e418-11f0-9f30-00410e2b5e6e', 'razorpay', 'pay_test_123456789', 53100.00, 'success', '2025-12-28 18:12:13'),
+('d085b227-f211-414b-aaf7-75cc41d906c1', 'd5133df0-cec7-48eb-9eb0-af30118d3001', 'cashfree', 'd5133df0-cec7-48eb-9eb0-af30118d3001_1775412120276', 137760.00, 'pending', '2026-04-05 18:02:00'),
+('dafc1185-b8bc-43c1-bf4a-a20866f47139', 'd5133df0-cec7-48eb-9eb0-af30118d3001', 'cashfree', 'd5133df0-cec7-48eb-9eb0-af30118d3001_1775413599327', 19680.00, 'pending', '2026-04-05 18:26:39'),
+('f44aef42-809f-4d64-a731-6cccbb88428c', 'd5133df0-cec7-48eb-9eb0-af30118d3001', 'cashfree', 'd5133df0-cec7-48eb-9eb0-af30118d3001_1775413248705', 19680.00, 'pending', '2026-04-05 18:20:48'),
 ('f4bbfda3-f7aa-4e51-823d-2bae6ae4801c', '3bb8abff-d1f9-4b6d-9a60-ce158e3f9a20', 'cashfree', '3bb8abff-d1f9-4b6d-9a60-ce158e3f9a20_1773333917176', 36900.00, 'pending', '2026-03-12 16:45:17'),
+('fca89534-33b6-4966-81b8-1d06adc56857', 'd5133df0-cec7-48eb-9eb0-af30118d3001', 'cashfree', 'd5133df0-cec7-48eb-9eb0-af30118d3001_1775412952556', 157440.00, 'pending', '2026-04-05 18:15:52'),
 ('fe71da5f-0315-4524-b584-ec6bbde9c6a5', '82b4cf48-b0bd-49e8-acfb-4ff3d2c3507e', 'cashfree', '82b4cf48-b0bd-49e8-acfb-4ff3d2c3507e_1771730095281', 55350.00, 'success', '2026-02-22 03:14:55'),
 ('payment-test-001', 'booking-test-001', 'razorpay', 'pay_rzp_test_001', 61068.00, 'success', '2026-01-08 05:05:00'),
 ('payment-test-002', 'booking-test-002', 'razorpay', 'pay_rzp_test_002', 25016.00, 'success', '2026-01-09 05:35:00'),
@@ -1213,14 +1239,16 @@ CREATE TABLE `refresh_tokens` (
 INSERT INTO `refresh_tokens` (`id`, `user_id`, `user_table`, `token_hash`, `expires_at`, `created_at`) VALUES
 ('05e3b3e4-c829-4364-8d20-b6fa25f78691', 'bb60817d-e418-11f0-9f30-00410e2b5e6e', 'vendors', '72f8131f7edfbeb3f600148d09b9334f90d949d3cb8af91d555150012b69adca', '2026-04-11 13:14:38', '2026-04-04 07:44:38'),
 ('072dc1e7-6b64-4c49-8006-21c6c1af04d8', 'bb6097e5-e418-11f0-9f30-00410e2b5e6e', 'vendors', 'd87cd89e2529df545162278fafa49f44160c13b66b9d6de596d54a938e25f805', '2026-04-11 14:11:41', '2026-04-04 08:41:41'),
-('0fe7893d-1970-456e-93f3-ae1e75bca395', 'bb5898f8-e418-11f0-9f30-00410e2b5e6e', 'admins', '0180006492dd39a863f91e42f397818735fb1d628e8d237bffa9fae0c5389e83', '2026-04-12 01:03:08', '2026-04-04 19:33:08'),
 ('10d5cc52-8fc8-4b2f-ab0b-d354d2e75325', 'bb5898f8-e418-11f0-9f30-00410e2b5e6e', 'admins', '6e62b0631ab7435f0f272df6ad46fba273fe27de8123e07543ed86c87fd9d8d1', '2026-04-11 14:11:18', '2026-04-04 08:41:18'),
 ('231a98c2-4abb-4891-b341-400329f74b37', 'bb5898f8-e418-11f0-9f30-00410e2b5e6e', 'admins', '2ee6e3b31ec2f3d08ff436b17b5d4502b3120aa65a3a73ba5eb859c52623a520', '2026-04-11 14:12:31', '2026-04-04 08:42:31'),
 ('23e8ba96-3524-447a-a417-6fca5a29b979', 'bb60817d-e418-11f0-9f30-00410e2b5e6e', 'vendors', '7ccfd1ad913c3ccafc946d235dd8e9cfe1233e626bde905d79111f5f2b18d56b', '2026-04-11 13:10:28', '2026-04-04 07:40:28'),
 ('2a7d01f0-5e87-4c9e-8564-df481f3edbce', 'bb5898f8-e418-11f0-9f30-00410e2b5e6e', 'admins', '0b2b26558d8969dfce0e2dec1e395ae4c34a899cf1959b60f03dddb496ce8ae2', '2026-04-10 23:06:15', '2026-04-03 17:36:15'),
+('34dead54-5fe5-4c85-a0ab-9a3af1af98be', 'bb5538d1-e418-11f0-9f30-00410e2b5e6e', 'users', 'e3a2dd4abf3e6f40e07d3ed74be2bef5a1f484666c1cf04931880ca007ef9e57', '2026-04-13 00:02:33', '2026-04-05 18:32:33'),
 ('34fca948-3414-428f-a8bf-04f0c23d803b', 'bb6097e5-e418-11f0-9f30-00410e2b5e6e', 'vendors', '8a3bad7d01497f620bd43915193cec0a9ce733e6d1cf7ffb64ef3c958e50f7ac', '2026-04-11 13:09:02', '2026-04-04 07:39:02'),
 ('3d209357-07b2-4c8b-b1b9-876803f35b75', 'bb6097e5-e418-11f0-9f30-00410e2b5e6e', 'vendors', 'ce729b72451e57ec86c881c078fe8e23b8f4c85d429fd73e56b9e799279a3779', '2026-04-11 13:14:00', '2026-04-04 07:44:00'),
+('5227895a-5012-48f9-a111-edfae6a788bd', '043ef643-2e5b-4358-a651-9d1764511169', 'users', 'bbca4ea4082d6469b9712807b8fd5e828d2dee6192463c7c5f0712a6c25fd84b', '2026-04-13 01:09:19', '2026-04-05 19:39:19'),
 ('58a5cb7c-0f28-4863-9925-8a698cd9de96', 'bb60817d-e418-11f0-9f30-00410e2b5e6e', 'vendors', '910d8ffe31774a9641cb9fbd51c47dadbe4b71ae72751822969ed106fd789b0a', '2026-04-11 13:16:42', '2026-04-04 07:46:42'),
+('5dc3f72b-4a31-4d6e-863c-f929f861cdb9', '043ef643-2e5b-4358-a651-9d1764511169', 'users', '947010d55d979318843f0efe06ed371b3a8e7f349026ef80b92c86f1091c9afe', '2026-04-13 01:03:25', '2026-04-05 19:33:25'),
 ('61bf47ce-a980-41a0-b4aa-fff725d5863f', 'bb6097e5-e418-11f0-9f30-00410e2b5e6e', 'vendors', 'b1a7c322063bbe1b7d0b9288467b101160fcc728347f32910d89f29cfd653c62', '2026-04-10 23:05:55', '2026-04-03 17:35:55'),
 ('78986112-9a7e-4d33-8cc2-403baa39d045', 'bb5898f8-e418-11f0-9f30-00410e2b5e6e', 'admins', 'b7118e6156ad15fb6135dd98edb3ffc1fc798e071aac05e33176cd5b5ab86137', '2026-04-11 14:14:08', '2026-04-04 08:44:08'),
 ('871b400d-c8f9-4adc-a920-da029f0a639a', 'bb60817d-e418-11f0-9f30-00410e2b5e6e', 'vendors', '31382ad0ae2932a3826fee83577cb79c996a046dd77b18804ab6c2b1fd251c98', '2026-04-11 13:13:59', '2026-04-04 07:43:59'),
@@ -1229,11 +1257,16 @@ INSERT INTO `refresh_tokens` (`id`, `user_id`, `user_table`, `token_hash`, `expi
 ('af0231c7-e02d-415c-9ea5-86c9a6e83b05', 'bb5898f8-e418-11f0-9f30-00410e2b5e6e', 'admins', '597f0dddb87446471bf6229fb372113f5240508d2f371aae2448ad4a4fb5f86c', '2026-04-11 14:11:41', '2026-04-04 08:41:41'),
 ('b16bb600-b0bb-4930-8fb4-80d1970da6f9', 'bb5898f8-e418-11f0-9f30-00410e2b5e6e', 'admins', '8d5470c6145a803da3b80cd77cf3674f6810c5f2a9f325ad63a9c94baa4af9de', '2026-04-11 14:12:09', '2026-04-04 08:42:09'),
 ('b220422b-a0cb-4945-84e4-a67072797863', 'bb5898f8-e418-11f0-9f30-00410e2b5e6e', 'admins', 'a4801c344fdd2c5a2b2e803f17a6ebc0784ec29caf115424c9ef0baca73f36a0', '2026-04-11 16:32:55', '2026-04-04 11:02:55'),
+('b3af4d7c-73cb-4041-beda-3293b4ee7f5b', 'bb5538d1-e418-11f0-9f30-00410e2b5e6e', 'users', '5589fc2e9aaf637dd1a45d30851bb2add339dcee5349774f6a2926d6233d8cac', '2026-04-12 23:32:00', '2026-04-05 18:02:00'),
 ('bdc041d5-c8bc-4970-835a-ae7e14a7fba5', 'bb60817d-e418-11f0-9f30-00410e2b5e6e', 'vendors', '5dabef61f6d8da4abc4e7ae471595dd160b45c14de2dcb0919e92ffd8da87325', '2026-04-11 21:32:59', '2026-04-04 16:02:59'),
 ('c0dafbd2-2c10-42b3-bbb6-7636b086a5e6', 'bb6097e5-e418-11f0-9f30-00410e2b5e6e', 'vendors', '165bc80ec415571eed98e28ba27c132d966340e628b2abff38bdcb60169bfe5e', '2026-04-11 14:13:25', '2026-04-04 08:43:25'),
+('d18a8868-12ea-4f8a-b81d-99c82c34f4db', 'bb5538d1-e418-11f0-9f30-00410e2b5e6e', 'users', 'a29ec92bc26fe33f2270dde1660ff3ae747120264bac0c166288196ce42ced09', '2026-04-13 01:53:23', '2026-04-05 20:23:23'),
+('d1a23945-12dd-4969-ae58-0f1bd9dc1464', 'bb5898f8-e418-11f0-9f30-00410e2b5e6e', 'admins', '17089f34cab91fbf27f89f938fd8fac3b8a19b9c9a576b637fa283d9eb001c94', '2026-04-13 02:12:27', '2026-04-05 20:42:27'),
 ('d7615930-aa23-4069-9493-54bbca5be793', 'bb5898f8-e418-11f0-9f30-00410e2b5e6e', 'admins', '398dcccf5950e12bcc4cdcb4e8162e24c2c680db7745a1a68c2c7a52c4a18f2a', '2026-04-11 14:14:22', '2026-04-04 08:44:22'),
+('d789ff57-83f2-4b73-b3c2-6fbcee2aab02', '043ef643-2e5b-4358-a651-9d1764511169', 'users', '445353cbfff9c417a0163c3afc0c76e63b47d9397e8ef058147b657981abde2e', '2026-04-13 01:34:02', '2026-04-05 20:04:02'),
 ('d925caa3-9cf4-4a7b-b544-f036774c034a', 'bb5898f8-e418-11f0-9f30-00410e2b5e6e', 'admins', '6d407e6d745c91dd32972478ea9bd089df047e5692c996b08f1a334d4f3b7c90', '2026-04-11 14:11:55', '2026-04-04 08:41:55'),
 ('db426c70-6a15-44af-8d16-f5c1a7a36840', 'bb6097e5-e418-11f0-9f30-00410e2b5e6e', 'vendors', '0af1efc0e82b169a9ec2ffce3e935b2d4f21c71fda3826ffc34ab7058fe8ba65', '2026-04-11 14:12:31', '2026-04-04 08:42:31'),
+('ef1c442d-18df-4cdf-b36e-c2a72b7e12eb', 'bb5538d1-e418-11f0-9f30-00410e2b5e6e', 'users', 'f02d8b2cfcd9290917e116dcccd5b6ce05185cce3215572d8548fd7e1ee52af3', '2026-04-13 00:47:44', '2026-04-05 19:17:44'),
 ('f0b12758-4a48-4cd9-a0b2-c0f4a34ec58a', 'bb6097e5-e418-11f0-9f30-00410e2b5e6e', 'vendors', '36d8dc791587ce130532ffae0310fac28ba86a8aac8021c9e33ba6d4a4960bed', '2026-04-11 13:16:42', '2026-04-04 07:46:42');
 
 -- --------------------------------------------------------
@@ -1439,6 +1472,7 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `full_name`, `email`, `phone`, `password_hash`, `status`, `created_at`, `deleted_at`, `avatar`, `address`, `bio`, `bank_details`, `reset_token`, `reset_token_expiry`, `is_corporate_user`, `company_name`, `company_gst`, `company_email_verified`, `email_verification_token`, `email_verification_token_expiry`, `email_verified_at`, `is_temporary_password`, `password_change_required`, `created_by`, `profile_completed`, `last_password_change`) VALUES
+('043ef643-2e5b-4358-a651-9d1764511169', 'Ranjith Gopafy', 'ranjithgopafy@gmail.com', '9876543210', '$2a$10$FBW4jUOIoaT00HTf9EyYv.mnkrPZR0ojQncZf5ibpux3SRk7yufJu', 'active', '2026-04-05 19:33:25', NULL, NULL, '', '', NULL, '06293a8d456498a82aee7f0452f0086c566e19d30dcd1b312165f5e3dde5e2f7', '2026-04-06 02:36:48', 0, NULL, NULL, 0, NULL, NULL, NULL, 0, 0, NULL, 0, NULL),
 ('1dee3043-ff2a-4712-8e9e-a46ee3024845', 'Shashank', 'shashankzevio@gmail.com', NULL, '$2a$10$0dOYIAPiTDKOdtvUPaQNW.jBRNLlzV0VfyMCUcYPvMRgKeAyl9DmS', 'active', '2026-03-29 17:01:48', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, 0, NULL, NULL, NULL, 1, 1, 'bb5898f8-e418-11f0-9f30-00410e2b5e6e', 0, NULL),
 ('2311bd48-54ff-469e-8a7c-9ff89ee7fb78', 'Test User', 'test_1767631087306@test.com', '1234567890', '$2a$10$IFE7cN/VckZtwgbSnVMimOD9EgQrjyTm38mVumUfQ9xXVpIkuRSJi', 'active', '2026-01-05 16:38:07', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, 0, NULL, NULL, NULL, 0, 0, NULL, 0, NULL),
 ('244c2909-85ef-4d38-8a0a-2723ff145942', 'Test User', 'testuser@zevio.in', '9999999999', '$2a$10$xPefuZECysURprHDo7i6lOIKmTbVoEY.w7IFEcpFQ7K3p5unFze0m', 'active', '2026-02-21 14:05:13', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, 0, NULL, NULL, NULL, 0, 0, NULL, 0, NULL),
@@ -1627,6 +1661,7 @@ CREATE TABLE `wishlists` (
 --
 
 INSERT INTO `wishlists` (`id`, `user_id`, `property_id`, `created_at`, `deleted_at`) VALUES
+('1fe5ab66-9509-456d-8bd9-5d5522cf74ab', '043ef643-2e5b-4358-a651-9d1764511169', 'bb927936-e418-11f0-9f30-00410e2b5e6e', '2026-04-05 19:34:37', NULL),
 ('239254ba-d885-4eda-a516-c6d5dcdaad1d', '88f47b63-ef0c-4726-9fdf-c976759d7da6', 'bb929607-e418-11f0-9f30-00410e2b5e6e', '2026-03-12 15:41:13', NULL),
 ('3b79bb2b-e89e-11f0-a597-00410e2b5e6e', 'bb551978-e418-11f0-9f30-00410e2b5e6e', 'bb927936-e418-11f0-9f30-00410e2b5e6e', '2026-01-03 12:17:54', NULL),
 ('3b79c8ec-e89e-11f0-a597-00410e2b5e6e', 'bb551978-e418-11f0-9f30-00410e2b5e6e', 'bb9298e7-e418-11f0-9f30-00410e2b5e6e', '2026-01-03 12:17:54', NULL),
@@ -1635,6 +1670,7 @@ INSERT INTO `wishlists` (`id`, `user_id`, `property_id`, `created_at`, `deleted_
 ('3c03a911-bab3-4adc-8f13-96b516d9fa64', 'a85b436f-dde2-4b06-ae86-aca64e6b222c', 'bb9298e7-e418-11f0-9f30-00410e2b5e6e', '2026-03-04 12:17:12', NULL),
 ('52b704a4-4e6d-4852-a20d-2d94273a4259', 'a85b436f-dde2-4b06-ae86-aca64e6b222c', '495d4419-f31f-11f0-8f27-00410e2b5e6e', '2026-03-04 12:45:07', NULL),
 ('70b9abac-fa96-4d8d-aa9a-9a9b10aadd00', 'bb5538d1-e418-11f0-9f30-00410e2b5e6e', 'bb9298e7-e418-11f0-9f30-00410e2b5e6e', '2026-01-10 08:59:59', NULL),
+('c5470d3d-e369-41d5-9fac-86131838f556', 'bb5538d1-e418-11f0-9f30-00410e2b5e6e', 'bb927936-e418-11f0-9f30-00410e2b5e6e', '2026-04-05 16:33:51', NULL),
 ('cbb10d02-c02e-4a10-af1e-edc0430ceba6', '244c2909-85ef-4d38-8a0a-2723ff145942', '43fbca17-da17-419f-b72a-f2d44d1caf5f', '2026-03-28 12:25:53', NULL),
 ('wishlist-test-003', 'bb551978-e418-11f0-9f30-00410e2b5e6e', 'bb9739d5-e418-11f0-9f30-00410e2b5e6e', '2026-01-06 03:30:00', NULL),
 ('wishlist-test-004', 'bb551978-e418-11f0-9f30-00410e2b5e6e', 'bb9fb45f-e418-11f0-9f30-00410e2b5e6e', '2026-01-07 05:30:00', NULL),
@@ -2045,7 +2081,7 @@ ALTER TABLE `guide_types`
 -- AUTO_INCREMENT for table `invoices`
 --
 ALTER TABLE `invoices`
-  MODIFY `invoice_number` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=100013;
+  MODIFY `invoice_number` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=100017;
 
 --
 -- AUTO_INCREMENT for table `location_types`

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/axios";
 import styles from "./corporate-offers.module.css";
-import { FiBriefcase } from "react-icons/fi";
+import { FiBriefcase, FiShield, FiAlertCircle } from "react-icons/fi";
 import { useCorporateUser } from "@/hooks/useCorporateUser";
 import CorporateLoginModal from "@/components/modals/CorporateLoginModal";
 import CorporatePropertyFilters, {
@@ -423,7 +423,9 @@ export default function CorporateOffersPage() {
       {isMounted && isAuthenticated && !isCorporateUser && (
         <div className={styles.verificationBanner}>
           <div className={styles.bannerContent}>
-            <div className={styles.bannerIcon}>??</div>
+            <div className={styles.bannerIcon}>
+              <FiShield size={28} />
+            </div>
             <div className={styles.bannerText}>
               <h3>Corporate Verification Required</h3>
               <p>
@@ -457,7 +459,9 @@ export default function CorporateOffersPage() {
       <div className={styles.content}>
         {error ? (
           <div className={styles.errorCard}>
-            <div className={styles.errorIcon}>??</div>
+            <div className={styles.errorIcon}>
+              <FiAlertCircle size={48} />
+            </div>
             <h3 className={styles.errorTitle}>Unable to Load Properties</h3>
             <p className={styles.errorMessage}>{error}</p>
             <button
