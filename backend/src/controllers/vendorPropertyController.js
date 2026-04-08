@@ -420,16 +420,28 @@ export const submitProperty = asyncHandler(async (req, res) => {
   }
 
   // Check minimum photo requirement (6 images required)
-  const [imageCount] = await db.query(
-    `SELECT COUNT(*) AS count FROM property_images WHERE property_id = ?`,
+  // Photos are stored as JSON array in properties.photos column
+  const [photoRows] = await db.query(
+    `SELECT photos FROM properties WHERE id = ?`,
     [id],
   );
 
+  let photoCount = 0;
+  try {
+    const photosData = photoRows[0]?.photos;
+    if (photosData && photosData !== "[]" && photosData !== "") {
+      const parsed = JSON.parse(photosData);
+      photoCount = Array.isArray(parsed) ? parsed.length : 0;
+    }
+  } catch {
+    photoCount = 0;
+  }
+
   const MIN_PHOTOS = 6;
-  if (imageCount[0].count < MIN_PHOTOS) {
+  if (photoCount < MIN_PHOTOS) {
     return sendError(
       res,
-      `Please upload at least ${MIN_PHOTOS} photos before submitting (currently ${imageCount[0].count})`,
+      `Please upload at least ${MIN_PHOTOS} photos before submitting (currently ${photoCount})`,
       400,
     );
   }

@@ -77,6 +77,7 @@ const VendorPropertyForm = ({
     check_in_time: "2:00 PM",
     check_out_time: "11:00 AM",
     price_per_night: "",
+    original_price: "",
     // GST is auto-calculated by backend: 5% if booking ≤₹7,500 | 18% if booking >₹7,500
     status: "draft",
 
@@ -361,6 +362,8 @@ const VendorPropertyForm = ({
           // Extract pricing from nested object (use ?? to preserve 0 values)
           price_per_night:
             pricing.price_per_night ?? property.price_per_night ?? "",
+          original_price:
+            pricing.original_price ?? property.original_price ?? "",
           min_guests: pricing.min_guests ?? property.min_guests ?? 1,
           extra_guest_charge:
             pricing.extra_guest_charge ?? property.extra_guest_charge ?? 0,
@@ -721,6 +724,7 @@ const VendorPropertyForm = ({
         ),
         // Numeric conversions
         price_per_night: parseFloat(formData.price_per_night) || 0,
+        original_price: parseFloat(formData.original_price) || null,
         bedrooms: parseInt(formData.bedrooms) || 0,
         bathrooms: parseInt(formData.bathrooms) || 0,
         living_area: formData.living_area ? parseInt(formData.living_area) : 1,
@@ -1220,10 +1224,10 @@ const VendorPropertyForm = ({
         {/* Section 4: Pricing */}
         <FormSection title="Pricing" icon={DollarSign} required={true}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            {/* Price Per Night */}
+            {/* Discounted Price Per Night */}
             <div className="flex flex-col">
               <label className="text-sm font-medium text-foreground mb-2">
-                Price Per Night (₹) <span className="text-destructive">*</span>
+                Discounted Price Per Night (₹) <span className="text-destructive">*</span>
               </label>
               <input
                 type="number"
@@ -1235,6 +1239,9 @@ const VendorPropertyForm = ({
                 required
                 className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
+              <span className="text-xs text-muted-foreground mt-1">
+                This is the price guests pay — shown prominently on the listing
+              </span>
               {errors.price_per_night && (
                 <span className="text-sm text-destructive mt-1">
                   {errors.price_per_night}
@@ -1242,122 +1249,167 @@ const VendorPropertyForm = ({
               )}
             </div>
 
-            {/* GST Info Banner */}
+            {/* Original Price Per Night */}
             <div className="flex flex-col">
-              <div className="flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-800 px-4 py-3 h-full">
-                <svg
-                  className="h-4 w-4 text-blue-600 mt-0.5 shrink-0"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-                <div>
-                  <p className="text-xs font-semibold text-blue-900 dark:text-blue-200">
-                    GST Auto-Calculated
-                  </p>
-                  <p className="text-xs text-blue-800 dark:text-blue-300 mt-0.5">
-                    <strong>5%</strong> GST for bookings ≤ ₹7,500
-                    <br />
-                    <strong>18%</strong> GST for bookings &gt; ₹7,500
-                    <br />
-                    Applied on total booking amount at checkout.
-                  </p>
-                </div>
+              <label className="text-sm font-medium text-foreground mb-2">
+                Original Price Per Night (₹)
+                <span className="ml-1 text-xs font-normal text-muted-foreground">
+                  (shown crossed-out)
+                </span>
+              </label>
+              <input
+                type="number"
+                name="original_price"
+                value={formData.original_price}
+                onChange={handleInputChange}
+                min="0.01"
+                step="0.01"
+                placeholder="e.g. 20000"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+              />
+              {formData.original_price &&
+              formData.price_per_night &&
+              parseFloat(formData.original_price) >
+                parseFloat(formData.price_per_night) ? (
+                <span className="text-xs text-emerald-600 font-semibold mt-1">
+                  {Math.round(
+                    ((parseFloat(formData.original_price) -
+                      parseFloat(formData.price_per_night)) /
+                      parseFloat(formData.original_price)) *
+                      100,
+                  )}
+                  % off — badge will be shown on listing
+                </span>
+              ) : (
+                <span className="text-xs text-muted-foreground mt-1">
+                  Must be higher than Discounted Price to show a "% off" badge
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* GST Info Banner */}
+          <div className="mb-6">
+            <div className="flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-800 px-4 py-3">
+              <svg
+                className="h-4 w-4 text-blue-600 mt-0.5 shrink-0"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              <div>
+                <p className="text-xs font-semibold text-blue-900 dark:text-blue-200">
+                  GST Auto-Calculated
+                </p>
+                <p className="text-xs text-blue-800 dark:text-blue-300 mt-0.5">
+                  <strong>5%</strong> GST for bookings ≤ ₹7,500
+                  <br />
+                  <strong>18%</strong> GST for bookings &gt; ₹7,500
+                  <br />
+                  Applied on total booking amount at checkout.
+                </p>
               </div>
             </div>
           </div>
 
           {/* Advanced Pricing */}
-          <div className="p-4 bg-muted/30 border border-border rounded-lg">
-            <h4 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              Guest & Children Pricing
-            </h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Min Guests */}
-              <div className="flex flex-col">
-                <label className="text-sm font-medium text-foreground mb-2">
-                  Minimum Guests
-                </label>
-                <input
-                  type="number"
-                  name="min_guests"
-                  value={formData.min_guests}
-                  onChange={handleInputChange}
-                  min="1"
-                  className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                />
-              </div>
+          <h4 className="text-lg font-semibold text-foreground mt-6 mb-4">
+            Advanced Pricing
+          </h4>
 
-              {/* Extra Guest Charge */}
-              <div className="flex flex-col">
-                <label className="text-sm font-medium text-foreground mb-2">
-                  Extra Guest Charge (₹)
-                </label>
-                <input
-                  type="number"
-                  name="extra_guest_charge"
-                  value={formData.extra_guest_charge}
-                  onChange={handleInputChange}
-                  min="0"
-                  step="0.01"
-                  className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                />
-              </div>
-
-              {/* Min Children */}
-              <div className="flex flex-col">
-                <label className="text-sm font-medium text-foreground mb-2">
-                  Min Children
-                </label>
-                <input
-                  type="number"
-                  name="min_children"
-                  value={formData.min_children}
-                  onChange={handleInputChange}
-                  min="0"
-                  className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                />
-              </div>
-
-              {/* Max Children */}
-              <div className="flex flex-col">
-                <label className="text-sm font-medium text-foreground mb-2">
-                  Max Children
-                </label>
-                <input
-                  type="number"
-                  name="max_children"
-                  value={formData.max_children}
-                  onChange={handleInputChange}
-                  min="0"
-                  className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                />
-              </div>
-
-              {/* Extra Child Charge */}
-              <div className="flex flex-col md:col-span-2">
-                <label className="text-sm font-medium text-foreground mb-2">
-                  Extra Child Charge (₹)
-                </label>
-                <input
-                  type="number"
-                  name="extra_child_charge"
-                  value={formData.extra_child_charge}
-                  onChange={handleInputChange}
-                  min="0"
-                  step="0.01"
-                  className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                />
-              </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            {/* Min Guests */}
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Min Guests (Included in Base Price)
+              </label>
+              <input
+                type="number"
+                name="min_guests"
+                value={formData.min_guests}
+                onChange={handleInputChange}
+                min="1"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+              />
             </div>
+
+            {/* Extra Guest Charge */}
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Extra Guest Charge (₹ per night)
+              </label>
+              <input
+                type="number"
+                name="extra_guest_charge"
+                value={formData.extra_guest_charge}
+                onChange={handleInputChange}
+                min="0"
+                step="0.01"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            {/* Min Children */}
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Min Children (Included in Base Price)
+              </label>
+              <input
+                type="number"
+                name="min_children"
+                value={formData.min_children}
+                onChange={handleInputChange}
+                min="0"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+              />
+            </div>
+
+            {/* Max Children */}
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Max Children Allowed
+              </label>
+              <input
+                type="number"
+                name="max_children"
+                value={formData.max_children}
+                onChange={handleInputChange}
+                min="0"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+              />
+            </div>
+
+            {/* Extra Child Charge */}
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-foreground mb-2">
+                Extra Child Charge (₹ per night)
+              </label>
+              <input
+                type="number"
+                name="extra_child_charge"
+                value={formData.extra_child_charge}
+                onChange={handleInputChange}
+                min="0"
+                step="0.01"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+              />
+            </div>
+          </div>
+
+          <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
+            <p className="text-sm text-blue-900 dark:text-blue-200">
+              <strong className="font-semibold">Note:</strong> Infants (0-2
+              years) are always FREE and unlimited
+            </p>
           </div>
 
           {/* Long-term Stay Discounts – only for Service Apartments */}
