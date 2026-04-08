@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS banners (
   button_link     VARCHAR(500)  NULL,
   inline_link_text VARCHAR(150) NULL,
   inline_link_url VARCHAR(500)  NULL,
-  property_id     VARCHAR(36)   NULL,         -- optional direct property deep-link
+  property_id     CHAR(36)      NULL,         -- optional direct property deep-link
   background_color VARCHAR(30)  NOT NULL DEFAULT '#1F3A5F',
   text_color      VARCHAR(30)   NOT NULL DEFAULT '#FFFFFF',
   banner_type     ENUM('popup', 'top_bar', 'slide_in') NOT NULL DEFAULT 'popup',
