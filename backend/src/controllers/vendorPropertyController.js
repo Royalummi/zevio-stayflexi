@@ -273,7 +273,7 @@ export const getPropertyById = asyncHandler(async (req, res) => {
       p.*,
       c.name as city_name,
       pt.name as property_type_name,
-      pr.price_per_night, pr.gst_percentage, pr.min_guests, pr.extra_guest_charge,
+      pr.price_per_night, pr.original_price, pr.gst_percentage, pr.min_guests, pr.extra_guest_charge,
       pr.min_children, pr.max_children, pr.extra_child_charge,
       pr.weekly_discount_percent, pr.monthly_discount_percent,
       pr.quarterly_discount_percent, pr.long_term_discount_percent,
@@ -552,7 +552,7 @@ export const updateProperty = asyncHandler(async (req, res) => {
     // ── Diff: only store fields that actually changed ────────
     // Fetch current property + pricing data for comparison
     const [currentProps] = await db.query(
-      `SELECT p.*, pr.price_per_night, pr.gst_percentage, pr.min_guests, pr.extra_guest_charge,
+      `SELECT p.*, pr.price_per_night, pr.original_price, pr.gst_percentage, pr.min_guests, pr.extra_guest_charge,
               pr.min_children, pr.max_children, pr.extra_child_charge,
               pr.weekly_discount_percent, pr.monthly_discount_percent,
               pr.quarterly_discount_percent, pr.long_term_discount_percent,

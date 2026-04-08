@@ -694,6 +694,7 @@ export const getAllProperties = asyncHandler(async (req, res) => {
         pt.stay_type as property_stay_type,
         pt.icon as property_type_icon,
         pr.price_per_night,
+        pr.original_price,
         pr.gst_percentage,
         pr.min_guests,
         pr.extra_guest_charge,
@@ -2474,6 +2475,7 @@ export const createProperty = asyncHandler(async (req, res) => {
     cancellation_policy,
     photos,
     price_per_night,
+    original_price,
     gst_percentage,
     status,
   } = req.body;
@@ -2586,20 +2588,21 @@ export const createProperty = asyncHandler(async (req, res) => {
   if (price_per_night) {
     const pricingQuery = `
       INSERT INTO property_pricing (
-        id, property_id, price_per_night, gst_percentage,
+        id, property_id, price_per_night, original_price, gst_percentage,
         min_guests, extra_guest_charge, min_children, max_children, extra_child_charge,
         weekly_discount_percent, monthly_discount_percent,
         quarterly_discount_percent, long_term_discount_percent,
         allow_corporate_booking, corporate_discount_percent,
         maintenance_charges,
         discount_3_5_days, discount_6_14_days, discount_15_plus_days
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const pricingValues = [
       generateUUID(),
       propertyId,
       price_per_night,
+      original_price || null,
       gst_percentage || 18,
       min_guests || 1,
       extra_guest_charge || 0,
@@ -2808,6 +2811,7 @@ export const updateProperty = asyncHandler(async (req, res) => {
     house_rules,
     cancellation_policy,
     price_per_night,
+    original_price,
     gst_percentage,
     status,
   } = req.body;
@@ -3001,6 +3005,7 @@ export const updateProperty = asyncHandler(async (req, res) => {
       const pricingUpdateQuery = `
         UPDATE property_pricing SET
           price_per_night = ?,
+          original_price = ?,
           gst_percentage = ?,
           min_guests = ?,
           extra_guest_charge = ?,
@@ -3022,6 +3027,7 @@ export const updateProperty = asyncHandler(async (req, res) => {
 
       const pricingValues = [
         price_per_night,
+        original_price || null,
         gst_percentage || 18,
         min_guests || 1,
         extra_guest_charge || 0,
@@ -3048,20 +3054,21 @@ export const updateProperty = asyncHandler(async (req, res) => {
       // Insert new pricing record
       const pricingInsertQuery = `
         INSERT INTO property_pricing (
-          id, property_id, price_per_night, gst_percentage,
+          id, property_id, price_per_night, original_price, gst_percentage,
           min_guests, extra_guest_charge, min_children, max_children, extra_child_charge,
           weekly_discount_percent, monthly_discount_percent,
           quarterly_discount_percent, long_term_discount_percent,
           allow_corporate_booking, corporate_discount_percent,
           maintenance_charges,
           discount_3_5_days, discount_6_14_days, discount_15_plus_days
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `;
 
       const pricingValues = [
         generateUUID(),
         id,
         price_per_night,
+        original_price || null,
         gst_percentage || 18,
         min_guests || 1,
         extra_guest_charge || 0,
