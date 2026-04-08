@@ -25,6 +25,8 @@ CREATE TABLE IF NOT EXISTS banners (
   deleted_at      DATETIME      NULL,
   CONSTRAINT fk_banners_property
     FOREIGN KEY (property_id) REFERENCES properties(id) ON DELETE SET NULL
-);
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 CREATE INDEX idx_banners_active ON banners (is_active, deleted_at, valid_from, valid_until);
+
+-- Note: properties table uses latin1 charset, so banners table must match for FK compatibility
