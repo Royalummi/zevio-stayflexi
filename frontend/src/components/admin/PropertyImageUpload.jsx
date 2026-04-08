@@ -171,11 +171,12 @@ const PropertyImageUpload = ({
       // Always notify parent of current state — including when files are cleared
       onImagesChange({
         selectedFiles,
+        uploadedImages,
         uploadPending: handleUpload,
         hasPendingUploads: selectedFiles.length > 0,
       });
     }
-  }, [selectedFiles]);
+  }, [selectedFiles, uploadedImages]);
 
   const handleUpload = async (overridePropertyId = null) => {
     const targetPropertyId = overridePropertyId || propertyId;

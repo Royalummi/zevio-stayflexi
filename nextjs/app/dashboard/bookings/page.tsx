@@ -31,7 +31,7 @@ interface Booking {
   id: string;
   property_id: string;
   property_title: string; // Backend returns 'property_title' not 'property_name'
-  property_city: string;
+  city_name: string;
   check_in: string;
   check_out: string;
   nights: number;
@@ -178,7 +178,7 @@ export default function BookingsEnhanced() {
       filtered = filtered.filter(
         (b) =>
           b.property_title?.toLowerCase().includes(query) ||
-          b.property_city?.toLowerCase().includes(query) ||
+          b.city_name?.toLowerCase().includes(query) ||
           b.id.toLowerCase().includes(query),
       );
     }
@@ -777,7 +777,7 @@ export default function BookingsEnhanced() {
                       </h3>
                       <div className={styles.bookingLocation}>
                         <FiMapPin size={16} />
-                        {booking.property_city || "Location"}
+                        {booking.city_name || "Location"}
                       </div>
                     </div>
                     <div className={styles.badgeGroup}>

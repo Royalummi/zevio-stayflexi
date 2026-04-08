@@ -385,7 +385,7 @@ export default function BookingDetailsPage() {
         {/* Horizontal Timeline */}
         <div className={styles.horizontalTimeline}>
           {/* Step 1: Booking Created */}
-          <div className={styles.timelineStep}>
+          <div className={`${styles.timelineStep} ${styles.stepCompleted}`}>
             <div className={`${styles.timelineStepIcon} ${styles.completed}`}>
               <FiCheckCircle />
             </div>
@@ -398,15 +398,16 @@ export default function BookingDetailsPage() {
                 })}
               </p>
             </div>
-            {(booking.payment_status === "completed" ||
-              booking.status === "confirmed" ||
-              booking.status === "completed") && (
-              <div className={styles.timelineStepLine}></div>
-            )}
           </div>
 
           {/* Step 2: Payment */}
-          <div className={styles.timelineStep}>
+          <div
+            className={`${styles.timelineStep} ${
+              booking.payment_status === "completed"
+                ? styles.stepCompleted
+                : styles.stepPending
+            }`}
+          >
             <div
               className={`${styles.timelineStepIcon} ${
                 booking.payment_status === "completed"
@@ -428,14 +429,19 @@ export default function BookingDetailsPage() {
                 ₹{(booking.total_amount || 0).toLocaleString()}
               </p>
             </div>
-            {(booking.status === "confirmed" ||
-              booking.status === "completed") && (
-              <div className={styles.timelineStepLine}></div>
-            )}
           </div>
 
           {/* Step 3: Confirmed */}
-          <div className={styles.timelineStep}>
+          <div
+            className={`${styles.timelineStep} ${
+              booking.status === "confirmed" || booking.status === "completed"
+                ? styles.stepCompleted
+                : booking.status === "cancelled" ||
+                    booking.status === "cancel_requested"
+                  ? styles.stepCancelled
+                  : styles.stepPending
+            }`}
+          >
             <div
               className={`${styles.timelineStepIcon} ${
                 booking.status === "confirmed" || booking.status === "completed"
@@ -472,17 +478,18 @@ export default function BookingDetailsPage() {
                     : "Pending"}
               </p>
             </div>
-            {booking.status !== "cancelled" &&
-              booking.status !== "cancel_requested" &&
-              (checkInDate <= today || booking.status === "completed") && (
-                <div className={styles.timelineStepLine}></div>
-              )}
           </div>
 
           {/* Step 4: Check-in */}
           {booking.status !== "cancelled" &&
             booking.status !== "cancel_requested" && (
-              <div className={styles.timelineStep}>
+              <div
+                className={`${styles.timelineStep} ${
+                  checkInDate <= today
+                    ? styles.stepCompleted
+                    : styles.stepPending
+                }`}
+              >
                 <div
                   className={`${styles.timelineStepIcon} ${
                     checkInDate <= today ? styles.completed : styles.pending
@@ -498,16 +505,19 @@ export default function BookingDetailsPage() {
                     {formatDate(checkInDate).split(",")[0]}
                   </p>
                 </div>
-                {booking.status === "completed" && (
-                  <div className={styles.timelineStepLine}></div>
-                )}
               </div>
             )}
 
           {/* Step 5: Check-out */}
           {booking.status !== "cancelled" &&
             booking.status !== "cancel_requested" && (
-              <div className={styles.timelineStep}>
+              <div
+                className={`${styles.timelineStep} ${
+                  booking.status === "completed"
+                    ? styles.stepCompleted
+                    : styles.stepPending
+                }`}
+              >
                 <div
                   className={`${styles.timelineStepIcon} ${
                     booking.status === "completed"
@@ -541,7 +551,9 @@ export default function BookingDetailsPage() {
           <div className={`${styles.card} ${styles.propertyPreviewCard}`}>
             {/* Large Property Image on Top */}
             <div className={styles.propertyImageContainer}>
-              {booking.property_images && booking.property_images.length > 0 ? (
+              {booking.property_images &&
+              booking.property_images.length > 0 &&
+              booking.property_images[0].image_url ? (
                 <Image
                   src={booking.property_images[0].image_url}
                   alt={booking.property_title}
@@ -553,7 +565,7 @@ export default function BookingDetailsPage() {
               ) : (
                 <div className={styles.propertyImagePlaceholder}>
                   <FiMapPin size={48} />
-                  <p>No image available</p>
+                  <p>Property image not uploaded yet</p>
                 </div>
               )}
             </div>
@@ -744,7 +756,7 @@ export default function BookingDetailsPage() {
                 </button>
               )}
 
-              {booking.invoice && (
+              {booking.invoice && booking.payment_status === "completed" && (
                 <button
                   onClick={async () => {
                     try {

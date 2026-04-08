@@ -419,6 +419,21 @@ export const submitProperty = asyncHandler(async (req, res) => {
     );
   }
 
+  // Check minimum photo requirement (6 images required)
+  const [imageCount] = await db.query(
+    `SELECT COUNT(*) AS count FROM property_images WHERE property_id = ?`,
+    [id],
+  );
+
+  const MIN_PHOTOS = 6;
+  if (imageCount[0].count < MIN_PHOTOS) {
+    return sendError(
+      res,
+      `Please upload at least ${MIN_PHOTOS} photos before submitting (currently ${imageCount[0].count})`,
+      400,
+    );
+  }
+
   // Update status to pending_approval
   await db.query(
     `UPDATE properties SET status = 'pending_approval' WHERE id = ?`,

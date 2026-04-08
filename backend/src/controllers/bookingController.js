@@ -42,12 +42,7 @@ const getCalendarBaseAmount = async (
   const cursor = new Date(start);
   while (cursor < end) {
     const key = cursor.toISOString().slice(0, 10); // YYYY-MM-DD
-    // parseFloat ensures numeric addition even when pricePerNight comes from
-    // the MySQL2 driver as a decimal string (e.g. "16000.00")
-    total +=
-      calendarMap[key] !== undefined
-        ? calendarMap[key]
-        : parseFloat(pricePerNight);
+    total += calendarMap[key] !== undefined ? calendarMap[key] : pricePerNight;
     cursor.setDate(cursor.getDate() + 1);
   }
 
@@ -141,14 +136,6 @@ export const createBooking = asyncHandler(async (req, res) => {
   // Validate guest counts
   if (guest_count < 1) {
     return sendError(res, "At least 1 guest is required", 400);
-  }
-
-  if (property.min_guests && guest_count < property.min_guests) {
-    return sendError(
-      res,
-      `Minimum ${property.min_guests} guests required`,
-      400,
-    );
   }
 
   if (property.max_guests && guest_count > property.max_guests) {
@@ -968,14 +955,6 @@ export const modifyPendingBooking = asyncHandler(async (req, res) => {
   // Validate guest counts
   if (guest_count < 1) {
     return sendError(res, "At least 1 guest is required", 400);
-  }
-
-  if (property.min_guests && guest_count < property.min_guests) {
-    return sendError(
-      res,
-      `Minimum ${property.min_guests} guests required`,
-      400,
-    );
   }
 
   if (property.max_guests && guest_count > property.max_guests) {

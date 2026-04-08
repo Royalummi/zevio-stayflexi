@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import PopBanner from "@/components/ui/PopBanner";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AuthModalProvider } from "@/contexts/AuthModalContext";
 import { BookingProvider } from "@/contexts/BookingContext";
@@ -45,6 +46,7 @@ export default function RootLayout({
         <AuthProvider>
           <AuthModalProvider>
             <BookingProvider>
+              <PopBanner />
               <Header />
               <main className="flex-1">{children}</main>
               <Footer />

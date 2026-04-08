@@ -26,6 +26,7 @@ import activityLogsRoutes from "./src/routes/activityLogsRoutes.js";
 import propertyImagesRoutes from "./src/routes/propertyImagesRoutes.js";
 import serviceApartmentsRoutes from "./src/routes/serviceApartmentsRoutes.js";
 import corporateRoutes from "./src/routes/corporateRoutes.js";
+import bannersRoutes from "./src/routes/bannersRoutes.js";
 
 // Load environment variables
 dotenv.config();
@@ -141,6 +142,7 @@ app.use("/api/notifications", notificationsRoutes); // No rate limit
 app.use("/api/wishlist", wishlistRoutes); // No rate limit
 app.use("/api", reviewsRoutes); // SESSION 64: Includes /properties/:id/reviews, /bookings/:id/reviews, /admin/reviews
 app.use("/api", couponsRoutes); // SESSION 64: Includes /admin/coupons and /coupons/validate
+app.use("/api", bannersRoutes); // SESSION 70: Includes /banners/active (public) + /admin/banners CRUD
 app.use("/api", changeRequestsRoutes); // No rate limit
 app.use("/api/admin/activity-logs", activityLogsRoutes); // No rate limit
 app.use("/api/admin", adminRoutes); // No rate limit

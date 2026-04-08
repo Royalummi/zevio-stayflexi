@@ -73,7 +73,6 @@ const DashboardLayout = () => {
         { name: "Refunds", icon: CreditCard, path: "/admin/refunds" },
         { name: "Settlements", icon: Wallet, path: "/admin/settlements" },
         { name: "Properties", icon: Building2, path: "/admin/properties" },
-        // { name: "Calendar", icon: CalendarDays, path: "/admin/calendar" },
         {
           name: "Change Requests",
           icon: GitPullRequest,
@@ -87,6 +86,11 @@ const DashboardLayout = () => {
         { name: "Users", icon: Users, path: "/admin/users" },
         { name: "Coupons", icon: Ticket, path: "/admin/coupons" },
         { name: "Reviews", icon: Star, path: "/admin/reviews" },
+        // {
+        //   name: "Calendar Pricing",
+        //   icon: CalendarDays,
+        //   path: "/admin/calendar-pricing",
+        // },
         { name: "Reports", icon: BarChart3, path: "/admin/reports" },
         { name: "Profile", icon: UserCircle, path: "/admin/profile" },
         { name: "Settings", icon: Settings, path: "/admin/settings" },
@@ -97,7 +101,6 @@ const DashboardLayout = () => {
         { name: "Refunds", icon: CreditCard, path: "/admin/refunds" },
         { name: "Settlements", icon: Wallet, path: "/admin/settlements" },
         { name: "Properties", icon: Building2, path: "/admin/properties" },
-        // { name: "Calendar", icon: CalendarDays, path: "/admin/calendar" },
         {
           name: "Change Requests",
           icon: GitPullRequest,
@@ -111,6 +114,11 @@ const DashboardLayout = () => {
         { name: "Users", icon: Users, path: "/admin/users" },
         { name: "Coupons", icon: Ticket, path: "/admin/coupons" },
         { name: "Reviews", icon: Star, path: "/admin/reviews" },
+        // {
+        //   name: "Calendar Pricing",
+        //   icon: CalendarDays,
+        //   path: "/admin/calendar-pricing",
+        // },
         { name: "Reports", icon: BarChart3, path: "/admin/reports" },
         { name: "Profile", icon: UserCircle, path: "/admin/profile" },
         { name: "Settings", icon: Settings, path: "/admin/settings" },
@@ -126,10 +134,14 @@ const DashboardLayout = () => {
       vendor: [
         { name: "Dashboard", icon: Home, path: "/vendor/dashboard" },
         { name: "My Properties", icon: Building2, path: "/vendor/properties" },
-        // { name: "Calendar", icon: CalendarDays, path: "/vendor/calendar" },
         { name: "Bookings", icon: Calendar, path: "/vendor/bookings" },
         { name: "Settlements", icon: Wallet, path: "/vendor/settlements" },
         { name: "Analytics", icon: BarChart3, path: "/vendor/analytics" },
+        // {
+        //   name: "Calendar Pricing",
+        //   icon: CalendarDays,
+        //   path: "/vendor/calendar-pricing",
+        // },
         { name: "Vendor T&C", icon: FileText, path: "/vendor/terms" },
         { name: "Profile", icon: UserCircle, path: "/vendor/profile" },
         { name: "Settings", icon: Settings, path: "/vendor/settings" },

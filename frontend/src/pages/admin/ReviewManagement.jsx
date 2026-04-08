@@ -42,6 +42,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../../components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../../components/ui/alert-dialog";
 import { Label } from "../../components/ui/label";
 import { Textarea } from "../../components/ui/textarea";
 import {
@@ -57,6 +67,7 @@ import {
   ChevronRight,
   AlertTriangle,
   Image as ImageIcon,
+  Trash2,
 } from "lucide-react";
 import { formatDate } from "../../lib/utils";
 
@@ -79,6 +90,8 @@ const ReviewManagement = () => {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleteReviewId, setDeleteReviewId] = useState(null);
   const [selectedReview, setSelectedReview] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
 
@@ -230,6 +243,27 @@ const ReviewManagement = () => {
       toast.error("Failed to reject review");
     } finally {
       setActionLoading(false);
+    }
+  };
+
+  // Handle delete review
+  const handleDeleteReview = (reviewId) => {
+    setDeleteReviewId(reviewId);
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDeleteReview = async () => {
+    if (!deleteReviewId) return;
+    try {
+      await api.delete(`/admin/reviews/${deleteReviewId}`);
+      toast.success("Review deleted successfully");
+      fetchReviews();
+    } catch (error) {
+      console.error("Error deleting review:", error);
+      toast.error("Failed to delete review");
+    } finally {
+      setShowDeleteDialog(false);
+      setDeleteReviewId(null);
     }
   };
 
@@ -561,6 +595,14 @@ const ReviewManagement = () => {
                               </Button>
                             </>
                           )}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteReview(review.id)}
+                            className="text-red-600"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -891,6 +933,35 @@ const ReviewManagement = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Review Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Review</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this review? This action cannot be
+              undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => {
+                setShowDeleteDialog(false);
+                setDeleteReviewId(null);
+              }}
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteReview}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

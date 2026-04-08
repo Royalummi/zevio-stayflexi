@@ -16,7 +16,6 @@ import AdminBookings from "./pages/admin/ManageBookings";
 import ProcessRefunds from "./pages/admin/ProcessRefunds";
 import VendorSettlements from "./pages/admin/VendorSettlements";
 import AdminProperties from "./pages/admin/AdminProperties";
-import AdminCalendarPricing from "./pages/admin/AdminCalendarPricing";
 import AddEditProperty from "./pages/admin/AddEditProperty";
 import RecommendedPropertiesManager from "./pages/admin/RecommendedPropertiesManager";
 import AdminUsers from "./pages/admin/AdminUsers";
@@ -25,6 +24,7 @@ import PropertyChangeRequests from "./pages/admin/PropertyChangeRequests";
 import CouponManagement from "./pages/admin/CouponManagement";
 import ReviewManagement from "./pages/admin/ReviewManagement";
 import CancellationPolicies from "./pages/admin/CancellationPolicies";
+import AdminCalendarPricing from "./pages/admin/AdminCalendarPricing";
 import AdminProfile from "./pages/admin/AdminProfile";
 import AdminSettings from "./pages/admin/AdminSettings";
 
@@ -37,8 +37,8 @@ import VendorSettlementsPage from "./pages/vendor/VendorSettlements";
 import VendorAnalytics from "./pages/vendor/VendorAnalytics";
 import VendorProfile from "./pages/vendor/VendorProfile";
 import VendorSettings from "./pages/vendor/VendorSettings";
-import VendorTerms from "./pages/vendor/VendorTerms";
 import VendorCalendarPricing from "./pages/vendor/VendorCalendarPricing";
+import VendorTerms from "./pages/vendor/VendorTerms";
 
 // Protected Route Component
 const isJwtExpired = (token) => {
@@ -101,7 +101,6 @@ function App() {
           <Route path="refunds" element={<ProcessRefunds />} />
           <Route path="settlements" element={<VendorSettlements />} />
           <Route path="properties" element={<AdminProperties />} />
-          <Route path="calendar" element={<AdminCalendarPricing />} />
           <Route path="properties/new" element={<AddEditProperty />} />
           <Route path="properties/:id/edit" element={<AddEditProperty />} />
           <Route path="change-requests" element={<PropertyChangeRequests />} />
@@ -120,6 +119,7 @@ function App() {
             path="vendor-terms"
             element={<Navigate to="/admin/settings" replace />}
           />
+          <Route path="calendar-pricing" element={<AdminCalendarPricing />} />
           <Route path="reports" element={<AdminReports />} />
           <Route path="profile" element={<AdminProfile />} />
           <Route path="settings" element={<AdminSettings />} />
@@ -136,7 +136,6 @@ function App() {
         >
           <Route path="dashboard" element={<VendorDashboard />} />
           <Route path="properties" element={<VendorProperties />} />
-          <Route path="calendar" element={<VendorCalendarPricing />} />
           <Route path="properties/add" element={<AddEditVendorProperty />} />
           <Route
             path="properties/:id/edit"
@@ -154,6 +153,7 @@ function App() {
           <Route path="bookings" element={<VendorBookings />} />
           <Route path="settlements" element={<VendorSettlementsPage />} />
           <Route path="analytics" element={<VendorAnalytics />} />
+          <Route path="calendar-pricing" element={<VendorCalendarPricing />} />
           <Route path="profile" element={<VendorProfile />} />
           <Route path="terms" element={<VendorTerms />} />
           <Route path="settings" element={<VendorSettings />} />

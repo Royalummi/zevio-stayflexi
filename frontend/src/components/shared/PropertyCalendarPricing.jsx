@@ -79,15 +79,24 @@ export default function PropertyCalendarPricing({
   const [noteInput, setNoteInput] = useState("");
 
   // ── Fetch calendar prices for current view ──
+  // role="vendor"  → only use vendor endpoint, no fallback
+  // role="admin"   → only use admin endpoint, no fallback
+  // role="auto"    → try admin first, fall back to vendor (legacy/unknown contexts)
   const apiBase = role === "vendor" ? "vendor" : "admin";
-  const apiFallback = role === "vendor" ? null : "vendor";
+  const apiFallback = role === "auto" ? "vendor" : null;
 
   const callApi = async (fn) => {
     try {
       return await fn(apiBase);
-    } catch {
-      if (apiFallback) return await fn(apiFallback);
-      throw new Error("API call failed");
+    } catch (err) {
+      // Only fall back on auth-related errors (401/403), never on server errors (5xx)
+      if (
+        apiFallback &&
+        (err?.response?.status === 401 || err?.response?.status === 403)
+      ) {
+        return await fn(apiFallback);
+      }
+      throw err;
     }
   };
 

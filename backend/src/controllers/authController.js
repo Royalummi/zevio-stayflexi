@@ -107,11 +107,14 @@ export const login = asyncHandler(async (req, res) => {
   let roleValue = null;
   let tableName = null;
 
-  // Check in all user tables to auto-detect role
+  // Check in all user tables to auto-detect role.
+  // Order matters: admins first (highest privilege), then vendors, then users.
+  // If the same email exists in multiple tables (e.g. users + vendors),
+  // the first match wins — so vendors must come before users.
   const tables = [
     { name: "admins", roleField: "role" }, // admin or super_admin
-    { name: "users", roleField: null, defaultRole: "user" },
     { name: "vendors", roleField: null, defaultRole: "vendor" },
+    { name: "users", roleField: null, defaultRole: "user" },
   ];
 
   for (const table of tables) {
@@ -244,14 +247,27 @@ export const register = asyncHandler(async (req, res) => {
     return sendError(res, "Full name, email, and password are required", 400);
   }
 
-  // Check if user already exists
+  // Check if email already exists in ANY table (users, vendors, admins)
+  // to prevent duplicate accounts that cause role-mismatch issues on login
   const [existingUsers] = await db.query(
-    "SELECT id FROM users WHERE email = ?",
+    "SELECT id FROM users WHERE email = ? AND deleted_at IS NULL",
+    [email],
+  );
+  const [existingVendors] = await db.query(
+    "SELECT id FROM vendors WHERE email = ? AND deleted_at IS NULL",
+    [email],
+  );
+  const [existingAdmins] = await db.query(
+    "SELECT id FROM admins WHERE email = ? AND deleted_at IS NULL",
     [email],
   );
 
-  if (existingUsers.length > 0) {
-    return sendError(res, "User with this email already exists", 409);
+  if (
+    existingUsers.length > 0 ||
+    existingVendors.length > 0 ||
+    existingAdmins.length > 0
+  ) {
+    return sendError(res, "An account with this email already exists", 409);
   }
 
   // Hash password
@@ -930,11 +946,11 @@ export const forgotPassword = asyncHandler(async (req, res) => {
     return sendError(res, "Email is required", 400);
   }
 
-  // Check all user tables for this email
+  // Check all user tables for this email (admins first, then vendors, then users)
   const tablesToCheck = [
-    { name: "users", nameField: "full_name" },
     { name: "admins", nameField: "name" },
     { name: "vendors", nameField: "name" },
+    { name: "users", nameField: "full_name" },
   ];
 
   let foundUser = null;
@@ -998,7 +1014,7 @@ export const resetPassword = asyncHandler(async (req, res) => {
   // Hash the presented token and look it up in all tables
   const hashedToken = hashToken(token);
 
-  const tablesToCheck = ["users", "admins", "vendors"];
+  const tablesToCheck = ["admins", "vendors", "users"];
   let foundUser = null;
   let foundTable = null;
 

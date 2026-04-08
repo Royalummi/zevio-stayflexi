@@ -12,6 +12,7 @@ import {
   adminEditReview,
   adminApproveReview,
   adminRejectReview,
+  adminDeleteReview,
   adminGetReviewDetails,
 } from "../controllers/reviewsController.js";
 
@@ -70,6 +71,14 @@ router.post(
   authenticate,
   authorize("admin", "super_admin"),
   adminRejectReview,
+);
+
+// Delete review (soft delete)
+router.delete(
+  "/admin/reviews/:reviewId",
+  authenticate,
+  authorize("admin", "super_admin"),
+  adminDeleteReview,
 );
 
 export default router;

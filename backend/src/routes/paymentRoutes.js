@@ -8,7 +8,6 @@ import {
   handleWebhook,
   getPaymentHistory,
   getInvoice,
-  downloadInvoicePDF,
 } from "../controllers/paymentController.js";
 
 const router = express.Router();
@@ -58,14 +57,6 @@ router.get(
   authenticate,
   authorize("user", "admin", "super_admin"),
   getInvoice,
-);
-
-// Invoice PDF download
-router.get(
-  "/invoice/:bookingId/pdf",
-  authenticate,
-  authorize("user", "admin", "super_admin"),
-  downloadInvoicePDF,
 );
 
 export default router;

@@ -90,10 +90,17 @@ api.interceptors.response.use(
               { headers: { "Content-Type": "application/json" } },
             );
 
-            const { accessToken } = response.data.data;
+            const { accessToken, refreshToken: newRefreshToken } =
+              response.data.data;
 
-            // Update token in localStorage
+            // Update tokens in localStorage
             localStorage.setItem("token", accessToken);
+            // Backend uses refresh token rotation — the old token is deleted
+            // from DB and a new one is returned. We MUST save it, otherwise
+            // the next refresh attempt will fail with "token revoked".
+            if (newRefreshToken) {
+              localStorage.setItem("refreshToken", newRefreshToken);
+            }
 
             // Update the authorization header
             api.defaults.headers.common["Authorization"] =

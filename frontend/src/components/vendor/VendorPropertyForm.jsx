@@ -184,6 +184,7 @@ const VendorPropertyForm = ({
   const [pendingCalendarPrices, setPendingCalendarPrices] = useState([]);
   const [hasSelectedImages, setHasSelectedImages] = useState(false);
   const [selectedImageCount, setSelectedImageCount] = useState(0);
+  const [uploadedImageCount, setUploadedImageCount] = useState(0);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const isInitialLoad = useRef(true);
 
@@ -256,6 +257,10 @@ const VendorPropertyForm = ({
         ),
       },
       {
+        name: "Photos",
+        complete: uploadedImageCount + selectedImageCount >= 6,
+      },
+      {
         name: "Policies",
         complete: !!(formData.house_rules && formData.cancellation_policy),
       },
@@ -265,7 +270,7 @@ const VendorPropertyForm = ({
     const percentage = Math.round((completedCount / sections.length) * 100);
 
     return { sections, percentage };
-  }, [formData]);
+  }, [formData, uploadedImageCount, selectedImageCount]);
 
   const quillModules = {
     toolbar: [
@@ -601,7 +606,9 @@ const VendorPropertyForm = ({
     }));
   };
 
-  const validateForm = () => {
+  const MIN_PHOTOS = 6;
+
+  const validateForm = (forSubmit = false) => {
     const newErrors = {};
 
     // Basic validations
@@ -613,6 +620,15 @@ const VendorPropertyForm = ({
       newErrors.maps_location = "Google Maps Location is required";
     if (!formData.price_per_night || formData.price_per_night <= 0) {
       newErrors.price_per_night = "Valid price is required";
+    }
+
+    // Photo validation — minimum 6 photos required for submission
+    if (forSubmit) {
+      const totalPhotos = uploadedImageCount + selectedImageCount;
+      if (totalPhotos < MIN_PHOTOS) {
+        const needed = MIN_PHOTOS - totalPhotos;
+        newErrors.photos = `At least ${MIN_PHOTOS} photos required. You have ${totalPhotos} — please add ${needed} more photo${needed === 1 ? "" : "s"}.`;
+      }
     }
 
     // Email validations
@@ -646,7 +662,7 @@ const VendorPropertyForm = ({
   // Show T&C modal before submitting new property for approval
   const handleShowTermsModal = async (e) => {
     e?.preventDefault();
-    if (!validateForm()) {
+    if (!validateForm(true)) {
       toast.error("Please fix validation errors before submitting");
       return;
     }
@@ -680,7 +696,7 @@ const VendorPropertyForm = ({
   const handleSubmit = async (e, submitForApproval = true) => {
     e?.preventDefault();
 
-    if (!validateForm()) {
+    if (!validateForm(submitForApproval)) {
       toast.error("Please fix validation errors before submitting");
       return;
     }
@@ -811,12 +827,12 @@ const VendorPropertyForm = ({
       }
     } catch (error) {
       console.error("Error submitting form:", error);
-      if (error.response?.data?.message) {
-        toast.error(error.response.data.message);
-      } else if (error.response?.status === 401) {
+      if (error.response?.status === 401) {
         toast.error("Session expired. Please login again.");
       } else if (error.response?.status === 403) {
         toast.error("You don't have permission to perform this action.");
+      } else if (error.response?.data?.message) {
+        toast.error(error.response.data.message);
       } else {
         toast.error("Failed to save property. Please try again.");
       }
@@ -2080,16 +2096,33 @@ const VendorPropertyForm = ({
         </FormSection>
 
         {/* Section 10: Property Images */}
-        <FormSection title="Property Images" icon={ImageIcon}>
+        <FormSection title="Property Images" icon={ImageIcon} required={true}>
           <PropertyImageUpload
             propertyId={propertyId}
-            onImagesChange={({ uploadPending, hasPendingUploads }) => {
+            onImagesChange={({
+              uploadPending,
+              hasPendingUploads,
+              selectedFiles: sf,
+              uploadedImages: ui,
+            }) => {
               setPendingImageUpload(() => uploadPending);
               setHasSelectedImages(hasPendingUploads);
+              setSelectedImageCount(sf?.length || 0);
+              setUploadedImageCount(ui?.length || 0);
             }}
             allowPreUpload={!propertyId}
             apiBasePath="/vendor/properties"
           />
+          {errors.photos && (
+            <p className="mt-2 text-sm text-destructive font-medium">
+              {errors.photos}
+            </p>
+          )}
+          {!errors.photos && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              Minimum 6 photos required to submit for approval. Upload up to 10.
+            </p>
+          )}
         </FormSection>
 
         {/* Section 11: Rich Text Guidelines */}

@@ -145,6 +145,13 @@ api.interceptors.response.use(
       }
     }
 
+    // Note: 403 Forbidden is NOT handled globally here.
+    // Each component / call-site is responsible for handling 403 appropriately.
+    // Auto-logout on 403 was removed because some components use 403 as a signal
+    // to fall back to a different endpoint (e.g. CityCombobox: admin → vendor → public).
+    // Blindly logging the user out on every 403 broke those fallback flows and
+    // caused vendors / admins to be ejected from the dashboard unexpectedly.
+
     return Promise.reject(error);
   },
 );

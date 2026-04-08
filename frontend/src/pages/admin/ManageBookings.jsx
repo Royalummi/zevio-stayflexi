@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import {
   Calendar,
@@ -53,6 +53,7 @@ import {
 
 export default function AdminBookings() {
   const navigate = useNavigate();
+  const { bookingId: urlBookingId } = useParams();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState(null);
@@ -83,6 +84,25 @@ export default function AdminBookings() {
     setPagination((prev) => ({ ...prev, page: 1 }));
     fetchBookings();
   }, [filters]);
+
+  // Auto-open booking detail dialog when navigated to /admin/bookings/:id
+  useEffect(() => {
+    if (!urlBookingId || loading) return;
+    const found = bookings.find((b) => b.id === urlBookingId);
+    if (found) {
+      handleViewDetails(found);
+    } else {
+      // Booking not on current page — fetch it directly
+      api
+        .get(`/admin/bookings/${urlBookingId}`)
+        .then((res) => {
+          const b = res.data?.data || res.data;
+          if (b) handleViewDetails(b);
+        })
+        .catch(() => {});
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlBookingId, loading]);
 
   const fetchBookings = async () => {
     setLoading(true);

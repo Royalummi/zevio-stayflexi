@@ -38,7 +38,11 @@ export const createCoupon = asyncHandler(async (req, res) => {
 
   // Validate discount values based on type
   if (type === "percentage" || type === "first_time") {
-    if (!discount_percentage || discount_percentage <= 0 || discount_percentage > 100) {
+    if (
+      !discount_percentage ||
+      discount_percentage <= 0 ||
+      discount_percentage > 100
+    ) {
       return sendError(res, "Invalid discount percentage (must be 1-100)", 400);
     }
   } else if (type === "flat") {
@@ -50,7 +54,7 @@ export const createCoupon = asyncHandler(async (req, res) => {
   // Check if coupon code already exists
   const [existing] = await db.query(
     "SELECT id FROM coupons WHERE code = ? AND deleted_at IS NULL",
-    [code.toUpperCase()]
+    [code.toUpperCase()],
   );
 
   if (existing.length > 0) {
@@ -82,14 +86,14 @@ export const createCoupon = asyncHandler(async (req, res) => {
       description || null,
       is_active ? 1 : 0,
       adminId,
-    ]
+    ],
   );
 
   // Log activity
   await db.query(
     `INSERT INTO activity_logs (id, actor_id, actor_role, action, entity, entity_id) 
      VALUES (?, ?, 'admin', 'Created coupon', 'coupon', ?)`,
-    [generateUUID(), adminId, couponId]
+    [generateUUID(), adminId, couponId],
   );
 
   sendSuccess(res, { coupon_id: couponId }, "Coupon created successfully", 201);
@@ -133,7 +137,7 @@ export const listCoupons = asyncHandler(async (req, res) => {
   // Get total count
   const [countResult] = await db.query(
     `SELECT COUNT(*) as total FROM coupons c WHERE ${whereClause}`,
-    queryParams
+    queryParams,
   );
   const total = countResult[0].total;
 
@@ -149,7 +153,7 @@ export const listCoupons = asyncHandler(async (req, res) => {
     WHERE ${whereClause}
     ORDER BY c.created_at DESC
     LIMIT ? OFFSET ?`,
-    queryParams
+    queryParams,
   );
 
   sendSuccess(res, {
@@ -177,7 +181,7 @@ export const getCouponDetails = asyncHandler(async (req, res) => {
     FROM coupons c
     LEFT JOIN admins a ON c.created_by = a.id
     WHERE c.id = ? AND c.deleted_at IS NULL`,
-    [id]
+    [id],
   );
 
   if (coupons.length === 0) {
@@ -194,7 +198,7 @@ export const getCouponDetails = asyncHandler(async (req, res) => {
       COUNT(DISTINCT user_id) as unique_users
     FROM coupon_usages
     WHERE coupon_id = ? AND status = 'completed'`,
-    [id]
+    [id],
   );
 
   // Get recent usages
@@ -210,7 +214,7 @@ export const getCouponDetails = asyncHandler(async (req, res) => {
     WHERE cu.coupon_id = ?
     ORDER BY cu.reserved_at DESC
     LIMIT 10`,
-    [id]
+    [id],
   );
 
   sendSuccess(res, {
@@ -247,7 +251,7 @@ export const updateCoupon = asyncHandler(async (req, res) => {
   // Check if coupon exists
   const [existing] = await db.query(
     "SELECT * FROM coupons WHERE id = ? AND deleted_at IS NULL",
-    [id]
+    [id],
   );
 
   if (existing.length === 0) {
@@ -258,7 +262,7 @@ export const updateCoupon = asyncHandler(async (req, res) => {
   if (code && code !== existing[0].code) {
     const [duplicate] = await db.query(
       "SELECT id FROM coupons WHERE code = ? AND id != ? AND deleted_at IS NULL",
-      [code.toUpperCase(), id]
+      [code.toUpperCase(), id],
     );
 
     if (duplicate.length > 0) {
@@ -312,7 +316,9 @@ export const updateCoupon = asyncHandler(async (req, res) => {
   }
   if (applicable_properties !== undefined) {
     updates.push("applicable_properties = ?");
-    values.push(applicable_properties ? JSON.stringify(applicable_properties) : null);
+    values.push(
+      applicable_properties ? JSON.stringify(applicable_properties) : null,
+    );
   }
   if (description !== undefined) {
     updates.push("description = ?");
@@ -331,14 +337,14 @@ export const updateCoupon = asyncHandler(async (req, res) => {
 
   await db.query(
     `UPDATE coupons SET ${updates.join(", ")} WHERE id = ?`,
-    values
+    values,
   );
 
   // Log activity
   await db.query(
     `INSERT INTO activity_logs (id, actor_id, actor_role, action, entity, entity_id) 
      VALUES (?, ?, 'admin', 'Updated coupon', 'coupon', ?)`,
-    [generateUUID(), adminId, id]
+    [generateUUID(), adminId, id],
   );
 
   sendSuccess(res, null, "Coupon updated successfully");
@@ -354,7 +360,7 @@ export const deleteCoupon = asyncHandler(async (req, res) => {
 
   const [existing] = await db.query(
     "SELECT * FROM coupons WHERE id = ? AND deleted_at IS NULL",
-    [id]
+    [id],
   );
 
   if (existing.length === 0) {
@@ -362,16 +368,13 @@ export const deleteCoupon = asyncHandler(async (req, res) => {
   }
 
   // Soft delete
-  await db.query(
-    "UPDATE coupons SET deleted_at = NOW() WHERE id = ?",
-    [id]
-  );
+  await db.query("UPDATE coupons SET deleted_at = NOW() WHERE id = ?", [id]);
 
   // Log activity
   await db.query(
     `INSERT INTO activity_logs (id, actor_id, actor_role, action, entity, entity_id) 
      VALUES (?, ?, 'admin', 'Deleted coupon', 'coupon', ?)`,
-    [generateUUID(), adminId, id]
+    [generateUUID(), adminId, id],
   );
 
   sendSuccess(res, null, "Coupon deleted successfully");
@@ -393,7 +396,7 @@ export const validateCoupon = asyncHandler(async (req, res) => {
   const [coupons] = await db.query(
     `SELECT * FROM coupons 
      WHERE code = ? AND is_active = 1 AND deleted_at IS NULL`,
-    [code.toUpperCase()]
+    [code.toUpperCase()],
   );
 
   if (coupons.length === 0) {
@@ -402,9 +405,13 @@ export const validateCoupon = asyncHandler(async (req, res) => {
 
   const coupon = coupons[0];
 
-  // Check expiry date
-  const today = new Date().toISOString().split("T")[0];
-  if (today < coupon.valid_from || today > coupon.valid_until) {
+  // Check expiry date — compare as Date objects to avoid string vs Date coercion issues
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const validFrom = new Date(coupon.valid_from);
+  const validUntil = new Date(coupon.valid_until);
+  validUntil.setHours(23, 59, 59, 999); // include the full end day
+  if (today < validFrom || today > validUntil) {
     return sendError(res, "Coupon has expired or not yet valid", 400);
   }
 
@@ -413,7 +420,7 @@ export const validateCoupon = asyncHandler(async (req, res) => {
     return sendError(
       res,
       `Minimum booking amount of ₹${coupon.min_booking_amount} required for this coupon`,
-      400
+      400,
     );
   }
 
@@ -421,7 +428,7 @@ export const validateCoupon = asyncHandler(async (req, res) => {
   if (coupon.usage_limit) {
     const [usageCount] = await db.query(
       "SELECT COUNT(*) as count FROM coupon_usages WHERE coupon_id = ? AND status = 'completed'",
-      [coupon.id]
+      [coupon.id],
     );
 
     if (usageCount[0].count >= coupon.usage_limit) {
@@ -432,22 +439,30 @@ export const validateCoupon = asyncHandler(async (req, res) => {
   // Check per-user limit
   const [userUsage] = await db.query(
     "SELECT COUNT(*) as count FROM coupon_usages WHERE coupon_id = ? AND user_id = ? AND status = 'completed'",
-    [coupon.id, userId]
+    [coupon.id, userId],
   );
 
   if (userUsage[0].count >= coupon.per_user_limit) {
-    return sendError(res, "You have already used this coupon the maximum number of times", 400);
+    return sendError(
+      res,
+      "You have already used this coupon the maximum number of times",
+      400,
+    );
   }
 
   // Check first-time user restriction
   if (coupon.type === "first_time") {
     const [completedBookings] = await db.query(
       "SELECT COUNT(*) as count FROM bookings WHERE user_id = ? AND payment_status = 'completed'",
-      [userId]
+      [userId],
     );
 
     if (completedBookings[0].count > 0) {
-      return sendError(res, "This coupon is only valid for first-time bookings", 400);
+      return sendError(
+        res,
+        "This coupon is only valid for first-time bookings",
+        400,
+      );
     }
   }
 
@@ -455,7 +470,11 @@ export const validateCoupon = asyncHandler(async (req, res) => {
   if (coupon.applicable_properties && property_id) {
     const applicableProps = JSON.parse(coupon.applicable_properties);
     if (!applicableProps.includes(property_id)) {
-      return sendError(res, "This coupon is not applicable to the selected property", 400);
+      return sendError(
+        res,
+        "This coupon is not applicable to the selected property",
+        400,
+      );
     }
   }
 

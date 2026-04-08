@@ -82,8 +82,18 @@ export const submitReview = async (req, res) => {
     }
 
     // 5. Calculate overall rating (weighted average)
+    // Parse each rating as a number to prevent string concatenation in reduce
+    const parsedRatings = [
+      parseFloat(cleanliness_rating),
+      parseFloat(accuracy_rating),
+      parseFloat(communication_rating),
+      parseFloat(location_rating),
+      parseFloat(check_in_rating),
+      parseFloat(value_rating),
+    ];
+
     const overallRating = (
-      ratings.reduce((sum, r) => sum + r, 0) / ratings.length
+      parsedRatings.reduce((sum, r) => sum + r, 0) / parsedRatings.length
     ).toFixed(1);
 
     // 6. Validate photo count (max 5)
@@ -100,9 +110,8 @@ export const submitReview = async (req, res) => {
         rating, overall_rating, review_text, guest_name,
         cleanliness_rating, accuracy_rating, communication_rating,
         location_rating, check_in_rating, value_rating,
-        status, is_visible,
-        created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+        status, is_visible
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         reviewId,
         booking.property_id,
@@ -112,12 +121,12 @@ export const submitReview = async (req, res) => {
         parseFloat(overallRating),
         review_text || null,
         guest_name || null,
-        cleanliness_rating,
-        accuracy_rating,
-        communication_rating,
-        location_rating,
-        check_in_rating,
-        value_rating,
+        parsedRatings[0],
+        parsedRatings[1],
+        parsedRatings[2],
+        parsedRatings[3],
+        parsedRatings[4],
+        parsedRatings[5],
         "pending", // Admin needs to approve
         false, // Not visible until approved
       ],
@@ -207,6 +216,7 @@ export const getPropertyReviews = async (req, res) => {
          AND r.is_visible = TRUE 
          AND r.status = 'published'
          AND r.deleted_at IS NULL
+         AND r.overall_rating > 0
        GROUP BY r.id
        ORDER BY r.created_at DESC
        LIMIT ? OFFSET ?`,
@@ -220,7 +230,8 @@ export const getPropertyReviews = async (req, res) => {
        WHERE property_id = ? 
          AND is_visible = TRUE 
          AND status = 'published'
-         AND deleted_at IS NULL`,
+         AND deleted_at IS NULL
+         AND overall_rating > 0`,
       [propertyId],
     );
 
@@ -238,7 +249,8 @@ export const getPropertyReviews = async (req, res) => {
        WHERE property_id = ? 
          AND is_visible = TRUE 
          AND status = 'published'
-         AND deleted_at IS NULL`,
+         AND deleted_at IS NULL
+         AND overall_rating > 0`,
       [propertyId],
     );
 
@@ -625,7 +637,7 @@ export const adminApproveReview = async (req, res) => {
       [adminId, reviewId],
     );
 
-    // 3. Update property average rating
+    // 3. Update property average rating (exclude invalid 0.0 ratings)
     await db.query(
       `UPDATE properties p
        SET rating = (
@@ -635,6 +647,7 @@ export const adminApproveReview = async (req, res) => {
            AND status = 'published'
            AND is_visible = TRUE
            AND deleted_at IS NULL
+           AND overall_rating > 0
        )
        WHERE p.id = ?`,
       [review.property_id],
@@ -716,6 +729,48 @@ export const adminRejectReview = async (req, res) => {
     );
   } catch (error) {
     console.error("❌ Error rejecting review:", error);
+    return sendError(res, error.message, 500);
+  }
+};
+
+/**
+ * @route   DELETE /api/admin/reviews/:reviewId
+ * @desc    Admin soft-deletes a review
+ * @access  Protected (Admin)
+ */
+export const adminDeleteReview = async (req, res) => {
+  const { reviewId } = req.params;
+  const adminId = req.user.id;
+
+  try {
+    const [reviews] = await db.query(
+      `SELECT id FROM reviews WHERE id = ? AND deleted_at IS NULL`,
+      [reviewId],
+    );
+
+    if (reviews.length === 0) {
+      return sendError(res, "Review not found", 404);
+    }
+
+    await db.query(
+      `UPDATE reviews SET deleted_at = NOW(), is_visible = FALSE, updated_at = NOW() WHERE id = ?`,
+      [reviewId],
+    );
+
+    const activityLogId = uuidv4();
+    await db.query(
+      `INSERT INTO activity_logs (id, actor_id, actor_role, action, entity, entity_id) 
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [activityLogId, adminId, "admin", "DELETE_REVIEW", "reviews", reviewId],
+    );
+
+    return sendSuccess(
+      res,
+      { review_id: reviewId },
+      "Review deleted successfully",
+    );
+  } catch (error) {
+    console.error("❌ Error deleting review:", error);
     return sendError(res, error.message, 500);
   }
 };

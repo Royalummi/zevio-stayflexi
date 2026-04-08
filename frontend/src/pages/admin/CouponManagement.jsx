@@ -610,9 +610,19 @@ const CouponManagement = () => {
                       </TableCell>
                       <TableCell>
                         <Badge
-                          variant={coupon.is_active ? "default" : "secondary"}
+                          variant={
+                            new Date(coupon.valid_until) < new Date()
+                              ? "destructive"
+                              : coupon.is_active
+                                ? "default"
+                                : "secondary"
+                          }
                         >
-                          {coupon.is_active ? "Active" : "Inactive"}
+                          {new Date(coupon.valid_until) < new Date()
+                            ? "Expired"
+                            : coupon.is_active
+                              ? "Active"
+                              : "Inactive"}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">

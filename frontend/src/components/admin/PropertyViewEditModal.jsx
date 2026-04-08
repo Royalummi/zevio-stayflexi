@@ -176,7 +176,8 @@ const PropertyViewEditModal = ({
         title: data.title || "",
         description: data.description || "",
         status: data.status || "draft",
-        price_per_night: data.price_per_night || "",
+        price_per_night:
+          data.price_per_night || data.pricing?.price_per_night || "",
         max_guests: data.max_guests || "",
         bedrooms: data.bedrooms || "",
         bathrooms: data.bathrooms || "",
@@ -688,7 +689,10 @@ const PropertyViewEditModal = ({
                           Price/Night
                         </p>
                         <p className="text-lg font-bold text-primary">
-                          {formatCurrency(fullPropertyData.price_per_night)}
+                          {formatCurrency(
+                            fullPropertyData.price_per_night ||
+                              fullPropertyData.pricing?.price_per_night,
+                          )}
                         </p>
                       </div>
                       <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">

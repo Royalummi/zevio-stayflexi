@@ -43,6 +43,7 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
   const [pendingCalendarPrices, setPendingCalendarPrices] = useState([]);
   const [hasSelectedImages, setHasSelectedImages] = useState(false);
   const [selectedImageCount, setSelectedImageCount] = useState(0);
+  const [uploadedImageCount, setUploadedImageCount] = useState(0);
 
   // Get property type from location state (passed from modal)
   const preSelectedPropertyType = location.state?.propertyTypeId || null;
@@ -251,8 +252,8 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
         complete: formData.amenities && formData.amenities.length > 0,
       },
       {
-        name: "Photos (Optional)",
-        complete: true, // Images uploaded separately, always mark as complete
+        name: "Photos",
+        complete: uploadedImageCount + selectedImageCount >= 6,
       },
       {
         name: "Policies",
@@ -264,7 +265,7 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
     const percentage = Math.round((completedCount / sections.length) * 100);
 
     return { sections, percentage };
-  }, [formData]); // Removed photoUrls dependency
+  }, [formData, uploadedImageCount, selectedImageCount]); // Removed photoUrls dependency
 
   const quillModules = {
     toolbar: [
@@ -779,6 +780,13 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
     if (!stripHtml(guidelines.emergency_contacts))
       newErrors.emergency_contacts = "Emergency Contacts is required";
 
+    // Photo validation — minimum 6 photos required
+    const totalPhotos = uploadedImageCount + selectedImageCount;
+    if (totalPhotos < 6) {
+      const needed = 6 - totalPhotos;
+      newErrors.photos = `At least 6 photos required. You have ${totalPhotos} — please add ${needed} more photo${needed === 1 ? "" : "s"}.`;
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -1014,14 +1022,14 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
       console.error("Error submitting form:", error);
 
       // Better error messages
-      if (error.response?.data?.message) {
-        toast.error(error.response.data.message);
-      } else if (error.response?.status === 400) {
-        toast.error("Invalid data. Please check all fields.");
-      } else if (error.response?.status === 401) {
+      if (error.response?.status === 401) {
         toast.error("Session expired. Please login again.");
       } else if (error.response?.status === 403) {
         toast.error("You don't have permission to perform this action.");
+      } else if (error.response?.status === 400) {
+        toast.error("Invalid data. Please check all fields.");
+      } else if (error.response?.data?.message) {
+        toast.error(error.response.data.message);
       } else {
         toast.error("Failed to save property. Please try again.");
       }
@@ -2913,8 +2921,19 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
                 setPendingImageUpload(null);
                 setSelectedImageCount(0);
               }
+              setUploadedImageCount(data.uploadedImages?.length || 0);
             }}
           />
+          {errors.photos && (
+            <p className="mt-2 text-sm text-destructive font-medium">
+              {errors.photos}
+            </p>
+          )}
+          {!errors.photos && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              Minimum 6 photos required. Upload up to 10.
+            </p>
+          )}
           {!propertyId && (
             <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700">
               <Info className="h-4 w-4 inline mr-1" />

@@ -111,7 +111,7 @@ export const getProperties = asyncHandler(async (req, res) => {
 
   // Area filter (for area-wise search)
   if (area) {
-    query += ` AND LOWER(p.area) = LOWER(?)`;
+    query += ` AND p.area = ?`;
     params.push(area);
   }
 

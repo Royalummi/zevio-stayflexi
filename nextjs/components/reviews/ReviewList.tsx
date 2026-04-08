@@ -98,8 +98,17 @@ const ReviewList: React.FC<ReviewListProps> = ({
       const response = await api.get(
         `/properties/${propertyId}/reviews?page=${currentPage}&limit=${initialLimit}`,
       );
-      setReviews(response.data.reviews);
-      setTotalPages(response.data.totalPages || 1);
+      const payload = response.data.data;
+      setReviews(payload.reviews || []);
+      setTotalPages(payload.pagination?.total_pages || 1);
+      // Use rating_stats from the reviews response to avoid a separate API call
+      if (payload.rating_stats) {
+        setStatistics({
+          total: payload.rating_stats.total,
+          average: parseFloat(payload.rating_stats.average),
+          breakdown: payload.rating_stats.breakdown,
+        });
+      }
     } catch (err: unknown) {
       console.error("Failed to fetch reviews:", err);
       setError("Failed to load reviews. Please try again.");
@@ -109,14 +118,8 @@ const ReviewList: React.FC<ReviewListProps> = ({
   }, [propertyId, currentPage, initialLimit]);
 
   const fetchStatistics = useCallback(async () => {
-    try {
-      const response = await api.get(
-        `/properties/${propertyId}/reviews/statistics`,
-      );
-      setStatistics(response.data);
-    } catch (err: unknown) {
-      console.error("Failed to fetch review statistics:", err);
-    }
+    // Statistics are now fetched inline with fetchReviews via rating_stats
+    // This function is kept as a no-op for backward compatibility
   }, [propertyId]);
 
   useEffect(() => {

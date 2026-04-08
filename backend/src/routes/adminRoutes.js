@@ -33,6 +33,7 @@ import {
   getAllAmenities,
   createProperty,
   updateProperty,
+  updatePropertyPricing,
   deleteProperty,
   getRecommendedPropertiesAdmin,
   toggleRecommendedStatus,
@@ -140,6 +141,7 @@ router.post(
   createProperty,
 );
 router.put("/properties/:id", updateProperty);
+router.patch("/properties/:id/pricing", updatePropertyPricing);
 router.delete("/properties/:id", deleteProperty);
 
 // Property Images Management
