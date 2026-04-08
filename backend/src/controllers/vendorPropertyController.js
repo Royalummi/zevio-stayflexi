@@ -387,8 +387,9 @@ export const submitProperty = asyncHandler(async (req, res) => {
 
   const property = properties[0];
 
-  // Only draft properties can be submitted
-  if (property.status !== "draft") {
+  // Only draft/rejected/changes_requested properties can be submitted
+  const submittableStatuses = ["draft", "rejected", "changes_requested"];
+  if (!submittableStatuses.includes(property.status)) {
     return sendError(
       res,
       `Cannot submit property with status: ${property.status}`,

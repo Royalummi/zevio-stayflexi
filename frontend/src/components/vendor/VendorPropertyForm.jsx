@@ -774,7 +774,30 @@ const VendorPropertyForm = ({
           } else if (response.data.data?.message === "No changes detected") {
             toast.info("No changes detected — property is already up to date.");
           } else {
-            toast.success("Property updated successfully!");
+            // If editing a draft and user clicked "Submit for Approval", also submit
+            if (
+              submitForApproval &&
+              (propertyStatus === "draft" ||
+                propertyStatus === "rejected" ||
+                propertyStatus === "changes_requested")
+            ) {
+              try {
+                await api.patch(
+                  `/vendor/properties/${propertyId}/submit`,
+                  {},
+                );
+                toast.success(
+                  "Property saved and submitted for approval! 🎉",
+                );
+              } catch (submitErr) {
+                const msg =
+                  submitErr?.response?.data?.message ||
+                  "Submission failed. You can retry from your properties list.";
+                toast.warning(`Property saved but: ${msg}`);
+              }
+            } else {
+              toast.success("Property updated successfully!");
+            }
           }
           setHasUnsavedChanges(false);
           if (onSuccess) onSuccess(response.data);
@@ -788,21 +811,7 @@ const VendorPropertyForm = ({
         if (createResponse.data.success) {
           const newPropertyId = createResponse.data.data.id;
 
-          if (submitForApproval) {
-            // Submit for approval
-            try {
-              await api.patch(`/vendor/properties/${newPropertyId}/submit`, {});
-              toast.success("Property created and submitted for approval! 🎉");
-            } catch {
-              toast.warning(
-                "Property created but submission failed. You can submit from your properties list.",
-              );
-            }
-          } else {
-            toast.success("Property saved as draft!");
-          }
-
-          // Upload pending images if any
+          // Upload pending images FIRST (before submit, which requires ≥6 photos)
           if (hasSelectedImages && pendingImageUpload) {
             try {
               await pendingImageUpload(String(newPropertyId));
@@ -811,6 +820,21 @@ const VendorPropertyForm = ({
                 "Property saved but image upload failed. You can upload them later.",
               );
             }
+          }
+
+          if (submitForApproval) {
+            // Submit for approval (images must be uploaded first)
+            try {
+              await api.patch(`/vendor/properties/${newPropertyId}/submit`, {});
+              toast.success("Property created and submitted for approval! 🎉");
+            } catch (submitErr) {
+              const msg =
+                submitErr?.response?.data?.message ||
+                "Submission failed. You can submit from your properties list.";
+              toast.warning(`Property created but: ${msg}`);
+            }
+          } else {
+            toast.success("Property saved as draft!");
           }
 
           // For new properties, remind vendor to set calendar pricing via the dedicated page
