@@ -257,6 +257,9 @@ function PropertyDetailContent() {
           pincode: data.pincode,
           maps_location: data.maps_location,
           price_per_night: Number(data.price_per_night),
+          original_price: data.original_price
+            ? Number(data.original_price)
+            : null,
           max_guests: data.max_guests,
           bedrooms: data.bedrooms,
           bathrooms: data.bathrooms,
@@ -1576,6 +1579,29 @@ function PropertyDetailContent() {
                   <div className={luxuryStyles.bookingHeader}>
                     <div className={luxuryStyles.priceSection}>
                       <div className={luxuryStyles.priceDisplay}>
+                        {property.original_price &&
+                          Number(property.original_price) >
+                            Number(property.price_per_night) && (
+                            <div className={luxuryStyles.originalPriceRow}>
+                              <span
+                                className={luxuryStyles.originalPriceStrike}
+                              >
+                                ₹
+                                {Number(property.original_price).toLocaleString(
+                                  "en-IN",
+                                )}
+                              </span>
+                              <span className={luxuryStyles.discountBadge}>
+                                {Math.round(
+                                  ((Number(property.original_price) -
+                                    Number(property.price_per_night)) /
+                                    Number(property.original_price)) *
+                                    100,
+                                )}
+                                % off
+                              </span>
+                            </div>
+                          )}
                         <span className={luxuryStyles.bookingPrice}>
                           ₹{(property.price_per_night || 0).toLocaleString()}
                         </span>
@@ -1860,6 +1886,29 @@ function PropertyDetailContent() {
                 </>
               ) : (
                 <>
+                  {property.original_price &&
+                    Number(property.original_price) >
+                      Number(property.price_per_night) && (
+                      <div className={luxuryStyles.mobileOriginalPriceRow}>
+                        <span
+                          className={luxuryStyles.mobileOriginalPriceStrike}
+                        >
+                          ₹
+                          {Number(property.original_price).toLocaleString(
+                            "en-IN",
+                          )}
+                        </span>
+                        <span className={luxuryStyles.mobileDiscountBadge}>
+                          {Math.round(
+                            ((Number(property.original_price) -
+                              Number(property.price_per_night)) /
+                              Number(property.original_price)) *
+                              100,
+                          )}
+                          % off
+                        </span>
+                      </div>
+                    )}
                   <div className={luxuryStyles.mobilePriceAmount}>
                     ₹{(property.price_per_night || 0).toLocaleString()}
                   </div>

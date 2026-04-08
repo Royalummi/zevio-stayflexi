@@ -127,7 +127,7 @@ const VendorPropertyForm = ({
     secondary_incharge_alt_contact: "",
 
     // Booking Rules
-    same_day_booking_allowed: false,
+    same_day_booking_allowed: true,
     max_booking_days: null,
 
     // Amenities
@@ -793,20 +793,12 @@ const VendorPropertyForm = ({
             }
           }
 
-          // Flush pending calendar prices if any were staged pre-creation
+          // For new properties, remind vendor to set calendar pricing via the dedicated page
           if (pendingCalendarPrices.length > 0) {
-            try {
-              await api.post(
-                `/vendor/properties/${newPropertyId}/calendar-pricing`,
-                {
-                  dates: pendingCalendarPrices,
-                },
-              );
-            } catch {
-              toast.warning(
-                "Property saved but calendar pricing could not be saved. You can set it later.",
-              );
-            }
+            toast.info(
+              "Property saved! Set day-wise calendar pricing from the Calendar page in the sidebar.",
+              { duration: 6000 },
+            );
           }
 
           setHasUnsavedChanges(false);

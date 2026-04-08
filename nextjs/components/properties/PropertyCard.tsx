@@ -59,6 +59,17 @@ export default function PropertyCard({
     (property.corporate_discount_percentage || 0) > 0;
   const corporateDiscountPercent = property.corporate_discount_percentage || 0;
 
+  // Original-price discount badge (original_price > price_per_night)
+  const originalPrice = property.original_price
+    ? Number(property.original_price)
+    : null;
+  const discountedPrice = Number(property.price_per_night) || 0;
+  const hasOriginalDiscount =
+    originalPrice !== null && originalPrice > discountedPrice;
+  const originalDiscountPercent = hasOriginalDiscount
+    ? Math.round(((originalPrice! - discountedPrice) / originalPrice!) * 100)
+    : 0;
+
   // Calculate corporate pricing
   const corporatePricing =
     hasCorporateDiscount && showCorporateFeatures
@@ -399,6 +410,21 @@ export default function PropertyCard({
                 <div className={styles.savingsText}>
                   Save {corporatePricing.savingsPercent}%
                 </div>
+              </>
+            ) : hasOriginalDiscount ? (
+              <>
+                <div className={styles.discountPricing}>
+                  <span className={styles.originalPrice}>
+                    ₹{originalPrice!.toLocaleString("en-IN")}
+                  </span>
+                  <span className={styles.priceAmount}>
+                    ₹{discountedPrice.toLocaleString("en-IN")}
+                  </span>
+                  <span className={styles.pricePeriod}>/ night</span>
+                </div>
+                <span className={styles.discountBadge}>
+                  {originalDiscountPercent}% off
+                </span>
               </>
             ) : (
               <>

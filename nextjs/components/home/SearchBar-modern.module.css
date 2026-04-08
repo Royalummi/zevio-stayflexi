@@ -56,13 +56,59 @@
 }
 
 /* Toggle Container for Property Type Pills - Always visible above overlay */
+/* ── Inline type-toggle inside the search pill ── */
+.toggleInBar {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px 12px 10px 16px;
+    flex-shrink: 0;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 68px;
+}
+
+.togglePillInBar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 50px;
+    border: 1.5px solid rgba(31, 58, 95, 0.18);
+    background: transparent;
+    color: var(--brand-navy);
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    letter-spacing: 0.2px;
+}
+
+.togglePillInBar:hover {
+    border-color: var(--brand-teal);
+    background: rgba(21, 180, 179, 0.07);
+    color: var(--brand-teal-dark);
+}
+
+.togglePillInBar.active {
+    background: var(--brand-teal);
+    border-color: var(--brand-teal);
+    color: white;
+}
+
+.toggleIconInBar {
+    font-size: 0.95rem;
+}
+
+/* Keep legacy .toggleContainer/.togglePill for any other usage */
 .toggleContainer {
     display: flex;
-    gap: 12px;
-    margin-bottom: 16px;
+    gap: 10px;
     justify-content: center;
     position: relative;
     z-index: 10001;
+    flex-shrink: 0;
 }
 
 .togglePill {
@@ -131,14 +177,12 @@
 @media (min-width: 640px) {
     .searchWrapper {
         width: 90%;
-        /* Slightly narrower on tablets */
     }
 }
 
 @media (min-width: 1024px) {
     .searchWrapper {
         width: 80%;
-        /* Original width on desktop */
     }
 }
 
@@ -1192,6 +1236,26 @@
         flex: 1;
         min-width: calc(50% - 4px);
         justify-content: center;
+    }
+
+    .toggleIconInBar {
+        font-size: 0.9rem;
+    }
+
+    /* On mobile (column layout), toggle becomes a row of equal pills */
+    .toggleInBar {
+        flex-direction: row;
+        padding: 12px 12px 4px;
+        min-height: unset;
+        gap: 8px;
+        width: 100%;
+    }
+
+    .togglePillInBar {
+        flex: 1;
+        justify-content: center;
+        font-size: 0.85rem;
+        padding: 8px 12px;
     }
 
     .toggleIcon {

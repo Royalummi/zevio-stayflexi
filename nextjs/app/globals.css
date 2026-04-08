@@ -308,11 +308,10 @@ button {
       var(--brand-navy) 0%,
       var(--brand-navy-dark) 50%,
       var(--brand-navy-darker) 100%);
-  padding: 40px 0 60px 0;
+  padding: 56px 0 72px 0;
   text-align: center;
   isolation: isolate;
   z-index: 1;
-  min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -320,13 +319,13 @@ button {
 
 @media (min-width: 768px) {
   .hero {
-    padding: 72px 0 100px 0;
+    padding: 72px 0 88px 0;
   }
 }
 
 @media (min-width: 1024px) {
   .hero {
-    padding: 100px 0 120px 0;
+    padding: 80px 0 96px 0;
   }
 }
 

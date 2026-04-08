@@ -3,6 +3,7 @@ import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
   Calendar,
+  CalendarDays,
   Home,
   Users,
   CreditCard,
@@ -72,6 +73,7 @@ const DashboardLayout = () => {
         { name: "Refunds", icon: CreditCard, path: "/admin/refunds" },
         { name: "Settlements", icon: Wallet, path: "/admin/settlements" },
         { name: "Properties", icon: Building2, path: "/admin/properties" },
+        { name: "Calendar", icon: CalendarDays, path: "/admin/calendar" },
         {
           name: "Change Requests",
           icon: GitPullRequest,
@@ -95,6 +97,7 @@ const DashboardLayout = () => {
         { name: "Refunds", icon: CreditCard, path: "/admin/refunds" },
         { name: "Settlements", icon: Wallet, path: "/admin/settlements" },
         { name: "Properties", icon: Building2, path: "/admin/properties" },
+        { name: "Calendar", icon: CalendarDays, path: "/admin/calendar" },
         {
           name: "Change Requests",
           icon: GitPullRequest,
@@ -123,6 +126,7 @@ const DashboardLayout = () => {
       vendor: [
         { name: "Dashboard", icon: Home, path: "/vendor/dashboard" },
         { name: "My Properties", icon: Building2, path: "/vendor/properties" },
+        { name: "Calendar", icon: CalendarDays, path: "/vendor/calendar" },
         { name: "Bookings", icon: Calendar, path: "/vendor/bookings" },
         { name: "Settlements", icon: Wallet, path: "/vendor/settlements" },
         { name: "Analytics", icon: BarChart3, path: "/vendor/analytics" },

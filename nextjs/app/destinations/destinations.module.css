@@ -136,6 +136,35 @@
     transform: scale(1.1);
 }
 
+/* ========================================
+   COMING SOON
+   ======================================== */
+
+.comingSoonCard {
+    position: relative;
+}
+
+.comingSoonBadge {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: var(--brand-navy);
+    color: var(--brand-white);
+    padding: 0.5rem 1rem;
+    border-radius: 50px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    z-index: 2;
+    box-shadow: 0 2px 8px rgba(31, 58, 95, 0.3);
+}
+
+/* ========================================
+   DESTINATION OVERLAY
+   ======================================== */
+
 .destinationOverlay {
     position: absolute;
     top: 0;

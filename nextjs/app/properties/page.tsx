@@ -109,6 +109,7 @@ function PropertiesContent() {
     fetchProperties();
   }, [
     filters.city,
+    filters.area,
     filters.checkin,
     filters.checkout,
     filters.guests,
@@ -245,10 +246,13 @@ function PropertiesContent() {
             <div className={styles.emptyIcon}>
               <FiHome />
             </div>
-            <h3 className={styles.emptyTitle}>No Properties Found</h3>
+            <h3 className={styles.emptyTitle}>
+              {filters.area ? "Coming Soon" : "No Properties Found"}
+            </h3>
             <p className={styles.emptyMessage}>
-              We couldn&apos;t find any properties matching your criteria. Try
-              adjusting your filters.
+              {filters.area
+                ? `We're expanding to ${filters.area} soon. Stay tuned for exciting properties in this area!`
+                : "We couldn't find any properties matching your criteria. Try adjusting your filters."}
             </p>
             <button onClick={clearFilters} className={styles.emptyCtaBtn}>
               Clear All Filters

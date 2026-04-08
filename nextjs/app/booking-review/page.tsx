@@ -136,10 +136,13 @@ function BookingReviewContent() {
             // MySQL2 returns DECIMAL columns as strings — parse to avoid NaN in arithmetic
             baseAmount: parseFloat(booking.base_amount) || 0,
             extraGuestCharges: parseFloat(booking.extra_guest_charges) || 0,
-            extraChildrenCharges: parseFloat(booking.extra_children_charges) || 0,
+            extraChildrenCharges:
+              parseFloat(booking.extra_children_charges) || 0,
             gstAmount: parseFloat(booking.gst_amount) || 0,
             totalAmount: parseFloat(booking.total_amount) || 0,
-            pricePerNight: Math.round((parseFloat(booking.base_amount) || 0) / (booking.nights || 1)),
+            pricePerNight: Math.round(
+              (parseFloat(booking.base_amount) || 0) / (booking.nights || 1),
+            ),
             minGuests: booking.min_guests || 2,
             maxGuests: booking.max_guests || 10,
             minChildren: booking.min_children || 0,
@@ -641,9 +644,7 @@ function BookingReviewContent() {
                   />
                 </div>
                 <div className={styles.formGroup}>
-                  <label className={styles.label}>
-                    Phone Number
-                  </label>
+                  <label className={styles.label}>Phone Number</label>
                   <input
                     type="tel"
                     value={phone}

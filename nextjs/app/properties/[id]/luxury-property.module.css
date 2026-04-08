@@ -436,6 +436,31 @@
     flex-wrap: wrap;
 }
 
+.originalPriceRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 2px;
+}
+
+.originalPriceStrike {
+    font-size: 15px;
+    font-weight: 500;
+    color: #9ca3af;
+    text-decoration: line-through;
+}
+
+.discountBadge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    color: #ffffff;
+    background: linear-gradient(135deg, #f97316, #ef4444);
+    border-radius: 4px;
+    padding: 2px 6px;
+    letter-spacing: 0.02em;
+}
+
 .bookingPrice {
     font-size: 24px;
     font-weight: 700;
@@ -969,6 +994,31 @@
     display: flex;
     flex-direction: column;
     gap: 2px;
+}
+
+.mobileOriginalPriceRow {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 1px;
+}
+
+.mobileOriginalPriceStrike {
+    font-size: 12px;
+    font-weight: 500;
+    color: #9ca3af;
+    text-decoration: line-through;
+}
+
+.mobileDiscountBadge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    color: #ffffff;
+    background: linear-gradient(135deg, #f97316, #ef4444);
+    border-radius: 3px;
+    padding: 1px 5px;
+    letter-spacing: 0.02em;
 }
 
 .mobilePriceAmount {

@@ -14,6 +14,7 @@ import db from "../config/database.js";
 export const getPricingSelectClause = (alias = "pr") => {
   return `
     ${alias}.price_per_night,
+    ${alias}.original_price,
     ${alias}.gst_percentage,
     ${alias}.min_guests,
     ${alias}.extra_guest_charge,
@@ -38,6 +39,7 @@ export const getPricingSelectClause = (alias = "pr") => {
 export const getPricingSelectClauseGrouped = (alias = "pr") => {
   return `
     MAX(${alias}.price_per_night) as price_per_night,
+    MAX(${alias}.original_price) as original_price,
     MAX(${alias}.gst_percentage) as gst_percentage,
     MAX(${alias}.min_guests) as min_guests,
     MAX(${alias}.extra_guest_charge) as extra_guest_charge,
@@ -76,6 +78,7 @@ export const getPropertyPricing = async (propertyId) => {
   const [rows] = await db.query(
     `SELECT 
       price_per_night,
+      original_price,
       gst_percentage,
       min_guests,
       extra_guest_charge,
@@ -106,6 +109,7 @@ export const getPropertyPricing = async (propertyId) => {
 export const updatePropertyPricing = async (propertyId, pricingData) => {
   const allowedFields = [
     "price_per_night",
+    "original_price",
     "gst_percentage",
     "min_guests",
     "extra_guest_charge",
@@ -157,6 +161,7 @@ export const createPropertyPricing = async (propertyId, pricingData) => {
 
   const defaults = {
     price_per_night: 0.0,
+    original_price: null,
     gst_percentage: 18.0,
     min_guests: 1,
     extra_guest_charge: 0.0,
@@ -176,16 +181,17 @@ export const createPropertyPricing = async (propertyId, pricingData) => {
 
   await db.query(
     `INSERT INTO property_pricing (
-      id, property_id, price_per_night, gst_percentage, min_guests, extra_guest_charge,
+      id, property_id, price_per_night, original_price, gst_percentage, min_guests, extra_guest_charge,
       min_children, max_children, extra_child_charge, weekly_discount_percent,
       monthly_discount_percent, quarterly_discount_percent, long_term_discount_percent,
       allow_corporate_booking, corporate_discount_percent,
       maintenance_charges
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       id,
       propertyId,
       data.price_per_night,
+      data.original_price,
       data.gst_percentage,
       data.min_guests,
       data.extra_guest_charge,

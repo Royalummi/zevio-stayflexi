@@ -67,6 +67,7 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
     check_in_time: "2:00 PM",
     check_out_time: "11:00 AM",
     price_per_night: "",
+    original_price: "",
     // GST is auto-calculated by backend: 5% if booking ≤₹7,500 | 18% if booking >₹7,500
     status: "draft",
 
@@ -131,7 +132,7 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
     secondary_incharge_alt_contact: "",
 
     // Booking Rules
-    same_day_booking_allowed: false,
+    same_day_booking_allowed: true,
     max_booking_days: null,
 
     // Amenities
@@ -368,6 +369,8 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
           // FIX: Extract pricing fields from nested pricing object
           price_per_night:
             pricing.price_per_night || property.price_per_night || "",
+          original_price:
+            pricing.original_price ?? property.original_price ?? "",
           min_guests: pricing.min_guests || property.min_guests || 1,
           extra_guest_charge:
             pricing.extra_guest_charge || property.extra_guest_charge || 0,
@@ -671,6 +674,16 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
       newErrors.price_per_night = "Valid price (minimum ₹0.01) is required";
     }
 
+    if (
+      formData.original_price &&
+      parseFloat(formData.original_price) > 0 &&
+      parseFloat(formData.original_price) <=
+        parseFloat(formData.price_per_night)
+    ) {
+      newErrors.original_price =
+        "Original Price must be higher than Discounted Price";
+    }
+
     // Discount validation - each discount must be <= 100%
     const discounts = [
       {
@@ -867,6 +880,12 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
       if (payload.price_per_night !== undefined) {
         payload.price_per_night = parseFloat(payload.price_per_night) || 0;
       }
+      if (payload.original_price !== undefined) {
+        payload.original_price =
+          payload.original_price !== "" && payload.original_price !== null
+            ? parseFloat(payload.original_price) || null
+            : null;
+      }
       if (payload.weekly_discount_percent !== undefined) {
         payload.weekly_discount_percent =
           parseFloat(payload.weekly_discount_percent) || 0;
@@ -979,21 +998,12 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
           );
         }
 
-        // Flush staged calendar prices (set before property existed)
-        if (isNewProperty && pendingCalendarPrices.length > 0) {
-          try {
-            const newPropertyId = savedProperty?.id || savedProperty;
-            await api.post(
-              `/admin/properties/${newPropertyId}/calendar-pricing`,
-              {
-                dates: pendingCalendarPrices,
-              },
-            );
-          } catch {
-            toast.warning(
-              "Property saved but calendar pricing could not be saved. Set it in the property edit form.",
-            );
-          }
+        // For new properties, remind admin to set calendar pricing via the dedicated page
+        if (isNewProperty) {
+          toast.info(
+            "Property saved! Set day-wise calendar pricing from the Calendar page in the sidebar.",
+            { duration: 6000 },
+          );
         }
 
         if (onSuccess) onSuccess();
@@ -1481,7 +1491,7 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div className="flex flex-col">
               <label className="text-sm font-medium text-foreground mb-2">
-                Price Per Night (\u20b9) *
+                Discounted Price Per Night (₹) *
               </label>
               <input
                 type="number"
@@ -1495,7 +1505,7 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
                 className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
               <span className="text-xs text-muted-foreground mt-1">
-                Minimum \u20b90.01 per night
+                This is the price guests pay — shown prominently on the listing
               </span>
               {errors.price_per_night && (
                 <span className="text-sm text-destructive mt-1" role="alert">
@@ -1505,32 +1515,74 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
             </div>
 
             <div className="flex flex-col">
-              <div className="flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-800 px-4 py-3 h-full">
-                <svg
-                  className="h-4 w-4 text-blue-600 mt-0.5 shrink-0"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-                <div>
-                  <p className="text-xs font-semibold text-blue-900 dark:text-blue-200">
-                    GST Auto-Calculated
-                  </p>
-                  <p className="text-xs text-blue-800 dark:text-blue-300 mt-0.5">
-                    <strong>5%</strong> GST for bookings ≤ ₹7,500
-                    <br />
-                    <strong>18%</strong> GST for bookings &gt; ₹7,500
-                    <br />
-                    Applied on total booking amount at checkout.
-                  </p>
-                </div>
+              <label className="text-sm font-medium text-foreground mb-2">
+                Original Price Per Night (₹)
+                <span className="ml-1 text-xs font-normal text-muted-foreground">
+                  (shown crossed-out)
+                </span>
+              </label>
+              <input
+                type="number"
+                name="original_price"
+                value={formData.original_price}
+                onChange={handleInputChange}
+                min="0.01"
+                step="0.01"
+                placeholder="e.g. 20000"
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+              />
+              {formData.original_price &&
+              formData.price_per_night &&
+              parseFloat(formData.original_price) >
+                parseFloat(formData.price_per_night) ? (
+                <span className="text-xs text-emerald-600 font-semibold mt-1">
+                  {Math.round(
+                    ((parseFloat(formData.original_price) -
+                      parseFloat(formData.price_per_night)) /
+                      parseFloat(formData.original_price)) *
+                      100,
+                  )}
+                  % off — badge will be shown on listing
+                </span>
+              ) : (
+                <span className="text-xs text-muted-foreground mt-1">
+                  Must be higher than Discounted Price to show a "% off" badge
+                </span>
+              )}
+              {errors.original_price && (
+                <span className="text-sm text-destructive mt-1" role="alert">
+                  {errors.original_price}
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="mb-6">
+            <div className="flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-800 px-4 py-3">
+              <svg
+                className="h-4 w-4 text-blue-600 mt-0.5 shrink-0"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              <div>
+                <p className="text-xs font-semibold text-blue-900 dark:text-blue-200">
+                  GST Auto-Calculated
+                </p>
+                <p className="text-xs text-blue-800 dark:text-blue-300 mt-0.5">
+                  <strong>5%</strong> GST for bookings ≤ ₹7,500
+                  <br />
+                  <strong>18%</strong> GST for bookings &gt; ₹7,500
+                  <br />
+                  Applied on total booking amount at checkout.
+                </p>
               </div>
             </div>
           </div>

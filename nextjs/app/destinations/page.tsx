@@ -1,151 +1,133 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { FiMapPin, FiArrowRight, FiStar } from "react-icons/fi";
+import { FiMapPin, FiArrowRight, FiClock } from "react-icons/fi";
+import { api } from "@/lib/axios";
 import styles from "./destinations.module.css";
 
-const destinations = [
+interface Destination {
+  id: number;
+  name: string;
+  area: string;
+  description: string;
+  image: string;
+  properties: number;
+  highlights: string[];
+  comingSoon?: boolean;
+}
+
+const destinationsData: Destination[] = [
   {
     id: 1,
-    city: "Goa",
-    state: "Goa",
-    description: "Beaches, nightlife, and Portuguese heritage",
+    name: "Nandi Hills",
+    area: "Nandi Hills",
+    description: "Scenic hilltop retreat perfect for sunrise views and weekend getaways",
     image:
-      "https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=800&q=80",
-    properties: 45,
-    rating: 4.8,
-    highlights: ["Beaches", "Water Sports", "Nightlife", "Heritage Sites"],
+      "https://images.unsplash.com/photo-1606145005479-747938dfd432?w=800&q=80",
+    properties: 0,
+    highlights: ["Hilltop Views", "Sunrise Point", "Nature Trails", "Weekend Getaway"],
   },
   {
     id: 2,
-    city: "Udaipur",
-    state: "Rajasthan",
-    description: "City of lakes and royal palaces",
+    name: "Bangalore Airport",
+    area: "Bangalore International Airport",
+    description: "Convenient stays near Kempegowda International Airport for travellers",
     image:
-      "https://images.unsplash.com/photo-1609920658906-8223bd289001?w=800&q=80",
-    properties: 32,
-    rating: 4.9,
-    highlights: ["Lake Views", "Palaces", "Culture", "Romantic Getaways"],
+      "https://images.unsplash.com/photo-1664892843718-186acc045805?w=800&q=80",
+    properties: 0,
+    highlights: ["Airport Proximity", "Transit Stays", "Business Travel", "Connectivity"],
   },
   {
     id: 3,
-    city: "Manali",
-    state: "Himachal Pradesh",
-    description: "Mountain paradise for adventure lovers",
+    name: "Ramanagar",
+    area: "Ramanagar",
+    description: "Adventure hub famous for rocky hills, trekking, and rappelling",
     image:
-      "https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?w=800&q=80",
-    properties: 38,
-    rating: 4.7,
-    highlights: ["Mountains", "Trekking", "Skiing", "Nature"],
+      "https://images.unsplash.com/photo-1675780385252-14b6a7287a22?w=800&q=80",
+    properties: 0,
+    highlights: ["Rock Climbing", "Trekking", "Adventure Sports", "Nature"],
   },
   {
     id: 4,
-    city: "Coorg",
-    state: "Karnataka",
-    description: "Scotland of India with coffee plantations",
+    name: "Koramangala",
+    area: "Koramangala",
+    description: "Vibrant urban neighbourhood with cafes, startups, and nightlife",
     image:
-      "https://images.unsplash.com/photo-1598970434795-0c54fe7c0648?w=800&q=80",
-    properties: 28,
-    rating: 4.8,
-    highlights: ["Coffee Estates", "Waterfalls", "Wildlife", "Trekking"],
+      "https://images.unsplash.com/photo-1708067077797-74f83eaa8231?w=800&q=80",
+    properties: 0,
+    highlights: ["Cafes", "Nightlife", "Shopping", "Urban Living"],
   },
   {
     id: 5,
-    city: "Jaipur",
-    state: "Rajasthan",
-    description: "Pink city with magnificent forts",
+    name: "Whitefield",
+    area: "Whitefield",
+    description: "Thriving tech corridor with modern amenities and green spaces",
     image:
-      "https://images.unsplash.com/photo-1477587458883-47145ed94245?w=800&q=80",
-    properties: 41,
-    rating: 4.7,
-    highlights: ["Forts", "Markets", "Heritage", "Architecture"],
+      "https://images.unsplash.com/photo-1627306036351-036986f292a9?w=800&q=80",
+    properties: 0,
+    highlights: ["Tech Hub", "Modern Living", "Parks", "Corporate Stays"],
   },
   {
     id: 6,
-    city: "Ooty",
-    state: "Tamil Nadu",
-    description: "Queen of hill stations",
+    name: "Electronic City",
+    area: "Electronic City",
+    description: "Major IT hub with excellent connectivity and modern infrastructure",
     image:
-      "https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?w=800&q=80",
-    properties: 35,
-    rating: 4.6,
-    highlights: ["Tea Gardens", "Toy Train", "Hills", "Gardens"],
+      "https://images.unsplash.com/photo-1741769971460-aad286ffe96b?w=800&q=80",
+    properties: 0,
+    highlights: ["IT Corridor", "Business Hub", "Metro Access", "Modern Amenities"],
   },
   {
     id: 7,
-    city: "Rishikesh",
-    state: "Uttarakhand",
-    description: "Yoga capital and adventure hub",
+    name: "Indiranagar",
+    area: "Indiranagar",
+    description: "Upscale neighbourhood known for trendy restaurants and boutiques",
     image:
-      "https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?w=800&q=80",
-    properties: 26,
-    rating: 4.8,
-    highlights: ["Yoga", "Rafting", "Spirituality", "Adventure"],
-  },
-  {
-    id: 8,
-    city: "Shimla",
-    state: "Himachal Pradesh",
-    description: "Colonial charm and scenic beauty",
-    image:
-      "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&q=80",
-    properties: 33,
-    rating: 4.6,
-    highlights: ["Colonial Architecture", "Mall Road", "Hills", "Snow"],
-  },
-  {
-    id: 9,
-    city: "Munnar",
-    state: "Kerala",
-    description: "Tea plantations and misty mountains",
-    image:
-      "https://images.unsplash.com/photo-1593693397690-362cb9666fc2?w=800&q=80",
-    properties: 29,
-    rating: 4.7,
-    highlights: ["Tea Estates", "Waterfalls", "Wildlife", "Honeymoon"],
-  },
-  {
-    id: 10,
-    city: "Alleppey",
-    state: "Kerala",
-    description: "Venice of the East with backwaters",
-    image:
-      "https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?w=800&q=80",
-    properties: 24,
-    rating: 4.8,
-    highlights: ["Houseboats", "Backwaters", "Beach", "Cuisine"],
-  },
-  {
-    id: 11,
-    city: "Lonavala",
-    state: "Maharashtra",
-    description: "Hill station near Mumbai and Pune",
-    image:
-      "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&q=80",
-    properties: 31,
-    rating: 4.5,
-    highlights: ["Waterfalls", "Caves", "Forts", "Weekend Getaway"],
-  },
-  {
-    id: 12,
-    city: "Nainital",
-    state: "Uttarakhand",
-    description: "Lake district of India",
-    image:
-      "https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?w=800&q=80",
-    properties: 27,
-    rating: 4.7,
-    highlights: ["Naini Lake", "Boating", "Hills", "Cable Car"],
+      "https://images.unsplash.com/photo-1737450768947-30d0abebe63e?w=800&q=80",
+    properties: 0,
+    highlights: ["Restaurants", "Boutiques", "Pubs", "Art & Culture"],
+    comingSoon: true,
   },
 ];
 
 export default function DestinationsPage() {
   const router = useRouter();
+  const [destinations, setDestinations] = useState<Destination[]>(destinationsData);
 
-  const handleDestinationClick = (city: string) => {
-    router.push(`/properties?city=${city.toLowerCase()}`);
+  // Fetch dynamic property counts from API
+  useEffect(() => {
+    const fetchAreaCounts = async () => {
+      try {
+        const response = await api.get("/public/areas");
+        const areas = response.data?.data?.areas || [];
+
+        setDestinations((prev) =>
+          prev.map((dest) => {
+            const match = areas.find(
+              (a: { area: string; property_count: number }) =>
+                a.area.toLowerCase() === dest.area.toLowerCase(),
+            );
+            return match
+              ? { ...dest, properties: match.property_count }
+              : dest;
+          }),
+        );
+      } catch (error) {
+        console.error("Error fetching area counts:", error);
+      }
+    };
+
+    fetchAreaCounts();
+  }, []);
+
+  const handleDestinationClick = (destination: Destination) => {
+    if (destination.comingSoon) {
+      router.push(`/properties?area=${encodeURIComponent(destination.area)}`);
+      return;
+    }
+    router.push(`/properties?area=${encodeURIComponent(destination.area)}`);
   };
 
   return (
@@ -155,9 +137,8 @@ export default function DestinationsPage() {
         <div className={styles.heroContent}>
           <h1 className={styles.heroTitle}>Explore Destinations</h1>
           <p className={styles.heroDescription}>
-            Discover luxury villas across India&apos;s most beautiful locations.
-            From serene beaches to majestic mountains, find your perfect
-            getaway.
+            Discover luxury villas and service apartments near Bangalore&apos;s
+            most popular locations, curated for unforgettable stays.
           </p>
         </div>
       </section>
@@ -168,7 +149,7 @@ export default function DestinationsPage() {
           <div className={styles.sectionHeader}>
             <h2 className={styles.sectionTitle}>Popular Destinations</h2>
             <p className={styles.sectionSubtitle}>
-              {destinations.length} incredible destinations across India
+              {destinations.length} destinations near Bangalore
             </p>
           </div>
 
@@ -176,21 +157,28 @@ export default function DestinationsPage() {
             {destinations.map((destination) => (
               <div
                 key={destination.id}
-                className={styles.destinationCard}
-                onClick={() => handleDestinationClick(destination.city)}
+                className={`${styles.destinationCard} ${destination.comingSoon ? styles.comingSoonCard : ""}`}
+                onClick={() => handleDestinationClick(destination)}
               >
                 <div className={styles.destinationImageWrapper}>
                   <Image
                     src={destination.image}
-                    alt={`${destination.city}, ${destination.state}`}
+                    alt={destination.name}
                     width={400}
                     height={300}
                     className={styles.destinationImage}
                     style={{ objectFit: "cover" }}
                   />
+                  {destination.comingSoon && (
+                    <div className={styles.comingSoonBadge}>
+                      <FiClock />
+                      Coming Soon
+                    </div>
+                  )}
                   <div className={styles.destinationOverlay}>
                     <button className={styles.exploreBtn}>
-                      Explore <FiArrowRight />
+                      {destination.comingSoon ? "Coming Soon" : "Explore"}{" "}
+                      <FiArrowRight />
                     </button>
                   </div>
                 </div>
@@ -201,16 +189,12 @@ export default function DestinationsPage() {
                       <FiMapPin className={styles.locationIcon} />
                       <div>
                         <h3 className={styles.destinationCity}>
-                          {destination.city}
+                          {destination.name}
                         </h3>
                         <p className={styles.destinationState}>
-                          {destination.state}
+                          Bengaluru, Karnataka
                         </p>
                       </div>
-                    </div>
-                    <div className={styles.destinationRating}>
-                      <FiStar className={styles.starIcon} />
-                      <span>{destination.rating}</span>
                     </div>
                   </div>
 
@@ -228,7 +212,9 @@ export default function DestinationsPage() {
 
                   <div className={styles.destinationFooter}>
                     <span className={styles.propertiesCount}>
-                      {destination.properties} properties
+                      {destination.comingSoon
+                        ? "Coming Soon"
+                        : `${destination.properties} ${destination.properties === 1 ? "property" : "properties"}`}
                     </span>
                   </div>
                 </div>

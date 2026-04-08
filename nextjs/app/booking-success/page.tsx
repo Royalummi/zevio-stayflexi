@@ -93,7 +93,11 @@ function BookingSuccessContent() {
       <div className={styles.pageContainer}>
         <div className={styles.loadingContainer}>
           <div className={styles.spinner}></div>
-          <p>{verifying ? "Confirming your payment..." : "Loading booking details..."}</p>
+          <p>
+            {verifying
+              ? "Confirming your payment..."
+              : "Loading booking details..."}
+          </p>
         </div>
       </div>
     );
@@ -126,9 +130,14 @@ function BookingSuccessContent() {
             {isConfirmed ? "Booking Confirmed!" : "Payment Pending"}
           </h1>
           <p className={styles.successSubtitle}>
-            {isConfirmed
-              ? <>Your booking has been successfully confirmed. We&apos;ve sent a confirmation email to <strong>{user?.email}</strong></>
-              : "Your payment is being processed. This page will update once confirmation is received."}
+            {isConfirmed ? (
+              <>
+                Your booking has been successfully confirmed. We&apos;ve sent a
+                confirmation email to <strong>{user?.email}</strong>
+              </>
+            ) : (
+              "Your payment is being processed. This page will update once confirmation is received."
+            )}
           </p>
           <p className={styles.bookingId}>
             Booking ID: <strong>{bookingId}</strong>
@@ -203,7 +212,11 @@ function BookingSuccessContent() {
               </p>
               <p className={styles.paymentStatus}>
                 Status:{" "}
-                <span className={isConfirmed ? styles.statusPaid : styles.statusPending}>
+                <span
+                  className={
+                    isConfirmed ? styles.statusPaid : styles.statusPending
+                  }
+                >
                   {isConfirmed ? "Paid" : "Pending"}
                 </span>
               </p>

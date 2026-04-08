@@ -56,6 +56,7 @@ export interface Property {
   pincode: string;
   maps_location?: string; // Google Maps URL for property location
   price_per_night: number;
+  original_price?: number | null; // Rack rate shown crossed-out; null = no discount
   max_guests: number;
   bedrooms: number;
   bathrooms: number;

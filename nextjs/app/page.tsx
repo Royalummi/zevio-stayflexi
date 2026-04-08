@@ -7,24 +7,41 @@ import RecommendedProperties from "@/components/home/RecommendedProperties";
 
 const destinations = [
   {
-    name: "Goa",
+    name: "Nandi Hills",
     image:
-      "https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=800&q=80",
+      "https://images.unsplash.com/photo-1606145005479-747938dfd432?w=800&q=80",
   },
   {
-    name: "Jaipur",
+    name: "Bangalore Airport",
+    area: "Bangalore International Airport",
     image:
-      "https://images.unsplash.com/photo-1477587458883-47145ed94245?w=800&q=80",
+      "https://images.unsplash.com/photo-1664892843718-186acc045805?w=800&q=80",
   },
   {
-    name: "Alibaug",
+    name: "Ramanagar",
     image:
-      "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=800&q=80",
+      "https://images.unsplash.com/photo-1675780385252-14b6a7287a22?w=800&q=80",
   },
   {
-    name: "Lonavala",
+    name: "Koramangala",
     image:
-      "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&q=80",
+      "https://images.unsplash.com/photo-1708067077797-74f83eaa8231?w=800&q=80",
+  },
+  {
+    name: "Whitefield",
+    image:
+      "https://images.unsplash.com/photo-1627306036351-036986f292a9?w=800&q=80",
+  },
+  {
+    name: "Electronic City",
+    image:
+      "https://images.unsplash.com/photo-1741769971460-aad286ffe96b?w=800&q=80",
+  },
+  {
+    name: "Indiranagar",
+    image:
+      "https://images.unsplash.com/photo-1737450768947-30d0abebe63e?w=800&q=80",
+    comingSoon: true,
   },
 ];
 
@@ -49,14 +66,14 @@ export default async function Home() {
           <div className="hero-text">
             <p className="hero-badge">Discover your dream villa with Zevio</p>
             <h1 className="hero-title">
-              Find your perfect{" "}
+              Stay Beyond Ordinary{" "}
               <span
                 className="hero-title-gradient"
                 style={{
                   display: "inline-block",
                 }}
               >
-                getaway
+                Book Your Stay
               </span>
             </h1>
           </div>
@@ -73,7 +90,7 @@ export default async function Home() {
             <span className="section-badge">Top picks</span>
             <h2 className="section-title">Inspiration for your next trip</h2>
             <p className="section-description">
-              Discover villas in India&apos;s most sought-after destinations
+              Discover villas near Bangalore&apos;s most sought-after locations
               curated for unforgettable stays.
             </p>
           </div>
@@ -82,7 +99,7 @@ export default async function Home() {
             {destinations.map((destination) => (
               <Link
                 key={destination.name}
-                href={`/properties?city=${destination.name.toLowerCase()}`}
+                href={`/properties?area=${encodeURIComponent(destination.area || destination.name)}`}
                 className="destination-card"
               >
                 <Image
@@ -92,6 +109,24 @@ export default async function Home() {
                   sizes="(max-width: 768px) 50vw, (max-width: 1200px) 25vw, 280px"
                 />
                 <div className="destination-overlay" />
+                {destination.comingSoon && (
+                  <span
+                    style={{
+                      position: "absolute",
+                      top: "0.75rem",
+                      right: "0.75rem",
+                      background: "#1F3A5F",
+                      color: "#fff",
+                      padding: "0.25rem 0.75rem",
+                      borderRadius: "50px",
+                      fontSize: "0.75rem",
+                      fontWeight: 600,
+                      zIndex: 2,
+                    }}
+                  >
+                    Coming Soon
+                  </span>
+                )}
                 <div className="destination-name">{destination.name}</div>
               </Link>
             ))}
