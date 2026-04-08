@@ -572,6 +572,13 @@ export const updateProperty = asyncHandler(async (req, res) => {
     );
     const currentData = currentProps[0] || {};
 
+    // Fetch current amenities for proper comparison
+    const [currentAmenityRows] = await db.query(
+      `SELECT amenity_id FROM property_amenities WHERE property_id = ?`,
+      [id],
+    );
+    currentData.amenities = currentAmenityRows.map((r) => r.amenity_id);
+
     // Fields that should never be part of a change request
     const skipFields = new Set([
       "id",

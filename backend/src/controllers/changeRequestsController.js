@@ -233,6 +233,7 @@ export const approveChangeRequest = asyncHandler(async (req, res) => {
   // Define which fields belong to which tables
   const pricingFields = new Set([
     "price_per_night",
+    "original_price",
     "gst_percentage",
     "min_guests",
     "extra_guest_charge",
