@@ -23,6 +23,7 @@ import AdminReports from "./pages/admin/AdminReports";
 import PropertyChangeRequests from "./pages/admin/PropertyChangeRequests";
 import CouponManagement from "./pages/admin/CouponManagement";
 import ReviewManagement from "./pages/admin/ReviewManagement";
+import BannerManagement from "./pages/admin/BannerManagement";
 import CancellationPolicies from "./pages/admin/CancellationPolicies";
 import AdminCalendarPricing from "./pages/admin/AdminCalendarPricing";
 import AdminProfile from "./pages/admin/AdminProfile";
@@ -111,6 +112,7 @@ function App() {
           <Route path="users" element={<AdminUsers />} />
           <Route path="coupons" element={<CouponManagement />} />
           <Route path="reviews" element={<ReviewManagement />} />
+          <Route path="banners" element={<BannerManagement />} />
           <Route
             path="cancellation-policies"
             element={<CancellationPolicies />}

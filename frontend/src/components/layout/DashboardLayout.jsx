@@ -28,6 +28,7 @@ import {
   Ticket,
   Star,
   Shield,
+  Megaphone,
 } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
 import { useThemeStore } from "../../store/themeStore";
@@ -86,6 +87,7 @@ const DashboardLayout = () => {
         { name: "Users", icon: Users, path: "/admin/users" },
         { name: "Coupons", icon: Ticket, path: "/admin/coupons" },
         { name: "Reviews", icon: Star, path: "/admin/reviews" },
+        { name: "Banners", icon: Megaphone, path: "/admin/banners" },
         // {
         //   name: "Calendar Pricing",
         //   icon: CalendarDays,
@@ -114,6 +116,7 @@ const DashboardLayout = () => {
         { name: "Users", icon: Users, path: "/admin/users" },
         { name: "Coupons", icon: Ticket, path: "/admin/coupons" },
         { name: "Reviews", icon: Star, path: "/admin/reviews" },
+        { name: "Banners", icon: Megaphone, path: "/admin/banners" },
         // {
         //   name: "Calendar Pricing",
         //   icon: CalendarDays,
