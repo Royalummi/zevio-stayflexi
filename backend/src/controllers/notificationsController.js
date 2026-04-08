@@ -7,11 +7,21 @@ import { asyncHandler, sendSuccess, sendError } from "../utils/response.js";
  * @access  Private
  */
 export const getNotifications = asyncHandler(async (req, res) => {
-  const { id: userId } = req.user;
+  const { id: userId, role } = req.user;
   const { filter } = req.query; // 'all' or 'unread'
+  const isAdmin = role === 'admin' || role === 'super_admin';
 
-  let query = "SELECT * FROM notifications WHERE recipient_id = ?";
-  const params = [userId];
+  let query;
+  let params;
+
+  if (isAdmin) {
+    // Admins see notifications targeted to them by ID, OR role-based admin notifications
+    query = "SELECT * FROM notifications WHERE (recipient_id = ? OR (recipient_role = 'admin' AND (recipient_id IS NULL OR recipient_id = ?)))";
+    params = [userId, userId];
+  } else {
+    query = "SELECT * FROM notifications WHERE recipient_id = ?";
+    params = [userId];
+  }
 
   if (filter === "unread") {
     query += " AND is_read = false";
@@ -36,23 +46,27 @@ export const getNotifications = asyncHandler(async (req, res) => {
  */
 export const markAsRead = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const { id: userId } = req.user;
+  const { id: userId, role } = req.user;
+  const isAdmin = role === 'admin' || role === 'super_admin';
 
-  // Check if notification belongs to user
-  const [notification] = await db.query(
-    "SELECT * FROM notifications WHERE id = ? AND recipient_id = ?",
-    [id, userId],
-  );
+  // Check if notification belongs to user (or is an admin role-based notification)
+  let findQuery, findParams;
+  if (isAdmin) {
+    findQuery = "SELECT * FROM notifications WHERE id = ? AND (recipient_id = ? OR (recipient_role = 'admin' AND recipient_id IS NULL))";
+    findParams = [id, userId];
+  } else {
+    findQuery = "SELECT * FROM notifications WHERE id = ? AND recipient_id = ?";
+    findParams = [id, userId];
+  }
+
+  const [notification] = await db.query(findQuery, findParams);
 
   if (notification.length === 0) {
     return sendError(res, "Notification not found", 404);
   }
 
   // Mark as read
-  await db.query(
-    "UPDATE notifications SET is_read = true WHERE id = ? AND recipient_id = ?",
-    [id, userId],
-  );
+  await db.query("UPDATE notifications SET is_read = true WHERE id = ?", [id]);
 
   sendSuccess(res, null, "Notification marked as read", 200);
 });
@@ -63,12 +77,20 @@ export const markAsRead = asyncHandler(async (req, res) => {
  * @access  Private
  */
 export const markAllAsRead = asyncHandler(async (req, res) => {
-  const { id: userId } = req.user;
+  const { id: userId, role } = req.user;
+  const isAdmin = role === 'admin' || role === 'super_admin';
 
-  await db.query(
-    "UPDATE notifications SET is_read = true WHERE recipient_id = ?",
-    [userId],
-  );
+  if (isAdmin) {
+    await db.query(
+      "UPDATE notifications SET is_read = true WHERE (recipient_id = ? OR (recipient_role = 'admin' AND recipient_id IS NULL))",
+      [userId],
+    );
+  } else {
+    await db.query(
+      "UPDATE notifications SET is_read = true WHERE recipient_id = ?",
+      [userId],
+    );
+  }
 
   sendSuccess(res, null, "All notifications marked as read", 200);
 });
@@ -80,23 +102,25 @@ export const markAllAsRead = asyncHandler(async (req, res) => {
  */
 export const deleteNotification = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const { id: userId } = req.user;
+  const { id: userId, role } = req.user;
+  const isAdmin = role === 'admin' || role === 'super_admin';
 
-  // Check if notification belongs to user
-  const [notification] = await db.query(
-    "SELECT * FROM notifications WHERE id = ? AND recipient_id = ?",
-    [id, userId],
-  );
+  let findQuery, findParams;
+  if (isAdmin) {
+    findQuery = "SELECT * FROM notifications WHERE id = ? AND (recipient_id = ? OR (recipient_role = 'admin' AND recipient_id IS NULL))";
+    findParams = [id, userId];
+  } else {
+    findQuery = "SELECT * FROM notifications WHERE id = ? AND recipient_id = ?";
+    findParams = [id, userId];
+  }
+
+  const [notification] = await db.query(findQuery, findParams);
 
   if (notification.length === 0) {
     return sendError(res, "Notification not found", 404);
   }
 
-  // Delete notification
-  await db.query(
-    "DELETE FROM notifications WHERE id = ? AND recipient_id = ?",
-    [id, userId],
-  );
+  await db.query("DELETE FROM notifications WHERE id = ?", [id]);
 
   sendSuccess(res, null, "Notification deleted successfully", 200);
 });
@@ -107,12 +131,19 @@ export const deleteNotification = asyncHandler(async (req, res) => {
  * @access  Private
  */
 export const getUnreadCount = asyncHandler(async (req, res) => {
-  const { id: userId } = req.user;
+  const { id: userId, role } = req.user;
+  const isAdmin = role === 'admin' || role === 'super_admin';
 
-  const [result] = await db.query(
-    "SELECT COUNT(*) as count FROM notifications WHERE recipient_id = ? AND is_read = false",
-    [userId],
-  );
+  let query, params;
+  if (isAdmin) {
+    query = "SELECT COUNT(*) as count FROM notifications WHERE (recipient_id = ? OR (recipient_role = 'admin' AND (recipient_id IS NULL OR recipient_id = ?))) AND is_read = false";
+    params = [userId, userId];
+  } else {
+    query = "SELECT COUNT(*) as count FROM notifications WHERE recipient_id = ? AND is_read = false";
+    params = [userId];
+  }
+
+  const [result] = await db.query(query, params);
 
   sendSuccess(
     res,

@@ -456,22 +456,15 @@ export const submitProperty = asyncHandler(async (req, res) => {
   // Notify admin (don't let notification failure block response)
   try {
     const notifId = generateUUID();
-    const [admins] = await db.query(
-      `SELECT id FROM admins WHERE role IN ('admin', 'super_admin') AND status = 'active' AND deleted_at IS NULL LIMIT 1`,
+    await db.query(
+      `INSERT INTO notifications (id, recipient_id, recipient_role, title, message, created_at) 
+       VALUES (?, NULL, 'admin', ?, ?, NOW())`,
+      [
+        notifId,
+        "New Property Submission",
+        `New property "${property.title}" submitted for approval by vendor`,
+      ],
     );
-
-    if (admins.length > 0) {
-      await db.query(
-        `INSERT INTO notifications (id, recipient_id, recipient_role, title, message, created_at) 
-         VALUES (?, ?, 'admin', ?, ?, NOW())`,
-        [
-          notifId,
-          admins[0].id,
-          "New Property Submission",
-          `New property "${property.title}" submitted for approval by vendor`,
-        ],
-      );
-    }
   } catch (notifError) {
     console.error("Failed to send notification:", notifError);
     // Continue anyway - notification failure shouldn't block submission
@@ -664,22 +657,15 @@ export const updateProperty = asyncHandler(async (req, res) => {
     // Notify admin (don't let notification failure block response)
     try {
       const notifId = generateUUID();
-      const [admins] = await db.query(
-        `SELECT id FROM admins WHERE role IN ('admin', 'super_admin') AND status = 'active' AND deleted_at IS NULL LIMIT 1`,
+      await db.query(
+        `INSERT INTO notifications (id, recipient_id, recipient_role, title, message, created_at) 
+         VALUES (?, NULL, 'admin', ?, ?, NOW())`,
+        [
+          notifId,
+          "Property Change Request",
+          `Vendor requested changes for property: ${property.title}`,
+        ],
       );
-
-      if (admins.length > 0) {
-        await db.query(
-          `INSERT INTO notifications (id, recipient_id, recipient_role, title, message, created_at) 
-           VALUES (?, ?, 'admin', ?, ?, NOW())`,
-          [
-            notifId,
-            admins[0].id,
-            "Property Change Request",
-            `Vendor requested changes for property: ${property.title}`,
-          ],
-        );
-      }
     } catch (notifError) {
       console.error("Failed to send notification:", notifError);
       // Continue anyway - notification failure shouldn't block change request
