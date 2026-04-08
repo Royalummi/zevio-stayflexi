@@ -78,7 +78,7 @@ export const createBanner = asyncHandler(async (req, res) => {
   const [rows] = await db.query("SELECT * FROM banners WHERE id = ?", [
     bannerId,
   ]);
-  return sendSuccess(res, "Banner created successfully", rows[0], 201);
+  return sendSuccess(res, rows[0], "Banner created successfully", 201);
 });
 
 // ============================================
@@ -113,7 +113,7 @@ export const listBanners = asyncHandler(async (req, res) => {
         u.name  AS created_by_name
      FROM banners b
      LEFT JOIN properties p ON p.id = b.property_id
-     LEFT JOIN users u      ON u.id = b.created_by
+     LEFT JOIN admins u     ON u.id = b.created_by
      ${whereClause}
      ORDER BY b.created_at DESC
      LIMIT ? OFFSET ?`,
@@ -125,7 +125,7 @@ export const listBanners = asyncHandler(async (req, res) => {
     params,
   );
 
-  return sendSuccess(res, "Banners retrieved", {
+  return sendSuccess(res, {
     banners,
     pagination: {
       total,
@@ -133,7 +133,7 @@ export const listBanners = asyncHandler(async (req, res) => {
       limit: Number(limit),
       totalPages: Math.ceil(total / Number(limit)),
     },
-  });
+  }, "Banners retrieved");
 });
 
 // ============================================
@@ -156,7 +156,7 @@ export const getBannerById = asyncHandler(async (req, res) => {
     return sendError(res, "Banner not found", 404);
   }
 
-  return sendSuccess(res, "Banner retrieved", rows[0]);
+  return sendSuccess(res, rows[0], "Banner retrieved");
 });
 
 // ============================================
@@ -233,7 +233,7 @@ export const updateBanner = asyncHandler(async (req, res) => {
     [id],
   );
 
-  return sendSuccess(res, "Banner updated successfully", rows[0]);
+  return sendSuccess(res, rows[0], "Banner updated successfully");
 });
 
 // ============================================
@@ -258,10 +258,10 @@ export const toggleBanner = asyncHandler(async (req, res) => {
     id,
   ]);
 
-  return sendSuccess(res, `Banner ${newStatus ? "activated" : "deactivated"}`, {
+  return sendSuccess(res, {
     id,
     is_active: newStatus === 1,
-  });
+  }, `Banner ${newStatus ? "activated" : "deactivated"}`);
 });
 
 // ============================================
@@ -285,7 +285,7 @@ export const deleteBanner = asyncHandler(async (req, res) => {
     [id],
   );
 
-  return sendSuccess(res, "Banner deleted successfully", { id });
+  return sendSuccess(res, { id }, "Banner deleted successfully");
 });
 
 // ============================================
@@ -315,5 +315,5 @@ export const getActiveBanners = asyncHandler(async (req, res) => {
     [now, now],
   );
 
-  return sendSuccess(res, "Active banners retrieved", banners);
+  return sendSuccess(res, banners, "Active banners retrieved");
 });

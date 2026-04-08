@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -32,13 +33,19 @@ export const verifyRefreshToken = (token) => {
 };
 
 export const generateTokens = (user) => {
-  const payload = {
+  const accessPayload = {
     id: user.id,
     role: user.role,
   };
 
+  const refreshPayload = {
+    id: user.id,
+    role: user.role,
+    jti: crypto.randomUUID(),
+  };
+
   return {
-    accessToken: generateAccessToken(payload),
-    refreshToken: generateRefreshToken(payload),
+    accessToken: generateAccessToken(accessPayload),
+    refreshToken: generateRefreshToken(refreshPayload),
   };
 };
