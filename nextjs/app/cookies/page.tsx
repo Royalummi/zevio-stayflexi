@@ -46,9 +46,7 @@ export default function CookiePolicyPage() {
           <div className={styles.privacySection}>
             <h2 className={styles.sectionTitle}>2. Types of Cookies We Use</h2>
 
-            <h3 className={styles.subsectionTitle}>
-              2.1 Essential Cookies
-            </h3>
+            <h3 className={styles.subsectionTitle}>2.1 Essential Cookies</h3>
             <p>
               These cookies are necessary for the website to function properly.
               They enable core functionality such as security, account
@@ -77,9 +75,7 @@ export default function CookiePolicyPage() {
               <li>Device type, browser, and operating system</li>
             </ul>
 
-            <h3 className={styles.subsectionTitle}>
-              2.3 Functional Cookies
-            </h3>
+            <h3 className={styles.subsectionTitle}>2.3 Functional Cookies</h3>
             <p>
               These cookies remember your preferences and choices to provide a
               more personalized experience.
@@ -108,9 +104,7 @@ export default function CookiePolicyPage() {
           </div>
 
           <div className={styles.privacySection}>
-            <h2 className={styles.sectionTitle}>
-              3. Third-Party Cookies
-            </h2>
+            <h2 className={styles.sectionTitle}>3. Third-Party Cookies</h2>
             <p>
               Some cookies on our site are placed by third-party services we
               use. These may include:
@@ -129,8 +123,8 @@ export default function CookiePolicyPage() {
                 mapping
               </li>
               <li>
-                <strong>Social Media Platforms:</strong> Share buttons and social
-                login functionality
+                <strong>Social Media Platforms:</strong> Share buttons and
+                social login functionality
               </li>
             </ul>
             <p>
@@ -203,9 +197,7 @@ export default function CookiePolicyPage() {
           </div>
 
           <div className={styles.privacySection}>
-            <h2 className={styles.sectionTitle}>
-              6. Updates to This Policy
-            </h2>
+            <h2 className={styles.sectionTitle}>6. Updates to This Policy</h2>
             <p>
               We may update this Cookie Policy from time to time to reflect
               changes in technology, regulation, or our business practices. We

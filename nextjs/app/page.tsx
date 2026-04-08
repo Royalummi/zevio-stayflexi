@@ -18,30 +18,14 @@ const destinations = [
       "https://images.unsplash.com/photo-1664892843718-186acc045805?w=800&q=80",
   },
   {
-    name: "Ramanagar",
-    image:
-      "https://images.unsplash.com/photo-1675780385252-14b6a7287a22?w=800&q=80",
-  },
-  {
-    name: "Koramangala",
-    image:
-      "https://images.unsplash.com/photo-1708067077797-74f83eaa8231?w=800&q=80",
-  },
-  {
     name: "Whitefield",
     image:
       "https://images.unsplash.com/photo-1627306036351-036986f292a9?w=800&q=80",
   },
   {
-    name: "Electronic City",
+    name: "Koramangala",
     image:
-      "https://images.unsplash.com/photo-1741769971460-aad286ffe96b?w=800&q=80",
-  },
-  {
-    name: "Indiranagar",
-    image:
-      "https://images.unsplash.com/photo-1737450768947-30d0abebe63e?w=800&q=80",
-    comingSoon: true,
+      "https://images.unsplash.com/photo-1708067077797-74f83eaa8231?w=800&q=80",
   },
 ];
 
@@ -109,24 +93,6 @@ export default async function Home() {
                   sizes="(max-width: 768px) 50vw, (max-width: 1200px) 25vw, 280px"
                 />
                 <div className="destination-overlay" />
-                {destination.comingSoon && (
-                  <span
-                    style={{
-                      position: "absolute",
-                      top: "0.75rem",
-                      right: "0.75rem",
-                      background: "#1F3A5F",
-                      color: "#fff",
-                      padding: "0.25rem 0.75rem",
-                      borderRadius: "50px",
-                      fontSize: "0.75rem",
-                      fontWeight: 600,
-                      zIndex: 2,
-                    }}
-                  >
-                    Coming Soon
-                  </span>
-                )}
                 <div className="destination-name">{destination.name}</div>
               </Link>
             ))}

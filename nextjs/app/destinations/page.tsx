@@ -23,27 +23,40 @@ const destinationsData: Destination[] = [
     id: 1,
     name: "Nandi Hills",
     area: "Nandi Hills",
-    description: "Scenic hilltop retreat perfect for sunrise views and weekend getaways",
+    description:
+      "Scenic hilltop retreat perfect for sunrise views and weekend getaways",
     image:
       "https://images.unsplash.com/photo-1606145005479-747938dfd432?w=800&q=80",
     properties: 0,
-    highlights: ["Hilltop Views", "Sunrise Point", "Nature Trails", "Weekend Getaway"],
+    highlights: [
+      "Hilltop Views",
+      "Sunrise Point",
+      "Nature Trails",
+      "Weekend Getaway",
+    ],
   },
   {
     id: 2,
     name: "Bangalore Airport",
     area: "Bangalore International Airport",
-    description: "Convenient stays near Kempegowda International Airport for travellers",
+    description:
+      "Convenient stays near Kempegowda International Airport for travellers",
     image:
       "https://images.unsplash.com/photo-1664892843718-186acc045805?w=800&q=80",
     properties: 0,
-    highlights: ["Airport Proximity", "Transit Stays", "Business Travel", "Connectivity"],
+    highlights: [
+      "Airport Proximity",
+      "Transit Stays",
+      "Business Travel",
+      "Connectivity",
+    ],
   },
   {
     id: 3,
     name: "Ramanagar",
     area: "Ramanagar",
-    description: "Adventure hub famous for rocky hills, trekking, and rappelling",
+    description:
+      "Adventure hub famous for rocky hills, trekking, and rappelling",
     image:
       "https://images.unsplash.com/photo-1675780385252-14b6a7287a22?w=800&q=80",
     properties: 0,
@@ -53,7 +66,8 @@ const destinationsData: Destination[] = [
     id: 4,
     name: "Koramangala",
     area: "Koramangala",
-    description: "Vibrant urban neighbourhood with cafes, startups, and nightlife",
+    description:
+      "Vibrant urban neighbourhood with cafes, startups, and nightlife",
     image:
       "https://images.unsplash.com/photo-1708067077797-74f83eaa8231?w=800&q=80",
     properties: 0,
@@ -63,7 +77,8 @@ const destinationsData: Destination[] = [
     id: 5,
     name: "Whitefield",
     area: "Whitefield",
-    description: "Thriving tech corridor with modern amenities and green spaces",
+    description:
+      "Thriving tech corridor with modern amenities and green spaces",
     image:
       "https://images.unsplash.com/photo-1627306036351-036986f292a9?w=800&q=80",
     properties: 0,
@@ -73,17 +88,24 @@ const destinationsData: Destination[] = [
     id: 6,
     name: "Electronic City",
     area: "Electronic City",
-    description: "Major IT hub with excellent connectivity and modern infrastructure",
+    description:
+      "Major IT hub with excellent connectivity and modern infrastructure",
     image:
       "https://images.unsplash.com/photo-1741769971460-aad286ffe96b?w=800&q=80",
     properties: 0,
-    highlights: ["IT Corridor", "Business Hub", "Metro Access", "Modern Amenities"],
+    highlights: [
+      "IT Corridor",
+      "Business Hub",
+      "Metro Access",
+      "Modern Amenities",
+    ],
   },
   {
     id: 7,
     name: "Indiranagar",
     area: "Indiranagar",
-    description: "Upscale neighbourhood known for trendy restaurants and boutiques",
+    description:
+      "Upscale neighbourhood known for trendy restaurants and boutiques",
     image:
       "https://images.unsplash.com/photo-1737450768947-30d0abebe63e?w=800&q=80",
     properties: 0,
@@ -94,7 +116,8 @@ const destinationsData: Destination[] = [
 
 export default function DestinationsPage() {
   const router = useRouter();
-  const [destinations, setDestinations] = useState<Destination[]>(destinationsData);
+  const [destinations, setDestinations] =
+    useState<Destination[]>(destinationsData);
 
   // Fetch dynamic property counts from API
   useEffect(() => {
@@ -109,9 +132,7 @@ export default function DestinationsPage() {
               (a: { area: string; property_count: number }) =>
                 a.area.toLowerCase() === dest.area.toLowerCase(),
             );
-            return match
-              ? { ...dest, properties: match.property_count }
-              : dest;
+            return match ? { ...dest, properties: match.property_count } : dest;
           }),
         );
       } catch (error) {

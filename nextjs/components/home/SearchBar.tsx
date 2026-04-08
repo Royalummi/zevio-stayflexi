@@ -525,405 +525,399 @@ export default function SearchBar() {
         data-testid="search-bar-container"
         className={styles.searchBarModern}
       >
-          <div className={styles.searchWrapper}>
-            {/* ── Property type toggle – always inline inside the pill ── */}
-            <div className={styles.toggleInBar}>
-              <button
-                className={`${styles.togglePillInBar} ${
-                  propertyType === "villas" ? styles.active : ""
-                }`}
-                onClick={() => setPropertyType("villas")}
-                type="button"
-              >
-                <FiHome className={styles.toggleIconInBar} />
-                <span>Villas</span>
-              </button>
-              <button
-                className={`${styles.togglePillInBar} ${
-                  propertyType === "apartments" ? styles.active : ""
-                }`}
-                onClick={() => setPropertyType("apartments")}
-                type="button"
-              >
-                <BsBuilding className={styles.toggleIconInBar} />
-                <span>Apartments</span>
-              </button>
-            </div>
-            <div className={styles.dividerModern} />
-            {/* Destination Field */}
+        {/* ── Property type toggle – always inline inside the pill ── */}
+        <div className={styles.toggleInBar}>
+          <button
+            className={`${styles.togglePillInBar} ${
+              propertyType === "villas" ? styles.active : ""
+            }`}
+            onClick={() => setPropertyType("villas")}
+            type="button"
+          >
+            <FiHome className={styles.toggleIconInBar} />
+            <span>Villas</span>
+          </button>
+          <button
+            className={`${styles.togglePillInBar} ${
+              propertyType === "apartments" ? styles.active : ""
+            }`}
+            onClick={() => setPropertyType("apartments")}
+            type="button"
+          >
+            <BsBuilding className={styles.toggleIconInBar} />
+            <span>Apartments</span>
+          </button>
+        </div>
+        <div className={styles.searchWrapper}>
+          <div className={styles.dividerModern} />
+          {/* Destination Field */}
+          <div
+            className={`${styles.searchFieldModern} ${
+              activeField === "where" ? styles.fieldActive : ""
+            }`}
+            ref={cityDropdownRef}
+          >
             <div
-              className={`${styles.searchFieldModern} ${
-                activeField === "where" ? styles.fieldActive : ""
-              }`}
-              ref={cityDropdownRef}
+              className={styles.fieldInner}
+              onClick={() => {
+                openModal();
+                setShowCityDropdown(true);
+                setActiveField("where");
+                // If a city is already selected, clear the input text so the
+                // full list shows again — user can type to filter or pick a new one
+                if (selectedCity) {
+                  setSearchInput("");
+                }
+                destinationInputRef.current?.focus();
+              }}
             >
-              <div
-                className={styles.fieldInner}
-                onClick={() => {
-                  openModal();
-                  setShowCityDropdown(true);
-                  setActiveField("where");
-                  // If a city is already selected, clear the input text so the
-                  // full list shows again — user can type to filter or pick a new one
-                  if (selectedCity) {
-                    setSearchInput("");
-                  }
-                  destinationInputRef.current?.focus();
-                }}
-              >
-                <FiMapPin className={styles.fieldIcon} />
-                <div className={styles.fieldTextWrapper}>
-                  <label className={styles.fieldLabelModern}>Location</label>
-                  <input
-                    ref={destinationInputRef}
-                    type="text"
-                    className={styles.fieldInputModern}
-                    placeholder="City or area"
-                    value={searchInput}
-                    onChange={(e) => {
-                      setSearchInput(e.target.value);
-                      setShowCityDropdown(true);
-                      setActiveField("where");
-                    }}
-                    onKeyDown={handleKeyDown}
-                  />
-                </div>
-                {searchInput && (
-                  <button
-                    className={styles.clearBtnModern}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      clearCity();
-                    }}
-                  >
-                    <FiX />
-                  </button>
-                )}
+              <FiMapPin className={styles.fieldIcon} />
+              <div className={styles.fieldTextWrapper}>
+                <label className={styles.fieldLabelModern}>Location</label>
+                <input
+                  ref={destinationInputRef}
+                  type="text"
+                  className={styles.fieldInputModern}
+                  placeholder="City or area"
+                  value={searchInput}
+                  onChange={(e) => {
+                    setSearchInput(e.target.value);
+                    setShowCityDropdown(true);
+                    setActiveField("where");
+                  }}
+                  onKeyDown={handleKeyDown}
+                />
               </div>
+              {searchInput && (
+                <button
+                  className={styles.clearBtnModern}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    clearCity();
+                  }}
+                >
+                  <FiX />
+                </button>
+              )}
+            </div>
 
-              {/* City Dropdown */}
-              {showCityDropdown && (
-                <div className={styles.dropdownModern}>
-                  {sortedCitiesForNav.length === 0 ? (
-                    <div className={styles.dropdownEmptyModern}>
-                      <FiMapPin className={styles.emptyIcon} />
-                      <div>Coming Soon</div>
-                      <div className={styles.emptySubtitle}>
-                        We&apos;re not in this area yet, but stay tuned!
-                      </div>
+            {/* City Dropdown */}
+            {showCityDropdown && (
+              <div className={styles.dropdownModern}>
+                {sortedCitiesForNav.length === 0 ? (
+                  <div className={styles.dropdownEmptyModern}>
+                    <FiMapPin className={styles.emptyIcon} />
+                    <div>Coming Soon</div>
+                    <div className={styles.emptySubtitle}>
+                      We&apos;re not in this area yet, but stay tuned!
                     </div>
-                  ) : (
-                    <div className={styles.dropdownListModern}>
-                      {renderList.map((city, i) => {
-                        /* City / area item */
-                        void i;
-                        const navIndex = sortedCitiesForNav.indexOf(city);
-                        const isSelected =
-                          selectedCity?.id === city.id &&
-                          (selectedCity?.area ?? "") === (city.area ?? "");
-                        return (
-                          <div
-                            key={
-                              city.area ? `${city.id}-${city.area}` : city.id
-                            }
-                            className={`${styles.dropdownItemModern} ${
-                              navIndex === selectedIndex
-                                ? styles.itemHighlighted
-                                : ""
-                            } ${isSelected ? styles.itemSelected : ""}`}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              selectCity(city);
-                            }}
-                          >
-                            <div className={styles.itemIconWrapper}>
-                              {city.area ? (
-                                <FiNavigation
-                                  className={styles.itemIconModern}
-                                />
-                              ) : (
-                                <FiMapPin className={styles.itemIconModern} />
-                              )}
+                  </div>
+                ) : (
+                  <div className={styles.dropdownListModern}>
+                    {renderList.map((city, i) => {
+                      /* City / area item */
+                      void i;
+                      const navIndex = sortedCitiesForNav.indexOf(city);
+                      const isSelected =
+                        selectedCity?.id === city.id &&
+                        (selectedCity?.area ?? "") === (city.area ?? "");
+                      return (
+                        <div
+                          key={city.area ? `${city.id}-${city.area}` : city.id}
+                          className={`${styles.dropdownItemModern} ${
+                            navIndex === selectedIndex
+                              ? styles.itemHighlighted
+                              : ""
+                          } ${isSelected ? styles.itemSelected : ""}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            selectCity(city);
+                          }}
+                        >
+                          <div className={styles.itemIconWrapper}>
+                            {city.area ? (
+                              <FiNavigation className={styles.itemIconModern} />
+                            ) : (
+                              <FiMapPin className={styles.itemIconModern} />
+                            )}
+                          </div>
+                          <div className={styles.itemText}>
+                            <div className={styles.itemTitleModern}>
+                              {city.area ? city.area : city.name}
                             </div>
-                            <div className={styles.itemText}>
-                              <div className={styles.itemTitleModern}>
-                                {city.area ? city.area : city.name}
-                              </div>
-                              <div className={styles.itemSubtitleModern}>
-                                {city.area
-                                  ? `${city.city || city.name}, ${city.state}`
-                                  : city.state}
-                              </div>
+                            <div className={styles.itemSubtitleModern}>
+                              {city.area
+                                ? `${city.city || city.name}, ${city.state}`
+                                : city.state}
                             </div>
                           </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Vertical Divider */}
-            <div className={styles.dividerModern} />
-
-            {/* Single Dates Field - Shows side-by-side calendars */}
-            <div
-              className={`${styles.searchFieldModern} ${
-                activeField === "dates" ? styles.fieldActive : ""
-              }`}
-              ref={datesDropdownRef}
-            >
-              <div
-                className={styles.fieldInner}
-                onClick={() => {
-                  openModal();
-                  setShowDatesDropdown(true);
-                  setActiveField("dates");
-                }}
-              >
-                <FiCalendar className={styles.fieldIcon} />
-                <div className={styles.fieldTextWrapper}>
-                  <label className={styles.fieldLabelModern}>
-                    {propertyType === "villas" ? "Dates" : "Duration"}
-                  </label>
-                  <div className={styles.fieldValueModern}>
-                    {propertyType === "villas"
-                      ? checkin && checkout
-                        ? `${checkin.toLocaleDateString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                          })} - ${checkout.toLocaleDateString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                          })}`
-                        : "Select dates"
-                      : moveInDate && moveOutDate
-                        ? `${moveInDate.toLocaleDateString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                          })} - ${moveOutDate.toLocaleDateString("en-US", {
-                            month: "short",
-                          })}`
-                        : "Select dates"}
+                        </div>
+                      );
+                    })}
                   </div>
-                </div>
+                )}
               </div>
-
-              {/* Dates Dropdown — desktop only; mobile is portaled to body */}
-              {showDatesDropdown && !isMobile && (
-                <div
-                  className={`${styles.dropdownModern} ${styles.datesDropdownModern}`}
-                >
-                  {propertyType === "villas" ? (
-                    <DateRangeSelector
-                      checkIn={checkin}
-                      checkOut={checkout}
-                      onCheckInChange={(date) => {
-                        setCheckin(date);
-                      }}
-                      onCheckOutChange={(date) => {
-                        setCheckout(date);
-                        if (checkin && date) {
-                          setShowDatesDropdown(false);
-                          setActiveField(null);
-                        }
-                      }}
-                      minDate={new Date()}
-                      calendarOnly={true}
-                      isOpen={showDatesDropdown}
-                      onOpenChange={setShowDatesDropdown}
-                    />
-                  ) : (
-                    <DateRangeSelector
-                      checkIn={moveInDate}
-                      checkOut={moveOutDate}
-                      onCheckInChange={(date) => {
-                        setMoveInDate(date);
-                      }}
-                      onCheckOutChange={(date) => {
-                        setMoveOutDate(date);
-                        if (moveInDate && date) {
-                          setShowDatesDropdown(false);
-                          setActiveField(null);
-                        }
-                      }}
-                      minDate={new Date()}
-                      calendarOnly={true}
-                      isOpen={showDatesDropdown}
-                      onOpenChange={setShowDatesDropdown}
-                    />
-                  )}
-                  {((propertyType === "villas" && (checkin || checkout)) ||
-                    (propertyType === "apartments" &&
-                      (moveInDate || moveOutDate))) && (
-                    <div className={styles.calendarFooter}>
-                      <button
-                        type="button"
-                        className={styles.clearDatesBtn}
-                        onClick={() => {
-                          if (propertyType === "villas") {
-                            setCheckin(null);
-                            setCheckout(null);
-                          } else {
-                            setMoveInDate(null);
-                            setMoveOutDate(null);
-                          }
-                        }}
-                      >
-                        Clear dates
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Vertical Divider */}
-            <div className={styles.dividerModern} />
-
-            {/* Guests Field */}
-            <div
-              className={`${styles.searchFieldModern} ${styles.fieldWithButton} ${
-                activeField === "guests" ? styles.fieldActive : ""
-              }`}
-              ref={guestsDropdownRef}
-            >
-              <div
-                className={styles.fieldInner}
-                onClick={() => {
-                  openModal();
-                  setShowGuestsDropdown(!showGuestsDropdown);
-                  setActiveField("guests");
-                }}
-              >
-                <FiUsers className={styles.fieldIcon} />
-                <div className={styles.fieldTextWrapper}>
-                  <label className={styles.fieldLabelModern}>Guests</label>
-                  <div className={styles.fieldValueModern}>
-                    {adults + children}{" "}
-                    {adults + children === 1 ? "Guest" : "Guests"}
-                    {infants > 0 &&
-                      `, ${infants} ${infants === 1 ? "Infant" : "Infants"}`}
-                  </div>
-                </div>
-              </div>
-
-              {/* Search Button */}
-              <button className={styles.searchBtnModern} onClick={handleSearch}>
-                <FiSearch className={styles.searchIcon} />
-                <span className={styles.searchText}>Search</span>
-              </button>
-
-              {/* Guests Dropdown */}
-              {showGuestsDropdown && (
-                <div
-                  className={`${styles.dropdownModern} ${styles.guestsDropdownModern}`}
-                >
-                  {/* Adults Counter */}
-                  <div className={styles.guestsControlModern}>
-                    <div className={styles.guestsInfoModern}>
-                      <div className={styles.guestsLabelModern}>Adults</div>
-                      <div className={styles.guestsSublabelModern}>Age 13+</div>
-                    </div>
-                    <div className={styles.guestsCounter}>
-                      <button
-                        className={styles.counterBtn}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setAdults(Math.max(1, adults - 1));
-                        }}
-                        disabled={adults <= 1}
-                      >
-                        −
-                      </button>
-                      <span className={styles.counterValue}>{adults}</span>
-                      <button
-                        className={styles.counterBtn}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setAdults(Math.min(16, adults + 1));
-                        }}
-                        disabled={adults >= 16}
-                      >
-                        +
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Divider */}
-                  <div className={styles.guestsDivider} />
-
-                  {/* Children Counter */}
-                  <div className={styles.guestsControlModern}>
-                    <div className={styles.guestsInfoModern}>
-                      <div className={styles.guestsLabelModern}>Children</div>
-                      <div className={styles.guestsSublabelModern}>
-                        Ages 2-12
-                      </div>
-                    </div>
-                    <div className={styles.guestsCounter}>
-                      <button
-                        className={styles.counterBtn}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setChildren(Math.max(0, children - 1));
-                        }}
-                        disabled={children <= 0}
-                      >
-                        −
-                      </button>
-                      <span className={styles.counterValue}>{children}</span>
-                      <button
-                        className={styles.counterBtn}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setChildren(Math.min(10, children + 1));
-                        }}
-                        disabled={children >= 10}
-                      >
-                        +
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Divider */}
-                  <div className={styles.guestsDivider} />
-
-                  {/* Infants Counter */}
-                  <div className={styles.guestsControlModern}>
-                    <div className={styles.guestsInfoModern}>
-                      <div className={styles.guestsLabelModern}>Infants</div>
-                      <div className={styles.guestsSublabelModern}>Under 2</div>
-                    </div>
-                    <div className={styles.guestsCounter}>
-                      <button
-                        className={styles.counterBtn}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setInfants(Math.max(0, infants - 1));
-                        }}
-                        disabled={infants <= 0}
-                      >
-                        −
-                      </button>
-                      <span className={styles.counterValue}>{infants}</span>
-                      <button
-                        className={styles.counterBtn}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setInfants(Math.min(5, infants + 1));
-                        }}
-                        disabled={infants >= 5}
-                      >
-                        +
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
+            )}
           </div>
+
+          {/* Vertical Divider */}
+          <div className={styles.dividerModern} />
+
+          {/* Single Dates Field - Shows side-by-side calendars */}
+          <div
+            className={`${styles.searchFieldModern} ${
+              activeField === "dates" ? styles.fieldActive : ""
+            }`}
+            ref={datesDropdownRef}
+          >
+            <div
+              className={styles.fieldInner}
+              onClick={() => {
+                openModal();
+                setShowDatesDropdown(true);
+                setActiveField("dates");
+              }}
+            >
+              <FiCalendar className={styles.fieldIcon} />
+              <div className={styles.fieldTextWrapper}>
+                <label className={styles.fieldLabelModern}>
+                  {propertyType === "villas" ? "Dates" : "Duration"}
+                </label>
+                <div className={styles.fieldValueModern}>
+                  {propertyType === "villas"
+                    ? checkin && checkout
+                      ? `${checkin.toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                        })} - ${checkout.toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                        })}`
+                      : "Select dates"
+                    : moveInDate && moveOutDate
+                      ? `${moveInDate.toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                        })} - ${moveOutDate.toLocaleDateString("en-US", {
+                          month: "short",
+                        })}`
+                      : "Select dates"}
+                </div>
+              </div>
+            </div>
+
+            {/* Dates Dropdown — desktop only; mobile is portaled to body */}
+            {showDatesDropdown && !isMobile && (
+              <div
+                className={`${styles.dropdownModern} ${styles.datesDropdownModern}`}
+              >
+                {propertyType === "villas" ? (
+                  <DateRangeSelector
+                    checkIn={checkin}
+                    checkOut={checkout}
+                    onCheckInChange={(date) => {
+                      setCheckin(date);
+                    }}
+                    onCheckOutChange={(date) => {
+                      setCheckout(date);
+                      if (checkin && date) {
+                        setShowDatesDropdown(false);
+                        setActiveField(null);
+                      }
+                    }}
+                    minDate={new Date()}
+                    calendarOnly={true}
+                    isOpen={showDatesDropdown}
+                    onOpenChange={setShowDatesDropdown}
+                  />
+                ) : (
+                  <DateRangeSelector
+                    checkIn={moveInDate}
+                    checkOut={moveOutDate}
+                    onCheckInChange={(date) => {
+                      setMoveInDate(date);
+                    }}
+                    onCheckOutChange={(date) => {
+                      setMoveOutDate(date);
+                      if (moveInDate && date) {
+                        setShowDatesDropdown(false);
+                        setActiveField(null);
+                      }
+                    }}
+                    minDate={new Date()}
+                    calendarOnly={true}
+                    isOpen={showDatesDropdown}
+                    onOpenChange={setShowDatesDropdown}
+                  />
+                )}
+                {((propertyType === "villas" && (checkin || checkout)) ||
+                  (propertyType === "apartments" &&
+                    (moveInDate || moveOutDate))) && (
+                  <div className={styles.calendarFooter}>
+                    <button
+                      type="button"
+                      className={styles.clearDatesBtn}
+                      onClick={() => {
+                        if (propertyType === "villas") {
+                          setCheckin(null);
+                          setCheckout(null);
+                        } else {
+                          setMoveInDate(null);
+                          setMoveOutDate(null);
+                        }
+                      }}
+                    >
+                      Clear dates
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Vertical Divider */}
+          <div className={styles.dividerModern} />
+
+          {/* Guests Field */}
+          <div
+            className={`${styles.searchFieldModern} ${styles.fieldWithButton} ${
+              activeField === "guests" ? styles.fieldActive : ""
+            }`}
+            ref={guestsDropdownRef}
+          >
+            <div
+              className={styles.fieldInner}
+              onClick={() => {
+                openModal();
+                setShowGuestsDropdown(!showGuestsDropdown);
+                setActiveField("guests");
+              }}
+            >
+              <FiUsers className={styles.fieldIcon} />
+              <div className={styles.fieldTextWrapper}>
+                <label className={styles.fieldLabelModern}>Guests</label>
+                <div className={styles.fieldValueModern}>
+                  {adults + children}{" "}
+                  {adults + children === 1 ? "Guest" : "Guests"}
+                  {infants > 0 &&
+                    `, ${infants} ${infants === 1 ? "Infant" : "Infants"}`}
+                </div>
+              </div>
+            </div>
+
+            {/* Search Button */}
+            <button className={styles.searchBtnModern} onClick={handleSearch}>
+              <FiSearch className={styles.searchIcon} />
+              <span className={styles.searchText}>Search</span>
+            </button>
+
+            {/* Guests Dropdown */}
+            {showGuestsDropdown && (
+              <div
+                className={`${styles.dropdownModern} ${styles.guestsDropdownModern}`}
+              >
+                {/* Adults Counter */}
+                <div className={styles.guestsControlModern}>
+                  <div className={styles.guestsInfoModern}>
+                    <div className={styles.guestsLabelModern}>Adults</div>
+                    <div className={styles.guestsSublabelModern}>Age 13+</div>
+                  </div>
+                  <div className={styles.guestsCounter}>
+                    <button
+                      className={styles.counterBtn}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setAdults(Math.max(1, adults - 1));
+                      }}
+                      disabled={adults <= 1}
+                    >
+                      −
+                    </button>
+                    <span className={styles.counterValue}>{adults}</span>
+                    <button
+                      className={styles.counterBtn}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setAdults(Math.min(16, adults + 1));
+                      }}
+                      disabled={adults >= 16}
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+
+                {/* Divider */}
+                <div className={styles.guestsDivider} />
+
+                {/* Children Counter */}
+                <div className={styles.guestsControlModern}>
+                  <div className={styles.guestsInfoModern}>
+                    <div className={styles.guestsLabelModern}>Children</div>
+                    <div className={styles.guestsSublabelModern}>Ages 2-12</div>
+                  </div>
+                  <div className={styles.guestsCounter}>
+                    <button
+                      className={styles.counterBtn}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setChildren(Math.max(0, children - 1));
+                      }}
+                      disabled={children <= 0}
+                    >
+                      −
+                    </button>
+                    <span className={styles.counterValue}>{children}</span>
+                    <button
+                      className={styles.counterBtn}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setChildren(Math.min(10, children + 1));
+                      }}
+                      disabled={children >= 10}
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+
+                {/* Divider */}
+                <div className={styles.guestsDivider} />
+
+                {/* Infants Counter */}
+                <div className={styles.guestsControlModern}>
+                  <div className={styles.guestsInfoModern}>
+                    <div className={styles.guestsLabelModern}>Infants</div>
+                    <div className={styles.guestsSublabelModern}>Under 2</div>
+                  </div>
+                  <div className={styles.guestsCounter}>
+                    <button
+                      className={styles.counterBtn}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setInfants(Math.max(0, infants - 1));
+                      }}
+                      disabled={infants <= 0}
+                    >
+                      −
+                    </button>
+                    <span className={styles.counterValue}>{infants}</span>
+                    <button
+                      className={styles.counterBtn}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setInfants(Math.min(5, infants + 1));
+                      }}
+                      disabled={infants >= 5}
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* ── Mobile calendar portal ────────────────────────────────────────
