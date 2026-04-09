@@ -330,20 +330,28 @@ export const getPropertyById = asyncHandler(async (req, res) => {
     [id],
   );
   if (guidelinesRows.length > 0) {
-    Object.assign(property, guidelinesRows[0]);
+    // Prefer properties columns, fall back to property_guidelines table
+    const gl = guidelinesRows[0];
+    property.safety_information = property.safety_information || gl.safety_information || "";
+    property.local_area_info = property.local_area_info || gl.local_area_info || "";
+    property.emergency_contacts = property.emergency_contacts || gl.emergency_contacts || "";
   }
 
-  // Parse JSON fields
+  // Parse JSON fields (with double-encode fallback)
   if (property.house_rules) {
     try {
-      property.house_rules = JSON.parse(property.house_rules);
+      let parsed = JSON.parse(property.house_rules);
+      if (typeof parsed === "string") parsed = JSON.parse(parsed);
+      property.house_rules = parsed;
     } catch (e) {
       property.house_rules = {};
     }
   }
   if (property.cancellation_policy) {
     try {
-      property.cancellation_policy = JSON.parse(property.cancellation_policy);
+      let parsed = JSON.parse(property.cancellation_policy);
+      if (typeof parsed === "string") parsed = JSON.parse(parsed);
+      property.cancellation_policy = parsed;
     } catch (e) {
       property.cancellation_policy = {};
     }
@@ -826,6 +834,30 @@ export const updateProperty = asyncHandler(async (req, res) => {
       `UPDATE properties SET ${updateFields.join(", ")} WHERE id = ?`,
       params,
     );
+  }
+
+  // Sync property_guidelines table if guideline fields were updated
+  const guidelineFields = ["safety_information", "local_area_info", "emergency_contacts"];
+  const updatedGuidelines = {};
+  guidelineFields.forEach((f) => {
+    if (updates[f] !== undefined) {
+      updatedGuidelines[f] = richTextFields.includes(f) && updates[f] ? sanitizeRichText(updates[f]) : (updates[f] || "");
+    }
+  });
+  if (Object.keys(updatedGuidelines).length > 0) {
+    const [existingGL] = await db.query(
+      `SELECT id FROM property_guidelines WHERE property_id = ?`,
+      [id],
+    );
+    if (existingGL.length > 0) {
+      const glFields = Object.keys(updatedGuidelines).map((f) => `${f} = ?`);
+      const glParams = Object.values(updatedGuidelines);
+      glParams.push(id);
+      await db.query(
+        `UPDATE property_guidelines SET ${glFields.join(", ")} WHERE property_id = ?`,
+        glParams,
+      );
+    }
   }
 
   // Merge top-level pricing fields with nested pricing object

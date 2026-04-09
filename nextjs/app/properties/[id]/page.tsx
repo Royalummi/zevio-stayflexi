@@ -1280,8 +1280,9 @@ function PropertyDetailContent() {
                           <span>No Outside Visitors</span>
                         </div>
                       )}
-                      {(property.house_rules as Record<string, unknown>)
-                        .pet_friendly === true ? (
+                      {((property.house_rules as Record<string, unknown>)
+                        .pet_friendly === true || (property.house_rules as Record<string, unknown>)
+                        .pets_allowed === true) ? (
                         <div
                           className={`${luxuryStyles.houseRuleItem} ${luxuryStyles.houseRuleAllow}`}
                         >
@@ -1290,8 +1291,9 @@ function PropertyDetailContent() {
                           </span>
                           <span>Pets Allowed</span>
                         </div>
-                      ) : (property.house_rules as Record<string, unknown>)
-                          .pet_friendly === false ? (
+                      ) : ((property.house_rules as Record<string, unknown>)
+                          .pet_friendly === false || (property.house_rules as Record<string, unknown>)
+                          .pets_allowed === false) ? (
                         <div
                           className={`${luxuryStyles.houseRuleItem} ${luxuryStyles.houseRuleDeny}`}
                         >
@@ -1350,16 +1352,16 @@ function PropertyDetailContent() {
                 )}
 
               {/* Cancellation Policy */}
-              {property.cancellation_policy && (
+              {property.cancellation_policy &&
+                typeof property.cancellation_policy === "object" && (
                 <section className={luxuryStyles.aboutSectionLuxury}>
                   <h2 className={luxuryStyles.sectionTitleLuxury}>
                     <FiAlertCircle /> Cancellation Policy
                   </h2>
-                  {property.cancellation_policy &&
-                    Array.isArray(
-                      (property.cancellation_policy as Record<string, unknown>)
-                        .tiers,
-                    ) && (
+                  {Array.isArray(
+                    (property.cancellation_policy as Record<string, unknown>)
+                      .tiers,
+                  ) ? (
                       <div className={luxuryStyles.cancelTiersList}>
                         {(
                           (
@@ -1398,7 +1400,63 @@ function PropertyDetailContent() {
                           </div>
                         ))}
                       </div>
-                    )}
+                  ) : (
+                    /* Flat cancellation policy format from admin/vendor forms */
+                    <div className={luxuryStyles.cancelTiersList}>
+                      {Boolean((property.cancellation_policy as Record<string, unknown>).policy_type) && (
+                        <div className={luxuryStyles.cancelTierItem}>
+                          <div className={luxuryStyles.cancelTierLabel}>
+                            {String((property.cancellation_policy as Record<string, unknown>).policy_type)} Policy
+                          </div>
+                        </div>
+                      )}
+                      {Boolean((property.cancellation_policy as Record<string, unknown>).free_cancellation_text) && (
+                        <div className={luxuryStyles.cancelTierItem}>
+                          <div className={luxuryStyles.cancelTierLabel}>
+                            Free Cancellation
+                          </div>
+                          <div className={luxuryStyles.cancelTierDetails}>
+                            <span className={luxuryStyles.cancelTierDays}>
+                              {String((property.cancellation_policy as Record<string, unknown>).free_cancellation_text)}
+                            </span>
+                            <span className={`${luxuryStyles.cancelTierRefund} ${luxuryStyles.refundFull}`}>
+                              100% Refund
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                      {Boolean((property.cancellation_policy as Record<string, unknown>).partial_refund_text) && (
+                        <div className={luxuryStyles.cancelTierItem}>
+                          <div className={luxuryStyles.cancelTierLabel}>
+                            Partial Refund
+                          </div>
+                          <div className={luxuryStyles.cancelTierDetails}>
+                            <span className={luxuryStyles.cancelTierDays}>
+                              {String((property.cancellation_policy as Record<string, unknown>).partial_refund_text)}
+                            </span>
+                            <span className={`${luxuryStyles.cancelTierRefund} ${luxuryStyles.refundPartial}`}>
+                              {String((property.cancellation_policy as Record<string, unknown>).partial_refund_percentage || 50)}% Refund
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                      {Boolean((property.cancellation_policy as Record<string, unknown>).no_refund_text) && (
+                        <div className={luxuryStyles.cancelTierItem}>
+                          <div className={luxuryStyles.cancelTierLabel}>
+                            No Refund
+                          </div>
+                          <div className={luxuryStyles.cancelTierDetails}>
+                            <span className={luxuryStyles.cancelTierDays}>
+                              {String((property.cancellation_policy as Record<string, unknown>).no_refund_text)}
+                            </span>
+                            <span className={`${luxuryStyles.cancelTierRefund} ${luxuryStyles.refundNone}`}>
+                              0% Refund
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </section>
               )}
 

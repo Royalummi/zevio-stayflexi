@@ -331,18 +331,22 @@ export const getPropertyDetails = asyncHandler(async (req, res) => {
       ? property.amenities.split(", ")
       : [];
     property.photos = property.photos ? JSON.parse(property.photos) : [];
-    // Parse house_rules if it exists
-    property.house_rules = property.house_rules
-      ? typeof property.house_rules === "string"
-        ? JSON.parse(property.house_rules)
-        : property.house_rules
-      : null;
-    // Parse cancellation_policy if it exists
-    property.cancellation_policy = property.cancellation_policy
-      ? typeof property.cancellation_policy === "string"
-        ? JSON.parse(property.cancellation_policy)
-        : property.cancellation_policy
-      : null;
+    // Parse house_rules if it exists (with double-encode fallback)
+    if (property.house_rules && typeof property.house_rules === "string") {
+      let parsed = JSON.parse(property.house_rules);
+      if (typeof parsed === "string") parsed = JSON.parse(parsed);
+      property.house_rules = parsed;
+    } else if (!property.house_rules) {
+      property.house_rules = null;
+    }
+    // Parse cancellation_policy if it exists (with double-encode fallback)
+    if (property.cancellation_policy && typeof property.cancellation_policy === "string") {
+      let parsed = JSON.parse(property.cancellation_policy);
+      if (typeof parsed === "string") parsed = JSON.parse(parsed);
+      property.cancellation_policy = parsed;
+    } else if (!property.cancellation_policy) {
+      property.cancellation_policy = null;
+    }
   } catch (error) {
     property.amenities = [];
     property.photos = [];

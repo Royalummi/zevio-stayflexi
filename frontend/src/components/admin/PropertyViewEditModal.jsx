@@ -368,6 +368,46 @@ const PropertyViewEditModal = ({
   // Try to parse a JSON-stringified policy field into readable key-value pairs
   const renderPolicyContent = (raw) => {
     if (!raw) return null;
+
+    // If already a parsed object, render key/value pairs directly
+    if (typeof raw === "object" && !Array.isArray(raw)) {
+      const entries = Object.entries(raw).filter(
+        ([, v]) =>
+          v !== "" &&
+          v !== null &&
+          v !== undefined &&
+          !(Array.isArray(v) && v.length === 0),
+      );
+      if (entries.length > 0) {
+        return (
+          <div className="space-y-2">
+            {entries.map(([k, v]) => {
+              const label = k
+                .replace(/_/g, " ")
+                .replace(/\b\w/g, (c) => c.toUpperCase());
+              const display =
+                typeof v === "boolean"
+                  ? v
+                    ? "Yes"
+                    : "No"
+                  : Array.isArray(v)
+                    ? v.join(", ")
+                    : String(v);
+              return (
+                <div key={k} className="flex items-start gap-2">
+                  <span className="text-gray-500 dark:text-gray-400 min-w-[140px] shrink-0">
+                    {label}:
+                  </span>
+                  <span className="font-medium">{display}</span>
+                </div>
+              );
+            })}
+          </div>
+        );
+      }
+      return null;
+    }
+
     let str = typeof raw === "string" ? raw : String(raw);
     // Strip wrapping quotes if double-encoded
     if (str.startsWith('"') && str.endsWith('"')) {
