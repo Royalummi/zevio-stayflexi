@@ -208,7 +208,7 @@ function BookingSuccessContent() {
             <div className={styles.detailSection}>
               <h3 className={styles.detailSectionTitle}>Payment</h3>
               <p className={styles.amountPaid}>
-                ₹{(booking.total_amount || 0).toLocaleString("en-IN")}
+                ₹{parseFloat(String(booking.total_amount || 0)).toLocaleString("en-IN")}
               </p>
               <p className={styles.paymentStatus}>
                 Status:{" "}

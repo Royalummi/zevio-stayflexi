@@ -620,7 +620,15 @@ function ServiceApartmentDetailContent() {
       extraChildCharge: Number(property!.extra_child_charge) || 0,
     });
 
-    router.push("/booking-review");
+    const queryParams = new URLSearchParams({
+      propertyId: property!.id,
+      checkIn: formatDateForAPI(checkIn!),
+      checkOut: formatDateForAPI(checkOut!),
+      adults: adults.toString(),
+      children: children.toString(),
+      propertyType: "service-apartment",
+    });
+    router.push(`/booking-review?${queryParams.toString()}`);
   };
 
   if (loading) {
@@ -957,7 +965,7 @@ function ServiceApartmentDetailContent() {
                         <div className={styles.infoLabel}>Maintenance Fee</div>
                         <div className={styles.infoValue}>
                           ₹
-                          {(property.maintenance_charges || 0).toLocaleString()}
+                          {parseFloat(String(property.maintenance_charges || 0)).toLocaleString("en-IN")}
                         </div>
                         <div className={styles.infoNote}>
                           One-time maintenance charge
@@ -1030,9 +1038,7 @@ function ServiceApartmentDetailContent() {
                           0 ? (
                           <div className={styles.infoNote}>
                             Extra charge: ₹
-                            {(
-                              property.extra_child_charge || 0
-                            ).toLocaleString()}{" "}
+                            {parseFloat(String(property.extra_child_charge || 0)).toLocaleString("en-IN")}{" "}
                             per child per night
                           </div>
                         ) : (
@@ -1372,7 +1378,7 @@ function ServiceApartmentDetailContent() {
           <div className={styles.priceHeader}>
             <div>
               <span className={styles.price}>
-                ₹{(property.price_per_night || 0).toLocaleString("en-IN")}
+                ₹{parseFloat(String(property.price_per_night || 0)).toLocaleString("en-IN")}
               </span>
               <span className={styles.perNight}>/ night</span>
             </div>
@@ -1508,12 +1514,12 @@ function ServiceApartmentDetailContent() {
                 <span>
                   ₹
                   {property
-                    ? (property.price_per_night || 0).toLocaleString("en-IN")
+                    ? parseFloat(String(property.price_per_night || 0)).toLocaleString("en-IN")
                     : "0"}{" "}
                   × {priceBreakdown.nights || 0} nights
                 </span>
                 <span>
-                  ₹{(priceBreakdown.base_total || 0).toLocaleString("en-IN")}
+                  ₹{parseFloat(String(priceBreakdown.base_total || 0)).toLocaleString("en-IN")}
                 </span>
               </div>
 
@@ -1529,9 +1535,7 @@ function ServiceApartmentDetailContent() {
                     </span>
                     <span>
                       -₹
-                      {(
-                        priceBreakdown.long_stay_discount.amount || 0
-                      ).toLocaleString("en-IN")}
+                      {parseFloat(String(priceBreakdown.long_stay_discount.amount || 0)).toLocaleString("en-IN")}
                     </span>
                   </div>
                 )}
@@ -1546,9 +1550,7 @@ function ServiceApartmentDetailContent() {
                     <span>Corporate discount</span>
                     <span>
                       -₹
-                      {(
-                        priceBreakdown.corporate_discount.amount || 0
-                      ).toLocaleString("en-IN")}
+                      {parseFloat(String(priceBreakdown.corporate_discount.amount || 0)).toLocaleString("en-IN")}
                     </span>
                   </div>
                 )}
@@ -1556,14 +1558,14 @@ function ServiceApartmentDetailContent() {
               <div className={styles.breakdownRow}>
                 <span>GST (18%)</span>
                 <span>
-                  ₹{(priceBreakdown.gst_amount || 0).toLocaleString("en-IN")}
+                  ₹{parseFloat(String(priceBreakdown.gst_amount || 0)).toLocaleString("en-IN")}
                 </span>
               </div>
 
               <div className={styles.breakdownTotal}>
                 <span>Total</span>
                 <span>
-                  ₹{(priceBreakdown.total_amount || 0).toLocaleString("en-IN")}
+                  ₹{parseFloat(String(priceBreakdown.total_amount || 0)).toLocaleString("en-IN")}
                 </span>
               </div>
             </div>
@@ -1593,9 +1595,9 @@ function ServiceApartmentDetailContent() {
                   )}{" "}
                   nights · ₹
                   {priceBreakdown
-                    ? (priceBreakdown.total_amount || 0).toLocaleString("en-IN")
+                    ? parseFloat(String(priceBreakdown.total_amount || 0)).toLocaleString("en-IN")
                     : (
-                        (property.price_per_night || 0) *
+                        parseFloat(String(property.price_per_night || 0)) *
                         Math.ceil(
                           (checkOut.getTime() - checkIn.getTime()) /
                             (1000 * 60 * 60 * 24),
@@ -1617,7 +1619,7 @@ function ServiceApartmentDetailContent() {
             ) : (
               <>
                 <div className={styles.mobilePriceAmount}>
-                  ₹{(property.price_per_night || 0).toLocaleString("en-IN")}
+                  ₹{parseFloat(String(property.price_per_night || 0)).toLocaleString("en-IN")}
                 </div>
                 <div className={styles.mobilePriceLabel}>per night</div>
               </>

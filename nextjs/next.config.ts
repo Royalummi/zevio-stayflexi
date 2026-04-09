@@ -38,6 +38,14 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
+        hostname: "api.zevio.in",
+      },
+      {
+        protocol: "https",
+        hostname: "zevio.in",
+      },
+      {
+        protocol: "https",
         hostname: "pub-6c324d7c9f5e49859e5016309646ff83.r2.dev",
       },
       {

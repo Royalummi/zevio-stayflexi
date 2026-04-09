@@ -877,7 +877,7 @@ export default function BookingsEnhanced() {
                       <div className={styles.detailContent}>
                         <p className={styles.detailLabel}>Total Amount</p>
                         <p className={styles.detailValueLarge}>
-                          ₹{(booking.total_amount || 0).toLocaleString("en-IN")}
+                          ₹{parseFloat(String(booking.total_amount || 0)).toLocaleString("en-IN")}
                         </p>
                       </div>
                     </div>
@@ -933,12 +933,8 @@ export default function BookingsEnhanced() {
                         {booking.status === "confirmed" && (
                           <button
                             className={`${styles.actionBtn} ${styles.actionBtnDanger}`}
-                            onClick={() => {
-                              setToast({
-                                message: "Cancellation feature coming soon!",
-                                type: "success",
-                              });
-                            }}
+                            disabled
+                            title="Cancellation requests can be made by contacting support"
                           >
                             <FiXCircle size={16} />
                             Request Cancellation

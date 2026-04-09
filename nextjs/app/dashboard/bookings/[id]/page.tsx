@@ -276,6 +276,9 @@ export default function BookingDetailsPage() {
     );
   };
 
+  const fmt = (v: unknown) =>
+    parseFloat(String(v || 0)).toLocaleString("en-IN");
+
   const getPaymentStatusBadge = (status: string) => {
     const statusConfig: Record<string, { label: string; statusClass: string }> =
       {
@@ -432,7 +435,7 @@ export default function BookingDetailsPage() {
                 {booking.payment_status === "completed" ? "Paid" : "Payment"}
               </p>
               <p className={styles.timelineStepDate}>
-                    ₹{(booking.total_amount || 0).toLocaleString("en-IN")}
+                      ₹{fmt(booking.total_amount)}
               </p>
             </div>
           </div>
@@ -644,13 +647,11 @@ export default function BookingDetailsPage() {
               <div className={styles.priceItem}>
                 <span className={styles.priceLabel}>
                   ₹
-                  {(
-                    (booking.base_amount || 0) / (booking.nights || 1)
-                  ).toLocaleString("en-IN")}{" "}
+                  {fmt((booking.base_amount || 0) / (booking.nights || 1))}{" "}
                   x {booking.nights} nights
                 </span>
                 <span className={styles.priceValue}>
-                  ₹{(booking.base_amount || 0).toLocaleString("en-IN")}
+                  ₹{fmt(booking.base_amount)}
                 </span>
               </div>
 
@@ -658,7 +659,7 @@ export default function BookingDetailsPage() {
                 <div className={styles.priceItem}>
                   <span className={styles.priceLabel}>Extra Guests</span>
                   <span className={styles.priceValue}>
-                    ₹{(booking.extra_guest_charges || 0).toLocaleString("en-IN")}
+                    ₹{fmt(booking.extra_guest_charges)}
                   </span>
                 </div>
               )}
@@ -667,7 +668,7 @@ export default function BookingDetailsPage() {
                 <div className={styles.priceItem}>
                   <span className={styles.priceLabel}>Extra Children</span>
                   <span className={styles.priceValue}>
-                    ₹{(booking.extra_children_charges || 0).toLocaleString("en-IN")}
+                    ₹{fmt(booking.extra_children_charges)}
                   </span>
                 </div>
               )}
@@ -678,7 +679,7 @@ export default function BookingDetailsPage() {
                     Discount ({booking.coupon_code})
                   </span>
                   <span className={styles.priceValue}>
-                    -₹{(booking.discount_amount || 0).toLocaleString("en-IN")}
+                    -₹{fmt(booking.discount_amount)}
                   </span>
                 </div>
               )}
@@ -686,15 +687,15 @@ export default function BookingDetailsPage() {
               <div className={styles.priceItem}>
                 <span className={styles.priceLabel}>GST (18%)</span>
                 <span className={styles.priceValue}>
-                  ₹{(booking.gst_amount || 0).toLocaleString("en-IN")}
+                  ₹{fmt(booking.gst_amount)}
                 </span>
               </div>
 
-              {(booking.service_charge || 0) > 0 && (
+              {parseFloat(String(booking.service_charge || 0)) > 0 && (
                 <div className={styles.priceItem}>
                   <span className={styles.priceLabel}>Service Charge (5%)</span>
                   <span className={styles.priceValue}>
-                    ₹{(booking.service_charge || 0).toLocaleString("en-IN")}
+                    ₹{fmt(booking.service_charge)}
                   </span>
                 </div>
               )}
@@ -704,7 +705,7 @@ export default function BookingDetailsPage() {
               <div className={`${styles.priceItem} ${styles.priceTotal}`}>
                 <span className={styles.priceLabel}>Total Amount</span>
                 <span className={styles.priceValue}>
-                  ₹{(booking.total_amount || 0).toLocaleString("en-IN")}
+                  ₹{fmt(booking.total_amount)}
                 </span>
               </div>
             </div>
@@ -776,19 +777,37 @@ export default function BookingDetailsPage() {
                   onClick={async () => {
                     try {
                       const res = await api.get(
-                        `/payments/invoice/${booking.id}/pdf`,
-                        { responseType: "blob" },
+                        `/payments/invoice/${booking.id}`,
                       );
-                      const url = window.URL.createObjectURL(
-                        new Blob([res.data], { type: "application/pdf" }),
-                      );
-                      const link = document.createElement("a");
-                      link.href = url;
-                      link.download = `Zevio_Invoice_${booking.id.substring(0, 8).toUpperCase()}.pdf`;
-                      link.click();
-                      window.URL.revokeObjectURL(url);
+                      const inv = res.data?.data?.invoice || res.data?.data;
+                      const invoiceWindow = window.open("", "_blank");
+                      if (invoiceWindow) {
+                        invoiceWindow.document.write(`
+                          <html><head><title>Invoice #${inv?.invoice_number || booking.invoice?.invoice_number}</title>
+                          <style>body{font-family:Arial,sans-serif;padding:40px;max-width:600px;margin:auto}
+                          h1{color:#1a1a2e}table{width:100%;border-collapse:collapse;margin:20px 0}
+                          td,th{padding:10px;border:1px solid #ddd;text-align:left}
+                          .total{font-weight:bold;font-size:1.1em}hr{margin:20px 0}</style></head>
+                          <body>
+                            <h1>Zevio - Tax Invoice</h1>
+                            <p><strong>Invoice #:</strong> ${inv?.invoice_number || booking.invoice?.invoice_number}</p>
+                            <p><strong>Booking ID:</strong> ${booking.id.substring(0, 8).toUpperCase()}</p>
+                            <p><strong>Property:</strong> ${booking.property_title}</p>
+                            <p><strong>Check-in:</strong> ${booking.check_in} &nbsp; <strong>Check-out:</strong> ${booking.check_out}</p>
+                            <hr/>
+                            <table><tr><th>Description</th><th>Amount</th></tr>
+                              <tr><td>Base amount</td><td>₹${fmt(booking.base_amount)}</td></tr>
+                              <tr><td>GST (18%)</td><td>₹${fmt(booking.gst_amount)}</td></tr>
+                              ${parseFloat(String(booking.service_charge || 0)) > 0 ? `<tr><td>Service Charge (5%)</td><td>₹${fmt(booking.service_charge)}</td></tr>` : ""}
+                              <tr class="total"><td><strong>Total</strong></td><td><strong>₹${fmt(booking.total_amount)}</strong></td></tr>
+                            </table>
+                            <p style="color:#666;font-size:0.9em">Thank you for booking with Zevio. This is a computer-generated invoice.</p>
+                            <script>window.print()</script>
+                          </body></html>`);
+                        invoiceWindow.document.close();
+                      }
                     } catch {
-                      alert("Failed to download invoice. Please try again.");
+                      alert("Failed to load invoice. Please contact support.");
                     }
                   }}
                   className={`${styles.actionButton} ${styles.downloadButton}`}
@@ -859,7 +878,7 @@ export default function BookingDetailsPage() {
               </div>
               <div className={styles.paymentRight}>
                 <p className={styles.paymentAmount}>
-                  ₹{(booking.payments[0].amount || 0).toLocaleString("en-IN")}
+                  ₹{fmt(booking.payments[0].amount)}
                 </p>
                 {getPaymentStatusBadge(booking.payments[0].status)}
               </div>
@@ -893,7 +912,7 @@ export default function BookingDetailsPage() {
                     </div>
                     <div className={styles.paymentRight}>
                       <p className={styles.paymentAmount}>
-                        ₹{(payment.amount || 0).toLocaleString("en-IN")}
+                        ₹{fmt(payment.amount)}
                       </p>
                       {getPaymentStatusBadge(payment.status)}
                     </div>

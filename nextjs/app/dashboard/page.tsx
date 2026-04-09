@@ -411,7 +411,7 @@ export default function Dashboard() {
                         <div>
                           <p className={styles.detailLabel}>Total Amount</p>
                           <p className={styles.detailValueLarge}>
-                            ₹{(booking.total_amount || 0).toLocaleString("en-IN")}
+                            ₹{parseFloat(String(booking.total_amount || 0)).toLocaleString("en-IN")}
                           </p>
                         </div>
                       </div>

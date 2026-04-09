@@ -181,8 +181,13 @@ function BookingReviewContent() {
       return;
     }
 
-    // Only redirect if no booking data AND not currently fetching
-    if (!bookingData && !fetchingBooking && !searchParams.get("bookingId")) {
+    // Only redirect if no booking data AND not currently fetching AND no recovery params
+    if (
+      !bookingData &&
+      !fetchingBooking &&
+      !searchParams.get("bookingId") &&
+      !searchParams.get("propertyId")
+    ) {
       toast.error("No booking data found");
       router.push("/");
       return;

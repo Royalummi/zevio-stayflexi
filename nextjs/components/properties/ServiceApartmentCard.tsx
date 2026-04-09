@@ -173,7 +173,7 @@ export default function ServiceApartmentCard({
         {/* Discount Badge */}
         {monthlyDiscount > 0 && (
           <div className={styles.discountBadge}>
-            {monthlyDiscount}% off monthly
+            {Math.round(parseFloat(String(monthlyDiscount)))}% off monthly
           </div>
         )}
 
@@ -191,11 +191,17 @@ export default function ServiceApartmentCard({
         <div className={styles.header}>
           <h3 className={styles.title}>{property.title}</h3>
           <div className={styles.rating}>
-            <FiStar className={styles.starIcon} />
-            <span className={styles.ratingValue}>{property.rating}</span>
-            <span className={styles.reviewsCount}>
-              ({property.reviews_count || property.total_reviews || 0})
-            </span>
+            {(property.rating || 0) > 0 ? (
+              <>
+                <FiStar className={styles.starIcon} />
+                <span className={styles.ratingValue}>{property.rating}</span>
+                <span className={styles.reviewsCount}>
+                  ({property.reviews_count || property.total_reviews || 0})
+                </span>
+              </>
+            ) : (
+              <span className={styles.reviewsCount}>No reviews yet</span>
+            )}
           </div>
         </div>
 
@@ -263,10 +269,10 @@ export default function ServiceApartmentCard({
             <>
               <div className={styles.corporatePricing}>
                 <span className={styles.originalPrice}>
-                  ₹{(property.price_per_night || 0).toLocaleString("en-IN")}
+                  ₹{parseFloat(String(property.price_per_night || 0)).toLocaleString("en-IN")}
                 </span>
                 <span className={styles.price}>
-                  ₹{(corporatePricing.discountedPrice || 0).toLocaleString("en-IN")}
+                  ₹{parseFloat(String(corporatePricing.discountedPrice || 0)).toLocaleString("en-IN")}
                 </span>
                 <span className={styles.perNight}>/ night</span>
               </div>
@@ -277,7 +283,7 @@ export default function ServiceApartmentCard({
           ) : (
             <div className={styles.priceMain}>
               <span className={styles.price}>
-                ₹{(property.price_per_night || 0).toLocaleString("en-IN")}
+                ₹{parseFloat(String(property.price_per_night || 0)).toLocaleString("en-IN")}
               </span>
               <span className={styles.perNight}>/ night</span>
             </div>
