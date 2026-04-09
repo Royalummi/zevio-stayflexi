@@ -491,6 +491,9 @@ async function handlePaymentSuccess(data) {
   const order = data.order;
   const payment = data.payment;
   const orderId = order.order_id;
+  const bookingId = orderId.includes("_")
+    ? orderId.substring(0, orderId.lastIndexOf("_"))
+    : orderId;
   const paymentId = payment.cf_payment_id;
   const amount = parseFloat(order.order_amount);
 
@@ -504,7 +507,7 @@ async function handlePaymentSuccess(data) {
     // Find booking by order ID (order_id = booking_id in our system)
     const [bookings] = await connection.query(
       "SELECT * FROM bookings WHERE id = ? AND deleted_at IS NULL",
-      [orderId],
+      [bookingId],
     );
 
     if (bookings.length === 0) {
@@ -540,19 +543,19 @@ async function handlePaymentSuccess(data) {
     // Update payment status
     await connection.query(
       'UPDATE payments SET status = "success", gateway_payment_id = ? WHERE booking_id = ?',
-      [paymentId, orderId],
+      [paymentId, bookingId],
     );
 
     // Update booking status
     await connection.query(
       'UPDATE bookings SET status = "confirmed" WHERE id = ?',
-      [orderId],
+      [bookingId],
     );
 
     // Generate invoice if not exists
     const [existingInvoices] = await connection.query(
       "SELECT id FROM invoices WHERE booking_id = ?",
-      [orderId],
+      [bookingId],
     );
 
     if (existingInvoices.length === 0) {
@@ -567,7 +570,7 @@ async function handlePaymentSuccess(data) {
         "INSERT INTO invoices (id, booking_id, user_id, base_amount, gst_amount, total_amount, invoice_type) VALUES (?, ?, ?, ?, ?, ?, ?)",
         [
           invoiceId,
-          orderId,
+          bookingId,
           booking.user_id,
           calculatedBaseAmount,
           booking.gst_amount,
@@ -585,7 +588,7 @@ async function handlePaymentSuccess(data) {
         booking.user_id,
         "user",
         "Booking Confirmed via Webhook",
-        `Your booking has been confirmed. Booking ID: ${orderId}`,
+        `Your booking has been confirmed. Booking ID: ${bookingId}`,
       ],
     );
 
@@ -603,16 +606,16 @@ async function handlePaymentSuccess(data) {
           properties[0].vendor_id,
           "vendor",
           "New Booking Received",
-          `You have a new booking. Booking ID: ${orderId}`,
+          `You have a new booking. Booking ID: ${bookingId}`,
         ],
       );
     }
 
     await connection.commit();
-    console.log(`✅ Booking ${orderId} confirmed via webhook`);
+    console.log(`✅ Booking ${bookingId} confirmed via webhook`);
 
     // Send email asynchronously
-    sendBookingConfirmationEmail(orderId).catch((err) =>
+    sendBookingConfirmationEmail(bookingId).catch((err) =>
       console.error("Email sending failed:", err),
     );
   } catch (error) {
@@ -630,6 +633,9 @@ async function handlePaymentSuccess(data) {
 async function handlePaymentFailed(data) {
   const order = data.order;
   const orderId = order.order_id;
+  const bookingId = orderId.includes("_")
+    ? orderId.substring(0, orderId.lastIndexOf("_"))
+    : orderId;
 
   console.log(`❌ Payment failed for order ${orderId}`);
 
@@ -637,7 +643,7 @@ async function handlePaymentFailed(data) {
     // Update payment status to failed
     await db.query(
       'UPDATE payments SET status = "failed" WHERE booking_id = ?',
-      [orderId],
+      [bookingId],
     );
 
     console.log(`✅ Payment status updated to failed`);

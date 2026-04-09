@@ -11,6 +11,7 @@
  */
 
 import { Cashfree, CFEnvironment } from "cashfree-pg";
+import crypto from "crypto";
 
 // Initialize Cashfree with constructor
 const cashfree = new Cashfree(
@@ -83,8 +84,6 @@ export const createOrder = async (orderData) => {
  */
 export const verifyWebhookSignature = (signature, timestamp, body) => {
   try {
-    const crypto = require("crypto");
-
     // Construct the signed string
     const signedString = timestamp + JSON.stringify(body);
 
