@@ -24,8 +24,8 @@ export const calculateBookingAmount = (
   // Base amount: use pre-computed calendar total if provided, else flat rate
   const baseAmount =
     precomputedBaseAmount !== null
-      ? precomputedBaseAmount
-      : pricePerNight * nights;
+      ? parseFloat(precomputedBaseAmount) || 0
+      : (parseFloat(pricePerNight) || 0) * nights;
 
   // Calculate extra guest charges
   let extraGuestCharges = 0;

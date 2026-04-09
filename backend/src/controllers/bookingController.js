@@ -20,6 +20,8 @@ const getCalendarBaseAmount = async (
 ) => {
   const start = new Date(checkIn);
   const end = new Date(checkOut);
+  // Coerce to number — mysql2 returns DECIMAL columns as strings
+  const basePrice = parseFloat(pricePerNight) || 0;
 
   // Fetch any calendar price overrides for this range
   const [calendarRows] = await db.query(
@@ -42,7 +44,7 @@ const getCalendarBaseAmount = async (
   const cursor = new Date(start);
   while (cursor < end) {
     const key = cursor.toISOString().slice(0, 10); // YYYY-MM-DD
-    total += calendarMap[key] !== undefined ? calendarMap[key] : pricePerNight;
+    total += calendarMap[key] !== undefined ? calendarMap[key] : basePrice;
     cursor.setDate(cursor.getDate() + 1);
   }
 
