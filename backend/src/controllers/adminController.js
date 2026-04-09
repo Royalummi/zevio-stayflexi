@@ -854,6 +854,26 @@ export const getPropertyDetails = asyncHandler(async (req, res) => {
 
   const property = properties[0];
 
+  // Parse JSON fields (handles double-encoded legacy data)
+  if (property.house_rules) {
+    try {
+      let parsed = JSON.parse(property.house_rules);
+      if (typeof parsed === 'string') parsed = JSON.parse(parsed);
+      property.house_rules = parsed;
+    } catch (e) {
+      property.house_rules = {};
+    }
+  }
+  if (property.cancellation_policy) {
+    try {
+      let parsed = JSON.parse(property.cancellation_policy);
+      if (typeof parsed === 'string') parsed = JSON.parse(parsed);
+      property.cancellation_policy = parsed;
+    } catch (e) {
+      property.cancellation_policy = {};
+    }
+  }
+
   // Parse photos JSON to images array
   if (property.photos) {
     try {
