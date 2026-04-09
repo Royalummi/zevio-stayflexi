@@ -521,7 +521,7 @@ function PropertyDetailContent() {
         extraGuestCharges: priceBreakdown.extraGuestCharges,
         extraChildrenCharges: priceBreakdown.extraChildrenCharges,
         gstAmount: priceBreakdown.gstAmount,
-        serviceChargeAmount: priceBreakdown.serviceChargeAmount,
+        serviceCharge: priceBreakdown.serviceChargeAmount,
         totalAmount: priceBreakdown.totalAmount,
         pricePerNight: Number(property.price_per_night),
         minGuests: propertyPricing.min_guests,
