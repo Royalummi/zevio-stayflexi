@@ -283,7 +283,7 @@ export default function Dashboard() {
                         {booking.city_name && (
                           <div className={styles.bookingLocation}>
                             <FiMapPin size={14} />
-                            {booking.city_name}, {booking.city_state}
+                            {booking.city_name}{booking.city_state ? `, ${booking.city_state}` : ""}
                           </div>
                         )}
                       </div>
@@ -411,7 +411,7 @@ export default function Dashboard() {
                         <div>
                           <p className={styles.detailLabel}>Total Amount</p>
                           <p className={styles.detailValueLarge}>
-                            ₹{(booking.total_amount || 0).toLocaleString()}
+                            ₹{(booking.total_amount || 0).toLocaleString("en-IN")}
                           </p>
                         </div>
                       </div>

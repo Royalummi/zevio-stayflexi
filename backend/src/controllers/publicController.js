@@ -100,6 +100,7 @@ export const getProperties = asyncHandler(async (req, res) => {
     WHERE p.status = 'approved' 
     AND p.deleted_at IS NULL
     AND p.property_type_id = 'pt-001'
+    AND COALESCE(pr.price_per_night, 0) > 0
   `;
 
   const params = [];
@@ -166,6 +167,7 @@ export const getProperties = asyncHandler(async (req, res) => {
     WHERE p.status = 'approved' 
     AND p.deleted_at IS NULL
     AND p.property_type_id = 'pt-001'
+    AND COALESCE(pr.price_per_night, 0) > 0
   `;
 
   if (city) {

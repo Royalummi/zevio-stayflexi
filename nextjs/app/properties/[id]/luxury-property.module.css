@@ -816,7 +816,7 @@
     border: 1px solid var(--brand-border-light);
     transition: all 0.25s ease;
     position: relative;
-    overflow: hidden;
+    overflow: visible;
 }
 
 .statCardLuxury::before {

@@ -544,6 +544,15 @@ export default function DateRangeSelector({
             </button>
           </div>
 
+          {/* Selection hint */}
+          <div className={styles.selectionHint}>
+            {!checkIn
+              ? "Select check-in date"
+              : !checkOut
+                ? "Select check-out date"
+                : `${formatDisplayDate(checkIn)} → ${formatDisplayDate(checkOut)}`}
+          </div>
+
           {/* Days of week header */}
           <div className={styles.daysOfWeek}>
             {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (

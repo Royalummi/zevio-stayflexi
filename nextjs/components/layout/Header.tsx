@@ -100,7 +100,7 @@ export default function Header() {
                   aria-expanded={showUserMenu}
                 >
                   <FiUser size={18} />
-                  <span>{user.full_name}</span>
+                  <span>{user.full_name?.split(" ")[0]}</span>
                 </button>
 
                 {showUserMenu && (
@@ -212,7 +212,7 @@ export default function Header() {
                       onClick={closeMobileMenu}
                     >
                       <FiUser size={18} />
-                      <span>{user.full_name}</span>
+                      <span>{user.full_name?.split(" ")[0]}</span>
                     </Link>
                     <button
                       onClick={() => {

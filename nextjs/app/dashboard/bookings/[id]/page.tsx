@@ -38,6 +38,7 @@ interface BookingDetails {
   extra_guest_charges: number;
   extra_children_charges: number;
   gst_amount: number;
+  service_charge: number;
   total_amount: number;
   discount_amount: number;
   coupon_code?: string;
@@ -48,10 +49,10 @@ interface BookingDetails {
   expires_at?: string; // SESSION 31: 12-hour expiry timestamp
   payments: Array<{
     id: string;
-    payment_id: string;
+    gateway_payment_id: string;
     amount: number;
     status: string;
-    payment_method: string;
+    gateway: string;
     created_at: string;
   }>;
   invoice?: {
@@ -286,6 +287,10 @@ export default function BookingDetailsPage() {
           label: "Paid",
           statusClass: "paid",
         },
+        success: {
+          label: "Paid",
+          statusClass: "paid",
+        },
         failed: {
           label: "Failed",
           statusClass: "failed",
@@ -366,7 +371,8 @@ export default function BookingDetailsPage() {
             </div>
             <div className={styles.statusBadgeContainer}>
               {getStatusBadge(booking.status)}
-              {getPaymentStatusBadge(booking.payment_status)}
+              {/* Only show payment badge when booking is not yet confirmed/completed */}
+              {booking.status !== "confirmed" && booking.status !== "completed" && getPaymentStatusBadge(booking.payment_status)}
               {/* SESSION 31: Countdown Timer Badge for Pending Bookings */}
               {(booking.status === "pending" ||
                 booking.status === "pending_payment") &&
@@ -426,7 +432,7 @@ export default function BookingDetailsPage() {
                 {booking.payment_status === "completed" ? "Paid" : "Payment"}
               </p>
               <p className={styles.timelineStepDate}>
-                ₹{(booking.total_amount || 0).toLocaleString()}
+                    ₹{(booking.total_amount || 0).toLocaleString("en-IN")}
               </p>
             </div>
           </div>
@@ -640,11 +646,11 @@ export default function BookingDetailsPage() {
                   ₹
                   {(
                     (booking.base_amount || 0) / (booking.nights || 1)
-                  ).toLocaleString()}{" "}
+                  ).toLocaleString("en-IN")}{" "}
                   x {booking.nights} nights
                 </span>
                 <span className={styles.priceValue}>
-                  ₹{(booking.base_amount || 0).toLocaleString()}
+                  ₹{(booking.base_amount || 0).toLocaleString("en-IN")}
                 </span>
               </div>
 
@@ -652,7 +658,7 @@ export default function BookingDetailsPage() {
                 <div className={styles.priceItem}>
                   <span className={styles.priceLabel}>Extra Guests</span>
                   <span className={styles.priceValue}>
-                    ₹{(booking.extra_guest_charges || 0).toLocaleString()}
+                    ₹{(booking.extra_guest_charges || 0).toLocaleString("en-IN")}
                   </span>
                 </div>
               )}
@@ -661,7 +667,7 @@ export default function BookingDetailsPage() {
                 <div className={styles.priceItem}>
                   <span className={styles.priceLabel}>Extra Children</span>
                   <span className={styles.priceValue}>
-                    ₹{(booking.extra_children_charges || 0).toLocaleString()}
+                    ₹{(booking.extra_children_charges || 0).toLocaleString("en-IN")}
                   </span>
                 </div>
               )}
@@ -672,7 +678,7 @@ export default function BookingDetailsPage() {
                     Discount ({booking.coupon_code})
                   </span>
                   <span className={styles.priceValue}>
-                    -₹{(booking.discount_amount || 0).toLocaleString()}
+                    -₹{(booking.discount_amount || 0).toLocaleString("en-IN")}
                   </span>
                 </div>
               )}
@@ -680,16 +686,25 @@ export default function BookingDetailsPage() {
               <div className={styles.priceItem}>
                 <span className={styles.priceLabel}>GST (18%)</span>
                 <span className={styles.priceValue}>
-                  ₹{(booking.gst_amount || 0).toLocaleString()}
+                  ₹{(booking.gst_amount || 0).toLocaleString("en-IN")}
                 </span>
               </div>
+
+              {(booking.service_charge || 0) > 0 && (
+                <div className={styles.priceItem}>
+                  <span className={styles.priceLabel}>Service Charge (5%)</span>
+                  <span className={styles.priceValue}>
+                    ₹{(booking.service_charge || 0).toLocaleString("en-IN")}
+                  </span>
+                </div>
+              )}
 
               <div className={styles.priceDivider}></div>
 
               <div className={`${styles.priceItem} ${styles.priceTotal}`}>
                 <span className={styles.priceLabel}>Total Amount</span>
                 <span className={styles.priceValue}>
-                  ₹{(booking.total_amount || 0).toLocaleString()}
+                  ₹{(booking.total_amount || 0).toLocaleString("en-IN")}
                 </span>
               </div>
             </div>
@@ -824,7 +839,7 @@ export default function BookingDetailsPage() {
             <div className={styles.paymentItem}>
               <div className={styles.paymentDetails}>
                 <p className={styles.paymentId}>
-                  ID: {booking.payments[0].payment_id}
+                  ID: {booking.payments[0].gateway_payment_id || booking.payments[0].id}
                 </p>
                 <p className={styles.paymentDate}>
                   {new Date(booking.payments[0].created_at).toLocaleDateString(
@@ -839,12 +854,12 @@ export default function BookingDetailsPage() {
                   )}
                 </p>
                 <p className={styles.paymentMethod}>
-                  {booking.payments[0].payment_method}
+                  {booking.payments[0].gateway || "Online Payment"}
                 </p>
               </div>
               <div className={styles.paymentRight}>
                 <p className={styles.paymentAmount}>
-                  ₹{(booking.payments[0].amount || 0).toLocaleString()}
+                  ₹{(booking.payments[0].amount || 0).toLocaleString("en-IN")}
                 </p>
                 {getPaymentStatusBadge(booking.payments[0].status)}
               </div>
@@ -858,7 +873,7 @@ export default function BookingDetailsPage() {
                   <div key={payment.id} className={styles.paymentItem}>
                     <div className={styles.paymentDetails}>
                       <p className={styles.paymentId}>
-                        ID: {payment.payment_id}
+                        ID: {payment.gateway_payment_id || payment.id}
                       </p>
                       <p className={styles.paymentDate}>
                         {new Date(payment.created_at).toLocaleDateString(
@@ -873,12 +888,12 @@ export default function BookingDetailsPage() {
                         )}
                       </p>
                       <p className={styles.paymentMethod}>
-                        {payment.payment_method}
+                        {payment.gateway || "Online Payment"}
                       </p>
                     </div>
                     <div className={styles.paymentRight}>
                       <p className={styles.paymentAmount}>
-                        ₹{(payment.amount || 0).toLocaleString()}
+                        ₹{(payment.amount || 0).toLocaleString("en-IN")}
                       </p>
                       {getPaymentStatusBadge(payment.status)}
                     </div>

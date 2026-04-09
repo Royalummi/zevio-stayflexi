@@ -1571,13 +1571,13 @@ function ServiceApartmentDetailContent() {
 
           <button
             onClick={handleReserve}
-            disabled={!checkIn || !checkOut || calculatingPrice}
+            disabled={!checkIn || calculatingPrice}
             className={styles.reserveButton}
           >
             {calculatingPrice ? "Calculating..." : "Reserve Now"}
           </button>
 
-          <p className={styles.disclaimer}>You wont be charged yet</p>
+          <p className={styles.disclaimer}>You won't be charged yet</p>
         </div>
       </div>
       {/* Mobile Floating Booking Bar */}

@@ -184,7 +184,7 @@ function BookingReviewContent() {
     // Only redirect if no booking data AND not currently fetching
     if (!bookingData && !fetchingBooking && !searchParams.get("bookingId")) {
       toast.error("No booking data found");
-      router.push("/properties");
+      router.push("/");
       return;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

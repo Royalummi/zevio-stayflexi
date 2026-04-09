@@ -233,9 +233,9 @@ export const verifyPayment = asyncHandler(async (req, res) => {
       [paymentDetails.cf_payment_id, booking_id],
     );
 
-    // 8. Update booking status
+    // 8. Update booking status + payment_status
     await connection.query(
-      'UPDATE bookings SET status = "confirmed" WHERE id = ?',
+      'UPDATE bookings SET status = "confirmed", payment_status = "completed" WHERE id = ?',
       [booking_id],
     );
 
@@ -546,9 +546,9 @@ async function handlePaymentSuccess(data) {
       [paymentId, bookingId],
     );
 
-    // Update booking status
+    // Update booking status + payment_status
     await connection.query(
-      'UPDATE bookings SET status = "confirmed" WHERE id = ?',
+      'UPDATE bookings SET status = "confirmed", payment_status = "completed" WHERE id = ?',
       [bookingId],
     );
 
