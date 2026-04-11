@@ -17,7 +17,7 @@ const faqs = [
       {
         question: "Can I modify or cancel my booking?",
         answer:
-          "Yes, you can modify or cancel your booking based on the property's cancellation policy. Most properties offer flexible cancellation (free cancellation up to 48 hours after booking, 50% refund up to 7 days before check-in). To modify or cancel, log into your account, go to 'My Bookings', and select the booking you want to change.",
+          "Yes, you can modify or cancel your booking. Our cancellation policy is based on how far your check-in date is: 10 days or more before check-in — Full Refund. 7 days before check-in — Partial Refund. Within 48 hours of check-in — No Refund. To modify or cancel, log into your account, go to 'My Bookings', and select the booking you want to change.",
       },
       {
         question: "When will I receive booking confirmation?",
@@ -87,12 +87,12 @@ const faqs = [
       {
         question: "Are there any hidden charges?",
         answer:
-          "No hidden charges! All applicable fees (cleaning fee, service fee, GST) are clearly displayed during booking before you make payment. The final amount shown at checkout is what you'll pay. Any additional services you request during your stay will be charged separately.",
+          "No hidden charges! The only additional fee is a 5% platform fee, which is clearly displayed during checkout before you make payment. GST is also applied as per government regulations. The final amount shown at checkout is what you'll pay. There are no surprise fees.",
       },
       {
         question: "Do you offer refunds?",
         answer:
-          "Refunds are processed according to the property's cancellation policy. For flexible cancellation: free cancellation within 48 hours of booking, 50% refund if cancelled 7+ days before check-in. Cleaning fees are refundable, service fees are refundable if cancelled within 48 hours. Refunds are processed within 5-7 business days.",
+          "Refunds are based on when you cancel relative to your check-in date: 10 days or more before check-in — Full Refund. 7 days before check-in — Partial Refund. Within 48 hours of check-in — No Refund. Refunds are processed within 5–7 business days to your original payment method.",
       },
     ],
   },
@@ -108,11 +108,6 @@ const faqs = [
         question: "What if I face issues during my stay?",
         answer:
           "Our 24/7 support team is always available to assist you. Contact us immediately if you face any issues. We'll work with the host to resolve problems quickly. If issues can't be resolved, we'll help you find alternative accommodation with full refund support.",
-      },
-      {
-        question: "Is travel insurance included?",
-        answer:
-          "Travel insurance is not included in the booking price. We recommend purchasing travel insurance separately to cover unforeseen circumstances like medical emergencies, trip cancellations, or lost baggage. We can recommend trusted insurance providers upon request.",
       },
     ],
   },
@@ -216,8 +211,8 @@ export default function SupportPage() {
               <FiPhone />
             </div>
             <h3 className={styles.contactTitle}>Phone Support</h3>
-            <p className={styles.contactDescription}>Available 24/7</p>
-            <a href="tel:+919876543210" className={styles.contactButton}>
+            <p className={styles.contactDescription}>+91 99800 50909</p>
+            <a href="tel:+919980050909" className={styles.contactButton}>
               Call Now
             </a>
           </div>
