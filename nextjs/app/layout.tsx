@@ -21,7 +21,7 @@ export const metadata: Metadata = {
     "luxury villas, villa rentals, vacation homes, Goa villas, Lonavala villas, Alibaug villas, India vacation rentals",
   openGraph: {
     title: "Zevio - Luxury Villa Rentals",
-    description: "Discover and book stunning luxury villas across India",
+    description: "Discover and book stunning luxury villas in Bangalore",
     type: "website",
     locale: "en_IN",
   },

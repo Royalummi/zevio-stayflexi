@@ -269,10 +269,16 @@ export default function ServiceApartmentCard({
             <>
               <div className={styles.corporatePricing}>
                 <span className={styles.originalPrice}>
-                  ₹{parseFloat(String(property.price_per_night || 0)).toLocaleString("en-IN")}
+                  ₹
+                  {parseFloat(
+                    String(property.price_per_night || 0),
+                  ).toLocaleString("en-IN")}
                 </span>
                 <span className={styles.price}>
-                  ₹{parseFloat(String(corporatePricing.discountedPrice || 0)).toLocaleString("en-IN")}
+                  ₹
+                  {parseFloat(
+                    String(corporatePricing.discountedPrice || 0),
+                  ).toLocaleString("en-IN")}
                 </span>
                 <span className={styles.perNight}>/ night</span>
               </div>
@@ -283,7 +289,10 @@ export default function ServiceApartmentCard({
           ) : (
             <div className={styles.priceMain}>
               <span className={styles.price}>
-                ₹{parseFloat(String(property.price_per_night || 0)).toLocaleString("en-IN")}
+                ₹
+                {parseFloat(
+                  String(property.price_per_night || 0),
+                ).toLocaleString("en-IN")}
               </span>
               <span className={styles.perNight}>/ night</span>
             </div>

@@ -216,7 +216,11 @@ export default function DateRangeSelector({
   const isBlocked = (date: Date): boolean => {
     if (blockedRanges.length === 0) return false;
     const key = toKey(date);
-    return blockedRanges.some((r) => key >= r.start_date.substring(0, 10) && key <= r.end_date.substring(0, 10));
+    return blockedRanges.some(
+      (r) =>
+        key >= r.start_date.substring(0, 10) &&
+        key <= r.end_date.substring(0, 10),
+    );
   };
 
   /** Returns true if any date strictly between fromDate and toDate (exclusive) is blocked */
@@ -248,7 +252,9 @@ export default function DateRangeSelector({
       if (selectedDate > checkIn) {
         // Validate: no blocked dates inside the selected range
         if (hasBlockedInRange(checkIn, selectedDate)) {
-          setRangeError("Your selected range includes unavailable dates. Please choose dates that don't span blocked periods.");
+          setRangeError(
+            "Your selected range includes unavailable dates. Please choose dates that don't span blocked periods.",
+          );
           onCheckInChange(selectedDate);
           onCheckOutChange(null);
           return;
@@ -436,9 +442,7 @@ export default function DateRangeSelector({
               : `${formatDisplayDate(checkIn)} → ${formatDisplayDate(checkOut)}`}
         </div>
         {/* Range error message */}
-        {rangeError && (
-          <div className={styles.rangeError}>{rangeError}</div>
-        )}
+        {rangeError && <div className={styles.rangeError}>{rangeError}</div>}
         {/* Days of week */}
         <div className={styles.daysOfWeek}>
           {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (

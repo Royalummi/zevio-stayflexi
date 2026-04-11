@@ -9,14 +9,15 @@ import { asyncHandler, sendSuccess, sendError } from "../utils/response.js";
 export const getNotifications = asyncHandler(async (req, res) => {
   const { id: userId, role } = req.user;
   const { filter } = req.query; // 'all' or 'unread'
-  const isAdmin = role === 'admin' || role === 'super_admin';
+  const isAdmin = role === "admin" || role === "super_admin";
 
   let query;
   let params;
 
   if (isAdmin) {
     // Admins see notifications targeted to them by ID, OR role-based admin notifications
-    query = "SELECT * FROM notifications WHERE (recipient_id = ? OR (recipient_role = 'admin' AND (recipient_id IS NULL OR recipient_id = ?)))";
+    query =
+      "SELECT * FROM notifications WHERE (recipient_id = ? OR (recipient_role = 'admin' AND (recipient_id IS NULL OR recipient_id = ?)))";
     params = [userId, userId];
   } else {
     query = "SELECT * FROM notifications WHERE recipient_id = ?";
@@ -47,12 +48,13 @@ export const getNotifications = asyncHandler(async (req, res) => {
 export const markAsRead = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const { id: userId, role } = req.user;
-  const isAdmin = role === 'admin' || role === 'super_admin';
+  const isAdmin = role === "admin" || role === "super_admin";
 
   // Check if notification belongs to user (or is an admin role-based notification)
   let findQuery, findParams;
   if (isAdmin) {
-    findQuery = "SELECT * FROM notifications WHERE id = ? AND (recipient_id = ? OR (recipient_role = 'admin' AND recipient_id IS NULL))";
+    findQuery =
+      "SELECT * FROM notifications WHERE id = ? AND (recipient_id = ? OR (recipient_role = 'admin' AND recipient_id IS NULL))";
     findParams = [id, userId];
   } else {
     findQuery = "SELECT * FROM notifications WHERE id = ? AND recipient_id = ?";
@@ -78,7 +80,7 @@ export const markAsRead = asyncHandler(async (req, res) => {
  */
 export const markAllAsRead = asyncHandler(async (req, res) => {
   const { id: userId, role } = req.user;
-  const isAdmin = role === 'admin' || role === 'super_admin';
+  const isAdmin = role === "admin" || role === "super_admin";
 
   if (isAdmin) {
     await db.query(
@@ -103,11 +105,12 @@ export const markAllAsRead = asyncHandler(async (req, res) => {
 export const deleteNotification = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const { id: userId, role } = req.user;
-  const isAdmin = role === 'admin' || role === 'super_admin';
+  const isAdmin = role === "admin" || role === "super_admin";
 
   let findQuery, findParams;
   if (isAdmin) {
-    findQuery = "SELECT * FROM notifications WHERE id = ? AND (recipient_id = ? OR (recipient_role = 'admin' AND recipient_id IS NULL))";
+    findQuery =
+      "SELECT * FROM notifications WHERE id = ? AND (recipient_id = ? OR (recipient_role = 'admin' AND recipient_id IS NULL))";
     findParams = [id, userId];
   } else {
     findQuery = "SELECT * FROM notifications WHERE id = ? AND recipient_id = ?";
@@ -132,14 +135,16 @@ export const deleteNotification = asyncHandler(async (req, res) => {
  */
 export const getUnreadCount = asyncHandler(async (req, res) => {
   const { id: userId, role } = req.user;
-  const isAdmin = role === 'admin' || role === 'super_admin';
+  const isAdmin = role === "admin" || role === "super_admin";
 
   let query, params;
   if (isAdmin) {
-    query = "SELECT COUNT(*) as count FROM notifications WHERE (recipient_id = ? OR (recipient_role = 'admin' AND (recipient_id IS NULL OR recipient_id = ?))) AND is_read = false";
+    query =
+      "SELECT COUNT(*) as count FROM notifications WHERE (recipient_id = ? OR (recipient_role = 'admin' AND (recipient_id IS NULL OR recipient_id = ?))) AND is_read = false";
     params = [userId, userId];
   } else {
-    query = "SELECT COUNT(*) as count FROM notifications WHERE recipient_id = ? AND is_read = false";
+    query =
+      "SELECT COUNT(*) as count FROM notifications WHERE recipient_id = ? AND is_read = false";
     params = [userId];
   }
 

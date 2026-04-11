@@ -877,7 +877,10 @@ export default function BookingsEnhanced() {
                       <div className={styles.detailContent}>
                         <p className={styles.detailLabel}>Total Amount</p>
                         <p className={styles.detailValueLarge}>
-                          ₹{parseFloat(String(booking.total_amount || 0)).toLocaleString("en-IN")}
+                          ₹
+                          {parseFloat(
+                            String(booking.total_amount || 0),
+                          ).toLocaleString("en-IN")}
                         </p>
                       </div>
                     </div>

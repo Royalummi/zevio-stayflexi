@@ -782,13 +782,8 @@ const VendorPropertyForm = ({
                 propertyStatus === "changes_requested")
             ) {
               try {
-                await api.patch(
-                  `/vendor/properties/${propertyId}/submit`,
-                  {},
-                );
-                toast.success(
-                  "Property saved and submitted for approval! 🎉",
-                );
+                await api.patch(`/vendor/properties/${propertyId}/submit`, {});
+                toast.success("Property saved and submitted for approval! 🎉");
               } catch (submitErr) {
                 const msg =
                   submitErr?.response?.data?.message ||
@@ -1251,7 +1246,8 @@ const VendorPropertyForm = ({
             {/* Discounted Price Per Night */}
             <div className="flex flex-col">
               <label className="text-sm font-medium text-foreground mb-2">
-                Discounted Price Per Night (₹) <span className="text-destructive">*</span>
+                Discounted Price Per Night (₹){" "}
+                <span className="text-destructive">*</span>
               </label>
               <input
                 type="number"

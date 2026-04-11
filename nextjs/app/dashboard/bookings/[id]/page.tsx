@@ -375,7 +375,9 @@ export default function BookingDetailsPage() {
             <div className={styles.statusBadgeContainer}>
               {getStatusBadge(booking.status)}
               {/* Only show payment badge when booking is not yet confirmed/completed */}
-              {booking.status !== "confirmed" && booking.status !== "completed" && getPaymentStatusBadge(booking.payment_status)}
+              {booking.status !== "confirmed" &&
+                booking.status !== "completed" &&
+                getPaymentStatusBadge(booking.payment_status)}
               {/* SESSION 31: Countdown Timer Badge for Pending Bookings */}
               {(booking.status === "pending" ||
                 booking.status === "pending_payment") &&
@@ -435,7 +437,7 @@ export default function BookingDetailsPage() {
                 {booking.payment_status === "completed" ? "Paid" : "Payment"}
               </p>
               <p className={styles.timelineStepDate}>
-                      ₹{fmt(booking.total_amount)}
+                ₹{fmt(booking.total_amount)}
               </p>
             </div>
           </div>
@@ -646,9 +648,8 @@ export default function BookingDetailsPage() {
             <div className={styles.priceBreakdown}>
               <div className={styles.priceItem}>
                 <span className={styles.priceLabel}>
-                  ₹
-                  {fmt((booking.base_amount || 0) / (booking.nights || 1))}{" "}
-                  x {booking.nights} nights
+                  ₹{fmt((booking.base_amount || 0) / (booking.nights || 1))} x{" "}
+                  {booking.nights} nights
                 </span>
                 <span className={styles.priceValue}>
                   ₹{fmt(booking.base_amount)}
@@ -858,7 +859,9 @@ export default function BookingDetailsPage() {
             <div className={styles.paymentItem}>
               <div className={styles.paymentDetails}>
                 <p className={styles.paymentId}>
-                  ID: {booking.payments[0].gateway_payment_id || booking.payments[0].id}
+                  ID:{" "}
+                  {booking.payments[0].gateway_payment_id ||
+                    booking.payments[0].id}
                 </p>
                 <p className={styles.paymentDate}>
                   {new Date(booking.payments[0].created_at).toLocaleDateString(

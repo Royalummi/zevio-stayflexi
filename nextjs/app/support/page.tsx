@@ -72,7 +72,7 @@ const faqs = [
       {
         question: "What documents do I need for check-in?",
         answer:
-          "You'll need government-issued photo ID (Aadhaar card, passport, driver's license, or PAN card) for all guests above 18 years. Your booking confirmation (digital or printed) is also required. International guests need a valid passport and visa.",
+          "You'll need government-issued photo ID (Aadhaar card, passport, driver's license) for all guests above 18 years. Your booking confirmation (digital or printed) is also required. International guests need a valid passport and visa.",
       },
     ],
   },

@@ -150,9 +150,21 @@ export const createProperty = asyncHandler(async (req, res) => {
     safeSafetyInfo,
     safeLocalAreaInfo,
     safeEmergencyContacts,
-    house_rules ? (typeof house_rules === "string" ? house_rules : JSON.stringify(house_rules)) : "{}",
-    cancellation_policy ? (typeof cancellation_policy === "string" ? cancellation_policy : JSON.stringify(cancellation_policy)) : "{}",
-    photos ? (typeof photos === "string" ? photos : JSON.stringify(photos)) : "[]",
+    house_rules
+      ? typeof house_rules === "string"
+        ? house_rules
+        : JSON.stringify(house_rules)
+      : "{}",
+    cancellation_policy
+      ? typeof cancellation_policy === "string"
+        ? cancellation_policy
+        : JSON.stringify(cancellation_policy)
+      : "{}",
+    photos
+      ? typeof photos === "string"
+        ? photos
+        : JSON.stringify(photos)
+      : "[]",
     pool_type || "none",
     garden_type || "none",
     pets_allowed ? 1 : 0,
@@ -332,9 +344,12 @@ export const getPropertyById = asyncHandler(async (req, res) => {
   if (guidelinesRows.length > 0) {
     // Prefer properties columns, fall back to property_guidelines table
     const gl = guidelinesRows[0];
-    property.safety_information = property.safety_information || gl.safety_information || "";
-    property.local_area_info = property.local_area_info || gl.local_area_info || "";
-    property.emergency_contacts = property.emergency_contacts || gl.emergency_contacts || "";
+    property.safety_information =
+      property.safety_information || gl.safety_information || "";
+    property.local_area_info =
+      property.local_area_info || gl.local_area_info || "";
+    property.emergency_contacts =
+      property.emergency_contacts || gl.emergency_contacts || "";
   }
 
   // Parse JSON fields (with double-encode fallback)
@@ -837,11 +852,18 @@ export const updateProperty = asyncHandler(async (req, res) => {
   }
 
   // Sync property_guidelines table if guideline fields were updated
-  const guidelineFields = ["safety_information", "local_area_info", "emergency_contacts"];
+  const guidelineFields = [
+    "safety_information",
+    "local_area_info",
+    "emergency_contacts",
+  ];
   const updatedGuidelines = {};
   guidelineFields.forEach((f) => {
     if (updates[f] !== undefined) {
-      updatedGuidelines[f] = richTextFields.includes(f) && updates[f] ? sanitizeRichText(updates[f]) : (updates[f] || "");
+      updatedGuidelines[f] =
+        richTextFields.includes(f) && updates[f]
+          ? sanitizeRichText(updates[f])
+          : updates[f] || "";
     }
   });
   if (Object.keys(updatedGuidelines).length > 0) {

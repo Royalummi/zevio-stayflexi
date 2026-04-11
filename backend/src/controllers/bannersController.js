@@ -125,15 +125,19 @@ export const listBanners = asyncHandler(async (req, res) => {
     params,
   );
 
-  return sendSuccess(res, {
-    banners,
-    pagination: {
-      total,
-      page: Number(page),
-      limit: Number(limit),
-      totalPages: Math.ceil(total / Number(limit)),
+  return sendSuccess(
+    res,
+    {
+      banners,
+      pagination: {
+        total,
+        page: Number(page),
+        limit: Number(limit),
+        totalPages: Math.ceil(total / Number(limit)),
+      },
     },
-  }, "Banners retrieved");
+    "Banners retrieved",
+  );
 });
 
 // ============================================
@@ -258,10 +262,14 @@ export const toggleBanner = asyncHandler(async (req, res) => {
     id,
   ]);
 
-  return sendSuccess(res, {
-    id,
-    is_active: newStatus === 1,
-  }, `Banner ${newStatus ? "activated" : "deactivated"}`);
+  return sendSuccess(
+    res,
+    {
+      id,
+      is_active: newStatus === 1,
+    },
+    `Banner ${newStatus ? "activated" : "deactivated"}`,
+  );
 });
 
 // ============================================

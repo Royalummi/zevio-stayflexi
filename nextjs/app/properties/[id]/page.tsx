@@ -981,7 +981,9 @@ function PropertyDetailContent() {
                           </div>
                           <div className={luxuryStyles.infoValue}>
                             ₹
-                            {parseFloat(String(property.maintenance_charges || 0)).toLocaleString("en-IN")}
+                            {parseFloat(
+                              String(property.maintenance_charges || 0),
+                            ).toLocaleString("en-IN")}
                           </div>
                           <div className={luxuryStyles.infoNote}>
                             One-time maintenance charge
@@ -1286,9 +1288,10 @@ function PropertyDetailContent() {
                           <span>No Outside Visitors</span>
                         </div>
                       )}
-                      {((property.house_rules as Record<string, unknown>)
-                        .pet_friendly === true || (property.house_rules as Record<string, unknown>)
-                        .pets_allowed === true) ? (
+                      {(property.house_rules as Record<string, unknown>)
+                        .pet_friendly === true ||
+                      (property.house_rules as Record<string, unknown>)
+                        .pets_allowed === true ? (
                         <div
                           className={`${luxuryStyles.houseRuleItem} ${luxuryStyles.houseRuleAllow}`}
                         >
@@ -1297,9 +1300,10 @@ function PropertyDetailContent() {
                           </span>
                           <span>Pets Allowed</span>
                         </div>
-                      ) : ((property.house_rules as Record<string, unknown>)
-                          .pet_friendly === false || (property.house_rules as Record<string, unknown>)
-                          .pets_allowed === false) ? (
+                      ) : (property.house_rules as Record<string, unknown>)
+                          .pet_friendly === false ||
+                        (property.house_rules as Record<string, unknown>)
+                          .pets_allowed === false ? (
                         <div
                           className={`${luxuryStyles.houseRuleItem} ${luxuryStyles.houseRuleDeny}`}
                         >
@@ -1360,14 +1364,14 @@ function PropertyDetailContent() {
               {/* Cancellation Policy */}
               {property.cancellation_policy &&
                 typeof property.cancellation_policy === "object" && (
-                <section className={luxuryStyles.aboutSectionLuxury}>
-                  <h2 className={luxuryStyles.sectionTitleLuxury}>
-                    <FiAlertCircle /> Cancellation Policy
-                  </h2>
-                  {Array.isArray(
-                    (property.cancellation_policy as Record<string, unknown>)
-                      .tiers,
-                  ) ? (
+                  <section className={luxuryStyles.aboutSectionLuxury}>
+                    <h2 className={luxuryStyles.sectionTitleLuxury}>
+                      <FiAlertCircle /> Cancellation Policy
+                    </h2>
+                    {Array.isArray(
+                      (property.cancellation_policy as Record<string, unknown>)
+                        .tiers,
+                    ) ? (
                       <div className={luxuryStyles.cancelTiersList}>
                         {(
                           (
@@ -1406,65 +1410,136 @@ function PropertyDetailContent() {
                           </div>
                         ))}
                       </div>
-                  ) : (
-                    /* Flat cancellation policy format from admin/vendor forms */
-                    <div className={luxuryStyles.cancelTiersList}>
-                      {Boolean((property.cancellation_policy as Record<string, unknown>).policy_type) && (
-                        <div className={luxuryStyles.cancelTierItem}>
-                          <div className={luxuryStyles.cancelTierLabel}>
-                            {String((property.cancellation_policy as Record<string, unknown>).policy_type)} Policy
+                    ) : (
+                      /* Flat cancellation policy format from admin/vendor forms */
+                      <div className={luxuryStyles.cancelTiersList}>
+                        {Boolean(
+                          (
+                            property.cancellation_policy as Record<
+                              string,
+                              unknown
+                            >
+                          ).policy_type,
+                        ) && (
+                          <div className={luxuryStyles.cancelTierItem}>
+                            <div className={luxuryStyles.cancelTierLabel}>
+                              {String(
+                                (
+                                  property.cancellation_policy as Record<
+                                    string,
+                                    unknown
+                                  >
+                                ).policy_type,
+                              )}{" "}
+                              Policy
+                            </div>
                           </div>
-                        </div>
-                      )}
-                      {Boolean((property.cancellation_policy as Record<string, unknown>).free_cancellation_text) && (
-                        <div className={luxuryStyles.cancelTierItem}>
-                          <div className={luxuryStyles.cancelTierLabel}>
-                            Free Cancellation
+                        )}
+                        {Boolean(
+                          (
+                            property.cancellation_policy as Record<
+                              string,
+                              unknown
+                            >
+                          ).free_cancellation_text,
+                        ) && (
+                          <div className={luxuryStyles.cancelTierItem}>
+                            <div className={luxuryStyles.cancelTierLabel}>
+                              Free Cancellation
+                            </div>
+                            <div className={luxuryStyles.cancelTierDetails}>
+                              <span className={luxuryStyles.cancelTierDays}>
+                                {String(
+                                  (
+                                    property.cancellation_policy as Record<
+                                      string,
+                                      unknown
+                                    >
+                                  ).free_cancellation_text,
+                                )}
+                              </span>
+                              <span
+                                className={`${luxuryStyles.cancelTierRefund} ${luxuryStyles.refundFull}`}
+                              >
+                                100% Refund
+                              </span>
+                            </div>
                           </div>
-                          <div className={luxuryStyles.cancelTierDetails}>
-                            <span className={luxuryStyles.cancelTierDays}>
-                              {String((property.cancellation_policy as Record<string, unknown>).free_cancellation_text)}
-                            </span>
-                            <span className={`${luxuryStyles.cancelTierRefund} ${luxuryStyles.refundFull}`}>
-                              100% Refund
-                            </span>
+                        )}
+                        {Boolean(
+                          (
+                            property.cancellation_policy as Record<
+                              string,
+                              unknown
+                            >
+                          ).partial_refund_text,
+                        ) && (
+                          <div className={luxuryStyles.cancelTierItem}>
+                            <div className={luxuryStyles.cancelTierLabel}>
+                              Partial Refund
+                            </div>
+                            <div className={luxuryStyles.cancelTierDetails}>
+                              <span className={luxuryStyles.cancelTierDays}>
+                                {String(
+                                  (
+                                    property.cancellation_policy as Record<
+                                      string,
+                                      unknown
+                                    >
+                                  ).partial_refund_text,
+                                )}
+                              </span>
+                              <span
+                                className={`${luxuryStyles.cancelTierRefund} ${luxuryStyles.refundPartial}`}
+                              >
+                                {String(
+                                  (
+                                    property.cancellation_policy as Record<
+                                      string,
+                                      unknown
+                                    >
+                                  ).partial_refund_percentage || 50,
+                                )}
+                                % Refund
+                              </span>
+                            </div>
                           </div>
-                        </div>
-                      )}
-                      {Boolean((property.cancellation_policy as Record<string, unknown>).partial_refund_text) && (
-                        <div className={luxuryStyles.cancelTierItem}>
-                          <div className={luxuryStyles.cancelTierLabel}>
-                            Partial Refund
+                        )}
+                        {Boolean(
+                          (
+                            property.cancellation_policy as Record<
+                              string,
+                              unknown
+                            >
+                          ).no_refund_text,
+                        ) && (
+                          <div className={luxuryStyles.cancelTierItem}>
+                            <div className={luxuryStyles.cancelTierLabel}>
+                              No Refund
+                            </div>
+                            <div className={luxuryStyles.cancelTierDetails}>
+                              <span className={luxuryStyles.cancelTierDays}>
+                                {String(
+                                  (
+                                    property.cancellation_policy as Record<
+                                      string,
+                                      unknown
+                                    >
+                                  ).no_refund_text,
+                                )}
+                              </span>
+                              <span
+                                className={`${luxuryStyles.cancelTierRefund} ${luxuryStyles.refundNone}`}
+                              >
+                                0% Refund
+                              </span>
+                            </div>
                           </div>
-                          <div className={luxuryStyles.cancelTierDetails}>
-                            <span className={luxuryStyles.cancelTierDays}>
-                              {String((property.cancellation_policy as Record<string, unknown>).partial_refund_text)}
-                            </span>
-                            <span className={`${luxuryStyles.cancelTierRefund} ${luxuryStyles.refundPartial}`}>
-                              {String((property.cancellation_policy as Record<string, unknown>).partial_refund_percentage || 50)}% Refund
-                            </span>
-                          </div>
-                        </div>
-                      )}
-                      {Boolean((property.cancellation_policy as Record<string, unknown>).no_refund_text) && (
-                        <div className={luxuryStyles.cancelTierItem}>
-                          <div className={luxuryStyles.cancelTierLabel}>
-                            No Refund
-                          </div>
-                          <div className={luxuryStyles.cancelTierDetails}>
-                            <span className={luxuryStyles.cancelTierDays}>
-                              {String((property.cancellation_policy as Record<string, unknown>).no_refund_text)}
-                            </span>
-                            <span className={`${luxuryStyles.cancelTierRefund} ${luxuryStyles.refundNone}`}>
-                              0% Refund
-                            </span>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </section>
-              )}
+                        )}
+                      </div>
+                    )}
+                  </section>
+                )}
 
               {/* Location Section */}
               {(property.area || property.maps_location) && (
@@ -1543,7 +1618,7 @@ function PropertyDetailContent() {
                   <p className={luxuryStyles.hostDescription}>
                     {property.property_type || "Luxury Property"} managed by
                     professional hospitality experts. We specialize in premium
-                    rentals across India&apos;s most beautiful destinations,
+                    rentals in Bangalore&apos;s most beautiful destinations,
                     ensuring every stay is memorable with exceptional service.
                   </p>
                 </div>
@@ -1612,7 +1687,9 @@ function PropertyDetailContent() {
                         <div className={luxuryStyles.pendingBookingRow}>
                           <span className={luxuryStyles.pendingBookingPrice}>
                             ₹
-                            {parseFloat(String(pendingBooking.total_amount || 0)).toLocaleString("en-IN")}
+                            {parseFloat(
+                              String(pendingBooking.total_amount || 0),
+                            ).toLocaleString("en-IN")}
                           </span>
                         </div>
                       </div>
@@ -1639,7 +1716,10 @@ function PropertyDetailContent() {
                     <div className={luxuryStyles.priceSection}>
                       <div className={luxuryStyles.priceDisplay}>
                         <span className={luxuryStyles.bookingPrice}>
-                          ₹{parseFloat(String(property.price_per_night || 0)).toLocaleString("en-IN")}
+                          ₹
+                          {parseFloat(
+                            String(property.price_per_night || 0),
+                          ).toLocaleString("en-IN")}
                         </span>
                         <span className={luxuryStyles.bookingPeriod}>
                           / night
@@ -1833,7 +1913,10 @@ function PropertyDetailContent() {
                             Base ({nights} {nights === 1 ? "night" : "nights"})
                           </span>
                           <span>
-                            ₹{(priceBreakdown.baseAmount || 0).toLocaleString("en-IN")}
+                            ₹
+                            {(priceBreakdown.baseAmount || 0).toLocaleString(
+                              "en-IN",
+                            )}
                           </span>
                         </div>
                         {priceBreakdown.extraGuestCharges > 0 && (
@@ -1867,14 +1950,20 @@ function PropertyDetailContent() {
                             %)
                           </span>
                           <span>
-                            ₹{(priceBreakdown.gstAmount || 0).toLocaleString("en-IN")}
+                            ₹
+                            {(priceBreakdown.gstAmount || 0).toLocaleString(
+                              "en-IN",
+                            )}
                           </span>
                         </div>
                         {priceBreakdown.serviceChargeAmount > 0 && (
                           <div className={luxuryStyles.breakdownItem}>
                             <span>Service Charge (5%)</span>
                             <span>
-                              ₹{(priceBreakdown.serviceChargeAmount || 0).toLocaleString("en-IN")}
+                              ₹
+                              {(
+                                priceBreakdown.serviceChargeAmount || 0
+                              ).toLocaleString("en-IN")}
                             </span>
                           </div>
                         )}
@@ -1882,7 +1971,9 @@ function PropertyDetailContent() {
                           <span>Total</span>
                           <span>
                             ₹
-                            {(priceBreakdown.totalAmount || 0).toLocaleString("en-IN")}
+                            {(priceBreakdown.totalAmount || 0).toLocaleString(
+                              "en-IN",
+                            )}
                           </span>
                         </div>
                       </div>
@@ -1911,7 +2002,9 @@ function PropertyDetailContent() {
                   <div className={luxuryStyles.mobilePriceAmount}>
                     {nights} {nights === 1 ? "night" : "nights"} · ₹
                     {priceBreakdown.totalAmount > 0
-                      ? (priceBreakdown.totalAmount || 0).toLocaleString("en-IN")
+                      ? (priceBreakdown.totalAmount || 0).toLocaleString(
+                          "en-IN",
+                        )
                       : (
                           (property.price_per_night || 0) * nights
                         ).toLocaleString("en-IN")}
@@ -1931,7 +2024,10 @@ function PropertyDetailContent() {
               ) : (
                 <>
                   <div className={luxuryStyles.mobilePriceAmount}>
-                    ₹{parseFloat(String(property.price_per_night || 0)).toLocaleString("en-IN")}
+                    ₹
+                    {parseFloat(
+                      String(property.price_per_night || 0),
+                    ).toLocaleString("en-IN")}
                   </div>
                   <div className={luxuryStyles.mobilePriceLabel}>per night</div>
                 </>

@@ -10,7 +10,13 @@ import {
 import { authenticate, authorize } from "../middlewares/auth.js";
 import { validatePagination } from "../middlewares/pagination.js";
 import { validate } from "../middlewares/validator.js";
-import { createCity, getAllCities, getPropertyImages, uploadPropertyImages, deletePropertyImage } from "../controllers/adminController.js";
+import {
+  createCity,
+  getAllCities,
+  getPropertyImages,
+  uploadPropertyImages,
+  deletePropertyImage,
+} from "../controllers/adminController.js";
 import { uploadPropertyImages as uploadPropertyImagesMiddleware } from "../middlewares/upload.js";
 import {
   getCalendarPricing,
@@ -36,7 +42,12 @@ const verifyPropertyOwner = async (req, res, next) => {
       [propertyId, vendorId],
     );
     if (rows.length === 0) {
-      return res.status(404).json({ success: false, message: "Property not found or unauthorized" });
+      return res
+        .status(404)
+        .json({
+          success: false,
+          message: "Property not found or unauthorized",
+        });
     }
     next();
   } catch (err) {
@@ -63,7 +74,11 @@ router.post(
   uploadPropertyImagesMiddleware.array("images", 10),
   uploadPropertyImages,
 );
-router.delete("/properties/:id/images/:imageId", verifyPropertyOwner, deletePropertyImage);
+router.delete(
+  "/properties/:id/images/:imageId",
+  verifyPropertyOwner,
+  deletePropertyImage,
+);
 
 // ── Session 70: Calendar Pricing (vendor manages own properties) ──
 router.get("/properties/:propertyId/calendar-pricing", getCalendarPricing);

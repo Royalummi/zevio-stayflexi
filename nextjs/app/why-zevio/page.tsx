@@ -88,7 +88,7 @@ const howItWorks = [
     step: "1",
     title: "Search & Discover",
     description:
-      "Browse our curated collection of luxury villas across India. Filter by location, amenities, and price.",
+      "Browse our curated collection of luxury villas in Bangalore. Filter by location, amenities, and price.",
   },
   {
     step: "2",

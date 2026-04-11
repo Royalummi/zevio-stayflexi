@@ -342,7 +342,10 @@ export const getPropertyDetails = asyncHandler(async (req, res) => {
       property.house_rules = null;
     }
     // Parse cancellation_policy if it exists (with double-encode fallback)
-    if (property.cancellation_policy && typeof property.cancellation_policy === "string") {
+    if (
+      property.cancellation_policy &&
+      typeof property.cancellation_policy === "string"
+    ) {
       let parsed = JSON.parse(property.cancellation_policy);
       if (typeof parsed === "string") parsed = JSON.parse(parsed);
       property.cancellation_policy = parsed;
