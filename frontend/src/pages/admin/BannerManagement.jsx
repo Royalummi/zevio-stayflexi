@@ -52,14 +52,15 @@ import {
   Trash2,
   ToggleLeft,
   ToggleRight,
-  Eye,
   ExternalLink,
-  Calendar,
   ChevronLeft,
   ChevronRight,
   AlertTriangle,
   Link2,
   ImageOff,
+  ImagePlus,
+  X,
+  Image as ImageIcon,
 } from "lucide-react";
 import { formatDate } from "../../lib/utils";
 
@@ -72,6 +73,14 @@ const COLOR_PRESETS = [
   { label: "Soft Gold", bg: "#D4A843", text: "#1F3A5F" },
 ];
 
+const IMAGE_SIZE_PRESETS = [
+  { value: "16:9", label: "Landscape 16:9 (wide)" },
+  { value: "4:3", label: "Landscape 4:3 (standard)" },
+  { value: "1:1", label: "Square 1:1" },
+  { value: "3:4", label: "Portrait 3:4" },
+  { value: "9:16", label: "Portrait 9:16 (tall)" },
+];
+
 const EMPTY_FORM = {
   title: "",
   description: "",
@@ -80,6 +89,10 @@ const EMPTY_FORM = {
   inline_link_text: "",
   inline_link_url: "",
   property_id: "",
+  image_url: "",
+  image_aspect_ratio: "16:9",
+  image_fit_mode: "contain",
+  banner_size: "normal",
   background_color: "#1F3A5F",
   text_color: "#FFFFFF",
   banner_type: "popup",
@@ -91,6 +104,9 @@ const EMPTY_FORM = {
 
 const BannerManagement = () => {
   const { user } = useAuthStore();
+
+  const toCssAspectRatio = (value) =>
+    value?.includes(":") ? value.replace(":", " / ") : value || "16 / 9";
 
   // Data
   const [banners, setBanners] = useState([]);
@@ -113,6 +129,11 @@ const BannerManagement = () => {
 
   // Preview
   const [showPreview, setShowPreview] = useState(false);
+
+  // Image upload state
+  const [imageFile, setImageFile] = useState(null); // pending File object
+  const [imagePreview, setImagePreview] = useState(""); // local object URL
+  const [removeImage, setRemoveImage] = useState(false); // flag to delete existing image
 
   // ------------------------------------------------
   // DATA FETCHING
@@ -208,6 +229,9 @@ const BannerManagement = () => {
   const handleCreate = () => {
     setEditingBanner(null);
     setFormData(EMPTY_FORM);
+    setImageFile(null);
+    setImagePreview("");
+    setRemoveImage(false);
     setShowDialog(true);
   };
 
@@ -221,6 +245,10 @@ const BannerManagement = () => {
       inline_link_text: banner.inline_link_text || "",
       inline_link_url: banner.inline_link_url || "",
       property_id: banner.property_id || "",
+      image_url: banner.image_url || "",
+      image_aspect_ratio: banner.image_aspect_ratio || "16:9",
+      image_fit_mode: banner.image_fit_mode || "contain",
+      banner_size: banner.banner_size || "normal",
       background_color: banner.background_color || "#1F3A5F",
       text_color: banner.text_color || "#FFFFFF",
       banner_type: banner.banner_type || "popup",
@@ -233,6 +261,9 @@ const BannerManagement = () => {
         ? new Date(banner.valid_until).toISOString().slice(0, 16)
         : "",
     });
+    setImageFile(null);
+    setImagePreview("");
+    setRemoveImage(false);
     setShowDialog(true);
   };
 
@@ -253,14 +284,34 @@ const BannerManagement = () => {
         inline_link_text: formData.inline_link_text || null,
         inline_link_url: formData.inline_link_url || null,
         description: formData.description || null,
+        image_url: formData.image_url || null,
+        image_aspect_ratio: formData.image_aspect_ratio || "16:9",
+        image_fit_mode: "contain",
+        banner_size: formData.banner_size || "normal",
       };
 
+      let savedBannerId;
       if (editingBanner) {
         await api.patch(`/admin/banners/${editingBanner.id}`, payload);
+        savedBannerId = editingBanner.id;
         toast.success("Banner updated successfully");
       } else {
-        await api.post("/admin/banners", payload);
+        const res = await api.post("/admin/banners", payload);
+        savedBannerId = res.data.data?.id;
         toast.success("Banner created successfully");
+      }
+
+      // Handle image upload/removal
+      if (savedBannerId) {
+        if (imageFile) {
+          const imgForm = new FormData();
+          imgForm.append("image", imageFile);
+          await api.post(`/admin/banners/${savedBannerId}/image`, imgForm, {
+            headers: { "Content-Type": "multipart/form-data" },
+          });
+        } else if (removeImage) {
+          await api.delete(`/admin/banners/${savedBannerId}/image`);
+        }
       }
 
       setShowDialog(false);
@@ -292,6 +343,26 @@ const BannerManagement = () => {
     } catch {
       toast.error("Failed to delete banner");
     }
+  };
+
+  // ------------------------------------------------
+  // IMAGE HANDLERS
+  // ------------------------------------------------
+  const handleImageSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (imagePreview) URL.revokeObjectURL(imagePreview);
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+    setRemoveImage(false);
+  };
+
+  const handleImageRemove = () => {
+    if (imagePreview) URL.revokeObjectURL(imagePreview);
+    setImageFile(null);
+    setImagePreview("");
+    setField("image_url", "");
+    setRemoveImage(true);
   };
 
   // ------------------------------------------------
@@ -493,14 +564,22 @@ const BannerManagement = () => {
                     <TableRow key={banner.id}>
                       <TableCell>
                         <div className="flex items-center gap-3">
-                          {/* Color swatch */}
-                          <div
-                            className="w-8 h-8 rounded flex-shrink-0 border border-gray-200"
-                            style={{
-                              backgroundColor:
-                                banner.background_color || "#1F3A5F",
-                            }}
-                          />
+                          {/* Banner thumbnail or color swatch */}
+                          {banner.image_url ? (
+                            <img
+                              src={banner.image_url}
+                              alt={banner.title}
+                              className="w-10 h-10 rounded object-cover flex-shrink-0 border border-gray-200"
+                            />
+                          ) : (
+                            <div
+                              className="w-10 h-10 rounded flex-shrink-0 border border-gray-200"
+                              style={{
+                                backgroundColor:
+                                  banner.background_color || "#1F3A5F",
+                              }}
+                            />
+                          )}
                           <div>
                             <div className="font-medium text-gray-900 dark:text-white line-clamp-1">
                               {banner.title}
@@ -640,6 +719,47 @@ const BannerManagement = () => {
               />
             </div>
 
+            {/* Banner Image */}
+            <div className="space-y-2">
+              <Label>Banner Image (optional)</Label>
+              {(imagePreview || formData.image_url) && !removeImage ? (
+                <div className="relative inline-block">
+                  <img
+                    src={imagePreview || formData.image_url}
+                    alt="Banner preview"
+                    className="w-full max-h-48 object-cover rounded-lg border border-gray-200"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleImageRemove}
+                    className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                    title="Remove image"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ) : (
+                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-400 hover:bg-gray-50 transition-colors">
+                  <div className="flex flex-col items-center justify-center gap-1 text-gray-500">
+                    <ImagePlus className="h-7 w-7" />
+                    <span className="text-sm font-medium">
+                      Click to upload image
+                    </span>
+                    <span className="text-xs">PNG, JPG, WEBP up to 5MB</span>
+                  </div>
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/jpg,image/png,image/webp"
+                    className="hidden"
+                    onChange={handleImageSelect}
+                  />
+                </label>
+              )}
+              <p className="text-xs text-gray-500">
+                Displayed inside the banner. Supports PNG, JPG, WEBP.
+              </p>
+            </div>
+
             {/* Description */}
             <div className="space-y-2">
               <Label htmlFor="description">Description</Label>
@@ -749,6 +869,59 @@ const BannerManagement = () => {
               </Select>
             </div>
 
+            {/* Display Size (popup / slide-in only) */}
+            {formData.banner_type !== "top_bar" && (
+              <div className="space-y-2">
+                <Label>Display Size</Label>
+                <div className="flex gap-2">
+                  {[
+                    { value: "normal", label: "Normal", desc: "~480px wide" },
+                    { value: "large", label: "Large", desc: "80vw × 80vh" },
+                  ].map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setField("banner_size", opt.value)}
+                      className={`flex-1 py-2 px-3 rounded border text-sm font-medium transition-all ${
+                        formData.banner_size === opt.value
+                          ? "border-blue-600 bg-blue-50 text-blue-700"
+                          : "border-gray-200 text-gray-600 hover:border-gray-300"
+                      }`}
+                    >
+                      <div>{opt.label}</div>
+                      <div className="text-xs opacity-60 font-normal">{opt.desc}</div>
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-gray-500">
+                  Large fills 80% of the screen — ideal for full-image banners.
+                </p>
+              </div>
+            )}
+
+            {/* Image Size / Orientation */}
+            <div className="space-y-2">
+              <Label>Image Size & Orientation</Label>
+              <Select
+                value={formData.image_aspect_ratio || "16:9"}
+                onValueChange={(v) => setField("image_aspect_ratio", v)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {IMAGE_SIZE_PRESETS.map((preset) => (
+                    <SelectItem key={preset.value} value={preset.value}>
+                      {preset.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-gray-500">
+                Image will fit fully inside this ratio (letterbox mode).
+              </p>
+            </div>
+
             {/* Colors */}
             <div className="space-y-3">
               <Label>Appearance</Label>
@@ -822,40 +995,97 @@ const BannerManagement = () => {
               </div>
 
               {/* Live mini-preview */}
-              <div
-                className="rounded-lg p-4"
-                style={{
-                  backgroundColor: formData.background_color,
-                  color: formData.text_color,
-                }}
-              >
-                <div className="text-sm font-semibold">
-                  {formData.title || "Banner Title"}
+              {(imagePreview || formData.image_url) && !removeImage ? (
+                /* Image present — overlay text/buttons on top of the image */
+                <div
+                  className="relative rounded-lg overflow-hidden"
+                  style={{ color: formData.text_color }}
+                >
+                  <div
+                    className="w-full bg-black/20"
+                    style={{
+                      aspectRatio: toCssAspectRatio(
+                        formData.image_aspect_ratio,
+                      ),
+                    }}
+                  >
+                    <img
+                      src={imagePreview || formData.image_url}
+                      alt="Banner"
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                  {/* Dark gradient at bottom so text is always readable */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+                  {/* Content overlay */}
+                  <div className="absolute bottom-0 left-0 right-0 p-4">
+                    <div className="text-sm font-semibold drop-shadow">
+                      {formData.title || "Banner Title"}
+                    </div>
+                    {formData.description && (
+                      <div className="text-xs mt-0.5 opacity-90 drop-shadow">
+                        {formData.description}
+                      </div>
+                    )}
+                    <div className="flex items-center gap-3 mt-2 flex-wrap">
+                      {formData.button_text && formData.button_link && (
+                        <span
+                          className="text-xs px-3 py-1 rounded border font-medium backdrop-blur-sm"
+                          style={{
+                            borderColor: formData.text_color,
+                            color: formData.text_color,
+                            backgroundColor: "rgba(0,0,0,0.25)",
+                          }}
+                        >
+                          {formData.button_text}
+                        </span>
+                      )}
+                      {formData.inline_link_text &&
+                        formData.inline_link_url && (
+                          <span className="text-xs underline opacity-90 drop-shadow">
+                            {formData.inline_link_text}
+                          </span>
+                        )}
+                    </div>
+                  </div>
                 </div>
-                {formData.description && (
-                  <div className="text-xs mt-0.5 opacity-80">
-                    {formData.description}
+              ) : (
+                /* No image — solid background with text */
+                <div
+                  className="rounded-lg p-4"
+                  style={{
+                    backgroundColor: formData.background_color,
+                    color: formData.text_color,
+                  }}
+                >
+                  <div className="text-sm font-semibold">
+                    {formData.title || "Banner Title"}
                   </div>
-                )}
-                {formData.button_text && (
-                  <div className="mt-2">
-                    <span
-                      className="text-xs px-3 py-1 rounded border"
-                      style={{
-                        borderColor: formData.text_color,
-                        color: formData.text_color,
-                      }}
-                    >
-                      {formData.button_text}
-                    </span>
+                  {formData.description && (
+                    <div className="text-xs mt-0.5 opacity-80">
+                      {formData.description}
+                    </div>
+                  )}
+                  <div className="flex items-center gap-3 mt-2 flex-wrap">
+                    {formData.button_text && formData.button_link && (
+                      <span
+                        className="text-xs px-3 py-1 rounded border"
+                        style={{
+                          borderColor: formData.text_color,
+                          color: formData.text_color,
+                        }}
+                      >
+                        {formData.button_text}
+                      </span>
+                    )}
+                    {formData.inline_link_text && formData.inline_link_url && (
+                      <span className="text-xs underline opacity-80">
+                        {formData.inline_link_text}
+                      </span>
+                    )}
                   </div>
-                )}
-                {formData.inline_link_text && (
-                  <div className="text-xs mt-1.5 underline opacity-80">
-                    {formData.inline_link_text}
-                  </div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
 
             {/* Validity */}

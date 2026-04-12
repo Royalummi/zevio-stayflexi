@@ -8,6 +8,10 @@ interface Banner {
   id: string;
   title: string;
   description?: string;
+  image_url?: string;
+  image_aspect_ratio?: string;
+  image_fit_mode?: "contain" | "cover";
+  banner_size?: "normal" | "large";
   button_text?: string;
   button_link?: string;
   inline_link_text?: string;
@@ -23,6 +27,28 @@ interface Banner {
 
 const DISMISS_PREFIX = "zevio_banner_dismissed_";
 
+// Resolve relative image URLs (local uploads) to full backend URL
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_URL?.replace("/api", "") ||
+  "http://localhost:5000";
+
+function resolveImageUrl(url?: string): string | undefined {
+  if (!url) return undefined;
+  if (url.startsWith("http")) return url; // already absolute (R2 / external)
+  return `${API_BASE}${url}`; // e.g. /uploads/banners/... → http://localhost:5000/uploads/banners/...
+}
+
+function toCssAspectRatio(value?: string): string {
+  if (!value) return "16 / 9";
+  return value.includes(":") ? value.replace(":", " / ") : value;
+}
+
+function normalizeExternalUrl(url?: string): string | undefined {
+  if (!url) return undefined;
+  if (url.startsWith("http://") || url.startsWith("https://")) return url;
+  return `https://${url}`;
+}
+
 function isDismissed(banner: Banner): boolean {
   if (!banner.show_once) return false;
   if (typeof window === "undefined") return false;
@@ -36,9 +62,11 @@ function markDismissed(banner: Banner) {
 }
 
 // Build the button/link href — property deeplink takes precedence over button_link
-function resolveButtonHref(banner: Banner): string {
+function resolveButtonHref(banner: Banner): string | undefined {
   if (banner.property_id) return `/properties/${banner.property_id}`;
-  return banner.button_link || "#";
+  if (banner.button_text && banner.button_link)
+    return normalizeExternalUrl(banner.button_link);
+  return undefined;
 }
 
 // ─────────────────────────────────────────
@@ -51,14 +79,18 @@ function PopupBanner({
   banner: Banner;
   onDismiss: () => void;
 }) {
+  const imageSrc = resolveImageUrl(banner.image_url);
   const buttonHref = resolveButtonHref(banner);
-  const buttonLabel =
-    banner.button_text || (banner.property_id ? "View Property" : undefined);
+  const buttonLabel = banner.property_id
+    ? banner.button_text || "View Property"
+    : banner.button_text && buttonHref
+      ? banner.button_text
+      : undefined;
 
   return (
     <div className={styles.overlay} onClick={onDismiss}>
       <div
-        className={styles.popup}
+        className={`${styles.popup}${banner.banner_size === "large" ? " " + styles.popupLarge : ""}`}
         style={{
           backgroundColor: banner.background_color,
           color: banner.text_color,
@@ -66,50 +98,125 @@ function PopupBanner({
         onClick={(e) => e.stopPropagation()}
       >
         <button
-          className={styles.closeBtn}
+          className={
+            banner.banner_size === "large"
+              ? styles.closeBtnOnLarge
+              : styles.closeBtn
+          }
           onClick={onDismiss}
           aria-label="Close banner"
-          style={{ color: banner.text_color }}
+          style={
+            banner.banner_size === "large"
+              ? undefined
+              : { color: banner.text_color }
+          }
         >
           ✕
         </button>
 
-        <p className={styles.title}>{banner.title}</p>
-
-        {banner.description && (
-          <p className={styles.description}>{banner.description}</p>
-        )}
-
-        <div className={styles.actions}>
-          {buttonLabel && (
-            <Link
-              href={buttonHref}
-              className={styles.ctaBtn}
+        {imageSrc ? (
+          <div
+            className={styles.bannerImageWrap}
+            style={
+              banner.banner_size === "large"
+                ? { height: "80vh" }
+                : { aspectRatio: toCssAspectRatio(banner.image_aspect_ratio) }
+            }
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={imageSrc}
+              alt={banner.title}
+              className={styles.bannerImage}
               style={{
-                color: banner.text_color,
-                borderColor: banner.text_color,
+                objectFit:
+                  banner.banner_size === "large"
+                    ? "cover"
+                    : banner.image_fit_mode || "contain",
               }}
-              onClick={onDismiss}
-              target={banner.property_id ? undefined : "_blank"}
-              rel={banner.property_id ? undefined : "noopener noreferrer"}
-            >
-              {buttonLabel}
-            </Link>
-          )}
+            />
+            <div className={styles.bannerImageOverlay} />
+            <div className={styles.bannerImageContent}>
+              <p className={styles.titleOnImage}>{banner.title}</p>
 
-          {banner.inline_link_text && banner.inline_link_url && (
-            <Link
-              href={banner.inline_link_url}
-              className={styles.inlineLink}
-              style={{ color: banner.text_color }}
-              onClick={onDismiss}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {banner.inline_link_text}
-            </Link>
-          )}
-        </div>
+              {banner.description && (
+                <p className={styles.descriptionOnImage}>
+                  {banner.description}
+                </p>
+              )}
+
+              <div className={styles.actionsOnImage}>
+                {buttonLabel && buttonHref && (
+                  <Link
+                    href={buttonHref}
+                    className={`${styles.ctaBtn} ${styles.ctaBtnOnImage}`}
+                    style={{
+                      color: banner.text_color,
+                      borderColor: banner.text_color,
+                    }}
+                    onClick={onDismiss}
+                    target={banner.property_id ? undefined : "_blank"}
+                    rel={banner.property_id ? undefined : "noopener noreferrer"}
+                  >
+                    {buttonLabel}
+                  </Link>
+                )}
+
+                {banner.inline_link_text && banner.inline_link_url && (
+                  <Link
+                    href={normalizeExternalUrl(banner.inline_link_url) || "#"}
+                    className={`${styles.inlineLink} ${styles.inlineLinkOnImage}`}
+                    style={{ color: banner.text_color }}
+                    onClick={onDismiss}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {banner.inline_link_text}
+                  </Link>
+                )}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <>
+            <p className={styles.title}>{banner.title}</p>
+
+            {banner.description && (
+              <p className={styles.description}>{banner.description}</p>
+            )}
+
+            <div className={styles.actions}>
+              {buttonLabel && buttonHref && (
+                <Link
+                  href={buttonHref}
+                  className={styles.ctaBtn}
+                  style={{
+                    color: banner.text_color,
+                    borderColor: banner.text_color,
+                  }}
+                  onClick={onDismiss}
+                  target={banner.property_id ? undefined : "_blank"}
+                  rel={banner.property_id ? undefined : "noopener noreferrer"}
+                >
+                  {buttonLabel}
+                </Link>
+              )}
+
+              {banner.inline_link_text && banner.inline_link_url && (
+                <Link
+                  href={normalizeExternalUrl(banner.inline_link_url) || "#"}
+                  className={styles.inlineLink}
+                  style={{ color: banner.text_color }}
+                  onClick={onDismiss}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {banner.inline_link_text}
+                </Link>
+              )}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
@@ -125,9 +232,13 @@ function TopBarBanner({
   banner: Banner;
   onDismiss: () => void;
 }) {
+  const imageSrc = resolveImageUrl(banner.image_url);
   const buttonHref = resolveButtonHref(banner);
-  const buttonLabel =
-    banner.button_text || (banner.property_id ? "View" : undefined);
+  const buttonLabel = banner.property_id
+    ? banner.button_text || "View"
+    : banner.button_text && buttonHref
+      ? banner.button_text
+      : undefined;
 
   return (
     <div
@@ -138,13 +249,28 @@ function TopBarBanner({
       }}
     >
       <div className={styles.topBarContent}>
+        {imageSrc && (
+          <div
+            className={styles.topBarImageWrap}
+            style={{ aspectRatio: toCssAspectRatio(banner.image_aspect_ratio) }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={imageSrc}
+              alt={banner.title}
+              className={styles.topBarImage}
+              style={{ objectFit: banner.image_fit_mode || "contain" }}
+            />
+          </div>
+        )}
+
         <span className={styles.topBarTitle}>{banner.title}</span>
 
         {banner.description && (
           <span className={styles.topBarDesc}>{banner.description}</span>
         )}
 
-        {buttonLabel && (
+        {buttonLabel && buttonHref && (
           <Link
             href={buttonHref}
             className={styles.ctaBtn}
@@ -159,7 +285,7 @@ function TopBarBanner({
 
         {banner.inline_link_text && banner.inline_link_url && (
           <Link
-            href={banner.inline_link_url}
+            href={normalizeExternalUrl(banner.inline_link_url) || "#"}
             className={styles.inlineLink}
             style={{ color: banner.text_color }}
             onClick={onDismiss}
@@ -193,9 +319,13 @@ function SlideInBanner({
   banner: Banner;
   onDismiss: () => void;
 }) {
+  const imageSrc = resolveImageUrl(banner.image_url);
   const buttonHref = resolveButtonHref(banner);
-  const buttonLabel =
-    banner.button_text || (banner.property_id ? "View Property" : undefined);
+  const buttonLabel = banner.property_id
+    ? banner.button_text || "View Property"
+    : banner.button_text && buttonHref
+      ? banner.button_text
+      : undefined;
 
   return (
     <div
@@ -214,39 +344,98 @@ function SlideInBanner({
         ✕
       </button>
 
-      <p className={styles.title}>{banner.title}</p>
+      {imageSrc ? (
+        <div
+          className={styles.bannerImageWrap}
+          style={{ aspectRatio: toCssAspectRatio(banner.image_aspect_ratio) }}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={imageSrc}
+            alt={banner.title}
+            className={styles.bannerImage}
+            style={{ objectFit: banner.image_fit_mode || "contain" }}
+          />
+          <div className={styles.bannerImageOverlay} />
+          <div className={styles.bannerImageContent}>
+            <p className={styles.titleOnImage}>{banner.title}</p>
 
-      {banner.description && (
-        <p className={styles.description}>{banner.description}</p>
+            {banner.description && (
+              <p className={styles.descriptionOnImage}>{banner.description}</p>
+            )}
+
+            <div className={styles.actionsOnImage}>
+              {buttonLabel && buttonHref && (
+                <Link
+                  href={buttonHref}
+                  className={`${styles.ctaBtn} ${styles.ctaBtnOnImage}`}
+                  style={{
+                    color: banner.text_color,
+                    borderColor: banner.text_color,
+                  }}
+                  onClick={onDismiss}
+                  target={banner.property_id ? undefined : "_blank"}
+                  rel={banner.property_id ? undefined : "noopener noreferrer"}
+                >
+                  {buttonLabel}
+                </Link>
+              )}
+
+              {banner.inline_link_text && banner.inline_link_url && (
+                <Link
+                  href={normalizeExternalUrl(banner.inline_link_url) || "#"}
+                  className={`${styles.inlineLink} ${styles.inlineLinkOnImage}`}
+                  style={{ color: banner.text_color }}
+                  onClick={onDismiss}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {banner.inline_link_text}
+                </Link>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : (
+        <>
+          <p className={styles.title}>{banner.title}</p>
+
+          {banner.description && (
+            <p className={styles.description}>{banner.description}</p>
+          )}
+
+          <div className={styles.actions}>
+            {buttonLabel && buttonHref && (
+              <Link
+                href={buttonHref}
+                className={styles.ctaBtn}
+                style={{
+                  color: banner.text_color,
+                  borderColor: banner.text_color,
+                }}
+                onClick={onDismiss}
+                target={banner.property_id ? undefined : "_blank"}
+                rel={banner.property_id ? undefined : "noopener noreferrer"}
+              >
+                {buttonLabel}
+              </Link>
+            )}
+
+            {banner.inline_link_text && banner.inline_link_url && (
+              <Link
+                href={normalizeExternalUrl(banner.inline_link_url) || "#"}
+                className={styles.inlineLink}
+                style={{ color: banner.text_color }}
+                onClick={onDismiss}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {banner.inline_link_text}
+              </Link>
+            )}
+          </div>
+        </>
       )}
-
-      <div className={styles.actions}>
-        {buttonLabel && (
-          <Link
-            href={buttonHref}
-            className={styles.ctaBtn}
-            style={{ color: banner.text_color, borderColor: banner.text_color }}
-            onClick={onDismiss}
-            target={banner.property_id ? undefined : "_blank"}
-            rel={banner.property_id ? undefined : "noopener noreferrer"}
-          >
-            {buttonLabel}
-          </Link>
-        )}
-
-        {banner.inline_link_text && banner.inline_link_url && (
-          <Link
-            href={banner.inline_link_url}
-            className={styles.inlineLink}
-            style={{ color: banner.text_color }}
-            onClick={onDismiss}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            {banner.inline_link_text}
-          </Link>
-        )}
-      </div>
     </div>
   );
 }
@@ -260,7 +449,7 @@ export default function PopBanner() {
 
   useEffect(() => {
     const apiUrl =
-      process.env.NEXT_PUBLIC_API_URL || "http://localhost:4500/api";
+      process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
     fetch(`${apiUrl}/banners/active`, { cache: "no-store" })
       .then((r) => r.json())
       .then((json) => {

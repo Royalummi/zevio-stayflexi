@@ -13,7 +13,10 @@ import {
   toggleBanner,
   deleteBanner,
   getActiveBanners,
+  uploadBannerImageHandler,
+  removeBannerImageHandler,
 } from "../controllers/bannersController.js";
+import { uploadBannerImage } from "../middlewares/upload.js";
 
 const router = express.Router();
 
@@ -66,6 +69,21 @@ router.delete(
   authenticate,
   authorize("admin", "super_admin"),
   deleteBanner,
+);
+
+router.post(
+  "/admin/banners/:id/image",
+  authenticate,
+  authorize("admin", "super_admin"),
+  uploadBannerImage.single("image"),
+  uploadBannerImageHandler,
+);
+
+router.delete(
+  "/admin/banners/:id/image",
+  authenticate,
+  authorize("admin", "super_admin"),
+  removeBannerImageHandler,
 );
 
 export default router;

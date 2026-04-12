@@ -91,3 +91,35 @@ export const uploadPropertyImages = multer({
   },
   fileFilter: fileFilter,
 });
+
+// ========================================
+// Banner Image Upload Configuration
+// ========================================
+
+const bannerUploadsDir = path.join(__dirname, "../../uploads/banners");
+if (!fs.existsSync(bannerUploadsDir)) {
+  fs.mkdirSync(bannerUploadsDir, { recursive: true });
+}
+
+const bannerStorage = useR2
+  ? multer.memoryStorage()
+  : multer.diskStorage({
+      destination: function (req, file, cb) {
+        cb(null, bannerUploadsDir);
+      },
+      filename: function (req, file, cb) {
+        const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+        const ext = path.extname(file.originalname);
+        const bannerId = req.params.id || "unknown";
+        cb(null, `banner-${bannerId}-${uniqueSuffix}${ext}`);
+      },
+    });
+
+// Multer upload configuration for banner images (single file)
+export const uploadBannerImage = multer({
+  storage: bannerStorage,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB max
+  },
+  fileFilter: fileFilter,
+});

@@ -6,6 +6,11 @@
 import db from "../config/database.js";
 import { asyncHandler, sendSuccess, sendError } from "../utils/response.js";
 import { generateUUID } from "../utils/helpers.js";
+import {
+  uploadToR2,
+  deleteFromR2,
+  isR2Configured,
+} from "../utils/r2Storage.js";
 
 // ============================================
 // ADMIN: CREATE BANNER
@@ -20,6 +25,10 @@ export const createBanner = asyncHandler(async (req, res) => {
     inline_link_text,
     inline_link_url,
     property_id,
+    image_url,
+    image_aspect_ratio = "16:9",
+    image_fit_mode = "contain",
+    banner_size = "normal",
     background_color = "#1F3A5F",
     text_color = "#FFFFFF",
     banner_type = "popup",
@@ -51,10 +60,11 @@ export const createBanner = asyncHandler(async (req, res) => {
   await db.query(
     `INSERT INTO banners (
       id, title, description, button_text, button_link,
-      inline_link_text, inline_link_url, property_id,
+      inline_link_text, inline_link_url, property_id, image_url,
+      image_aspect_ratio, image_fit_mode, banner_size,
       background_color, text_color, banner_type, show_once,
       is_active, valid_from, valid_until, created_by
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       bannerId,
       title,
@@ -64,6 +74,10 @@ export const createBanner = asyncHandler(async (req, res) => {
       inline_link_text || null,
       inline_link_url || null,
       property_id || null,
+      image_url || null,
+      image_aspect_ratio,
+      image_fit_mode,
+      banner_size,
       background_color,
       text_color,
       banner_type,
@@ -177,6 +191,10 @@ export const updateBanner = asyncHandler(async (req, res) => {
     inline_link_text,
     inline_link_url,
     property_id,
+    image_url,
+    image_aspect_ratio,
+    image_fit_mode,
+    banner_size,
     background_color,
     text_color,
     banner_type,
@@ -209,6 +227,12 @@ export const updateBanner = asyncHandler(async (req, res) => {
   if (inline_link_url !== undefined)
     updates.inline_link_url = inline_link_url || null;
   if (property_id !== undefined) updates.property_id = property_id || null;
+  if (image_url !== undefined) updates.image_url = image_url || null;
+  if (image_aspect_ratio !== undefined)
+    updates.image_aspect_ratio = image_aspect_ratio || "16:9";
+  if (image_fit_mode !== undefined)
+    updates.image_fit_mode = image_fit_mode || "contain";
+  if (banner_size !== undefined) updates.banner_size = banner_size || "normal";
   if (background_color !== undefined)
     updates.background_color = background_color;
   if (text_color !== undefined) updates.text_color = text_color;
@@ -309,7 +333,9 @@ export const getActiveBanners = asyncHandler(async (req, res) => {
        b.id, b.title, b.description,
        b.button_text, b.button_link,
        b.inline_link_text, b.inline_link_url,
-       b.property_id, b.background_color, b.text_color,
+      b.property_id, b.image_url,
+      b.image_aspect_ratio, b.image_fit_mode, b.banner_size,
+       b.background_color, b.text_color,
        b.banner_type, b.show_once,
        b.valid_from, b.valid_until,
        p.title AS property_title
@@ -324,4 +350,75 @@ export const getActiveBanners = asyncHandler(async (req, res) => {
   );
 
   return sendSuccess(res, banners, "Active banners retrieved");
+});
+
+// ============================================
+// ADMIN: UPLOAD BANNER IMAGE
+// POST /api/admin/banners/:id/image
+// ============================================
+export const uploadBannerImageHandler = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  const [existing] = await db.query(
+    "SELECT id, image_url FROM banners WHERE id = ? AND deleted_at IS NULL",
+    [id],
+  );
+
+  if (existing.length === 0) {
+    return sendError(res, "Banner not found", 404);
+  }
+
+  if (!req.file) {
+    return sendError(res, "No image file uploaded", 400);
+  }
+
+  const useR2 = isR2Configured();
+  let imageUrl;
+
+  if (useR2) {
+    // Delete old image from R2 if it exists
+    if (existing[0].image_url) {
+      await deleteFromR2(existing[0].image_url).catch(() => {});
+    }
+    imageUrl = await uploadToR2(req.file.buffer, "banners", null, {
+      ext: req.file.originalname.split(".").pop(),
+    });
+  } else {
+    imageUrl = `/uploads/banners/${req.file.filename}`;
+  }
+
+  await db.query("UPDATE banners SET image_url = ? WHERE id = ?", [
+    imageUrl,
+    id,
+  ]);
+
+  return sendSuccess(
+    res,
+    { image_url: imageUrl },
+    "Banner image uploaded successfully",
+  );
+});
+
+// ============================================
+// ADMIN: REMOVE BANNER IMAGE
+// DELETE /api/admin/banners/:id/image
+// ============================================
+export const removeBannerImageHandler = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  const [existing] = await db.query(
+    "SELECT id, image_url FROM banners WHERE id = ? AND deleted_at IS NULL",
+    [id],
+  );
+
+  if (existing.length === 0) {
+    return sendError(res, "Banner not found", 404);
+  }
+
+  if (existing[0].image_url) {
+    await deleteFromR2(existing[0].image_url).catch(() => {});
+    await db.query("UPDATE banners SET image_url = NULL WHERE id = ?", [id]);
+  }
+
+  return sendSuccess(res, { id }, "Banner image removed successfully");
 });

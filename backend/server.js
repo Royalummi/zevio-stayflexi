@@ -61,22 +61,41 @@ const authLimiter = rateLimit({
 // Middleware
 app.use(helmet()); // Security headers
 
-// CORS Configuration - Allow all local development ports
+// CORS Configuration - allow known domains and local dev ports
+const allowedOrigins = [
+  process.env.FRONTEND_URL || "http://localhost:3000",
+  process.env.VITE_FRONTEND_URL || "http://localhost:5173", // Vite React frontend
+  process.env.ASTRO_URL || "http://localhost:4321",
+  process.env.NEXTJS_URL || "http://localhost:8000",
+  "http://localhost:5173", // Vite dev server (hardcoded for safety)
+  "http://localhost:3000", // React dev server
+  "http://localhost:8000", // Next.js
+  "http://localhost:4321", // Astro
+  "https://zevio.in",
+  "https://www.zevio.in",
+  "https://api.zevio.in",
+  "https://admin.zevio.in",
+];
+
+const isAllowedOrigin = (origin) => {
+  if (!origin) return true; // server-to-server calls and curl/postman without origin
+  if (allowedOrigins.includes(origin)) return true;
+
+  // Accept any localhost/127.0.0.1 dev port (e.g. Vite auto-switches to 3001)
+  if (/^http:\/\/localhost:\d+$/.test(origin)) return true;
+  if (/^http:\/\/127\.0\.0\.1:\d+$/.test(origin)) return true;
+
+  return false;
+};
+
 const corsOptions = {
-  origin: [
-    process.env.FRONTEND_URL || "http://localhost:3000",
-    process.env.VITE_FRONTEND_URL || "http://localhost:5173", // Vite React frontend
-    process.env.ASTRO_URL || "http://localhost:4321",
-    process.env.NEXTJS_URL || "http://localhost:8000",
-    "http://localhost:5173", // Vite dev server (hardcoded for safety)
-    "http://localhost:3000", // React dev server
-    "http://localhost:8000", // Next.js
-    "http://localhost:4321", // Astro
-    "https://zevio.in",
-    "https://www.zevio.in",
-    "https://api.zevio.in",
-    "https://admin.zevio.in",
-  ],
+  origin: (origin, callback) => {
+    if (isAllowedOrigin(origin)) {
+      callback(null, true);
+      return;
+    }
+    callback(new Error(`CORS blocked for origin: ${origin}`));
+  },
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "Cache-Control"],
@@ -96,7 +115,7 @@ app.use(
   (req, res, next) => {
     // Set CORS headers explicitly for static files
     const origin = req.headers.origin;
-    if (corsOptions.origin.includes(origin)) {
+    if (isAllowedOrigin(origin)) {
       res.setHeader("Access-Control-Allow-Origin", origin);
     }
     res.setHeader("Access-Control-Allow-Credentials", "true");

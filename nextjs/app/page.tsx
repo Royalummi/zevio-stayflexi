@@ -9,23 +9,23 @@ const destinations = [
   {
     name: "Nandi Hills",
     image:
-      "https://images.unsplash.com/photo-1606145005479-747938dfd432?w=800&q=80",
+      "https://pub-6c324d7c9f5e49859e5016309646ff83.r2.dev/destinations/nandi-hills.jpeg",
   },
   {
     name: "Bangalore Airport",
     area: "Bangalore International Airport",
     image:
-      "https://images.unsplash.com/photo-1664892843718-186acc045805?w=800&q=80",
+      "https://pub-6c324d7c9f5e49859e5016309646ff83.r2.dev/destinations/bangalore-airport.jpeg",
   },
   {
     name: "Whitefield",
     image:
-      "https://images.unsplash.com/photo-1627306036351-036986f292a9?w=800&q=80",
+      "https://pub-6c324d7c9f5e49859e5016309646ff83.r2.dev/destinations/whitefield.jpeg",
   },
   {
     name: "Koramangala",
     image:
-      "https://images.unsplash.com/photo-1708067077797-74f83eaa8231?w=800&q=80",
+      "https://pub-6c324d7c9f5e49859e5016309646ff83.r2.dev/destinations/koramangala.jpeg",
   },
 ];
 

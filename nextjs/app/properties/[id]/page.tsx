@@ -1361,13 +1361,19 @@ function PropertyDetailContent() {
                   </section>
                 )}
 
-              {/* Cancellation Policy */}
+              {/* Cancellation Policy - Accordion (closed by default) */}
               {property.cancellation_policy &&
                 typeof property.cancellation_policy === "object" && (
-                  <section className={luxuryStyles.aboutSectionLuxury}>
-                    <h2 className={luxuryStyles.sectionTitleLuxury}>
-                      <FiAlertCircle /> Cancellation Policy
-                    </h2>
+                  <details className={luxuryStyles.accordionCard}>
+                    <summary className={luxuryStyles.accordionHeader}>
+                      <span className={luxuryStyles.accordionHeaderInner}>
+                        <FiAlertCircle />
+                        Cancellation Policy
+                      </span>
+                      <span className={luxuryStyles.accordionChevron}>
+                        &#8250;
+                      </span>
+                    </summary>
                     {Array.isArray(
                       (property.cancellation_policy as Record<string, unknown>)
                         .tiers,
@@ -1538,7 +1544,7 @@ function PropertyDetailContent() {
                         )}
                       </div>
                     )}
-                  </section>
+                  </details>
                 )}
 
               {/* Location Section */}

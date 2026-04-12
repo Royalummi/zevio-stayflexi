@@ -17,7 +17,7 @@ const faqs = [
       {
         question: "Can I modify or cancel my booking?",
         answer:
-          "Yes, you can modify or cancel your booking. Our cancellation policy is based on how far your check-in date is: 10 days or more before check-in — Full Refund. 7 days before check-in — Partial Refund. Within 48 hours of check-in — No Refund. To modify or cancel, log into your account, go to 'My Bookings', and select the booking you want to change.",
+          "Yes, you can modify or cancel your booking. Our cancellation policy is based on how far your check-in date/time is: 10 days or more before check-in — Full Refund (minus 5% cancellation fee). 7 days before check-in — Partial Refund (minus 5% cancellation fee). Within 48 hours of check-in — No Refund. A 5% cancellation fee applies to all cancellations. To modify or cancel, log into your account, go to 'My Bookings', and select the booking you want to change.",
       },
       {
         question: "When will I receive booking confirmation?",
@@ -92,7 +92,7 @@ const faqs = [
       {
         question: "Do you offer refunds?",
         answer:
-          "Refunds are based on when you cancel relative to your check-in date: 10 days or more before check-in — Full Refund. 7 days before check-in — Partial Refund. Within 48 hours of check-in — No Refund. Refunds are processed within 5–7 business days to your original payment method.",
+          "Refunds are based on when you cancel relative to your check-in date/time: Within 48 hours of check-in — No Refund. 7 days before check-in — Partial Refund (minus 5% cancellation fee). 10 days or more before check-in — Full Refund (minus 5% cancellation fee). A 5% cancellation fee applies to all cancellations. Refunds are processed within 5–7 business days to your original payment method.",
       },
     ],
   },
@@ -102,12 +102,12 @@ const faqs = [
       {
         question: "Are properties verified for safety?",
         answer:
-          "Yes! Every property undergoes rigorous safety and quality checks by our team. We verify ownership documents, inspect fire safety equipment, check electrical and plumbing systems, and ensure secure locks on all entry points. Host identity is also verified.",
+          "Yes! Every property undergoes rigorous safety and quality checks by our team. ensure secure locks on all entry points. Host identity is also verified. ",
       },
       {
         question: "What if I face issues during my stay?",
         answer:
-          "Our 24/7 support team is always available to assist you. Contact us immediately if you face any issues. We'll work with the host to resolve problems quickly. If issues can't be resolved, we'll help you find alternative accommodation with full refund support.",
+          "Our 24/7 support team is always available to assist you. Contact us immediately if you face any issues. We'll work with the host to resolve problems quickly",
       },
     ],
   },

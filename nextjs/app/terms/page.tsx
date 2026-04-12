@@ -85,8 +85,9 @@ export default function TermsPage() {
                 immediately of any breach of security.
               </li>
               <li>
-                <strong>Account Transfer:</strong> Accounts are non-transferable.
-                You may not sell or assign your account to another party.
+                <strong>Account Transfer:</strong> Accounts are
+                non-transferable. You may not sell or assign your account to
+                another party.
               </li>
               <li>
                 <strong>One Account Policy:</strong> Users may generally only
@@ -111,9 +112,7 @@ export default function TermsPage() {
               booking must be processed through the Platform.
             </p>
             <h3 className={styles.subsectionTitle}>4.2 Pricing Components</h3>
-            <p>
-              The &quot;Total Price&quot; displayed includes:
-            </p>
+            <p>The &quot;Total Price&quot; displayed includes:</p>
             <ul>
               <li>
                 <strong>Accommodation Fee:</strong> Set by the Host.
@@ -200,14 +199,14 @@ export default function TermsPage() {
             </h2>
             <h3 className={styles.subsectionTitle}>7.1 Use of Property</h3>
             <p>
-              The Accommodation shall be used strictly for personal, residential,
-              and lawful accommodation purposes for the duration of the booked
-              stay. Guests are expressly prohibited from using the property for
-              any commercial activities, illegal enterprises, subletting, or
-              transferring the booking to any third party without the prior
-              written consent of the Host. The Guest acknowledges that the
-              booking constitutes a temporary license to use the property and
-              does not create any tenancy, leasehold, or other real property
+              The Accommodation shall be used strictly for personal,
+              residential, and lawful accommodation purposes for the duration of
+              the booked stay. Guests are expressly prohibited from using the
+              property for any commercial activities, illegal enterprises,
+              subletting, or transferring the booking to any third party without
+              the prior written consent of the Host. The Guest acknowledges that
+              the booking constitutes a temporary license to use the property
+              and does not create any tenancy, leasehold, or other real property
               rights under Indian law.
             </p>
             <h3 className={styles.subsectionTitle}>7.2 House Rules</h3>
@@ -493,8 +492,7 @@ export default function TermsPage() {
                 <strong>Zevio</strong>
               </p>
               <p>
-                Email:{" "}
-                <a href="mailto:support@zevio.com">support@zevio.com</a>
+                Email: <a href="mailto:support@zevio.com">support@zevio.com</a>
               </p>
               <p>Phone: +91 99800 50909</p>
             </div>

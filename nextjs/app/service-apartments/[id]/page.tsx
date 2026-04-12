@@ -1279,59 +1279,65 @@ function ServiceApartmentDetailContent() {
             </div>
           )}
 
-          {/* Cancellation Policy - Structured tiers display */}
+          {/* Cancellation Policy - Accordion (closed by default) */}
           {property.cancellation_policy && (
-            <div className={styles.section}>
-              <div className={styles.sectionHeader}>
-                <h2>
-                  <FiAlertCircle
-                    style={{ display: "inline-block", marginRight: "0.5rem" }}
-                  />
+            <details
+              className={`${styles.accordionCard} ${styles.cancellationAccordion}`}
+            >
+              <summary className={styles.accordionHeader}>
+                <span className={styles.accordionHeaderInner}>
+                  <FiAlertCircle />
                   Cancellation Policy
-                </h2>
-                <div className={styles.sectionDivider}></div>
-              </div>
-              {property.cancellation_policy &&
-                Array.isArray(
-                  (property.cancellation_policy as Record<string, unknown>)
-                    .tiers,
-                ) && (
-                  <div className={styles.cancelTiersList}>
-                    {(
-                      (property.cancellation_policy as Record<string, unknown>)
-                        .tiers as Array<{
-                        label: string;
-                        days_before_checkin: number;
-                        refund_percent: number;
-                      }>
-                    ).map((tier, i) => (
-                      <div key={i} className={styles.cancelTierItem}>
-                        <div className={styles.cancelTierLabel}>
-                          {tier.label}
-                        </div>
-                        <div className={styles.cancelTierDetails}>
-                          <span className={styles.cancelTierDays}>
-                            {tier.days_before_checkin > 0
-                              ? `${tier.days_before_checkin}+ days before`
-                              : "At check-in"}
-                          </span>
-                          <span
-                            className={`${styles.cancelTierRefund} ${
-                              tier.refund_percent === 100
-                                ? styles.refundFull
-                                : tier.refund_percent > 0
-                                  ? styles.refundPartial
-                                  : styles.refundNone
-                            }`}
+                </span>
+                <span className={styles.accordionChevron}>&#8250;</span>
+              </summary>
+              <div className={styles.accordionBody}>
+                {property.cancellation_policy &&
+                  Array.isArray(
+                    (property.cancellation_policy as Record<string, unknown>)
+                      .tiers,
+                  ) && (
+                    <div className={styles.cancelTiersList}>
+                      {(
+                        (
+                          property.cancellation_policy as Record<
+                            string,
+                            unknown
                           >
-                            {tier.refund_percent}% Refund
-                          </span>
+                        ).tiers as Array<{
+                          label: string;
+                          days_before_checkin: number;
+                          refund_percent: number;
+                        }>
+                      ).map((tier, i) => (
+                        <div key={i} className={styles.cancelTierItem}>
+                          <div className={styles.cancelTierLabel}>
+                            {tier.label}
+                          </div>
+                          <div className={styles.cancelTierDetails}>
+                            <span className={styles.cancelTierDays}>
+                              {tier.days_before_checkin > 0
+                                ? `${tier.days_before_checkin}+ days before`
+                                : "At check-in"}
+                            </span>
+                            <span
+                              className={`${styles.cancelTierRefund} ${
+                                tier.refund_percent === 100
+                                  ? styles.refundFull
+                                  : tier.refund_percent > 0
+                                    ? styles.refundPartial
+                                    : styles.refundNone
+                              }`}
+                            >
+                              {tier.refund_percent}% Refund
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-            </div>
+                      ))}
+                    </div>
+                  )}
+              </div>
+            </details>
           )}
 
           {/* Local Area Information - Accordion */}

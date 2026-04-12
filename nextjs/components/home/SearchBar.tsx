@@ -176,6 +176,62 @@ export default function SearchBar() {
     return () => window.removeEventListener("keydown", handleEscKey);
   }, [isSearchModalOpen]);
 
+  // Mobile keyboard detection - adjust search bar position to stay visible
+  useEffect(() => {
+    if (!isMobile || !isSearchModalOpen) return;
+
+    const handleKeyboardVisibilityChange = () => {
+      if (!searchBarRef.current) return;
+
+      const searchBar = searchBarRef.current;
+      const searchBarHeight = searchBar.offsetHeight || 80;
+      const minTopPosition = 20; // Minimum space from top (in px)
+
+      // Calculate visible viewport height (accounts for keyboard)
+      const windowHeight = window.innerHeight;
+      const visualViewportHeight =
+        window.visualViewport?.height || windowHeight;
+      const keyboardHeight = windowHeight - visualViewportHeight;
+
+      // If keyboard is visible (keyboardHeight > 50px threshold)
+      if (keyboardHeight > 50) {
+        // Calculate safe top position: ensure search bar stays visible with margin
+        // Available space = visualViewportHeight - searchBarHeight - margin
+        const maxSafeTop =
+          visualViewportHeight - searchBarHeight - minTopPosition;
+        const currentTop = parseFloat(searchBar.style.top || "100");
+
+        // If current position would be cut off by keyboard, adjust it
+        if (
+          currentTop + searchBarHeight >
+          visualViewportHeight - minTopPosition
+        ) {
+          const newTop = Math.max(minTopPosition, maxSafeTop);
+          // Use existing animation easing for smooth adjustment
+          searchBar.style.transition = "top 0.3s cubic-bezier(0.4, 0, 0.2, 1)";
+          searchBar.style.top = `${newTop}px`;
+        }
+      } else {
+        // Keyboard closed — return to original position (100px)
+        searchBar.style.transition = "top 0.3s cubic-bezier(0.4, 0, 0.2, 1)";
+        searchBar.style.top = "100px";
+      }
+    };
+
+    // Listen to visualViewport resize (keyboard appearance on mobile)
+    window.visualViewport?.addEventListener(
+      "resize",
+      handleKeyboardVisibilityChange,
+    );
+
+    return () => {
+      window.visualViewport?.removeEventListener(
+        "resize",
+        handleKeyboardVisibilityChange,
+      );
+    };
+  }, [isMobile, isSearchModalOpen]);
+
   // Fetch areas/localities based on property type.
   // Villas tab: no filter → backend returns all approved property types merged
   // (DB DISTINCT on area+city_id ensures deduplication automatically).
