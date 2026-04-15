@@ -74,7 +74,7 @@ const VendorPropertyForm = ({
     bathrooms: 1,
     living_area: 1,
     max_guests: 2,
-    check_in_time: "2:00 PM",
+    check_in_time: "1:00 PM",
     check_out_time: "11:00 AM",
     price_per_night: "",
     original_price: "",
@@ -136,7 +136,7 @@ const VendorPropertyForm = ({
 
     // House Rules (JSON)
     house_rules: {
-      check_in_after: "2:00 PM",
+      check_in_after: "1:00 PM",
       check_out_before: "11:00 AM",
       no_smoking: true,
       no_parties: true,
@@ -541,6 +541,18 @@ const VendorPropertyForm = ({
   useEffect(() => {
     onDirtyChange?.(hasUnsavedChanges);
   }, [hasUnsavedChanges, onDirtyChange]);
+
+  // Keep house_rules check-in/out in sync with the primary fields
+  useEffect(() => {
+    setFormData((prev) => ({
+      ...prev,
+      house_rules: {
+        ...prev.house_rules,
+        check_in_after: prev.check_in_time,
+        check_out_before: prev.check_out_time,
+      },
+    }));
+  }, [formData.check_in_time, formData.check_out_time]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -1218,7 +1230,7 @@ const VendorPropertyForm = ({
                 name="check_in_time"
                 value={formData.check_in_time}
                 onChange={handleInputChange}
-                placeholder="e.g., 2:00 PM"
+                placeholder="e.g., 1:00 PM"
                 className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
             </div>
@@ -1243,10 +1255,10 @@ const VendorPropertyForm = ({
         {/* Section 4: Pricing */}
         <FormSection title="Pricing" icon={DollarSign} required={true}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            {/* Discounted Price Per Night */}
+            {/* Discounted Price / Base Price  Per Night */}
             <div className="flex flex-col">
               <label className="text-sm font-medium text-foreground mb-2">
-                Discounted Price Per Night (₹){" "}
+                Discounted Price / Base Price Per Night (₹){" "}
                 <span className="text-destructive">*</span>
               </label>
               <input
@@ -1562,7 +1574,7 @@ const VendorPropertyForm = ({
         <FormSection
           title="📅 Calendar Pricing"
           icon={Calendar}
-          defaultOpen={false}
+          defaultOpen={true}
         >
           <div className="mb-4">
             <p className="text-sm text-muted-foreground">
@@ -1868,7 +1880,7 @@ const VendorPropertyForm = ({
         <FormSection
           title="Secondary Property Incharge (Optional)"
           icon={UserCircle}
-          defaultOpen={false}
+          defaultOpen={true}
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Name */}
@@ -1954,7 +1966,7 @@ const VendorPropertyForm = ({
         </FormSection>
 
         {/* Section 7: Booking Rules */}
-        <FormSection title="Booking Rules" icon={Calendar} defaultOpen={false}>
+        <FormSection title="Booking Rules" icon={Calendar} defaultOpen={true}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Same Day Booking */}
             <div className="flex items-center space-x-3 p-4 bg-muted/30 border border-border rounded-lg">
@@ -2007,51 +2019,8 @@ const VendorPropertyForm = ({
         </FormSection>
 
         {/* Section 9: House Rules */}
-        <FormSection title="House Rules" icon={Shield} defaultOpen={false}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            {/* Check-in After */}
-            <div className="flex flex-col">
-              <label className="text-sm font-medium text-foreground mb-2">
-                Check-in After
-              </label>
-              <input
-                type="text"
-                value={formData.house_rules.check_in_after}
-                onChange={(e) =>
-                  handleNestedChange(
-                    "house_rules",
-                    "check_in_after",
-                    e.target.value,
-                  )
-                }
-                placeholder="2:00 PM"
-                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-              />
-            </div>
-
-            {/* Check-out Before */}
-            <div className="flex flex-col">
-              <label className="text-sm font-medium text-foreground mb-2">
-                Check-out Before
-              </label>
-              <input
-                type="text"
-                value={formData.house_rules.check_out_before}
-                onChange={(e) =>
-                  handleNestedChange(
-                    "house_rules",
-                    "check_out_before",
-                    e.target.value,
-                  )
-                }
-                placeholder="11:00 AM"
-                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-              />
-            </div>
-          </div>
-
-          {/* Rule Checkboxes */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <FormSection title="House Rules" icon={Shield} defaultOpen={true}>
+          <div className="grid grid-cols-1 md:grid-cols-1 gap-6 mb-6">
             <div className="flex items-center space-x-3 p-4 bg-muted/30 border border-border rounded-lg">
               <input
                 type="checkbox"
@@ -2192,7 +2161,7 @@ const VendorPropertyForm = ({
           )}
           {!errors.photos && (
             <p className="mt-2 text-xs text-muted-foreground">
-              Minimum 6 photos required to submit for approval. Upload up to 10.
+              Minimum 6 photos required to submit for approval. Upload up to 40.
             </p>
           )}
         </FormSection>
@@ -2201,7 +2170,7 @@ const VendorPropertyForm = ({
         <FormSection
           title="Property Guidelines & Information"
           icon={FileText}
-          defaultOpen={false}
+          defaultOpen={true}
         >
           <div className="space-y-6">
             {/* Safety Information */}

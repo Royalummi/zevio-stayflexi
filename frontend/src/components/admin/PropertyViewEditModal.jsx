@@ -148,8 +148,6 @@ const PropertyViewEditModal = ({
     bathrooms: "",
     check_in_time: "",
     check_out_time: "",
-    wifi_available: false,
-    parking_available: false,
     is_featured: false,
     recommended_priority: 0,
   });
@@ -181,10 +179,8 @@ const PropertyViewEditModal = ({
         max_guests: data.max_guests || "",
         bedrooms: data.bedrooms || "",
         bathrooms: data.bathrooms || "",
-        check_in_time: data.check_in_time || "2:00 PM",
+        check_in_time: data.check_in_time || "1:00 PM",
         check_out_time: data.check_out_time || "11:00 AM",
-        wifi_available: data.wifi_available || false,
-        parking_available: data.parking_available || false,
         is_featured: data.is_featured || false,
         recommended_priority: data.recommended_priority || 0,
       });
@@ -242,23 +238,112 @@ const PropertyViewEditModal = ({
     try {
       setLoading(true);
 
+      const d = fullPropertyData;
+
+      // Build a complete payload so the backend full-UPDATE doesn't wipe unedited fields.
+      // Only the fields exposed in this quick-edit form override; everything else is
+      // passed through from the already-fetched fullPropertyData.
       const updatePayload = {
+        // ── Identity (required by backend, never edited here) ──
+        vendor_id: d.vendor_id,
+        city_id: d.city_id,
+        property_type_id: d.property_type_id,
+        // ── Quick-edit fields ──
         title: formData.title,
         description: formData.description,
         status: formData.status,
         price_per_night: parseFloat(formData.price_per_night),
+        original_price: d.original_price ?? d.pricing?.original_price ?? null,
+        gst_percentage: d.gst_percentage ?? d.pricing?.gst_percentage ?? 0,
         max_guests: parseInt(formData.max_guests),
         bedrooms: parseInt(formData.bedrooms),
         bathrooms: parseInt(formData.bathrooms),
         check_in_time: formData.check_in_time,
         check_out_time: formData.check_out_time,
-        wifi_available: formData.wifi_available,
-        parking_available: formData.parking_available,
-        is_featured: formData.is_featured,
+        // ── Recommendation (pass through; recommended_priority editable) ──
+        is_recommended: d.is_recommended || false,
         recommended_priority: parseInt(formData.recommended_priority),
+        // ── Pass-through: location ──
+        address: d.address ?? null,
+        area: d.area ?? null,
+        state: d.state ?? null,
+        pincode: d.pincode ?? null,
+        maps_location: d.maps_location ?? null,
+        // ── Pass-through: property features ──
+        pool_type: d.pool_type ?? "none",
+        garden_type: d.garden_type ?? "none",
+        pets_allowed: d.pets_allowed ?? false,
+        events_allowed: d.events_allowed ?? false,
+        event_capacity: d.event_capacity ?? null,
+        living_area: d.living_area ?? 1,
+        furnishing_type: d.furnishing_type ?? "fully_furnished",
+        floor_number: d.floor_number ?? null,
+        parking_slots: d.parking_slots ?? 0,
+        wifi_speed_mbps: d.wifi_speed_mbps ?? null,
+        wifi_provider: d.wifi_provider ?? null,
+        // ── Pass-through: stay settings ──
+        min_stay_days: d.min_stay_days ?? 1,
+        max_stay_days: d.max_stay_days ?? null,
+        housekeeping_frequency: d.housekeeping_frequency ?? "weekly",
+        laundry_frequency: d.laundry_frequency ?? "weekly",
+        utilities_included: d.utilities_included ?? false,
+        same_day_booking_allowed: d.same_day_booking_allowed ?? true,
+        max_booking_days: d.max_booking_days ?? null,
+        // ── Pass-through: pricing extras ──
+        min_guests: d.pricing?.min_guests ?? d.min_guests ?? 1,
+        extra_guest_charge: d.pricing?.extra_guest_charge ?? 0,
+        min_children: d.pricing?.min_children ?? 0,
+        max_children: d.pricing?.max_children ?? 5,
+        extra_child_charge: d.pricing?.extra_child_charge ?? 0,
+        weekly_discount_percent: d.pricing?.weekly_discount_percent ?? 0,
+        monthly_discount_percent: d.pricing?.monthly_discount_percent ?? 0,
+        quarterly_discount_percent: d.pricing?.quarterly_discount_percent ?? 0,
+        long_term_discount_percent: d.pricing?.long_term_discount_percent ?? 0,
+        allow_corporate_booking: d.pricing?.allow_corporate_booking ?? false,
+        corporate_discount_percent: d.pricing?.corporate_discount_percent ?? 0,
+        maintenance_charges: d.pricing?.maintenance_charges ?? 0,
+        discount_3_5_days: d.pricing?.discount_3_5_days ?? 0,
+        discount_6_14_days: d.pricing?.discount_6_14_days ?? 0,
+        discount_15_plus_days: d.pricing?.discount_15_plus_days ?? 0,
+        // ── Pass-through: incharge contacts (contacts live in property_contacts table,
+        //    returned as an array by getPropertyDetails — map back to flat fields) ──
+        ...(() => {
+          const primary = d.contacts?.find((c) => c.contact_type_id === 1);
+          const secondary = d.contacts?.find((c) => c.contact_type_id === 2);
+          return {
+            primary_incharge_name: primary?.name ?? "",
+            primary_incharge_phone: primary?.phone ?? "",
+            primary_incharge_email: primary?.email ?? "",
+            primary_incharge_whatsapp: primary?.whatsapp ?? "",
+            primary_incharge_alt_contact: primary?.alt_contact ?? "",
+            secondary_incharge_name: secondary?.name ?? "",
+            secondary_incharge_phone: secondary?.phone ?? "",
+            secondary_incharge_email: secondary?.email ?? "",
+            secondary_incharge_whatsapp: secondary?.whatsapp ?? "",
+            secondary_incharge_alt_contact: secondary?.alt_contact ?? "",
+          };
+        })(),
+        // ── Pass-through: rich text guidelines ──
+        safety_information: d.safety_information ?? "",
+        local_area_info: d.local_area_info ?? "",
+        emergency_contacts: d.emergency_contacts ?? "",
+        // ── Pass-through: JSON policies ──
+        house_rules: d.house_rules ? JSON.stringify(d.house_rules) : "{}",
+        cancellation_policy: d.cancellation_policy
+          ? JSON.stringify(d.cancellation_policy)
+          : "{}",
       };
 
+      // Save main property fields
       await api.put(`/admin/properties/${property.id}`, updatePayload);
+
+      // Save is_featured separately via dedicated endpoint (if changed)
+      const featuredChanged = formData.is_featured !== (d.is_featured || false);
+      if (featuredChanged) {
+        await api.patch(`/admin/properties/${property.id}/featured`, {
+          is_featured: formData.is_featured,
+        });
+      }
 
       toast.success("Property updated successfully! 🎉");
       setHasUnsavedChanges(false);
@@ -323,10 +408,8 @@ const PropertyViewEditModal = ({
           max_guests: fullPropertyData.max_guests || "",
           bedrooms: fullPropertyData.bedrooms || "",
           bathrooms: fullPropertyData.bathrooms || "",
-          check_in_time: fullPropertyData.check_in_time || "2:00 PM",
+          check_in_time: fullPropertyData.check_in_time || "1:00 PM",
           check_out_time: fullPropertyData.check_out_time || "11:00 AM",
-          wifi_available: fullPropertyData.wifi_available || false,
-          parking_available: fullPropertyData.parking_available || false,
           is_featured: fullPropertyData.is_featured || false,
           recommended_priority: fullPropertyData.recommended_priority || 0,
         });
@@ -808,38 +891,6 @@ const PropertyViewEditModal = ({
                         <label className="flex items-center gap-2">
                           <input
                             type="checkbox"
-                            checked={formData.wifi_available}
-                            onChange={(e) =>
-                              handleInputChange(
-                                "wifi_available",
-                                e.target.checked,
-                              )
-                            }
-                            className="rounded"
-                          />
-                          <Wifi className="h-4 w-4" />
-                          <span>WiFi Available</span>
-                        </label>
-
-                        <label className="flex items-center gap-2">
-                          <input
-                            type="checkbox"
-                            checked={formData.parking_available}
-                            onChange={(e) =>
-                              handleInputChange(
-                                "parking_available",
-                                e.target.checked,
-                              )
-                            }
-                            className="rounded"
-                          />
-                          <Car className="h-4 w-4" />
-                          <span>Parking Available</span>
-                        </label>
-
-                        <label className="flex items-center gap-2">
-                          <input
-                            type="checkbox"
                             checked={formData.is_featured}
                             onChange={(e) =>
                               handleInputChange("is_featured", e.target.checked)
@@ -896,7 +947,9 @@ const PropertyViewEditModal = ({
                       </div>
 
                       <div className="flex flex-wrap gap-2">
-                        {fullPropertyData.wifi_available && (
+                        {fullPropertyData.amenities?.some(
+                          (a) => a.icon === "wifi",
+                        ) && (
                           <Badge
                             variant="secondary"
                             className="flex items-center gap-1"
@@ -904,7 +957,9 @@ const PropertyViewEditModal = ({
                             <Wifi className="h-3 w-3" /> WiFi
                           </Badge>
                         )}
-                        {fullPropertyData.parking_available && (
+                        {fullPropertyData.amenities?.some(
+                          (a) => a.icon === "car",
+                        ) && (
                           <Badge
                             variant="secondary"
                             className="flex items-center gap-1"

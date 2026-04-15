@@ -738,18 +738,7 @@ function PropertyDetailContent() {
               <h1 className={propertyStyles.propertyNameNav}>
                 {property.name}
               </h1>
-              <div
-                className={`${propertyStyles.propertyLocationNav} ${
-                  property.maps_location ? propertyStyles.locationClickable : ""
-                }`}
-                onClick={(e) => {
-                  if (property.maps_location) {
-                    e.preventDefault();
-                    window.open(property.maps_location, "_blank");
-                  }
-                }}
-                title={property.maps_location ? "View on Google Maps" : ""}
-              >
+              <div className={propertyStyles.propertyLocationNav}>
                 <FiMapPin />
                 <span>
                   {property.area ? (
@@ -762,11 +751,6 @@ function PropertyDetailContent() {
                     </>
                   )}
                 </span>
-                {property.maps_location && (
-                  <span className={propertyStyles.mapLinkText}>
-                    • View on Map
-                  </span>
-                )}
               </div>
             </div>
 
@@ -1070,25 +1054,7 @@ function PropertyDetailContent() {
                       </div>
                     )}
 
-                  {/* GST Information */}
-                  {property.gst_percentage && (
-                    <div className={luxuryStyles.infoItem}>
-                      <div className={luxuryStyles.infoIcon}>
-                        <FiPercent />
-                      </div>
-                      <div className={luxuryStyles.infoContent}>
-                        <div className={luxuryStyles.infoLabel}>
-                          GST Included
-                        </div>
-                        <div className={luxuryStyles.infoValue}>
-                          {parseFloat(property.gst_percentage.toString())}% GST
-                        </div>
-                        <div className={luxuryStyles.infoNote}>
-                          All prices include applicable taxes
-                        </div>
-                      </div>
-                    </div>
-                  )}
+
 
                   {/* Maximum Booking Period */}
                   {property.max_booking_days && (
@@ -1548,7 +1514,7 @@ function PropertyDetailContent() {
                 )}
 
               {/* Location Section */}
-              {(property.area || property.maps_location) && (
+              {property.area && (
                 <section className={luxuryStyles.locationSectionLuxury}>
                   <h2 className={luxuryStyles.sectionTitleLuxury}>
                     <FiMapPin /> Location
@@ -1565,17 +1531,6 @@ function PropertyDetailContent() {
                           )}
                         </p>
                       </div>
-                      {property.maps_location && (
-                        <button
-                          onClick={() =>
-                            window.open(property.maps_location, "_blank")
-                          }
-                          className={luxuryStyles.viewMapButton}
-                        >
-                          <FiMapPin />
-                          <span>View on Google Maps</span>
-                        </button>
-                      )}
                     </div>
                   </div>
                 </section>

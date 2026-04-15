@@ -220,19 +220,6 @@ export default function PriceBreakdown({
               <FiPercent className={styles.icon} /> GST (
               {pricingBreakdown.gstRate}%)
             </span>
-            {showDetails && (
-              <span
-                className={`${styles.lineNote} ${
-                  pricingBreakdown.gstRate === 5
-                    ? styles.gstLowTier
-                    : styles.gstHighTier
-                }`}
-              >
-                {pricingBreakdown.gstRate === 5
-                  ? "✓ Low tier (≤₹7,500)"
-                  : "Standard tier (>₹7,500)"}
-              </span>
-            )}
           </div>
           <span className={styles.lineValue}>
             {formatCurrency(pricingBreakdown.gstAmount)}

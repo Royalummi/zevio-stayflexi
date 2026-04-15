@@ -108,7 +108,7 @@ export default function CancellationPolicyPage() {
               <p>
                 <strong>How to Modify:</strong> Contact our support team at{" "}
                 <a href="mailto:support@zevio.com">support@zevio.com</a> or call{" "}
-                <a href="tel:+911234567890">+91 123-456-7890</a>
+                <a href="tel:+919980050909">+91 99800 50909</a>
               </p>
             </div>
           </section>
@@ -146,7 +146,7 @@ export default function CancellationPolicyPage() {
               </p>
               <p>
                 <strong>Phone:</strong>{" "}
-                <a href="tel:+911234567890">+91 123-456-7890</a>
+                <a href="tel:+919980050909">+91 99800 50909</a>
               </p>
               <p>
                 <strong>Hours:</strong> Monday - Sunday, 9:00 AM - 9:00 PM IST

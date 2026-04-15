@@ -21,8 +21,8 @@ router.use(authorize("vendor"));
  */
 router.post(
   "/:id/images",
-  uploadMiddleware.array("images", 10), // Allow up to 10 images at once
-  uploadPropertyImages
+  uploadMiddleware.array("images", 40), // Allow up to 40 images at once
+  uploadPropertyImages,
 );
 
 /**

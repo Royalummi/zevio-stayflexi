@@ -339,7 +339,7 @@ export default function PrivacyPage() {
                 <strong>Zevio - Privacy Team</strong>
               </p>
               <p>Email: privacy@zevio.com</p>
-              <p>Phone: +91 98765 43210</p>
+              <p>Phone: +91 99800 50909</p>
               <p>Address: [Your Business Address]</p>
             </div>
             <p>

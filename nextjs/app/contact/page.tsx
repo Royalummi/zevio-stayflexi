@@ -88,7 +88,7 @@ export default function ContactPage() {
                 <FiPhone />
               </div>
               <h3 className={styles.infoTitle}>Call Us</h3>
-              <p className={styles.infoText}>+91 98765 43210</p>
+              <p className={styles.infoText}>+91 99800 50909</p>
               <p className={styles.infoDescription}>
                 Available 24/7 for support
               </p>
@@ -161,7 +161,7 @@ export default function ContactPage() {
                     value={formData.phone}
                     onChange={handleChange}
                     className={styles.formInput}
-                    placeholder="+91 98765 43210"
+                    placeholder="+91 99800 50909"
                   />
                 </div>
 

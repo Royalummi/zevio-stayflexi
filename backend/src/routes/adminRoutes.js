@@ -51,6 +51,7 @@ import {
   deleteCalendarPricing,
   clearCalendarPricingRange,
 } from "../controllers/calendarPricingController.js";
+import { toggleFeaturedStatus } from "../controllers/featuredPropertiesController.js";
 import {
   adminGetPropertyBlackouts,
   adminCreateBlackout,
@@ -142,13 +143,23 @@ router.post(
 );
 router.put("/properties/:id", updateProperty);
 router.patch("/properties/:id/pricing", updatePropertyPricing);
+router.patch(
+  "/properties/:id/featured",
+  [
+    body("is_featured")
+      .isBoolean()
+      .withMessage("is_featured must be true or false"),
+    validate,
+  ],
+  toggleFeaturedStatus,
+);
 router.delete("/properties/:id", deleteProperty);
 
 // Property Images Management
 router.get("/properties/:id/images", getPropertyImages);
 router.post(
   "/properties/:id/images",
-  uploadPropertyImagesMiddleware.array("images", 10), // Max 10 images per upload
+  uploadPropertyImagesMiddleware.array("images", 40), // Max 40 images per upload
   uploadPropertyImages,
 );
 router.delete("/properties/:id/images/:imageId", deletePropertyImage);

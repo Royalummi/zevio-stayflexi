@@ -65,7 +65,7 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
     bathrooms: 1,
     living_area: 1,
     max_guests: 2,
-    check_in_time: "2:00 PM",
+    check_in_time: "1:00 PM",
     check_out_time: "11:00 AM",
     price_per_night: "",
     original_price: "",
@@ -141,7 +141,7 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
 
     // House Rules (JSON)
     house_rules: {
-      check_in_after: "2:00 PM",
+      check_in_after: "1:00 PM",
       check_out_before: "11:00 AM",
       no_smoking: true,
       no_parties: true,
@@ -301,21 +301,33 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
   }, [propertyId, preSelectedPropertyType]);
 
   // Auto-load guideline templates when property type is selected (only for new properties)
-  // useEffect(() => {
-  //   if (!propertyId && formData.property_type_id && !templatesLoaded) {
-  //     const templates = guidelineTemplates[formData.property_type_id];
-  //     if (templates) {
-  //       setGuidelines(templates);
-  //       setTemplatesLoaded(true);
-  //       // Use setTimeout to avoid setState during render warning
-  //       setTimeout(() => {
-  //         toast.success(
-  //           "Default guidelines loaded! You can customize them as needed.",
-  //         );
-  //       }, 0);
-  //     }
-  //   }
-  // }, [formData.property_type_id, propertyId, templatesLoaded]);
+  useEffect(() => {
+    if (!propertyId && formData.property_type_id && !templatesLoaded) {
+      const templates = guidelineTemplates[formData.property_type_id];
+      if (templates) {
+        setGuidelines(templates);
+        setTemplatesLoaded(true);
+        // Use setTimeout to avoid setState during render warning
+        setTimeout(() => {
+          toast.success(
+            "Default guidelines loaded! You can customize them as needed.",
+          );
+        }, 0);
+      }
+    }
+  }, [formData.property_type_id, propertyId, templatesLoaded]);
+
+  // Keep house_rules check-in/out in sync with the primary fields
+  useEffect(() => {
+    setFormData((prev) => ({
+      ...prev,
+      house_rules: {
+        ...prev.house_rules,
+        check_in_after: prev.check_in_time,
+        check_out_before: prev.check_out_time,
+      },
+    }));
+  }, [formData.check_in_time, formData.check_out_time]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchDropdownData = async () => {
     try {
@@ -1219,7 +1231,7 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
           title="Location Details"
           icon={MapPin}
           required={true}
-          defaultOpen={false}
+          defaultOpen={true}
         >
           <div className="mb-6">
             <div className="flex flex-col">
@@ -1363,7 +1375,7 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
           title="Property Specifications"
           icon={Home}
           required={true}
-          defaultOpen={false}
+          defaultOpen={true}
         >
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
             <div className="flex flex-col">
@@ -1468,7 +1480,7 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
                 name="check_in_time"
                 value={formData.check_in_time}
                 onChange={handleInputChange}
-                placeholder="e.g., 2:00 PM"
+                placeholder="e.g., 1:00 PM"
                 className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
             </div>
@@ -1494,12 +1506,12 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
           title="Pricing"
           icon={DollarSign}
           required={true}
-          defaultOpen={false}
+          defaultOpen={true}
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div className="flex flex-col">
               <label className="text-sm font-medium text-foreground mb-2">
-                Discounted Price Per Night (₹) *
+                Discounted Price / Base Price Per Night (₹) *
               </label>
               <input
                 type="number"
@@ -1899,7 +1911,7 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
         <FormSection
           title="📅 Calendar Pricing"
           icon={Calendar}
-          defaultOpen={false}
+          defaultOpen={true}
         >
           <div className="mb-4">
             <p className="text-sm text-muted-foreground">
@@ -2373,7 +2385,7 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
         <FormSection
           title="Secondary Property Incharge (Optional)"
           icon={Users}
-          defaultOpen={false}
+          defaultOpen={true}
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div className="flex flex-col">
@@ -2519,45 +2531,7 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
           defaultOpen={true}
           required
         >
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            <div className="flex flex-col">
-              <label className="text-sm font-medium text-foreground mb-2">
-                Check-in After
-              </label>
-              <input
-                type="text"
-                value={formData.house_rules.check_in_after}
-                onChange={(e) =>
-                  handleNestedChange(
-                    "house_rules",
-                    "check_in_after",
-                    e.target.value,
-                  )
-                }
-                placeholder="2:00 PM"
-                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-              />
-            </div>
-
-            <div className="flex flex-col">
-              <label className="text-sm font-medium text-foreground mb-2">
-                Check-out Before
-              </label>
-              <input
-                type="text"
-                value={formData.house_rules.check_out_before}
-                onChange={(e) =>
-                  handleNestedChange(
-                    "house_rules",
-                    "check_out_before",
-                    e.target.value,
-                  )
-                }
-                placeholder="11:00 AM"
-                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-              />
-            </div>
-
+          <div className="grid grid-cols-1 md:grid-cols-1 gap-6 mb-6">
             <div className="flex flex-col">
               <label className="text-sm font-medium text-foreground mb-2">
                 Quiet Hours
@@ -2906,7 +2880,7 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
           title="Property Photos"
           icon={Image}
           required={true}
-          defaultOpen={false}
+          defaultOpen={true}
         >
           <PropertyImageUpload
             propertyId={sanitizedPropertyId}
@@ -2931,7 +2905,7 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
           )}
           {!errors.photos && (
             <p className="mt-2 text-xs text-muted-foreground">
-              Minimum 6 photos required. Upload up to 10.
+              Minimum 6 photos required. Upload up to 40.
             </p>
           )}
           {!propertyId && (

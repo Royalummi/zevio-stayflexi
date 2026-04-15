@@ -95,8 +95,8 @@ export const APP_CONFIG = {
   APP_NAME: "Zevio Villa",
   APP_DESCRIPTION: "Premium villa rentals for your perfect getaway",
   COMPANY_NAME: "Zevio",
-  SUPPORT_EMAIL: "support@zeviovilla.com",
-  CONTACT_PHONE: "+91 1234567890",
+  SUPPORT_EMAIL: "support@zevio.com",
+  CONTACT_PHONE: "+91 99800 50909",
 
   // Social Media
   SOCIAL: {

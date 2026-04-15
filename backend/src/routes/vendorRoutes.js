@@ -42,12 +42,10 @@ const verifyPropertyOwner = async (req, res, next) => {
       [propertyId, vendorId],
     );
     if (rows.length === 0) {
-      return res
-        .status(404)
-        .json({
-          success: false,
-          message: "Property not found or unauthorized",
-        });
+      return res.status(404).json({
+        success: false,
+        message: "Property not found or unauthorized",
+      });
     }
     next();
   } catch (err) {
@@ -71,7 +69,7 @@ router.get("/properties/:id/images", verifyPropertyOwner, getPropertyImages);
 router.post(
   "/properties/:id/images",
   verifyPropertyOwner,
-  uploadPropertyImagesMiddleware.array("images", 10),
+  uploadPropertyImagesMiddleware.array("images", 40),
   uploadPropertyImages,
 );
 router.delete(

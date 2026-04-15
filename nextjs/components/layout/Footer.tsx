@@ -153,16 +153,16 @@ export default function Footer() {
             <h3 className="footer-title">Get in Touch</h3>
             <div className="footer-links">
               <a
-                href="mailto:stay@zevio.com"
+                href="mailto:support@zevio.com"
                 className="footer-link footer-contact-link"
               >
-                <FiMail size={15} /> stay@zevio.com
+                <FiMail size={15} /> support@zevio.com
               </a>
               <a
-                href="tel:+918000123456"
+                href="tel:+919980050909"
                 className="footer-link footer-contact-link"
               >
-                <FiPhone size={15} /> +91 8000 123 456
+                <FiPhone size={15} /> +91 99800 50909
               </a>
             </div>
           </div>

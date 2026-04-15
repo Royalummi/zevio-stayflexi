@@ -2,7 +2,15 @@ import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { DayPicker } from "react-day-picker";
 import "react-day-picker/style.css";
-import { Loader2, Trash2, CalendarOff, Lock, Info } from "lucide-react";
+import {
+  Loader2,
+  Trash2,
+  CalendarOff,
+  Lock,
+  Info,
+  X,
+  ChevronDown,
+} from "lucide-react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
@@ -60,6 +68,16 @@ const PropertyBlockoutCalendar = ({
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
+  const [isMobile, setIsMobile] = useState(
+    () => typeof window !== "undefined" && window.innerWidth < 768,
+  );
+
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
+  }, []);
+
   const [blackouts, setBlackouts] = useState([]);
   const [bookedDates, setBookedDates] = useState([]);
   const [blockedVendorDates, setBlockedVendorDates] = useState([]);
@@ -74,6 +92,10 @@ const PropertyBlockoutCalendar = ({
 
   // Delete candidate
   const [deleteCandidate, setDeleteCandidate] = useState(null);
+
+  // Mobile info/blocks toggles
+  const [showInfo, setShowInfo] = useState(false);
+  const [showBlocksList, setShowBlocksList] = useState(false);
 
   // ── Data fetch ─────────────────────────────────────────────────────────────
   const fetchCalendarData = useCallback(async () => {
@@ -248,9 +270,26 @@ const PropertyBlockoutCalendar = ({
   const selectionStarted = range?.from && !range?.to;
 
   return (
-    <div className="flex gap-6 min-h-0">
+    <div className="flex flex-col md:flex-row gap-4 md:gap-6 min-h-0">
+      {/* ── Mobile-only close header ── */}
+      {onClose && (
+        <div className="flex items-center justify-between md:hidden -mt-1 mb-1">
+          <p className="text-sm font-semibold text-foreground truncate pr-2">
+            {propertyTitle}
+          </p>
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-8 w-8 shrink-0"
+            onClick={onClose}
+            aria-label="Close calendar"
+          >
+            <X className="h-5 w-5" />
+          </Button>
+        </div>
+      )}
       {/* ── Left: Calendar ── */}
-      <div className="flex-shrink-0">
+      <div className="flex-shrink-0 overflow-x-auto">
         <DayPicker
           mode="range"
           selected={range}
@@ -259,7 +298,7 @@ const PropertyBlockoutCalendar = ({
           disabled={disabledDates}
           modifiers={modifiers}
           modifiersClassNames={modifiersClassNames}
-          numberOfMonths={2}
+          numberOfMonths={isMobile ? 1 : 2}
           fromDate={today}
           showOutsideDays={false}
           classNames={{
@@ -299,12 +338,16 @@ const PropertyBlockoutCalendar = ({
       </div>
 
       {/* ── Divider ── */}
-      <Separator orientation="vertical" className="self-stretch" />
+      <Separator
+        orientation="vertical"
+        className="self-stretch hidden md:block"
+      />
+      <Separator className="md:hidden" />
 
       {/* ── Right: Controls + Active Blocks ── */}
-      <div className="flex-1 flex flex-col gap-4 min-w-0 overflow-y-auto max-h-[420px] pr-1">
-        {/* Property name */}
-        <div>
+      <div className="flex-1 flex flex-col gap-3 min-w-0 overflow-y-auto md:max-h-[420px] pr-1">
+        {/* Property name — desktop only (mobile shows it in the close header) */}
+        <div className="hidden md:block">
           <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-0.5">
             Property
           </p>
@@ -313,49 +356,92 @@ const PropertyBlockoutCalendar = ({
           </p>
         </div>
 
-        {/* Legend */}
-        <div className="bg-muted/40 rounded-lg p-3 space-y-1.5">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
-            Legend
-          </p>
-          {[
-            {
-              color: "bg-amber-100 border-amber-300",
-              label: "Guest booking (read-only)",
-            },
-            {
-              color: "bg-red-100 border-red-300",
-              label: isAdmin ? "Blocked by vendor" : "Blocked by you",
-            },
-            {
-              color: "bg-red-200 border-red-400",
-              label: isAdmin ? "Blocked by admin (you)" : "Blocked by admin",
-            },
-            { color: "bg-primary border-primary", label: "Selected range" },
-          ].map(({ color, label }) => (
-            <span
-              key={label}
-              className="flex items-center gap-2 text-xs text-foreground"
-            >
-              <span
-                className={`inline-block w-3 h-3 rounded shrink-0 border ${color}`}
-              />
-              {label}
+        {/* ── Mobile: compact toggle bar (Legend ⓘ | N blocks ▾) ── */}
+        <div className="flex items-center justify-between md:hidden">
+          <button
+            onClick={() => setShowInfo((v) => !v)}
+            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <span className="flex gap-0.5">
+              <span className="w-2.5 h-2.5 rounded-sm bg-amber-100 border border-amber-300 inline-block" />
+              <span className="w-2.5 h-2.5 rounded-sm bg-red-100 border border-red-300 inline-block" />
+              <span className="w-2.5 h-2.5 rounded-sm bg-red-200 border border-red-400 inline-block" />
+              <span className="w-2.5 h-2.5 rounded-sm bg-primary/60 border border-primary inline-block" />
             </span>
-          ))}
+            <Info className="h-3.5 w-3.5" />
+            <span>Legend</span>
+            <ChevronDown
+              className={`h-3.5 w-3.5 transition-transform duration-200 ${showInfo ? "rotate-180" : ""}`}
+            />
+          </button>
+          {blackouts.length > 0 && (
+            <button
+              onClick={() => setShowBlocksList((v) => !v)}
+              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <span className="font-medium">
+                {blackouts.length} block{blackouts.length !== 1 ? "s" : ""}
+              </span>
+              <ChevronDown
+                className={`h-3.5 w-3.5 transition-transform duration-200 ${showBlocksList ? "rotate-180" : ""}`}
+              />
+            </button>
+          )}
         </div>
 
-        <Separator />
+        {/* Legend — desktop: always visible | mobile: shown when showInfo */}
+        {(!isMobile || showInfo) && (
+          <div className="bg-muted/40 rounded-lg p-3 space-y-1.5">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
+              Legend
+            </p>
+            {[
+              {
+                color: "bg-amber-100 border-amber-300",
+                label: "Guest booking (read-only)",
+              },
+              {
+                color: "bg-red-100 border-red-300",
+                label: isAdmin ? "Blocked by vendor" : "Blocked by you",
+              },
+              {
+                color: "bg-red-200 border-red-400",
+                label: isAdmin ? "Blocked by admin (you)" : "Blocked by admin",
+              },
+              { color: "bg-primary border-primary", label: "Selected range" },
+            ].map(({ color, label }) => (
+              <span
+                key={label}
+                className="flex items-center gap-2 text-xs text-foreground"
+              >
+                <span
+                  className={`inline-block w-3 h-3 rounded shrink-0 border ${color}`}
+                />
+                {label}
+              </span>
+            ))}
+          </div>
+        )}
+
+        <Separator className="hidden md:block" />
 
         {/* Instruction / State panel */}
         {!selectionStarted && !selectionComplete && !deleteCandidate && (
-          <div className="flex items-start gap-2 text-sm text-muted-foreground bg-muted/30 rounded-lg px-3 py-3">
-            <Info className="h-4 w-4 shrink-0 mt-0.5" />
-            <span>
-              Click a start date on the calendar, then click an end date to
-              select a range to block.
-            </span>
-          </div>
+          <>
+            {/* Desktop — full hint card */}
+            <div className="hidden md:flex items-start gap-2 text-sm text-muted-foreground bg-muted/30 rounded-lg px-3 py-3">
+              <Info className="h-4 w-4 shrink-0 mt-0.5" />
+              <span>
+                Click a start date on the calendar, then click an end date to
+                select a range to block.
+              </span>
+            </div>
+            {/* Mobile — compact chip */}
+            <div className="flex md:hidden items-center gap-1.5 text-xs text-muted-foreground bg-muted/30 rounded-md px-3 py-2">
+              <Info className="h-3.5 w-3.5 shrink-0" />
+              <span>Tap a start date, then tap an end date to block.</span>
+            </div>
+          </>
         )}
 
         {/* Partial selection hint */}
@@ -363,8 +449,8 @@ const PropertyBlockoutCalendar = ({
           <div className="flex items-start gap-2 text-sm text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/20 rounded-lg px-3 py-3">
             <Info className="h-4 w-4 shrink-0 mt-0.5" />
             <span>
-              Started from <strong>{toYMD(range.from)}</strong> — now click an
-              end date to complete the range.
+              Started from <strong>{toYMD(range.from)}</strong> — now tap an end
+              date to complete the range.
             </span>
           </div>
         )}
@@ -458,8 +544,8 @@ const PropertyBlockoutCalendar = ({
           </div>
         )}
 
-        {/* Active Blocks list */}
-        {blackouts.length > 0 ? (
+        {/* Active Blocks list — desktop: always | mobile: shown when showBlocksList */}
+        {(!isMobile || showBlocksList) && blackouts.length > 0 && (
           <div>
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
               Active Blocks ({blackouts.length})
@@ -513,8 +599,11 @@ const PropertyBlockoutCalendar = ({
               ))}
             </div>
           </div>
-        ) : (
-          <div className="flex-1 flex items-center justify-center">
+        )}
+
+        {/* No blocks yet — desktop only */}
+        {blackouts.length === 0 && (
+          <div className="flex-1 hidden md:flex items-center justify-center">
             <p className="text-xs text-muted-foreground text-center">
               No blocks set yet.
               <br />

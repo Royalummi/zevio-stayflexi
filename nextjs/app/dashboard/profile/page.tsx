@@ -420,7 +420,7 @@ export default function ProfileRedesign() {
                     value={formData.phone}
                     onChange={handleChange}
                     className={styles.formInput}
-                    placeholder="+91 98765 43210"
+                    placeholder="+91 XXXXX XXXXX"
                   />
                 </div>
 

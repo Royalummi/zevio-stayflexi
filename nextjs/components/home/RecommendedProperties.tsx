@@ -130,15 +130,7 @@ export default function RecommendedProperties({
               <div className={styles.cardContent}>
                 {/* Location */}
                 <div
-                  className={`${styles.location} ${property.maps_location ? styles.locationClickable : ""}`}
-                  onClick={(e) => {
-                    if (property.maps_location) {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      window.open(property.maps_location, "_blank");
-                    }
-                  }}
-                  title={property.maps_location ? "View on Google Maps" : ""}
+                  className={styles.location}
                 >
                   <FiMapPin />
                   <span>

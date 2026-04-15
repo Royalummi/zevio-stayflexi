@@ -26,7 +26,7 @@ const PropertyImageUpload = ({
   const [loading, setLoading] = useState(true);
   const [dragActive, setDragActive] = useState(false);
 
-  const MAX_IMAGES = 10;
+  const MAX_IMAGES = 40;
   const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
   const ALLOWED_TYPES = [
     "image/jpeg",

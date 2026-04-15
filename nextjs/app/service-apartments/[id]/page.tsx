@@ -664,16 +664,7 @@ function ServiceApartmentDetailContent() {
             {/* Left: Property Title & Location */}
             <div className={styles.propertyTitleSection}>
               <h1 className={styles.propertyNameHeader}>{property.title}</h1>
-              <p
-                className={`${styles.propertyLocationHeader} ${property.maps_location ? styles.locationClickable : ""}`}
-                onClick={(e) => {
-                  if (property.maps_location) {
-                    e.preventDefault();
-                    window.open(property.maps_location, "_blank");
-                  }
-                }}
-                title={property.maps_location ? "View on Google Maps" : ""}
-              >
+              <p className={styles.propertyLocationHeader}>
                 <FiMapPin />
                 <span>
                   {property.area
@@ -1054,23 +1045,7 @@ function ServiceApartmentDetailContent() {
                     </div>
                   )}
 
-                {/* GST */}
-                {property.gst_percentage && (
-                  <div className={styles.infoItem}>
-                    <div className={styles.infoIcon}>
-                      <FiPercent />
-                    </div>
-                    <div className={styles.infoContent}>
-                      <div className={styles.infoLabel}>GST Included</div>
-                      <div className={styles.infoValue}>
-                        {parseFloat(property.gst_percentage.toString())}% GST
-                      </div>
-                      <div className={styles.infoNote}>
-                        All prices include applicable taxes
-                      </div>
-                    </div>
-                  </div>
-                )}
+
 
                 {/* Maximum Booking Period */}
                 {property.max_booking_days && (

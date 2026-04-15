@@ -1,3 +1,6 @@
+import db from "../config/database.js";
+import { asyncHandler, sendSuccess, sendError } from "../utils/response.js";
+
 // Additional controller functions for Featured & Recommended Properties Manager
 // Add these functions to adminController.js after the existing recommended properties functions
 
@@ -110,7 +113,7 @@ export const getFeaturedRecommendedManagement = asyncHandler(
 export const toggleFeaturedStatus = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const { is_featured } = req.body;
-  const adminId = req.admin.id;
+  const adminId = req.user.id;
 
   // Validate property exists
   const [properties] = await db.query(

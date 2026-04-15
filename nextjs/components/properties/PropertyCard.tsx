@@ -346,17 +346,7 @@ export default function PropertyCard({
         {/* Location & Rating Row */}
         <div className={styles.propertyCardHeader}>
           <div
-            className={`${styles.propertyLocation} ${
-              property.maps_location ? styles.locationClickable : ""
-            }`}
-            onClick={(e) => {
-              if (property.maps_location) {
-                e.preventDefault();
-                e.stopPropagation();
-                window.open(property.maps_location, "_blank");
-              }
-            }}
-            title={property.maps_location ? "View on Google Maps" : undefined}
+            className={styles.propertyLocation}
           >
             <FiMapPin className={styles.locationIcon} />
             <span className={styles.locationText}>
