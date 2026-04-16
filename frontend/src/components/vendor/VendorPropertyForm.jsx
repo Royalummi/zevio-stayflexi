@@ -477,7 +477,8 @@ const VendorPropertyForm = ({
       }
     } catch (error) {
       console.error("Error fetching property:", error);
-      toast.error("Failed to load property data. Please try again.");
+      const msg = error.response?.data?.message || "Failed to load property data. Please try again.";
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -560,6 +561,10 @@ const VendorPropertyForm = ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
+    // Clear validation error for this field as soon as user types
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: "" }));
+    }
   };
 
   const handleNestedChange = (parent, field, value) => {
@@ -671,14 +676,57 @@ const VendorPropertyForm = ({
     }
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return { valid: Object.keys(newErrors).length === 0, errors: newErrors };
+  };
+
+  // Scroll to and focus the first field that has a validation error
+  const scrollToFirstError = (newErrors) => {
+    const FIELD_ORDER = [
+      "city_id",
+      "title",
+      "area",
+      "pincode",
+      "maps_location",
+      "price_per_night",
+      "original_price",
+      "primary_incharge_phone",
+      "primary_incharge_email",
+      "secondary_incharge_email",
+      "photos",
+    ];
+    const firstKey = FIELD_ORDER.find((k) => newErrors[k]);
+    if (!firstKey) return;
+    setTimeout(() => {
+      let el;
+      if (firstKey === "city_id") {
+        el = document.getElementById("field-city_id");
+      } else if (firstKey === "photos") {
+        el = document.getElementById("field-photos");
+      } else {
+        el = document.querySelector(`[name="${firstKey}"]`);
+      }
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        el.focus?.();
+      }
+    }, 150);
+  };
+
+  // Build a readable summary of validation errors for the toast
+  const buildErrorSummary = (newErrors) => {
+    const messages = Object.values(newErrors).filter(Boolean);
+    if (messages.length === 0) return "";
+    const shown = messages.slice(0, 2).join(" · ");
+    return messages.length > 2 ? `${shown} (+${messages.length - 2} more)` : shown;
   };
 
   // Show T&C modal before submitting new property for approval
   const handleShowTermsModal = async (e) => {
     e?.preventDefault();
-    if (!validateForm(true)) {
-      toast.error("Please fix validation errors before submitting");
+    const { valid, errors: newErrors } = validateForm(true);
+    if (!valid) {
+      toast.error(buildErrorSummary(newErrors));
+      scrollToFirstError(newErrors);
       return;
     }
     try {
@@ -711,8 +759,10 @@ const VendorPropertyForm = ({
   const handleSubmit = async (e, submitForApproval = true) => {
     e?.preventDefault();
 
-    if (!validateForm(submitForApproval)) {
-      toast.error("Please fix validation errors before submitting");
+    const { valid, errors: newErrors } = validateForm(submitForApproval);
+    if (!valid) {
+      toast.error(buildErrorSummary(newErrors));
+      scrollToFirstError(newErrors);
       return;
     }
 
@@ -866,6 +916,11 @@ const VendorPropertyForm = ({
         toast.error("Session expired. Please login again.");
       } else if (error.response?.status === 403) {
         toast.error("You don't have permission to perform this action.");
+      } else if (error.response?.status === 400) {
+        // Validation error from server — show exact message
+        toast.warning(error.response.data.message || "Please fix the highlighted fields and try again.");
+      } else if (error.response?.status === 422) {
+        toast.warning(error.response.data.message || "Some fields have invalid values.");
       } else if (error.response?.data?.message) {
         toast.error(error.response.data.message);
       } else {
@@ -933,10 +988,11 @@ const VendorPropertyForm = ({
           icon={Building}
           required={true}
           defaultOpen={true}
+          forceOpen={!!(errors.city_id || errors.title)}
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             {/* City Selection - Using CityCombobox */}
-            <div className="flex flex-col">
+            <div id="field-city_id" className="flex flex-col">
               <label className="text-sm font-medium text-foreground mb-2">
                 City <span className="text-destructive">*</span>
               </label>
@@ -956,11 +1012,6 @@ const VendorPropertyForm = ({
                 required={true}
                 externalCities={cities}
               />
-              {errors.city_id && (
-                <span className="text-sm text-destructive mt-1">
-                  {errors.city_id}
-                </span>
-              )}
               {formData.city && formData.state && (
                 <small className="text-xs text-primary font-medium mt-1">
                   Selected: {formData.city}, {formData.state}
@@ -1050,7 +1101,7 @@ const VendorPropertyForm = ({
         </FormSection>
 
         {/* Section 2: Location Details */}
-        <FormSection title="Location Details" icon={MapPin} required={true}>
+        <FormSection title="Location Details" icon={MapPin} required={true} forceOpen={!!(errors.area || errors.pincode || errors.maps_location)}>
           <div className="mb-6">
             <label className="text-sm font-medium text-foreground mb-2 block">
               Street Address <span className="text-destructive">*</span>
@@ -1253,7 +1304,7 @@ const VendorPropertyForm = ({
         </FormSection>
 
         {/* Section 4: Pricing */}
-        <FormSection title="Pricing" icon={DollarSign} required={true}>
+        <FormSection title="Pricing" icon={DollarSign} required={true} forceOpen={!!(errors.price_per_night || errors.original_price)}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             {/* Discounted Price / Base Price  Per Night */}
             <div className="flex flex-col">
@@ -1294,12 +1345,31 @@ const VendorPropertyForm = ({
                 name="original_price"
                 value={formData.original_price}
                 onChange={handleInputChange}
+                onBlur={() => {
+                  if (
+                    formData.original_price &&
+                    formData.price_per_night &&
+                    parseFloat(formData.original_price) <= parseFloat(formData.price_per_night)
+                  ) {
+                    setErrors((prev) => ({
+                      ...prev,
+                      original_price: "Original Price must be higher than Discounted Price",
+                    }));
+                  } else {
+                    setErrors((prev) => ({ ...prev, original_price: "" }));
+                  }
+                }}
                 min="0.01"
                 step="0.01"
                 placeholder="e.g. 20000"
                 className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
-              {formData.original_price &&
+              {errors.original_price && (
+                <span className="text-sm text-destructive mt-1">
+                  {errors.original_price}
+                </span>
+              )}
+              {!errors.original_price && formData.original_price &&
               formData.price_per_night &&
               parseFloat(formData.original_price) >
                 parseFloat(formData.price_per_night) ? (
@@ -1313,9 +1383,11 @@ const VendorPropertyForm = ({
                   % off — badge will be shown on listing
                 </span>
               ) : (
-                <span className="text-xs text-muted-foreground mt-1">
-                  Must be higher than Discounted Price to show a "% off" badge
-                </span>
+                !errors.original_price && (
+                  <span className="text-xs text-muted-foreground mt-1">
+                    Must be higher than Discounted Price to show a "% off" badge
+                  </span>
+                )
               )}
             </div>
           </div>
@@ -1785,6 +1857,7 @@ const VendorPropertyForm = ({
           title="Primary Property Incharge"
           icon={Phone}
           required={true}
+          forceOpen={!!(errors.primary_incharge_phone || errors.primary_incharge_email)}
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Name */}
@@ -1881,6 +1954,7 @@ const VendorPropertyForm = ({
           title="Secondary Property Incharge (Optional)"
           icon={UserCircle}
           defaultOpen={true}
+          forceOpen={!!errors.secondary_incharge_email}
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Name */}
@@ -2137,7 +2211,8 @@ const VendorPropertyForm = ({
         </FormSection>
 
         {/* Section 10: Property Images */}
-        <FormSection title="Property Images" icon={ImageIcon} required={true}>
+        <FormSection title="Property Images" icon={ImageIcon} required={true} forceOpen={!!errors.photos}>
+          <div id="field-photos" />
           <PropertyImageUpload
             propertyId={propertyId}
             onImagesChange={({

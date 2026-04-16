@@ -215,47 +215,59 @@ export const createProperty = asyncHandler(async (req, res) => {
     await db.query(pricingQuery, pricingValues);
   }
 
-  // Insert amenities if provided
+  // Insert amenities if provided — non-fatal, don't fail the whole request
   if (amenities && Array.isArray(amenities) && amenities.length > 0) {
-    const amenityValues = amenities.map((amenityId) => [
-      generateUUID(),
-      propertyId,
-      amenityId,
-    ]);
-    const amenityQuery = `INSERT INTO property_amenities (id, property_id, amenity_id) VALUES ?`;
-    await db.query(amenityQuery, [amenityValues]);
+    try {
+      const amenityValues = amenities.map((amenityId) => [
+        generateUUID(),
+        propertyId,
+        amenityId,
+      ]);
+      const amenityQuery = `INSERT INTO property_amenities (id, property_id, amenity_id) VALUES ?`;
+      await db.query(amenityQuery, [amenityValues]);
+    } catch (amenityErr) {
+      console.error("Non-fatal: failed to insert amenities for property", propertyId, amenityErr.message);
+    }
   }
 
-  // Insert primary incharge if provided
+  // Insert primary incharge if provided — non-fatal, don't fail the whole request
   if (primary_incharge_name && primary_incharge_phone) {
-    const contactQuery = `
-      INSERT INTO property_contacts (property_id, contact_type_id, name, phone, email, whatsapp, alt_contact, is_active)
-      VALUES (?, 1, ?, ?, ?, ?, ?, 1)
-    `;
-    await db.query(contactQuery, [
-      propertyId,
-      primary_incharge_name,
-      primary_incharge_phone,
-      primary_incharge_email || null,
-      req.body.primary_incharge_whatsapp || null,
-      req.body.primary_incharge_alt_contact || null,
-    ]);
+    try {
+      const contactQuery = `
+        INSERT INTO property_contacts (property_id, contact_type_id, name, phone, email, whatsapp, alt_contact, is_active)
+        VALUES (?, 1, ?, ?, ?, ?, ?, 1)
+      `;
+      await db.query(contactQuery, [
+        propertyId,
+        primary_incharge_name,
+        primary_incharge_phone,
+        primary_incharge_email || null,
+        req.body.primary_incharge_whatsapp || null,
+        req.body.primary_incharge_alt_contact || null,
+      ]);
+    } catch (contactErr) {
+      console.error("Non-fatal: failed to insert primary contact for property", propertyId, contactErr.message);
+    }
   }
 
-  // Insert secondary incharge if provided
+  // Insert secondary incharge if provided — non-fatal, don't fail the whole request
   if (secondary_incharge_name && secondary_incharge_phone) {
-    const contactQuery = `
-      INSERT INTO property_contacts (property_id, contact_type_id, name, phone, email, whatsapp, alt_contact, is_active)
-      VALUES (?, 2, ?, ?, ?, ?, ?, 1)
-    `;
-    await db.query(contactQuery, [
-      propertyId,
-      secondary_incharge_name,
-      secondary_incharge_phone,
-      secondary_incharge_email || null,
-      req.body.secondary_incharge_whatsapp || null,
-      req.body.secondary_incharge_alt_contact || null,
-    ]);
+    try {
+      const contactQuery = `
+        INSERT INTO property_contacts (property_id, contact_type_id, name, phone, email, whatsapp, alt_contact, is_active)
+        VALUES (?, 2, ?, ?, ?, ?, ?, 1)
+      `;
+      await db.query(contactQuery, [
+        propertyId,
+        secondary_incharge_name,
+        secondary_incharge_phone,
+        secondary_incharge_email || null,
+        req.body.secondary_incharge_whatsapp || null,
+        req.body.secondary_incharge_alt_contact || null,
+      ]);
+    } catch (contactErr) {
+      console.error("Non-fatal: failed to insert secondary contact for property", propertyId, contactErr.message);
+    }
   }
 
   sendSuccess(

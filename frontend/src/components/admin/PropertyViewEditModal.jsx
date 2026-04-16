@@ -158,9 +158,14 @@ const PropertyViewEditModal = ({
   // Fetch full property details when modal opens
   useEffect(() => {
     if (open && property?.id) {
+      // Reset stale data from previous property before fetching
+      setFullPropertyData(null);
+      setErrors({});
+      setIsEditMode(false);
+      setHasUnsavedChanges(false);
       fetchPropertyDetails();
     }
-  }, [open, property]);
+  }, [open, property?.id]);
 
   const fetchPropertyDetails = async () => {
     try {
@@ -188,7 +193,8 @@ const PropertyViewEditModal = ({
       setHasUnsavedChanges(false);
     } catch (error) {
       console.error("Error fetching property:", error);
-      toast.error("Failed to load property details");
+      const msg = error.response?.data?.message || "Failed to load property details. Please try again.";
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -206,32 +212,43 @@ const PropertyViewEditModal = ({
   const validateForm = () => {
     const newErrors = {};
 
-    if (!formData.title.trim()) {
+    if (!formData.title?.trim()) {
       newErrors.title = "Title is required";
     }
-    if (!formData.description.trim()) {
+    if (!formData.description?.trim()) {
       newErrors.description = "Description is required";
     }
-    if (!formData.price_per_night || formData.price_per_night <= 0) {
-      newErrors.price_per_night = "Valid price is required";
+    if (!formData.price_per_night || Number(formData.price_per_night) <= 0) {
+      newErrors.price_per_night = "Valid price is required (must be > 0)";
     }
-    if (!formData.max_guests || formData.max_guests <= 0) {
+    if (!formData.max_guests || Number(formData.max_guests) <= 0) {
       newErrors.max_guests = "At least 1 guest required";
     }
-    if (!formData.bedrooms || formData.bedrooms <= 0) {
+    if (!formData.bedrooms || Number(formData.bedrooms) <= 0) {
       newErrors.bedrooms = "At least 1 bedroom required";
     }
-    if (!formData.bathrooms || formData.bathrooms <= 0) {
+    if (!formData.bathrooms || Number(formData.bathrooms) <= 0) {
       newErrors.bathrooms = "At least 1 bathroom required";
     }
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return newErrors; // return errors object so callers can build messages
   };
 
   const handleSaveChanges = async () => {
-    if (!validateForm()) {
-      toast.error("Please fix validation errors");
+    const validationErrors = validateForm();
+    if (Object.keys(validationErrors).length > 0) {
+      const messages = Object.values(validationErrors).slice(0, 2).join(" · ");
+      const extra = Object.keys(validationErrors).length > 2
+        ? ` (+${Object.keys(validationErrors).length - 2} more)`
+        : "";
+      toast.warning(`${messages}${extra}`);
+      // Scroll to first error field
+      const firstKey = Object.keys(validationErrors)[0];
+      setTimeout(() => {
+        const el = document.getElementById(firstKey);
+        if (el) { el.scrollIntoView({ behavior: "smooth", block: "center" }); el.focus(); }
+      }, 100);
       return;
     }
 
@@ -358,7 +375,17 @@ const PropertyViewEditModal = ({
       await fetchPropertyDetails();
     } catch (error) {
       console.error("Error updating property:", error);
-      toast.error(error.response?.data?.message || "Failed to update property");
+      if (error.response?.status === 400) {
+        toast.warning(error.response.data?.message || "Invalid input — please check the form fields.");
+      } else if (error.response?.status === 401) {
+        toast.error("Session expired. Please log in again.");
+      } else if (error.response?.status === 403) {
+        toast.error("You do not have permission to edit this property.");
+      } else if (error.response?.status === 404) {
+        toast.error("Property not found — it may have been deleted.");
+      } else {
+        toast.error(error.response?.data?.message || "Failed to update property. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -390,6 +417,7 @@ const PropertyViewEditModal = ({
     }
     setIsEditMode(false);
     setHasUnsavedChanges(false);
+    setErrors({});
     onClose();
   };
 
@@ -398,13 +426,16 @@ const PropertyViewEditModal = ({
       if (!window.confirm("You have unsaved changes. Discard them?")) {
         return;
       }
-      // Reset form to original values
+      // Reset form to original values — use same fallback logic as fetchPropertyDetails
       if (fullPropertyData) {
         setFormData({
           title: fullPropertyData.title || "",
           description: fullPropertyData.description || "",
           status: fullPropertyData.status || "draft",
-          price_per_night: fullPropertyData.price_per_night || "",
+          price_per_night:
+            fullPropertyData.price_per_night ||
+            fullPropertyData.pricing?.price_per_night ||
+            "",
           max_guests: fullPropertyData.max_guests || "",
           bedrooms: fullPropertyData.bedrooms || "",
           bathrooms: fullPropertyData.bathrooms || "",
@@ -633,10 +664,10 @@ const PropertyViewEditModal = ({
                           onChange={(e) =>
                             handleInputChange("title", e.target.value)
                           }
-                          className={errors.title ? "border-red-500" : ""}
+                          className={errors.title ? "border-destructive" : ""}
                         />
                         {errors.title && (
-                          <p className="text-sm text-red-500 mt-1">
+                          <p className="text-sm text-destructive mt-1">
                             {errors.title}
                           </p>
                         )}
@@ -652,10 +683,10 @@ const PropertyViewEditModal = ({
                             handleInputChange("description", e.target.value)
                           }
                           rows={4}
-                          className={errors.description ? "border-red-500" : ""}
+                          className={errors.description ? "border-destructive" : ""}
                         />
                         {errors.description && (
-                          <p className="text-sm text-red-500 mt-1">
+                          <p className="text-sm text-destructive mt-1">
                             {errors.description}
                           </p>
                         )}
@@ -707,8 +738,8 @@ const PropertyViewEditModal = ({
                         <Badge
                           className={getStatusColor(fullPropertyData.status)}
                         >
-                          {fullPropertyData.status
-                            .replace("_", " ")
+                          {(fullPropertyData.status || "draft")
+                            .replace(/_/g, " ")
                             .toUpperCase()}
                         </Badge>
                       </div>
@@ -738,11 +769,11 @@ const PropertyViewEditModal = ({
                             handleInputChange("price_per_night", e.target.value)
                           }
                           className={
-                            errors.price_per_night ? "border-red-500" : ""
+                            errors.price_per_night ? "border-destructive" : ""
                           }
                         />
                         {errors.price_per_night && (
-                          <p className="text-sm text-red-500 mt-1">
+                          <p className="text-sm text-destructive mt-1">
                             {errors.price_per_night}
                           </p>
                         )}
@@ -758,10 +789,10 @@ const PropertyViewEditModal = ({
                           onChange={(e) =>
                             handleInputChange("max_guests", e.target.value)
                           }
-                          className={errors.max_guests ? "border-red-500" : ""}
+                          className={errors.max_guests ? "border-destructive" : ""}
                         />
                         {errors.max_guests && (
-                          <p className="text-sm text-red-500 mt-1">
+                          <p className="text-sm text-destructive mt-1">
                             {errors.max_guests}
                           </p>
                         )}
@@ -777,10 +808,10 @@ const PropertyViewEditModal = ({
                           onChange={(e) =>
                             handleInputChange("bedrooms", e.target.value)
                           }
-                          className={errors.bedrooms ? "border-red-500" : ""}
+                          className={errors.bedrooms ? "border-destructive" : ""}
                         />
                         {errors.bedrooms && (
-                          <p className="text-sm text-red-500 mt-1">
+                          <p className="text-sm text-destructive mt-1">
                             {errors.bedrooms}
                           </p>
                         )}
@@ -796,10 +827,10 @@ const PropertyViewEditModal = ({
                           onChange={(e) =>
                             handleInputChange("bathrooms", e.target.value)
                           }
-                          className={errors.bathrooms ? "border-red-500" : ""}
+                          className={errors.bathrooms ? "border-destructive" : ""}
                         />
                         {errors.bathrooms && (
-                          <p className="text-sm text-red-500 mt-1">
+                          <p className="text-sm text-destructive mt-1">
                             {errors.bathrooms}
                           </p>
                         )}

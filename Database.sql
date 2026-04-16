@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Apr 15, 2026 at 10:05 PM
+-- Generation Time: Apr 16, 2026 at 08:32 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -509,6 +509,7 @@ INSERT INTO `cron_jobs_log` (`id`, `job_name`, `run_date`, `status`, `remarks`) 
 ('3a359083-c8c2-4656-b59d-a15764489aab', 'daily_booking_processor', '2026-04-05', 'success', 'Processed 0 settlements'),
 ('3e2e27ab-923d-4a80-a3c8-dc22537cc210', 'review_request', '2026-02-15', 'success', 'Sent 0 review requests, 0 failed'),
 ('41380528-58cf-439e-bd65-03e5e4e655db', 'check_in_reminder_24h', '2026-03-03', 'success', 'Sent 0 reminders, 0 failed'),
+('4dce21fa-cb8a-479d-b61c-a5b5283d0ff0', 'daily_booking_processor', '2026-04-15', 'success', 'Processed 0 settlements'),
 ('4e4f6494-4b55-4a62-8c18-2fdca9d49b5c', 'daily_booking_processor', '2026-01-19', 'success', 'Processed 0 settlements'),
 ('4e68e9c8-374b-4375-a000-9b0f7d21990f', 'daily_booking_processor', '2026-04-08', 'success', 'Processed 0 settlements'),
 ('4eee4cab-7f09-4fde-bad2-c049d800b1c6', 'daily_booking_processor', '2026-02-14', 'success', 'Processed 0 settlements'),
@@ -695,7 +696,6 @@ CREATE TABLE `login_attempts` (
 --
 
 INSERT INTO `login_attempts` (`email`, `attempts`, `locked_until`, `last_attempt`) VALUES
-('admin@zevio.com', 1, NULL, '2026-04-15 19:16:29'),
 ('admin@zevio.in', 2, NULL, '2026-04-15 18:35:46'),
 ('hello@zevio.in', 4, NULL, '2026-04-15 18:35:46'),
 ('mithunmanju77@gmail.com', 2, NULL, '2026-04-08 17:08:49'),
@@ -1492,6 +1492,7 @@ INSERT INTO `refresh_tokens` (`id`, `user_id`, `user_table`, `token_hash`, `expi
 ('a0138df8-9f3f-4927-8988-a92a2ad79e7c', 'bb6097e5-e418-11f0-9f30-00410e2b5e6e', 'vendors', '76678d5ab266af0802aa646487e7b632c4084d3683f72432e75a41bbef8e0dcc', '2026-04-11 14:14:08', '2026-04-04 08:44:08'),
 ('aa5223cc-2ade-41da-a7f1-7c5d752fe72d', 'a1336f20-f05e-4142-a10e-4c7f7be3c295', 'users', 'df081755a92a16c91c3f88c71e3f4735b4c0235438921962c6ea3686e1347848', '2026-04-15 22:07:32', '2026-04-08 16:37:32'),
 ('ab328e31-8cda-4c4d-a1dd-6ce1810e51b1', 'bb5898f8-e418-11f0-9f30-00410e2b5e6e', 'admins', 'aa698269af774e861c3248dafe19c9f4c053fc516e681e73f01629e887450a6d', '2026-04-23 00:37:10', '2026-04-15 19:07:10'),
+('abada85c-cfe1-4e88-9bfd-bfb861f28537', 'bb5898f8-e418-11f0-9f30-00410e2b5e6e', 'admins', 'acb7c60f08aec98b227e15b1356b91087ee8801f33970f857c539eacc2f67b5b', '2026-04-23 22:22:24', '2026-04-16 16:52:24'),
 ('ad199fc0-6213-468e-bedb-8539a14c83db', 'bb5538d1-e418-11f0-9f30-00410e2b5e6e', 'users', 'b3b32f0727219f50fbfd83f4a3d7278afe0a13d5dc0ce87a82bc34031c0648da', '2026-04-23 01:04:43', '2026-04-15 19:34:43'),
 ('af0231c7-e02d-415c-9ea5-86c9a6e83b05', 'bb5898f8-e418-11f0-9f30-00410e2b5e6e', 'admins', '597f0dddb87446471bf6229fb372113f5240508d2f371aae2448ad4a4fb5f86c', '2026-04-11 14:11:41', '2026-04-04 08:41:41'),
 ('af0b40be-421d-47c0-aec7-c06fba77e460', 'bb5898f8-e418-11f0-9f30-00410e2b5e6e', 'admins', 'd95a9e4083ba0ac2bc9c4bb7e1b1f3ecdaea276b9c1e18f54a54a4539edeee1b', '2026-04-23 00:37:53', '2026-04-15 19:07:53'),
@@ -1503,8 +1504,11 @@ INSERT INTO `refresh_tokens` (`id`, `user_id`, `user_table`, `token_hash`, `expi
 ('bd5e41f9-fd14-4fa8-bcac-c70894ef2f8e', 'bb5898f8-e418-11f0-9f30-00410e2b5e6e', 'admins', 'a680aaa746621d634f678d03323b28f1bec30d8e044201a35ea9ad2f710e65be', '2026-04-23 00:36:49', '2026-04-15 19:06:49'),
 ('bdc041d5-c8bc-4970-835a-ae7e14a7fba5', 'bb60817d-e418-11f0-9f30-00410e2b5e6e', 'vendors', '5dabef61f6d8da4abc4e7ae471595dd160b45c14de2dcb0919e92ffd8da87325', '2026-04-11 21:32:59', '2026-04-04 16:02:59'),
 ('bee69846-f5d7-46bc-b4b3-d89118c1cc17', 'bb5898f8-e418-11f0-9f30-00410e2b5e6e', 'admins', '6fccee58893503a7c66169ac45bb9aa7debdf3f8d08eb479383a19017e391152', '2026-04-20 00:08:46', '2026-04-12 18:38:46'),
+('c0a22920-f7df-4f6e-8dbd-43240002a0d4', 'bb5898f8-e418-11f0-9f30-00410e2b5e6e', 'admins', '248eee89b8c36fb1ee436fdf974235ef7eb163baa3b42dd6c0f3cfd0caf66227', '2026-04-23 21:46:24', '2026-04-16 16:16:24'),
+('c0d1a4d2-a1e3-48d3-9fba-a999690478e8', 'bb5898f8-e418-11f0-9f30-00410e2b5e6e', 'admins', '8a5c4577a586290714cb450661d2dae3d4ff91a31338daf58bc63993f1049690', '2026-04-23 22:37:24', '2026-04-16 17:07:24'),
 ('c0dafbd2-2c10-42b3-bbb6-7636b086a5e6', 'bb6097e5-e418-11f0-9f30-00410e2b5e6e', 'vendors', '165bc80ec415571eed98e28ba27c132d966340e628b2abff38bdcb60169bfe5e', '2026-04-11 14:13:25', '2026-04-04 08:43:25'),
 ('cb301fe1-7b7e-4041-9c1f-f058e9c4e265', 'bb5898f8-e418-11f0-9f30-00410e2b5e6e', 'admins', 'bcae1023ae8044324b4777bcc697edeb644bca864aa006a36c5d7589377bcbfd', '2026-04-23 00:39:54', '2026-04-15 19:09:54'),
+('cc7c17f3-9a4c-453b-91b1-e37b1dbc1667', 'bb5898f8-e418-11f0-9f30-00410e2b5e6e', 'admins', '0ce14d14cae31d632e281fef655bc761679321aedc2f1f673b56983edb5a339c', '2026-04-23 22:07:24', '2026-04-16 16:37:24'),
 ('d18a8868-12ea-4f8a-b81d-99c82c34f4db', 'bb5538d1-e418-11f0-9f30-00410e2b5e6e', 'users', 'a29ec92bc26fe33f2270dde1660ff3ae747120264bac0c166288196ce42ced09', '2026-04-13 01:53:23', '2026-04-05 20:23:23'),
 ('d1a23945-12dd-4969-ae58-0f1bd9dc1464', 'bb5898f8-e418-11f0-9f30-00410e2b5e6e', 'admins', '17089f34cab91fbf27f89f938fd8fac3b8a19b9c9a576b637fa283d9eb001c94', '2026-04-13 02:12:27', '2026-04-05 20:42:27'),
 ('d55957da-af48-4b8a-bef5-4573436f1865', 'bb6097e5-e418-11f0-9f30-00410e2b5e6e', 'vendors', '34507bd48b68020edb4d7cdadc8a60348cbab98aee277d3a762d062f7dbb72aa', '2026-04-23 00:46:31', '2026-04-15 19:16:31'),
@@ -1516,7 +1520,7 @@ INSERT INTO `refresh_tokens` (`id`, `user_id`, `user_table`, `token_hash`, `expi
 ('ef1c442d-18df-4cdf-b36e-c2a72b7e12eb', 'bb5538d1-e418-11f0-9f30-00410e2b5e6e', 'users', 'f02d8b2cfcd9290917e116dcccd5b6ce05185cce3215572d8548fd7e1ee52af3', '2026-04-13 00:47:44', '2026-04-05 19:17:44'),
 ('f0b12758-4a48-4cd9-a0b2-c0f4a34ec58a', 'bb6097e5-e418-11f0-9f30-00410e2b5e6e', 'vendors', '36d8dc791587ce130532ffae0310fac28ba86a8aac8021c9e33ba6d4a4960bed', '2026-04-11 13:16:42', '2026-04-04 07:46:42'),
 ('f8cf9a1f-34e8-44f3-91a3-2a844fa7b763', 'bb5898f8-e418-11f0-9f30-00410e2b5e6e', 'admins', 'e7c2af68ae95a21dd4756f6871bc3e59247a1b77c2770dcf20162d772f9064f5', '2026-04-23 00:41:14', '2026-04-15 19:11:14'),
-('fd3a51da-bbad-4fa2-b266-d0f8bf4dce09', 'bb5898f8-e418-11f0-9f30-00410e2b5e6e', 'admins', '036948ab82eae1983f3afe36e0ef6a914a2a3146d5e16dbbe4ca600fa37af7d2', '2026-04-23 01:21:14', '2026-04-15 19:51:14'),
+('fd99ae3a-c637-4760-831b-22596666ad54', 'bb5898f8-e418-11f0-9f30-00410e2b5e6e', 'admins', '7884f19b7180fce6b85160b31619efc5f286a4632395af4cb9d84b4b201ae0df', '2026-04-23 23:38:24', '2026-04-16 18:08:24'),
 ('fdec6e22-fe3f-4ff7-9895-b6e2886a7755', 'bb60817d-e418-11f0-9f30-00410e2b5e6e', 'vendors', '4922932be0d272eb2ea2f7f2dc66fd037c36d37344f145e0150fc0bc012ee2c3', '2026-04-15 21:14:05', '2026-04-08 15:44:05');
 
 -- --------------------------------------------------------

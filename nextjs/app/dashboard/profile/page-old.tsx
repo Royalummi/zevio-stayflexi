@@ -213,7 +213,7 @@ export default function Profile() {
                 <span className={styles.accountInfoValue}>
                   {(user as ProfileUser).created_at
                     ? new Date(
-                        (user as ProfileUser).created_at!
+                        (user as ProfileUser).created_at!,
                       ).toLocaleDateString()
                     : "N/A"}
                 </span>

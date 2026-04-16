@@ -61,9 +61,10 @@ const AddEditVendorProperty = () => {
     try {
       setLoading(true);
       const response = await api.get(`/vendor/properties/${id}`);
-      setProperty(response.data.data);
+      setProperty(response.data.data.property || response.data.data);
     } catch (error) {
-      toast.error("Failed to load property details");
+      const msg = error.response?.data?.message || "Failed to load property details. Please try again.";
+      toast.error(msg);
       console.error(error);
     } finally {
       setLoading(false);

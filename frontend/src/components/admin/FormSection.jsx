@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
 
 /**
@@ -12,8 +12,14 @@ const FormSection = ({
   defaultOpen = true,
   required = false,
   badge = null,
+  forceOpen = false,
 }) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
+
+  // Force-open the section when it contains validation errors
+  useEffect(() => {
+    if (forceOpen) setIsOpen(true);
+  }, [forceOpen]);
 
   return (
     <section className="mb-6 bg-card rounded-lg border border-border shadow-sm hover:shadow-md transition-shadow">
