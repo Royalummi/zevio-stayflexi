@@ -2,6 +2,16 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 const Dialog = ({ open, onOpenChange, children }) => {
+  // Close on Escape key
+  React.useEffect(() => {
+    if (!open) return;
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") onOpenChange(false);
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [open, onOpenChange]);
+
   if (!open) return null;
 
   return (
@@ -20,7 +30,7 @@ const DialogTrigger = React.forwardRef(
     <div ref={ref} className={className} {...props}>
       {children}
     </div>
-  )
+  ),
 );
 DialogTrigger.displayName = "DialogTrigger";
 
@@ -30,13 +40,13 @@ const DialogContent = React.forwardRef(
       ref={ref}
       className={cn(
         "relative bg-background rounded-lg shadow-lg w-full max-w-lg p-6 border",
-        className
+        className,
       )}
       {...props}
     >
       {children}
     </div>
-  )
+  ),
 );
 DialogContent.displayName = "DialogContent";
 
@@ -44,7 +54,7 @@ const DialogHeader = ({ className, ...props }) => (
   <div
     className={cn(
       "flex flex-col space-y-1.5 text-center sm:text-left",
-      className
+      className,
     )}
     {...props}
   />
@@ -56,7 +66,7 @@ const DialogTitle = React.forwardRef(({ className, ...props }, ref) => (
     ref={ref}
     className={cn(
       "text-lg font-semibold leading-none tracking-tight",
-      className
+      className,
     )}
     {...props}
   />
@@ -76,7 +86,7 @@ const DialogFooter = ({ className, ...props }) => (
   <div
     className={cn(
       "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 mt-4",
-      className
+      className,
     )}
     {...props}
   />

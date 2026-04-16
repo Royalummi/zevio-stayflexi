@@ -474,17 +474,21 @@ export const markSettlementPaid = asyncHandler(async (req, res) => {
     [payment_proof || null, settlement_id],
   );
 
-  // Create notification for vendor
-  await db.query(
-    "INSERT INTO notifications (id, recipient_id, recipient_role, title, message) VALUES (?, ?, ?, ?, ?)",
-    [
-      generateUUID(),
-      settlement.vendor_id,
-      "vendor",
-      "Settlement Paid",
-      `Your settlement of ₹${settlement.amount} has been paid`,
-    ],
-  );
+  // Create notification for vendor (best-effort: vendors table is separate from users)
+  try {
+    await db.query(
+      "INSERT INTO notifications (id, recipient_id, recipient_role, title, message) VALUES (?, ?, ?, ?, ?)",
+      [
+        generateUUID(),
+        settlement.vendor_id,
+        "vendor",
+        "Settlement Paid",
+        `Your settlement of ₹${settlement.amount} has been paid`,
+      ],
+    );
+  } catch (_notifErr) {
+    // Notification is non-critical; proceed even if FK constraint fails
+  }
 
   // Log activity
   await db.query(

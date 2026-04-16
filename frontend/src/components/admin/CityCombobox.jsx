@@ -309,7 +309,7 @@ const CityCombobox = ({
             className={cn(
               "w-full justify-between px-4 py-3 h-auto text-left font-normal",
               !value && "text-muted-foreground",
-              error && "border-red-500",
+              error && "border-destructive",
             )}
           >
             {selectedCity
@@ -400,7 +400,7 @@ const CityCombobox = ({
         </PopoverContent>
       </Popover>
 
-      {error && <span className="text-sm text-red-500 mt-1">{error}</span>}
+      {error && <span className="text-sm text-destructive mt-1">{error}</span>}
 
       {/* Add City Dialog */}
       <AddCityDialog

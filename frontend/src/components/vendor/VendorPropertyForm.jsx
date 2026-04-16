@@ -477,7 +477,9 @@ const VendorPropertyForm = ({
       }
     } catch (error) {
       console.error("Error fetching property:", error);
-      const msg = error.response?.data?.message || "Failed to load property data. Please try again.";
+      const msg =
+        error.response?.data?.message ||
+        "Failed to load property data. Please try again.";
       toast.error(msg);
     } finally {
       setLoading(false);
@@ -634,12 +636,30 @@ const VendorPropertyForm = ({
     // Basic validations
     if (!formData.title.trim()) newErrors.title = "Title is required";
     if (!formData.city_id) newErrors.city_id = "City is required";
+    if (!formData.description?.trim())
+      newErrors.description = "Description is required";
     if (!formData.area?.trim()) newErrors.area = "Area / Locality is required";
     if (!formData.pincode?.trim()) newErrors.pincode = "Pincode is required";
     if (!formData.maps_location?.trim())
       newErrors.maps_location = "Google Maps Location is required";
-    if (!formData.price_per_night || formData.price_per_night <= 0) {
-      newErrors.price_per_night = "Valid price is required";
+
+    // Price validation — must be a positive number ≥ ₹1
+    const priceVal = parseFloat(formData.price_per_night);
+    if (!formData.price_per_night || isNaN(priceVal) || priceVal < 1) {
+      newErrors.price_per_night = "Price must be at least ₹1";
+    }
+
+    // Cross-field: original price must be strictly higher than discounted price
+    if (
+      formData.original_price &&
+      formData.price_per_night &&
+      !isNaN(parseFloat(formData.original_price)) &&
+      !isNaN(parseFloat(formData.price_per_night)) &&
+      parseFloat(formData.original_price) <=
+        parseFloat(formData.price_per_night)
+    ) {
+      newErrors.original_price =
+        "Original Price must be higher than Discounted Price";
     }
 
     // Photo validation — minimum 6 photos required for submission
@@ -684,6 +704,7 @@ const VendorPropertyForm = ({
     const FIELD_ORDER = [
       "city_id",
       "title",
+      "description",
       "area",
       "pincode",
       "maps_location",
@@ -717,7 +738,9 @@ const VendorPropertyForm = ({
     const messages = Object.values(newErrors).filter(Boolean);
     if (messages.length === 0) return "";
     const shown = messages.slice(0, 2).join(" · ");
-    return messages.length > 2 ? `${shown} (+${messages.length - 2} more)` : shown;
+    return messages.length > 2
+      ? `${shown} (+${messages.length - 2} more)`
+      : shown;
   };
 
   // Show T&C modal before submitting new property for approval
@@ -918,9 +941,14 @@ const VendorPropertyForm = ({
         toast.error("You don't have permission to perform this action.");
       } else if (error.response?.status === 400) {
         // Validation error from server — show exact message
-        toast.warning(error.response.data.message || "Please fix the highlighted fields and try again.");
+        toast.warning(
+          error.response.data.message ||
+            "Please fix the highlighted fields and try again.",
+        );
       } else if (error.response?.status === 422) {
-        toast.warning(error.response.data.message || "Some fields have invalid values.");
+        toast.warning(
+          error.response.data.message || "Some fields have invalid values.",
+        );
       } else if (error.response?.data?.message) {
         toast.error(error.response.data.message);
       } else {
@@ -981,14 +1009,14 @@ const VendorPropertyForm = ({
         )}
       </div>
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} noValidate>
         {/* Section 1: Basic Information */}
         <FormSection
           title="Basic Information"
           icon={Building}
           required={true}
           defaultOpen={true}
-          forceOpen={!!(errors.city_id || errors.title)}
+          forceOpen={!!(errors.city_id || errors.title || errors.description)}
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             {/* City Selection - Using CityCombobox */}
@@ -1094,14 +1122,25 @@ const VendorPropertyForm = ({
               onChange={handleInputChange}
               rows="5"
               placeholder="Describe your property in detail..."
-              required
-              className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-vertical transition-all"
+              className={`w-full px-4 py-3 bg-background border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-vertical transition-all ${
+                errors.description ? "border-destructive" : "border-border"
+              }`}
             />
+            {errors.description && (
+              <span className="text-sm text-destructive mt-1">
+                {errors.description}
+              </span>
+            )}
           </div>
         </FormSection>
 
         {/* Section 2: Location Details */}
-        <FormSection title="Location Details" icon={MapPin} required={true} forceOpen={!!(errors.area || errors.pincode || errors.maps_location)}>
+        <FormSection
+          title="Location Details"
+          icon={MapPin}
+          required={true}
+          forceOpen={!!(errors.area || errors.pincode || errors.maps_location)}
+        >
           <div className="mb-6">
             <label className="text-sm font-medium text-foreground mb-2 block">
               Street Address <span className="text-destructive">*</span>
@@ -1304,7 +1343,12 @@ const VendorPropertyForm = ({
         </FormSection>
 
         {/* Section 4: Pricing */}
-        <FormSection title="Pricing" icon={DollarSign} required={true} forceOpen={!!(errors.price_per_night || errors.original_price)}>
+        <FormSection
+          title="Pricing"
+          icon={DollarSign}
+          required={true}
+          forceOpen={!!(errors.price_per_night || errors.original_price)}
+        >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             {/* Discounted Price / Base Price  Per Night */}
             <div className="flex flex-col">
@@ -1317,10 +1361,13 @@ const VendorPropertyForm = ({
                 name="price_per_night"
                 value={formData.price_per_night}
                 onChange={handleInputChange}
-                min="0"
+                min="1"
                 step="0.01"
-                required
-                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                className={`w-full px-4 py-3 bg-background border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all ${
+                  errors.price_per_night
+                    ? "border-destructive"
+                    : "border-border"
+                }`}
               />
               <span className="text-xs text-muted-foreground mt-1">
                 This is the price guests pay — shown prominently on the listing
@@ -1349,11 +1396,13 @@ const VendorPropertyForm = ({
                   if (
                     formData.original_price &&
                     formData.price_per_night &&
-                    parseFloat(formData.original_price) <= parseFloat(formData.price_per_night)
+                    parseFloat(formData.original_price) <=
+                      parseFloat(formData.price_per_night)
                   ) {
                     setErrors((prev) => ({
                       ...prev,
-                      original_price: "Original Price must be higher than Discounted Price",
+                      original_price:
+                        "Original Price must be higher than Discounted Price",
                     }));
                   } else {
                     setErrors((prev) => ({ ...prev, original_price: "" }));
@@ -1369,7 +1418,8 @@ const VendorPropertyForm = ({
                   {errors.original_price}
                 </span>
               )}
-              {!errors.original_price && formData.original_price &&
+              {!errors.original_price &&
+              formData.original_price &&
               formData.price_per_night &&
               parseFloat(formData.original_price) >
                 parseFloat(formData.price_per_night) ? (
@@ -1857,7 +1907,9 @@ const VendorPropertyForm = ({
           title="Primary Property Incharge"
           icon={Phone}
           required={true}
-          forceOpen={!!(errors.primary_incharge_phone || errors.primary_incharge_email)}
+          forceOpen={
+            !!(errors.primary_incharge_phone || errors.primary_incharge_email)
+          }
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Name */}
@@ -2211,7 +2263,12 @@ const VendorPropertyForm = ({
         </FormSection>
 
         {/* Section 10: Property Images */}
-        <FormSection title="Property Images" icon={ImageIcon} required={true} forceOpen={!!errors.photos}>
+        <FormSection
+          title="Property Images"
+          icon={ImageIcon}
+          required={true}
+          forceOpen={!!errors.photos}
+        >
           <div id="field-photos" />
           <PropertyImageUpload
             propertyId={propertyId}
