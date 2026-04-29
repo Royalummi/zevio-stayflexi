@@ -39,7 +39,10 @@ const fileFilter = (req, file, cb) => {
   if (file.mimetype.startsWith("image/")) {
     return cb(null, true);
   }
-  cb(new Error("Only image files are allowed"));
+  const err = new Error("File format not supported");
+  err.statusCode = 400;
+  err.isOperational = true;
+  cb(err);
 };
 
 // Multer upload configuration for avatars
