@@ -212,8 +212,11 @@ export default function RecommendedPropertiesManager() {
       const response = await api.get("/admin/properties");
 
       if (response.data.success) {
-        const allProps =
+        const allPropsRaw =
           response.data.data.properties || response.data.data || [];
+        const allProps = (Array.isArray(allPropsRaw) ? allPropsRaw : []).filter(
+          (p) => p && p.status !== "draft",
+        );
         setProperties(Array.isArray(allProps) ? allProps : []);
 
         // Separate by property type

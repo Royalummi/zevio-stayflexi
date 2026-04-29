@@ -3335,7 +3335,7 @@ export const toggleRecommendedStatus = asyncHandler(async (req, res) => {
 
   // Validate property exists and is approved
   const [properties] = await db.query(
-    "SELECT id, property_type_id, is_recommended, title FROM properties WHERE id = ? AND deleted_at IS NULL",
+    "SELECT id, property_type_id, is_recommended, title, status FROM properties WHERE id = ? AND deleted_at IS NULL",
     [id],
   );
 
@@ -3345,6 +3345,14 @@ export const toggleRecommendedStatus = asyncHandler(async (req, res) => {
 
   const property = properties[0];
 
+  if (is_recommended && property.status !== "approved") {
+    return sendError(
+      res,
+      "Only approved properties can be marked as recommended",
+      400,
+    );
+  }
+
   // If marking as recommended, check limit (12 per property type)
   if (is_recommended) {
     const [count] = await db.query(
@@ -3352,6 +3360,7 @@ export const toggleRecommendedStatus = asyncHandler(async (req, res) => {
        FROM properties 
        WHERE property_type_id = ? 
        AND is_recommended = 1 
+       AND status = 'approved'
        AND deleted_at IS NULL
        AND id != ?`,
       [property.property_type_id, id],
@@ -3371,6 +3380,7 @@ export const toggleRecommendedStatus = asyncHandler(async (req, res) => {
        FROM properties 
        WHERE property_type_id = ? 
        AND is_recommended = 1 
+       AND status = 'approved'
        AND deleted_at IS NULL`,
       [property.property_type_id],
     );
@@ -3415,6 +3425,7 @@ export const toggleRecommendedStatus = asyncHandler(async (req, res) => {
        FROM properties 
        WHERE property_type_id = ? 
        AND is_recommended = 1 
+       AND status = 'approved'
        AND deleted_at IS NULL
        ORDER BY recommended_priority DESC`,
       [property.property_type_id],
@@ -3462,6 +3473,7 @@ export const reorderRecommendedProperties = asyncHandler(async (req, res) => {
      WHERE id IN (${placeholders}) 
      AND property_type_id = ?
      AND is_recommended = 1
+     AND status = 'approved'
      AND deleted_at IS NULL`,
     [...ordered_property_ids, property_type_id],
   );
