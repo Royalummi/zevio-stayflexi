@@ -215,7 +215,7 @@ export default function RecommendedPropertiesManager() {
         const allPropsRaw =
           response.data.data.properties || response.data.data || [];
         const allProps = (Array.isArray(allPropsRaw) ? allPropsRaw : []).filter(
-          (p) => p && p.status !== "draft",
+          (p) => p && p.status === "approved",
         );
         setProperties(Array.isArray(allProps) ? allProps : []);
 
@@ -452,8 +452,6 @@ export default function RecommendedPropertiesManager() {
                 <SelectItem value="all">All Properties</SelectItem>
                 <SelectItem value="recommended">Recommended Only</SelectItem>
                 <SelectItem value="approved">Approved</SelectItem>
-                <SelectItem value="pending_approval">Pending</SelectItem>
-                <SelectItem value="draft">Draft</SelectItem>
               </SelectContent>
             </Select>
 
