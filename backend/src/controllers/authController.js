@@ -8,7 +8,10 @@ import {
 import { generateTokens, verifyRefreshToken } from "../config/jwt.js";
 import { generateUUID } from "../utils/helpers.js";
 import { asyncHandler, sendSuccess, sendError } from "../utils/response.js";
-import { sendForgotPasswordLinkEmail } from "../services/emailService.js";
+import {
+  sendForgotPasswordLinkEmail,
+  sendSelfSignupWelcomeEmail,
+} from "../services/emailService.js";
 import {
   uploadToR2,
   isR2Configured,
@@ -310,6 +313,14 @@ export const register = asyncHandler(async (req, res) => {
 
   // Store refresh token in DB
   await storeRefreshToken(user.id, "users", tokens.refreshToken);
+
+  // Send welcome email after successful self-signup.
+  // Do not block registration if email delivery fails.
+  try {
+    await sendSelfSignupWelcomeEmail(user.email, user.full_name);
+  } catch (emailError) {
+    console.error("Failed to send self-signup welcome email:", emailError);
+  }
 
   sendSuccess(
     res,

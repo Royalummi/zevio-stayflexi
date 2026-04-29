@@ -943,6 +943,65 @@ If you have any questions, please contact our support team.
 };
 
 /**
+ * Send welcome email for self-signup users
+ * @param {string} email - User's email address
+ * @param {string} name - User's full name
+ */
+export const sendSelfSignupWelcomeEmail = async (email, name) => {
+  if (!transporter) {
+    console.log("⚠️  Welcome email not sent: Email service not configured");
+    return false;
+  }
+
+  try {
+    const loginUrl = `${process.env.NEXTJS_URL || "http://localhost:3000"}/login`;
+
+    const html =
+      _emailOpen("Welcome to Zevio") +
+      _emailHeader("WELCOME TO ZEVIO") +
+      `<tr><td style="padding:36px 36px 28px;">
+        <p style="font-size:15px;color:#5F6B7A;margin:0 0 6px;font-family:${_F};line-height:1.6;">Hello <strong style="color:#1F3A5F;">${name}</strong>!</p>
+        <p style="font-size:14px;color:#4a5666;margin:0 0 20px;font-family:${_F};line-height:1.6;">
+          Your account is ready. You can now sign in and start booking your next stay.
+        </p>
+        ${_box(`
+          <table width="100%" cellpadding="0" cellspacing="0">
+            ${_dr("Email", `<span style="font-family:'Courier New',monospace;font-size:12px;">${email}</span>`, true)}
+          </table>
+        `)}
+        ${_btn(loginUrl, "Login to Your Account")}
+        <p style="font-size:13px;color:#5F6B7A;margin:16px 0 0;font-family:${_F};">Need help? Reply to this email and our team will assist you.</p>
+      </td></tr>` +
+      `<tr><td>${_brandFooter()}</td></tr>` +
+      _emailClose();
+
+    const text = `
+Welcome to Zevio, ${name}!
+
+Your account is ready. You can now sign in and start booking your next stay.
+
+Email: ${email}
+Login at: ${loginUrl}
+
+© ${new Date().getFullYear()} Zevio Villa Booking
+    `;
+
+    await sendEmail({
+      to: email,
+      subject: "Welcome to Zevio",
+      html,
+      text,
+    });
+
+    console.log(`✅ Self-signup welcome email sent to ${email}`);
+    return true;
+  } catch (error) {
+    console.error("Failed to send self-signup welcome email:", error);
+    throw error;
+  }
+};
+
+/**
  * Send password-reset email with a new temporary password (admin-triggered)
  * @param {string} email - User's email address
  * @param {string} name  - User's full name
