@@ -1,7 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import {
   User,
+  Camera,
+  Loader2,
   Phone,
   MapPin,
   Building2,
@@ -36,6 +38,9 @@ const VendorProfile = () => {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState(null);
+  const fileInputRef = useRef(null);
 
   // Edit-mode toggles (read-only by default)
   const [editingProfile, setEditingProfile] = useState(false);
@@ -76,6 +81,8 @@ const VendorProfile = () => {
   // Snapshots for cancel (restore on cancel)
   const [profileSnapshot, setProfileSnapshot] = useState(null);
   const [bankSnapshot, setBankSnapshot] = useState(null);
+
+  const currentAvatar = avatarPreview || user?.avatar || null;
 
   useEffect(() => {
     fetchVendorProfile();
@@ -277,6 +284,61 @@ const VendorProfile = () => {
     }
   };
 
+  const handleAvatarClick = () => {
+    if (!avatarUploading) {
+      fileInputRef.current?.click();
+    }
+  };
+
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select a valid image file");
+      e.target.value = "";
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Image size must be less than 2MB");
+      e.target.value = "";
+      return;
+    }
+
+    const previewUrl = URL.createObjectURL(file);
+    setAvatarPreview(previewUrl);
+
+    try {
+      setAvatarUploading(true);
+      const formData = new FormData();
+      formData.append("avatar", file);
+
+      const response = await api.post("/auth/upload-avatar", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      const updatedUser = response?.data?.data?.user;
+      if (response?.data?.success && updatedUser) {
+        updateUser({ ...user, ...updatedUser });
+        setAvatarPreview(null);
+        toast.success("Profile image updated successfully");
+      } else {
+        throw new Error("Invalid upload response");
+      }
+    } catch (error) {
+      console.error("Avatar upload error:", error);
+      setAvatarPreview(null);
+      toast.error(
+        error.response?.data?.message || "Failed to upload profile image",
+      );
+    } finally {
+      setAvatarUploading(false);
+      URL.revokeObjectURL(previewUrl);
+      e.target.value = "";
+    }
+  };
+
   return (
     <div className="space-y-6 p-6">
       {/* Header */}
@@ -293,8 +355,31 @@ const VendorProfile = () => {
       <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
         <CardContent className="p-6">
           <div className="flex items-center gap-4">
-            <div className="bg-blue-100 p-4 rounded-full">
-              <User className="h-8 w-8 text-blue-600" />
+            <div className="relative">
+              <div className="h-16 w-16 rounded-full overflow-hidden border-2 border-blue-200 bg-blue-100 flex items-center justify-center">
+                {currentAvatar ? (
+                  <img
+                    src={currentAvatar}
+                    alt="Vendor avatar"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <User className="h-8 w-8 text-blue-600" />
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={handleAvatarClick}
+                disabled={avatarUploading}
+                className="absolute -bottom-1 -right-1 h-7 w-7 rounded-full bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 disabled:opacity-50"
+                title="Upload profile image"
+              >
+                {avatarUploading ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Camera className="h-3.5 w-3.5" />
+                )}
+              </button>
             </div>
             <div className="flex-1">
               <h2 className="text-2xl font-bold text-gray-900">
@@ -313,6 +398,13 @@ const VendorProfile = () => {
                 )}
               </div>
             </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleAvatarChange}
+              className="hidden"
+            />
           </div>
         </CardContent>
       </Card>
