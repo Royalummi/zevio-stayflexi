@@ -318,6 +318,13 @@ button {
   justify-content: center;
 }
 
+@media (max-width: 767px) {
+  .hero {
+    min-height: calc(100vh - 72px);
+    min-height: calc(100dvh - 72px);
+  }
+}
+
 @media (min-width: 768px) {
   .hero {
     padding: 72px 0 100px 0;

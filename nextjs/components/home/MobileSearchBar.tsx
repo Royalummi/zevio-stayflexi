@@ -199,12 +199,6 @@ export default function MobileSearchBar({
           infants > 0 ? `, ${infants} ${infants === 1 ? "infant" : "infants"}` : ""
         }`;
 
-  const heroSummary = [
-    formatLocation(selectedCity),
-    formatDateRange(startDate, endDate),
-    guestsSummary,
-  ].join(" · ");
-
   return (
     <>
       <div className={styles.mobileSearchBar}>
@@ -240,9 +234,42 @@ export default function MobileSearchBar({
             <div className={styles.heroIcon}><FiSearch /></div>
             <div className={styles.heroText}>
               <span className={styles.heroLabel}>Search stay</span>
-              <span className={styles.heroValue}>{heroSummary}</span>
             </div>
             <FiChevronRight className={styles.heroChevron} />
+          </button>
+
+          <div className={styles.summaryGrid}>
+            <button
+              type="button"
+              className={styles.summaryItem}
+              onClick={() => activateStep("where")}
+            >
+              <span className={styles.summaryLabel}>Where</span>
+              <span className={styles.summaryValue}>{formatLocation(selectedCity)}</span>
+            </button>
+            <button
+              type="button"
+              className={styles.summaryItem}
+              onClick={() => activateStep("dates")}
+            >
+              <span className={styles.summaryLabel}>
+                {propertyType === "villas" ? "Dates" : "Duration"}
+              </span>
+              <span className={styles.summaryValue}>{formatDateRange(startDate, endDate)}</span>
+            </button>
+            <button
+              type="button"
+              className={`${styles.summaryItem} ${styles.summaryItemFull}`}
+              onClick={() => activateStep("guests")}
+            >
+              <span className={styles.summaryLabel}>Guests</span>
+              <span className={styles.summaryValue}>{guestsSummary}</span>
+            </button>
+          </div>
+
+          <button type="button" className={styles.searchButton} onClick={openFromSummary}>
+            <FiSearch className={styles.searchButtonIcon} />
+            <span>{propertyType === "villas" ? "Search villas" : "Search apartments"}</span>
           </button>
 
 
