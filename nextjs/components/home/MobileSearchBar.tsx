@@ -45,7 +45,7 @@ interface MobileSearchBarProps {
 }
 
 function formatLocation(city: City | null): string {
-  if (!city) return "Select location";
+  if (!city) return "City";
 
   if (city.area) {
     return `${city.area}, ${city.city || city.name}`;
@@ -55,7 +55,7 @@ function formatLocation(city: City | null): string {
 }
 
 function formatDateRange(startDate: Date | null, endDate: Date | null): string {
-  if (!startDate || !endDate) return "Add dates";
+  if (!startDate || !endDate) return "Dates";
 
   return `${startDate.toLocaleDateString("en-US", {
     month: "short",
@@ -182,7 +182,7 @@ export default function MobileSearchBar({
 
   const stepButtonLabel = useMemo(() => {
     if (activeStep === "where") {
-      return selectedCity ? "Continue to dates" : "Select location";
+      return selectedCity ? "Continue to dates" : "Select city";
     }
 
     if (activeStep === "dates") {
@@ -245,39 +245,7 @@ export default function MobileSearchBar({
             <FiChevronRight className={styles.heroChevron} />
           </button>
 
-          <div className={styles.summaryGrid}>
-            <button
-              type="button"
-              className={styles.summaryItem}
-              onClick={() => activateStep("where")}
-            >
-              <span className={styles.summaryLabel}>Where</span>
-              <span className={styles.summaryValue}>{formatLocation(selectedCity)}</span>
-            </button>
-            <button
-              type="button"
-              className={styles.summaryItem}
-              onClick={() => activateStep("dates")}
-            >
-              <span className={styles.summaryLabel}>
-                {propertyType === "villas" ? "Dates" : "Duration"}
-              </span>
-              <span className={styles.summaryValue}>{formatDateRange(startDate, endDate)}</span>
-            </button>
-            <button
-              type="button"
-              className={`${styles.summaryItem} ${styles.summaryItemFull}`}
-              onClick={() => activateStep("guests")}
-            >
-              <span className={styles.summaryLabel}>Guests</span>
-              <span className={styles.summaryValue}>{guestsSummary}</span>
-            </button>
-          </div>
 
-          <button type="button" className={styles.searchButton} onClick={openFromSummary}>
-            <FiSearch className={styles.searchButtonIcon} />
-            <span>{propertyType === "villas" ? "Search villas" : "Search apartments"}</span>
-          </button>
         </div>
       </div>
 
@@ -290,7 +258,6 @@ export default function MobileSearchBar({
           <div className={`${styles.sheet} ${isVisible ? styles.sheetVisible : ""}`}>
             <div className={styles.sheetHeader}>
               <div>
-                <div className={styles.sheetEyebrow}>Mobile search</div>
                 <h3 className={styles.sheetTitle}>Find your stay faster</h3>
               </div>
               <button type="button" className={styles.closeButton} onClick={closeSheet}>
@@ -330,7 +297,6 @@ export default function MobileSearchBar({
                 <div className={styles.stepPanel}>
                   <div className={styles.stepHeader}>
                     <h4>Choose city or area</h4>
-                    <p>Use the same live area list as desktop so both experiences stay consistent.</p>
                   </div>
 
                   <div className={styles.locationField}>
@@ -401,7 +367,6 @@ export default function MobileSearchBar({
                 <div className={styles.stepPanel}>
                   <div className={styles.stepHeader}>
                     <h4>{propertyType === "villas" ? "Select stay dates" : "Select move-in and move-out"}</h4>
-                    <p>Keep date selection focused on one task, then move to guest details.</p>
                   </div>
 
                   <div className={styles.calendarPanel}>
@@ -441,7 +406,6 @@ export default function MobileSearchBar({
                 <div className={styles.stepPanel}>
                   <div className={styles.stepHeader}>
                     <h4>How many guests?</h4>
-                    <p>Use large counters so this step is quick on mobile.</p>
                   </div>
 
                   <div className={styles.counterList}>
