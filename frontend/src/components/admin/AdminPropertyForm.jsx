@@ -31,6 +31,27 @@ import PropertyCalendarPricing from "../shared/PropertyCalendarPricing";
 import CancellationPolicyInfoCard from "../shared/CancellationPolicyInfoCard";
 
 const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
+  const toSafeHtmlString = (value) =>
+    typeof value === "string" ? value : value == null ? "" : String(value);
+
+  const sanitizeGuidelineHtml = (value) =>
+    DOMPurify.sanitize(toSafeHtmlString(value), {
+      ALLOWED_TAGS: [
+        "h3",
+        "h4",
+        "p",
+        "ul",
+        "ol",
+        "li",
+        "strong",
+        "em",
+        "u",
+        "a",
+        "br",
+      ],
+      ALLOWED_ATTR: ["href", "target"],
+    });
+
   // Ensure propertyId is either null or a string
   const sanitizedPropertyId = propertyId ? String(propertyId) : null;
 
@@ -113,10 +134,6 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
     pets_allowed: false,
     events_allowed: false,
     event_capacity: null,
-
-    // Recommendations
-    is_recommended: false,
-    recommended_priority: 0,
 
     // Primary Incharge
     primary_incharge_name: "",
@@ -267,25 +284,31 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
     return { sections, percentage };
   }, [formData, uploadedImageCount, selectedImageCount]); // Removed photoUrls dependency
 
-  const quillModules = {
-    toolbar: [
-      [{ header: [3, false] }],
-      ["bold", "italic", "underline"],
-      [{ list: "ordered" }, { list: "bullet" }],
-      ["link"],
-      ["clean"],
-    ],
-  };
+  const quillModules = useMemo(
+    () => ({
+      toolbar: [
+        [{ header: [3, false] }],
+        ["bold", "italic", "underline"],
+        [{ list: "ordered" }, { list: "bullet" }],
+        ["link"],
+        ["clean"],
+      ],
+    }),
+    [],
+  );
 
-  const quillFormats = [
-    "header",
-    "bold",
-    "italic",
-    "underline",
-    "list",
-    "bullet",
-    "link",
-  ];
+  const quillFormats = useMemo(
+    () => [
+      "header",
+      "bold",
+      "italic",
+      "underline",
+      "list",
+      "bullet",
+      "link",
+    ],
+    [],
+  );
 
   useEffect(() => {
     fetchDropdownData();
@@ -468,9 +491,9 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
         setOriginalFormData(JSON.parse(JSON.stringify(loadedFormData)));
 
         const loadedGuidelines = {
-          safety_information: property.safety_information || "",
-          local_area_info: property.local_area_info || "",
-          emergency_contacts: property.emergency_contacts || "",
+          safety_information: toSafeHtmlString(property.safety_information),
+          local_area_info: toSafeHtmlString(property.local_area_info),
+          emergency_contacts: toSafeHtmlString(property.emergency_contacts),
         };
 
         setGuidelines(loadedGuidelines);
@@ -558,24 +581,7 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
   };
 
   const handleGuidelineChange = (field, value) => {
-    // Sanitize HTML
-    const sanitized = DOMPurify.sanitize(value, {
-      ALLOWED_TAGS: [
-        "h3",
-        "h4",
-        "p",
-        "ul",
-        "ol",
-        "li",
-        "strong",
-        "em",
-        "u",
-        "a",
-        "br",
-      ],
-      ALLOWED_ATTR: ["href", "target"],
-    });
-    setGuidelines((prev) => ({ ...prev, [field]: sanitized }));
+    setGuidelines((prev) => ({ ...prev, [field]: toSafeHtmlString(value) }));
     // Mark guideline field as dirty
     setDirtyFields((prev) => ({ ...prev, [field]: true }));
     setHasUnsavedChanges(true);
@@ -837,6 +843,9 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
         payload = {
           ...restFormData,
           ...guidelines,
+          safety_information: sanitizeGuidelineHtml(guidelines.safety_information),
+          local_area_info: sanitizeGuidelineHtml(guidelines.local_area_info),
+          emergency_contacts: sanitizeGuidelineHtml(guidelines.emergency_contacts),
           amenities: formData.amenities || [],
           primary_incharge_name: formData.primary_incharge_name || "",
           primary_incharge_phone: formData.primary_incharge_phone || "",
@@ -868,6 +877,9 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
         payload = {
           ...restFormData,
           ...guidelines,
+          safety_information: sanitizeGuidelineHtml(guidelines.safety_information),
+          local_area_info: sanitizeGuidelineHtml(guidelines.local_area_info),
+          emergency_contacts: sanitizeGuidelineHtml(guidelines.emergency_contacts),
           // Include amenities for new properties
           amenities: formData.amenities || [],
           // Include incharge contacts
@@ -964,10 +976,6 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
         payload.wifi_speed_mbps = payload.wifi_speed_mbps
           ? parseInt(payload.wifi_speed_mbps)
           : null;
-      }
-      if (payload.recommended_priority !== undefined) {
-        payload.recommended_priority =
-          parseInt(payload.recommended_priority) || 0;
       }
       // Use api.js module for consistent error handling
       let response;
@@ -2236,59 +2244,6 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
           </FormSection>
         )}
 
-        {/* Section 4.6: Recommendations */}
-        <FormSection
-          title="Property Recommendations"
-          icon={Star}
-          defaultOpen={true}
-        >
-          <div className="bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4 mb-6">
-            <p className="text-sm text-purple-900 dark:text-purple-200">
-              <strong className="font-semibold">Admin Only:</strong> Mark
-              properties as recommended to feature them prominently on the
-              homepage
-            </p>
-          </div>
-
-          <div className="flex items-center gap-3 mb-6">
-            <input
-              type="checkbox"
-              name="is_recommended"
-              checked={formData.is_recommended}
-              onChange={handleInputChange}
-              className="h-5 w-5 rounded border-border text-primary focus:ring-2 focus:ring-primary focus:ring-offset-0"
-              id="is_recommended"
-            />
-            <label
-              htmlFor="is_recommended"
-              className="text-sm font-medium text-foreground cursor-pointer"
-            >
-              Mark as Recommended Property
-            </label>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div className="flex flex-col">
-              <label className="text-sm font-medium text-foreground mb-2">
-                Recommended Priority (1-12)
-              </label>
-              <input
-                type="number"
-                name="recommended_priority"
-                value={formData.recommended_priority}
-                onChange={handleInputChange}
-                min="0"
-                max="12"
-                disabled={!formData.is_recommended}
-                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              />
-              <small className="text-xs text-muted-foreground mt-1">
-                Higher number = shows first (1-12 range)
-              </small>
-            </div>
-          </div>
-        </FormSection>
-
         {/* Section 5: Primary Incharge */}
         <FormSection
           title="Primary Property Incharge"
@@ -2819,7 +2774,7 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
               Safety Information <span className="text-destructive">*</span>
             </label>
             <ReactQuill
-              value={guidelines.safety_information}
+              value={toSafeHtmlString(guidelines.safety_information)}
               onChange={(value) =>
                 handleGuidelineChange("safety_information", value)
               }
@@ -2839,7 +2794,7 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
               Local Area Information <span className="text-destructive">*</span>
             </label>
             <ReactQuill
-              value={guidelines.local_area_info}
+              value={toSafeHtmlString(guidelines.local_area_info)}
               onChange={(value) =>
                 handleGuidelineChange("local_area_info", value)
               }
@@ -2859,7 +2814,7 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
               Emergency Contacts <span className="text-destructive">*</span>
             </label>
             <ReactQuill
-              value={guidelines.emergency_contacts}
+              value={toSafeHtmlString(guidelines.emergency_contacts)}
               onChange={(value) =>
                 handleGuidelineChange("emergency_contacts", value)
               }

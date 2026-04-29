@@ -237,7 +237,14 @@ const PropertyImageUpload = ({
       );
 
       console.log("✅ Upload successful, response:", response.data);
-      toast.success("Images uploaded successfully!");
+      const summary = response.data?.data?.summary;
+      if (summary?.failed > 0) {
+        toast.warning(
+          `${summary.uploaded} image(s) uploaded, ${summary.failed} failed.`,
+        );
+      } else {
+        toast.success("Images uploaded successfully!");
+      }
 
       // Clear selected files and their previews
       selectedFiles.forEach((fileObj) => {
@@ -252,7 +259,8 @@ const PropertyImageUpload = ({
 
       if (onImagesChange) {
         onImagesChange({
-          uploadedImages: response.data.data,
+          uploadedImages:
+            response.data?.data?.images || response.data?.data || [],
           hasPendingUploads: false,
         });
       }

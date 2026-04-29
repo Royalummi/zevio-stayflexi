@@ -20,8 +20,8 @@
  * ```
  */
 
-import React, { useMemo } from "react";
-import { FiInfo, FiTag, FiPercent, FiDollarSign } from "react-icons/fi";
+import React, { useMemo, useState } from "react";
+import { FiInfo, FiTag, FiPercent, FiChevronDown } from "react-icons/fi";
 import styles from "./PriceBreakdown.module.css";
 
 interface PriceBreakdownProps {
@@ -59,6 +59,7 @@ export default function PriceBreakdown({
   showDetails = true,
   className = "",
 }: PriceBreakdownProps) {
+  const [taxExpanded, setTaxExpanded] = useState(false);
   // Calculate pricing breakdown following Session 64 pricing logic
   const pricingBreakdown = useMemo(() => {
     // Step 1: Subtotal = Base + Extra Guests + Extra Children
@@ -213,34 +214,55 @@ export default function PriceBreakdown({
           </span>
         </div>
 
-        {/* GST (Tiered) */}
-        <div className={styles.priceLine}>
-          <div className={styles.lineLeft}>
-            <span className={styles.lineLabel}>
-              <FiPercent className={styles.icon} /> GST (
-              {pricingBreakdown.gstRate}%)
-            </span>
-          </div>
-          <span className={styles.lineValue}>
-            {formatCurrency(pricingBreakdown.gstAmount)}
-          </span>
-        </div>
-
-        {/* Service Charge */}
-        <div className={styles.priceLine}>
-          <div className={styles.lineLeft}>
-            <span className={styles.lineLabel}>
-              <FiDollarSign className={styles.icon} /> Service Charge (5%)
-            </span>
-            {showDetails && (
-              <span className={`${styles.lineNote} ${styles.noGstNote}`}>
-                💡 No GST on service charge
+        {/* Taxes & Fees — collapsible */}
+        <div className={styles.taxRow}>
+          <button
+            type="button"
+            className={styles.taxHeader}
+            onClick={() => setTaxExpanded((prev) => !prev)}
+            aria-expanded={taxExpanded}
+          >
+            <div className={styles.taxHeaderLeft}>
+              <span className={styles.lineLabel}>
+                <FiPercent className={styles.icon} /> Taxes &amp; Fees
               </span>
-            )}
-          </div>
-          <span className={styles.lineValue}>
-            {formatCurrency(pricingBreakdown.serviceCharge)}
-          </span>
+              <span className={styles.taxHint}>
+                {taxExpanded ? "Hide breakdown" : "View breakdown"}
+              </span>
+            </div>
+            <div className={styles.taxHeaderRight}>
+              <span className={styles.lineValue}>
+                {formatCurrency(
+                  pricingBreakdown.gstAmount + pricingBreakdown.serviceCharge,
+                )}
+              </span>
+              <FiChevronDown
+                className={`${styles.chevron} ${taxExpanded ? styles.chevronOpen : ""}`}
+              />
+            </div>
+          </button>
+
+          {taxExpanded && (
+            <div className={styles.taxBreakdown}>
+              <div className={styles.taxItem}>
+                <span className={styles.taxItemLabel}>
+                  GST ({pricingBreakdown.gstRate}%)
+                </span>
+                <span className={styles.taxItemValue}>
+                  {formatCurrency(pricingBreakdown.gstAmount)}
+                </span>
+              </div>
+              <div className={styles.taxItem}>
+                <span className={styles.taxItemLabel}>
+                  Service Charge (5%)
+                  <span className={styles.taxNote}>no GST</span>
+                </span>
+                <span className={styles.taxItemValue}>
+                  {formatCurrency(pricingBreakdown.serviceCharge)}
+                </span>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Final Divider */}

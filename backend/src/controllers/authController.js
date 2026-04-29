@@ -9,6 +9,11 @@ import { generateTokens, verifyRefreshToken } from "../config/jwt.js";
 import { generateUUID } from "../utils/helpers.js";
 import { asyncHandler, sendSuccess, sendError } from "../utils/response.js";
 import { sendForgotPasswordLinkEmail } from "../services/emailService.js";
+import {
+  uploadToR2,
+  isR2Configured,
+  ensureR2Folder,
+} from "../utils/r2Storage.js";
 
 const MAX_LOGIN_ATTEMPTS = 5;
 const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutes
@@ -16,6 +21,15 @@ const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutes
 // Helper: hash a token with SHA-256
 const hashToken = (token) =>
   crypto.createHash("sha256").update(token).digest("hex");
+
+const normalizeAvatarUrl = (avatar, req) => {
+  if (!avatar) return avatar;
+  if (/^https?:\/\//i.test(avatar)) return avatar;
+  if (avatar.startsWith("/")) {
+    return `${req.protocol}://${req.get("host")}${avatar}`;
+  }
+  return avatar;
+};
 
 // Helper: store refresh token in DB
 const storeRefreshToken = async (userId, userTable, refreshToken) => {
@@ -426,6 +440,8 @@ export const getProfile = asyncHandler(async (req, res) => {
     }
   }
 
+  user.avatar = normalizeAvatarUrl(user.avatar, req);
+
   sendSuccess(res, { ...user, role }, "Profile fetched successfully", 200);
 });
 
@@ -515,6 +531,8 @@ export const updateProfile = asyncHandler(async (req, res) => {
       user.bank_details = null;
     }
   }
+
+  user.avatar = normalizeAvatarUrl(user.avatar, req);
 
   sendSuccess(res, { ...user, role }, "Profile updated successfully", 200);
 });
@@ -723,8 +741,28 @@ export const uploadAvatar = asyncHandler(async (req, res) => {
       return sendError(res, "Invalid role", 400);
   }
 
-  // Avatar URL (relative path from uploads folder)
-  const avatarUrl = `/uploads/avatars/${req.file.filename}`;
+  let avatarUrl;
+  if (isR2Configured()) {
+    if (!req.file.buffer) {
+      return sendError(res, "Avatar file buffer missing", 400);
+    }
+
+    await ensureR2Folder("profiles");
+    const ext = req.file.originalname?.split(".").pop() || "webp";
+    avatarUrl = await uploadToR2(req.file.buffer, "profiles", null, {
+      ext,
+      maxWidth: 512,
+      maxHeight: 512,
+      quality: 82,
+    });
+  } else {
+    if (!req.file.filename) {
+      return sendError(res, "Avatar filename missing", 400);
+    }
+
+    const localPath = `/uploads/avatars/${req.file.filename}`;
+    avatarUrl = `${req.protocol}://${req.get("host")}${localPath}`;
+  }
 
   // Update user avatar in database
   await db.query(`UPDATE ${tableName} SET avatar = ? WHERE id = ?`, [
@@ -743,6 +781,7 @@ export const uploadAvatar = asyncHandler(async (req, res) => {
 
   const user = rows[0];
   delete user.password_hash; // Don't send password hash
+  user.avatar = normalizeAvatarUrl(user.avatar, req);
 
   sendSuccess(res, { user }, "Avatar uploaded successfully", 200);
 });

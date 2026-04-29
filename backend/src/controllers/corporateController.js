@@ -13,7 +13,7 @@
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import db from "../config/database.js";
-import { sendEmail } from "../services/emailService.js";
+import { sendEmail, _logoImg, _brandFooter } from "../services/emailService.js";
 import { generateTokens } from "../config/jwt.js";
 
 const TOKEN_EXPIRY_HOURS = 24;
@@ -101,21 +101,7 @@ export const registerCorporate = async (req, res) => {
           await sendEmail({
             to: email,
             subject: "Verify Your Corporate Account - Zevio",
-            html: `
-              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                <h2 style="color: #2563eb;">Email Verification</h2>
-                <p>Hello ${name},</p>
-                <p>Here is a fresh verification link for your corporate account at <strong>${company_name}</strong>:</p>
-                <div style="text-align: center; margin: 30px 0;">
-                  <a href="${verificationLink}"
-                     style="background-color: #2563eb; color: white; padding: 12px 30px;
-                            text-decoration: none; border-radius: 5px; display: inline-block;">
-                    Verify Email Address
-                  </a>
-                </div>
-                <p style="color: #6b7280; word-break: break-all;">${verificationLink}</p>
-              </div>
-            `,
+            html: `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Email Verification - Zevio</title></head><body style="margin:0;padding:0;font-family:'Inter','Segoe UI',Arial,sans-serif;background-color:#f2f4f7;"><table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f2f4f7;padding:32px 16px;"><tr><td align="center"><table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:16px;overflow:hidden;max-width:620px;box-shadow:0 4px 20px rgba(31,58,95,0.08);"><tr><td style="background:#1F3A5F;padding:32px 20px;text-align:center;">${_logoImg}<div style="margin-top:14px;color:#2FA4A9;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;font-family:'Inter','Segoe UI',Arial,sans-serif;">EMAIL VERIFICATION</div></td></tr><tr><td style="padding:32px 30px;"><h2 style="margin:0 0 16px;color:#1F3A5F;font-size:20px;font-weight:600;font-family:'Inter','Segoe UI',Arial,sans-serif;">Hello ${name}!</h2><p style="margin:0 0 16px;color:#5F6B7A;font-size:15px;line-height:1.6;font-family:'Inter','Segoe UI',Arial,sans-serif;">Here is a fresh verification link for your corporate account at <strong style="color:#1F3A5F;">${company_name}</strong>:</p><table width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0;"><tr><td align="center"><a href="${verificationLink}" style="display:inline-block;padding:13px 36px;background:#2FA4A9;color:#ffffff;text-decoration:none;border-radius:8px;font-size:15px;font-weight:600;font-family:'Inter','Segoe UI',Arial,sans-serif;">Verify Email Address</a></td></tr></table><p style="margin:0;color:#5F6B7A;font-size:13px;line-height:1.6;font-family:'Inter','Segoe UI',Arial,sans-serif;">Or copy and paste this link:<br><a href="${verificationLink}" style="color:#2FA4A9;word-break:break-all;">${verificationLink}</a></p></td></tr><tr><td>${_brandFooter()}</td></tr></table></td></tr></table></body></html>`,
           });
         } catch (emailError) {
           console.error("Error resending verification email:", emailError);
@@ -191,30 +177,7 @@ export const registerCorporate = async (req, res) => {
       await sendEmail({
         to: email,
         subject: "Verify Your Corporate Account - Zevio",
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #2563eb;">Welcome to Zevio Corporate!</h2>
-            <p>Hello ${name},</p>
-            <p>Thank you for registering your company <strong>${company_name}</strong> with Zevio.</p>
-            <p>Please verify your corporate email address by clicking the button below:</p>
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${verificationLink}" 
-                 style="background-color: #2563eb; color: white; padding: 12px 30px; 
-                        text-decoration: none; border-radius: 5px; display: inline-block;">
-                Verify Email Address
-              </a>
-            </div>
-            <p>Or copy and paste this link in your browser:</p>
-            <p style="color: #6b7280; word-break: break-all;">${verificationLink}</p>
-            <p style="margin-top: 30px; color: #6b7280; font-size: 14px;">
-              This link will expire in 24 hours. If you didn't create this account, please ignore this email.
-            </p>
-            <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;">
-            <p style="color: #6b7280; font-size: 12px;">
-              © 2026 Zevio. All rights reserved.
-            </p>
-          </div>
-        `,
+        html: `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Welcome to Zevio Corporate - Verify Email</title></head><body style="margin:0;padding:0;font-family:'Inter','Segoe UI',Arial,sans-serif;background-color:#f2f4f7;"><table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f2f4f7;padding:32px 16px;"><tr><td align="center"><table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:16px;overflow:hidden;max-width:620px;box-shadow:0 4px 20px rgba(31,58,95,0.08);"><tr><td style="background:#1F3A5F;padding:32px 20px;text-align:center;">${_logoImg}<div style="margin-top:14px;color:#2FA4A9;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;font-family:'Inter','Segoe UI',Arial,sans-serif;">WELCOME TO ZEVIO CORPORATE</div></td></tr><tr><td style="padding:32px 30px;"><h2 style="margin:0 0 16px;color:#1F3A5F;font-size:20px;font-weight:600;font-family:'Inter','Segoe UI',Arial,sans-serif;">Hello ${name}!</h2><p style="margin:0 0 16px;color:#5F6B7A;font-size:15px;line-height:1.6;font-family:'Inter','Segoe UI',Arial,sans-serif;">Thank you for registering your company <strong style="color:#1F3A5F;">${company_name}</strong> with Zevio. Please verify your corporate email address by clicking the button below:</p><table width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0;"><tr><td align="center"><a href="${verificationLink}" style="display:inline-block;padding:13px 36px;background:#2FA4A9;color:#ffffff;text-decoration:none;border-radius:8px;font-size:15px;font-weight:600;font-family:'Inter','Segoe UI',Arial,sans-serif;">Verify Email Address</a></td></tr></table><p style="margin:0 0 16px;color:#5F6B7A;font-size:13px;line-height:1.6;font-family:'Inter','Segoe UI',Arial,sans-serif;">Or copy and paste this link:<br><a href="${verificationLink}" style="color:#2FA4A9;word-break:break-all;">${verificationLink}</a></p><p style="margin:0;color:#5F6B7A;font-size:13px;font-family:'Inter','Segoe UI',Arial,sans-serif;">This link will expire in 24 hours. If you didn't create this account, please ignore this email.</p></td></tr><tr><td>${_brandFooter()}</td></tr></table></td></tr></table></body></html>`,
       });
     } catch (emailError) {
       console.error("Error sending verification email:", emailError);
@@ -467,22 +430,7 @@ export const resendCorporateVerification = async (req, res) => {
     await sendEmail({
       to: email,
       subject: "Verify Your Corporate Account - Zevio",
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #2563eb;">Email Verification</h2>
-          <p>Hello ${userData.full_name},</p>
-          <p>Please verify your corporate email address for <strong>${userData.company_name}</strong>:</p>
-          <div style="text-align: center; margin: 30px 0;">
-            <a href="${verificationLink}" 
-               style="background-color: #2563eb; color: white; padding: 12px 30px; 
-                      text-decoration: none; border-radius: 5px; display: inline-block;">
-              Verify Email Address
-            </a>
-          </div>
-          <p>Or copy and paste this link:</p>
-          <p style="color: #6b7280; word-break: break-all;">${verificationLink}</p>
-        </div>
-      `,
+      html: `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Email Verification - Zevio</title></head><body style="margin:0;padding:0;font-family:'Inter','Segoe UI',Arial,sans-serif;background-color:#f2f4f7;"><table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f2f4f7;padding:32px 16px;"><tr><td align="center"><table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:16px;overflow:hidden;max-width:620px;box-shadow:0 4px 20px rgba(31,58,95,0.08);"><tr><td style="background:#1F3A5F;padding:32px 20px;text-align:center;">${_logoImg}<div style="margin-top:14px;color:#2FA4A9;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;font-family:'Inter','Segoe UI',Arial,sans-serif;">EMAIL VERIFICATION</div></td></tr><tr><td style="padding:32px 30px;"><h2 style="margin:0 0 16px;color:#1F3A5F;font-size:20px;font-weight:600;font-family:'Inter','Segoe UI',Arial,sans-serif;">Hello ${userData.full_name}!</h2><p style="margin:0 0 16px;color:#5F6B7A;font-size:15px;line-height:1.6;font-family:'Inter','Segoe UI',Arial,sans-serif;">Please verify your corporate email address for <strong style="color:#1F3A5F;">${userData.company_name}</strong>:</p><table width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0;"><tr><td align="center"><a href="${verificationLink}" style="display:inline-block;padding:13px 36px;background:#2FA4A9;color:#ffffff;text-decoration:none;border-radius:8px;font-size:15px;font-weight:600;font-family:'Inter','Segoe UI',Arial,sans-serif;">Verify Email Address</a></td></tr></table><p style="margin:0;color:#5F6B7A;font-size:13px;line-height:1.6;font-family:'Inter','Segoe UI',Arial,sans-serif;">Or copy and paste this link:<br><a href="${verificationLink}" style="color:#2FA4A9;word-break:break-all;">${verificationLink}</a></p></td></tr><tr><td>${_brandFooter()}</td></tr></table></td></tr></table></body></html>`,
     });
 
     res.json({

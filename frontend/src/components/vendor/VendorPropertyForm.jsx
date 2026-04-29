@@ -453,9 +453,13 @@ const VendorPropertyForm = ({
           primary_incharge_name: primary.name || "",
           primary_incharge_phone: primary.phone || "",
           primary_incharge_email: primary.email || "",
+          primary_incharge_whatsapp: primary.whatsapp || "",
+          primary_incharge_alt_contact: primary.alt_contact || "",
           secondary_incharge_name: secondary.name || "",
           secondary_incharge_phone: secondary.phone || "",
           secondary_incharge_email: secondary.email || "",
+          secondary_incharge_whatsapp: secondary.whatsapp || "",
+          secondary_incharge_alt_contact: secondary.alt_contact || "",
           // Map 5 new property feature fields
           pool_type: property.pool_type || "none",
           garden_type: property.garden_type || "none",
@@ -863,6 +867,7 @@ const VendorPropertyForm = ({
             if (
               submitForApproval &&
               (propertyStatus === "draft" ||
+                propertyStatus === "inactive" ||
                 propertyStatus === "rejected" ||
                 propertyStatus === "changes_requested")
             ) {
@@ -2376,7 +2381,10 @@ const VendorPropertyForm = ({
 
         {/* Form Actions */}
         <div className="flex flex-col sm:flex-row gap-4 mt-8 p-6 bg-card border border-border rounded-lg">
-          {propertyStatus === "draft" || !propertyId ? (
+          {!propertyId ||
+          ["draft", "inactive", "rejected", "changes_requested"].includes(
+            propertyStatus,
+          ) ? (
             <>
               <button
                 type="button"
@@ -2390,7 +2398,9 @@ const VendorPropertyForm = ({
                     Saving...
                   </span>
                 ) : (
-                  "Save as Draft"
+                  !propertyId || propertyStatus === "draft"
+                    ? "Save as Draft"
+                    : "Save Changes"
                 )}
               </button>
               <button
@@ -2405,7 +2415,9 @@ const VendorPropertyForm = ({
                     {termsLoading ? "Loading T&C..." : "Submitting..."}
                   </span>
                 ) : (
-                  "Submit for Approval"
+                  !propertyId || propertyStatus === "draft"
+                    ? "Submit for Approval"
+                    : "Resubmit for Approval"
                 )}
               </button>
             </>

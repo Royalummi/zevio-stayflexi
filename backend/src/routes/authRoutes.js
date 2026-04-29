@@ -40,7 +40,7 @@ const refreshTokenLimiter = rateLimit({
 const loginValidation = [
   body("email")
     .isEmail()
-    .normalizeEmail()
+    .normalizeEmail({ gmail_remove_dots: false })
     .withMessage("Valid email is required"),
   body("password").notEmpty().withMessage("Password is required"),
   // Role is auto-detected by the backend based on email lookup
@@ -51,7 +51,7 @@ const registerValidation = [
   body("full_name").trim().notEmpty().withMessage("Full name is required"),
   body("email")
     .isEmail()
-    .normalizeEmail()
+    .normalizeEmail({ gmail_remove_dots: false })
     .withMessage("Valid email is required"),
   body("password")
     .isLength({ min: 8 })
@@ -81,7 +81,7 @@ const changePasswordValidation = [
 const forgotPasswordValidation = [
   body("email")
     .isEmail()
-    .normalizeEmail()
+    .normalizeEmail({ gmail_remove_dots: false })
     .withMessage("Valid email is required"),
   validate,
 ];
@@ -97,7 +97,7 @@ const resetPasswordValidation = [
 const forceResetPasswordValidation = [
   body("email")
     .isEmail()
-    .normalizeEmail()
+    .normalizeEmail({ gmail_remove_dots: false })
     .withMessage("Valid email is required"),
   body("currentPassword")
     .notEmpty()

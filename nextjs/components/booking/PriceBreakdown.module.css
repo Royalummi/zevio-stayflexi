@@ -431,3 +431,154 @@
     padding: 3px 10px;
   }
 }
+
+/* ── Collapsible Taxes & Fees Row ── */
+.taxRow {
+  display: flex;
+  flex-direction: column;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+}
+
+@media (prefers-color-scheme: dark) {
+  .taxRow {
+    border-color: #374151;
+  }
+}
+
+.taxHeader {
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  gap: 12px;
+  background: #f9fafb;
+  transition: background 0.15s ease;
+}
+
+.taxHeader:hover {
+  background: #f3f4f6;
+}
+
+@media (prefers-color-scheme: dark) {
+  .taxHeader {
+    background: #1f2937;
+  }
+  .taxHeader:hover {
+    background: #374151;
+  }
+}
+
+.taxHeaderLeft {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  flex: 1;
+}
+
+.taxHeaderRight {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.taxHint {
+  font-size: 12px;
+  color: #2fa4a9;
+  font-weight: 500;
+}
+
+.chevron {
+  width: 16px;
+  height: 16px;
+  color: #6b7280;
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+}
+
+.taxBreakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border-top: 1px solid #e5e7eb;
+  background: #ffffff;
+}
+
+@media (prefers-color-scheme: dark) {
+  .taxBreakdown {
+    border-top-color: #374151;
+    background: #111827;
+  }
+}
+
+.taxItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px 8px 20px;
+  gap: 12px;
+}
+
+.taxItem + .taxItem {
+  border-top: 1px solid #f3f4f6;
+}
+
+@media (prefers-color-scheme: dark) {
+  .taxItem + .taxItem {
+    border-top-color: #1f2937;
+  }
+}
+
+.taxItemLabel {
+  font-size: 13px;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .taxItemLabel {
+    color: #9ca3af;
+  }
+}
+
+.taxNote {
+  font-size: 11px;
+  padding: 1px 6px;
+  background: #dbeafe;
+  color: #1d4ed8;
+  border-radius: 10px;
+  font-weight: 500;
+}
+
+@media (prefers-color-scheme: dark) {
+  .taxNote {
+    background: #1e3a8a;
+    color: #93c5fd;
+  }
+}
+
+.taxItemValue {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  white-space: nowrap;
+}
+
+@media (prefers-color-scheme: dark) {
+  .taxItemValue {
+    color: #d1d5db;
+  }
+}

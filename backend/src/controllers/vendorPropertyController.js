@@ -226,7 +226,11 @@ export const createProperty = asyncHandler(async (req, res) => {
       const amenityQuery = `INSERT INTO property_amenities (id, property_id, amenity_id) VALUES ?`;
       await db.query(amenityQuery, [amenityValues]);
     } catch (amenityErr) {
-      console.error("Non-fatal: failed to insert amenities for property", propertyId, amenityErr.message);
+      console.error(
+        "Non-fatal: failed to insert amenities for property",
+        propertyId,
+        amenityErr.message,
+      );
     }
   }
 
@@ -246,7 +250,11 @@ export const createProperty = asyncHandler(async (req, res) => {
         req.body.primary_incharge_alt_contact || null,
       ]);
     } catch (contactErr) {
-      console.error("Non-fatal: failed to insert primary contact for property", propertyId, contactErr.message);
+      console.error(
+        "Non-fatal: failed to insert primary contact for property",
+        propertyId,
+        contactErr.message,
+      );
     }
   }
 
@@ -266,7 +274,11 @@ export const createProperty = asyncHandler(async (req, res) => {
         req.body.secondary_incharge_alt_contact || null,
       ]);
     } catch (contactErr) {
-      console.error("Non-fatal: failed to insert secondary contact for property", propertyId, contactErr.message);
+      console.error(
+        "Non-fatal: failed to insert secondary contact for property",
+        propertyId,
+        contactErr.message,
+      );
     }
   }
 
@@ -410,7 +422,7 @@ export const submitProperty = asyncHandler(async (req, res) => {
 
   // Check if property exists and belongs to vendor
   const [properties] = await db.query(
-    `SELECT id, title, status, city_id, property_type_id 
+    `SELECT id, title, status, city_id, property_type_id, photos
      FROM properties 
      WHERE id = ? AND vendor_id = ? AND deleted_at IS NULL`,
     [id, vendorId],
@@ -422,8 +434,13 @@ export const submitProperty = asyncHandler(async (req, res) => {
 
   const property = properties[0];
 
-  // Only draft/rejected/changes_requested properties can be submitted
-  const submittableStatuses = ["draft", "rejected", "changes_requested"];
+  // Allow resubmission after admin rejection/inactive as well.
+  const submittableStatuses = [
+    "draft",
+    "rejected",
+    "changes_requested",
+    "inactive",
+  ];
   if (!submittableStatuses.includes(property.status)) {
     return sendError(
       res,
@@ -456,22 +473,26 @@ export const submitProperty = asyncHandler(async (req, res) => {
   }
 
   // Check minimum photo requirement (6 images required)
-  // Photos are stored as JSON array in properties.photos column
-  const [photoRows] = await db.query(
-    `SELECT photos FROM properties WHERE id = ?`,
+  // Support both storages: legacy properties.photos JSON and property_images table.
+  const [[{ photoCountTable }]] = await db.query(
+    `SELECT COUNT(*) AS photoCount FROM property_images WHERE property_id = ?`,
     [id],
   );
 
-  let photoCount = 0;
+  let photoCountJson = 0;
   try {
-    const photosData = photoRows[0]?.photos;
-    if (photosData && photosData !== "[]" && photosData !== "") {
-      const parsed = JSON.parse(photosData);
-      photoCount = Array.isArray(parsed) ? parsed.length : 0;
-    }
+    const parsed =
+      typeof property.photos === "string"
+        ? JSON.parse(property.photos)
+        : Array.isArray(property.photos)
+          ? property.photos
+          : [];
+    photoCountJson = Array.isArray(parsed) ? parsed.length : 0;
   } catch {
-    photoCount = 0;
+    photoCountJson = 0;
   }
+
+  const photoCount = Math.max(photoCountTable || 0, photoCountJson || 0);
 
   const MIN_PHOTOS = 6;
   if (photoCount < MIN_PHOTOS) {

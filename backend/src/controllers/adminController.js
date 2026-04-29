@@ -11,7 +11,7 @@ import { sanitizeRichText } from "../utils/sanitize.js";
 import { notifyVendor } from "../services/notificationEmailService.js";
 import cashfreeService from "../services/cashfree.service.js";
 import {
-  uploadMultipleToR2,
+  uploadToR2,
   deleteFromR2,
   isR2Configured,
 } from "../utils/r2Storage.js";
@@ -3590,21 +3590,35 @@ export const uploadPropertyImages = asyncHandler(async (req, res) => {
 
   // Upload images based on storage mode
   let newImageUrls;
+  const failedUploads = [];
 
   if (useR2) {
-    // Upload to Cloudflare R2
+    // Upload to Cloudflare R2 (fault-tolerant: continue even if some files fail)
     console.log("☁️  Uploading to Cloudflare R2...");
-    try {
-      newImageUrls = await uploadMultipleToR2(req.files, "properties");
-      console.log("✅ R2 upload successful:", newImageUrls.length, "images");
-    } catch (error) {
-      console.error("❌ R2 upload failed:", error.message);
+    newImageUrls = [];
+    for (const file of req.files) {
+      try {
+        const ext = file.originalname.split(".").pop();
+        const imageUrl = await uploadToR2(file.buffer, "properties", null, {
+          ext,
+        });
+        newImageUrls.push(imageUrl);
+      } catch (error) {
+        console.error("❌ R2 upload failed for file:", file.originalname, error);
+        failedUploads.push({
+          filename: file.originalname,
+          error: error?.message || "Upload failed",
+        });
+      }
+    }
+    if (newImageUrls.length === 0) {
       return sendError(
         res,
-        `Failed to upload images to R2: ${error.message}`,
+        failedUploads[0]?.error || "Failed to upload images to R2",
         500,
       );
     }
+    console.log("✅ R2 upload successful:", newImageUrls.length, "images");
   } else {
     // Local storage fallback
     console.log("💾 Using local disk storage...");
@@ -3659,7 +3673,22 @@ export const uploadPropertyImages = asyncHandler(async (req, res) => {
   }));
 
   console.log("✅ Returning all images:", allImages.length);
-  sendSuccess(res, allImages, "Images uploaded successfully", 200);
+  sendSuccess(
+    res,
+    {
+      images: allImages,
+      failed: failedUploads,
+      summary: {
+        total: req.files.length,
+        uploaded: newImageUrls.length,
+        failed: failedUploads.length,
+      },
+    },
+    failedUploads.length
+      ? `Uploaded ${newImageUrls.length} image(s). ${failedUploads.length} failed.`
+      : "Images uploaded successfully",
+    200,
+  );
 });
 
 /**

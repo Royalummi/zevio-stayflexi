@@ -17,6 +17,7 @@ import {
   FiArrowLeft,
 } from "react-icons/fi";
 import styles from "./booking-review.module.css";
+import { canBook } from "@/lib/bookingWhitelist";
 // SESSION 64: New components for coupon and price breakdown
 import CouponInput from "@/components/booking/CouponInput";
 import PriceBreakdown from "@/components/booking/PriceBreakdown";
@@ -725,41 +726,52 @@ function BookingReviewContent() {
                 </label>
               </div>
 
-              {/* Payment Button */}
-              <button
-                onClick={handlePayment}
-                disabled={loading}
-                className={styles.paymentButton}
-              >
-                {loading ? (
-                  <span className={styles.loadingWrapper}>
-                    <span className={styles.spinner}></span>
-                    Processing Payment...
-                  </span>
-                ) : (
-                  <>
-                    <FiCheck /> Confirm & Pay ₹
-                    {/* SESSION 64: Calculate total with Session 64 pricing logic */}
-                    {(() => {
-                      const subtotal =
-                        bookingData.baseAmount +
-                        bookingData.extraGuestCharges +
-                        bookingData.extraChildrenCharges;
-                      const bookingAmount = subtotal - couponDiscount;
-                      const gstRate = bookingAmount <= 7500 ? 5 : 18;
-                      const gstAmount = Math.round(
-                        (bookingAmount * gstRate) / 100,
-                      );
-                      const serviceCharge = Math.round(
-                        (bookingAmount * 5) / 100,
-                      );
-                      const totalAmount =
-                        bookingAmount + gstAmount + serviceCharge;
-                      return totalAmount.toLocaleString("en-IN");
-                    })()}
-                  </>
-                )}
-              </button>
+              {/* Payment Button / Coming Soon gate */}
+              {canBook(user?.email) ? (
+                <button
+                  onClick={handlePayment}
+                  disabled={loading}
+                  className={styles.paymentButton}
+                >
+                  {loading ? (
+                    <span className={styles.loadingWrapper}>
+                      <span className={styles.spinner}></span>
+                      Processing Payment...
+                    </span>
+                  ) : (
+                    <>
+                      <FiCheck /> Confirm & Pay ₹
+                      {/* SESSION 64: Calculate total with Session 64 pricing logic */}
+                      {(() => {
+                        const subtotal =
+                          bookingData.baseAmount +
+                          bookingData.extraGuestCharges +
+                          bookingData.extraChildrenCharges;
+                        const bookingAmount = subtotal - couponDiscount;
+                        const gstRate = bookingAmount <= 7500 ? 5 : 18;
+                        const gstAmount = Math.round(
+                          (bookingAmount * gstRate) / 100,
+                        );
+                        const serviceCharge = Math.round(
+                          (bookingAmount * 5) / 100,
+                        );
+                        const totalAmount =
+                          bookingAmount + gstAmount + serviceCharge;
+                        return totalAmount.toLocaleString("en-IN");
+                      })()}
+                    </>
+                  )}
+                </button>
+              ) : (
+                <div className={styles.comingSoonBanner}>
+                  <div className={styles.comingSoonIcon}>🚀</div>
+                  <div className={styles.comingSoonTitle}>Coming Soon</div>
+                  <div className={styles.comingSoonText}>
+                    Online booking is launching very soon. Stay tuned — we'll
+                    notify you the moment it's live!
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

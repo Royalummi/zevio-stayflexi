@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import {
@@ -18,6 +18,7 @@ import {
   XCircle,
   Home,
   CalendarOff,
+  Send,
   MoreHorizontal,
 } from "lucide-react";
 import {
@@ -79,7 +80,7 @@ import PropertyBlockoutCalendar from "../../components/vendor/PropertyBlockoutCa
 
 const VendorProperties = () => {
   const navigate = useNavigate();
-  const [properties, setProperties] = useState([]);
+  const [rawProperties, setRawProperties] = useState([]);
   const [loading, setLoading] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletingPropertyId, setDeletingPropertyId] = useState(null);
@@ -125,14 +126,14 @@ const VendorProperties = () => {
     fetchCities();
   }, []);
 
-  // Reset to page 1 when filters change
+  // Reset to page 1 when server-side filters change
   useEffect(() => {
     setPagination((prev) => ({ ...prev, page: 1 }));
-  }, [statusFilter, searchTerm, cityFilter]);
+  }, [statusFilter, cityFilter]);
 
   useEffect(() => {
     fetchProperties();
-  }, [pagination.page, statusFilter, searchTerm, sortBy, cityFilter]);
+  }, [pagination.page, statusFilter, cityFilter]);
 
   const fetchStats = async () => {
     try {
@@ -171,43 +172,7 @@ const VendorProperties = () => {
       const { properties: fetchedProperties, pagination: paginationData } =
         response.data.data;
 
-      // Client-side filtering for search and advanced filters
-      let filteredProperties = fetchedProperties;
-
-      // Search filter
-      if (searchTerm) {
-        filteredProperties = filteredProperties.filter(
-          (p) =>
-            p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            p.city_name?.toLowerCase().includes(searchTerm.toLowerCase()),
-        );
-      }
-
-      // City filter
-      if (cityFilter && cityFilter !== "all") {
-        filteredProperties = filteredProperties.filter(
-          (p) => p.city_name === cityFilter,
-        );
-      }
-
-      // Client-side sorting
-      if (sortBy === "newest") {
-        filteredProperties.sort(
-          (a, b) => new Date(b.created_at) - new Date(a.created_at),
-        );
-      } else if (sortBy === "oldest") {
-        filteredProperties.sort(
-          (a, b) => new Date(a.created_at) - new Date(b.created_at),
-        );
-      } else if (sortBy === "revenue") {
-        filteredProperties.sort(
-          (a, b) => parseFloat(b.total_revenue) - parseFloat(a.total_revenue),
-        );
-      } else if (sortBy === "bookings") {
-        filteredProperties.sort((a, b) => b.total_bookings - a.total_bookings);
-      }
-
-      setProperties(filteredProperties);
+      setRawProperties(fetchedProperties);
       setPagination(paginationData);
     } catch (error) {
       console.error("Error fetching properties:", error);
@@ -243,6 +208,31 @@ const VendorProperties = () => {
     setCityFilter("all");
   };
 
+  // Client-side filtering and sorting — no API call on search/sort changes
+  const properties = useMemo(() => {
+    let list = [...rawProperties];
+    if (searchTerm) {
+      const q = searchTerm.toLowerCase();
+      list = list.filter(
+        (p) =>
+          p.title.toLowerCase().includes(q) ||
+          p.city_name?.toLowerCase().includes(q),
+      );
+    }
+    if (sortBy === "newest") {
+      list.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    } else if (sortBy === "oldest") {
+      list.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+    } else if (sortBy === "revenue") {
+      list.sort(
+        (a, b) => parseFloat(b.total_revenue) - parseFloat(a.total_revenue),
+      );
+    } else if (sortBy === "bookings") {
+      list.sort((a, b) => b.total_bookings - a.total_bookings);
+    }
+    return list;
+  }, [rawProperties, searchTerm, sortBy]);
+
   const handleEditProperty = (propertyId) => {
     navigate(`/vendor/properties/${propertyId}/edit`);
   };
@@ -257,6 +247,25 @@ const VendorProperties = () => {
     } catch (error) {
       console.error("Error deleting property:", error);
       toast.error(error.response?.data?.message || "Failed to delete property");
+    }
+  };
+
+  const canQuickSubmit = (status) =>
+    ["draft", "inactive", "rejected", "changes_requested"].includes(
+      status,
+    );
+
+  const handleQuickSubmit = async (property) => {
+    try {
+      await api.patch(`/vendor/properties/${property.id}/submit`, {});
+      toast.success("Property submitted for approval");
+      fetchProperties();
+      fetchStats();
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message ||
+          "Could not submit property for approval",
+      );
     }
   };
 
@@ -285,16 +294,18 @@ const VendorProperties = () => {
   };
 
   const getStatusBadge = (status) => {
-    const variants = {
-      draft: "bg-gray-100 text-gray-800 border-gray-300",
-      pending: "bg-yellow-100 text-yellow-800 border-yellow-300",
-      approved: "bg-green-100 text-green-800 border-green-300",
-      rejected: "bg-red-100 text-red-800 border-red-300",
+    const config = {
+      draft: { cls: "bg-gray-100 text-gray-800 border-gray-300", label: "Draft" },
+      pending_approval: { cls: "bg-yellow-100 text-yellow-800 border-yellow-300", label: "Pending Approval" },
+      approved: { cls: "bg-green-100 text-green-800 border-green-300", label: "Approved" },
+      inactive: { cls: "bg-red-100 text-red-800 border-red-300", label: "Inactive" },
+      rejected: { cls: "bg-red-100 text-red-800 border-red-300", label: "Rejected" },
+      changes_requested: { cls: "bg-orange-100 text-orange-800 border-orange-300", label: "Changes Requested" },
     };
-
+    const { cls, label } = config[status] || config.draft;
     return (
-      <Badge variant="outline" className={variants[status] || variants.draft}>
-        {status.charAt(0).toUpperCase() + status.slice(1)}
+      <Badge variant="outline" className={cls}>
+        {label}
       </Badge>
     );
   };
@@ -618,6 +629,14 @@ const VendorProperties = () => {
                                   <CalendarOff className="h-4 w-4 mr-2" />
                                   Block Calendar Dates
                                 </DropdownMenuItem>
+                                {canQuickSubmit(property.status) && (
+                                  <DropdownMenuItem
+                                    onClick={() => handleQuickSubmit(property)}
+                                  >
+                                    <Send className="h-4 w-4 mr-2" />
+                                    Submit for Approval
+                                  </DropdownMenuItem>
+                                )}
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem
                                   className="text-red-600 focus:text-red-600"
@@ -729,6 +748,14 @@ const VendorProperties = () => {
                               <CalendarOff className="h-4 w-4 mr-2" />
                               Block Calendar Dates
                             </DropdownMenuItem>
+                            {canQuickSubmit(property.status) && (
+                              <DropdownMenuItem
+                                onClick={() => handleQuickSubmit(property)}
+                              >
+                                <Send className="h-4 w-4 mr-2" />
+                                Submit for Approval
+                              </DropdownMenuItem>
+                            )}
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                               className="text-red-600 focus:text-red-600"

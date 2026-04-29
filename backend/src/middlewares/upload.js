@@ -35,17 +35,11 @@ const storage = useR2
 
 // File filter - only allow images
 const fileFilter = (req, file, cb) => {
-  const allowedTypes = /jpeg|jpg|png|gif|webp/;
-  const extname = allowedTypes.test(
-    path.extname(file.originalname).toLowerCase(),
-  );
-  const mimetype = allowedTypes.test(file.mimetype);
-
-  if (mimetype && extname) {
+  // Accept any image/* MIME type — covers JPEG, PNG, WEBP, GIF, HEIC, AVIF, JFIF, etc.
+  if (file.mimetype.startsWith("image/")) {
     return cb(null, true);
-  } else {
-    cb(new Error("Only image files are allowed (jpeg, jpg, png, gif, webp)"));
   }
+  cb(new Error("Only image files are allowed"));
 };
 
 // Multer upload configuration for avatars

@@ -120,6 +120,33 @@ export const uploadMultipleToR2 = async (files, folder = "properties") => {
 };
 
 /**
+ * Ensure a folder-like prefix exists in R2 by creating a placeholder object.
+ * Object storage has no real directories, but this makes the prefix visible in dashboards.
+ * @param {string} folder - Folder/prefix to ensure (e.g., 'profiles')
+ * @returns {Promise<string>} - Created key
+ */
+export const ensureR2Folder = async (folder = "profiles") => {
+  const key = `${folder}/.keep`;
+
+  try {
+    const command = new PutObjectCommand({
+      Bucket: R2_BUCKET(),
+      Key: key,
+      Body: "",
+      ContentType: "text/plain",
+      CacheControl: "no-cache",
+    });
+
+    await getR2Client().send(command);
+    console.log(`✅ Ensured R2 folder prefix: ${folder}/`);
+    return key;
+  } catch (error) {
+    console.error("❌ Failed to ensure R2 folder:", error.message);
+    throw new Error(`Failed to ensure R2 folder '${folder}': ${error.message}`);
+  }
+};
+
+/**
  * Delete image from R2
  * @param {string} imageUrl - Full public URL or just the key
  * @returns {Promise<boolean>} - Success status
@@ -215,6 +242,7 @@ export const migrateLocalToR2 = async (localPath, folder = "properties") => {
 export default {
   uploadToR2,
   uploadMultipleToR2,
+  ensureR2Folder,
   deleteFromR2,
   deleteMultipleFromR2,
   isR2Configured,

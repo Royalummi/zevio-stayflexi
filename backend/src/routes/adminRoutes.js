@@ -195,7 +195,7 @@ router.post(
       .withMessage("Email is required")
       .isEmail()
       .withMessage("Valid email is required")
-      .normalizeEmail(),
+      .normalizeEmail({ gmail_remove_dots: false }),
     body("phone")
       .optional({ values: "falsy" })
       .trim()

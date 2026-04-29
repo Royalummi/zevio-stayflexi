@@ -14,6 +14,10 @@ import {
   CardContent,
 } from "../components/ui/card";
 
+const MAIN_APP_URL =
+  import.meta.env.VITE_MAIN_APP_URL ||
+  (import.meta.env.PROD ? "https://zevio.in" : "http://localhost:3000");
+
 export default function Register() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -52,7 +56,7 @@ export default function Register() {
       toast.success("Registration successful! Redirecting to dashboard...");
       // Redirect users to Next.js dashboard
       setTimeout(() => {
-        window.location.href = "http://localhost:3000/dashboard";
+        window.location.href = `${MAIN_APP_URL}/dashboard`;
       }, 1000);
     } catch (error) {
       toast.error(error.response?.data?.message || "Registration failed");
@@ -65,7 +69,7 @@ export default function Register() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 p-4">
       {/* Back to Home Link */}
       <a
-        href="http://localhost:3000/"
+        href={MAIN_APP_URL}
         className="absolute top-4 left-4 flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:text-primary transition-colors"
       >
         <svg
