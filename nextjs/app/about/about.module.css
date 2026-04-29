@@ -474,25 +474,25 @@
     transition: all 0.3s ease;
 }
 
-.ctaButton.primary {
+.primary {
     background: var(--brand-teal);
     color: var(--brand-white);
     box-shadow: 0 4px 16px rgba(47, 164, 169, 0.3);
 }
 
-.ctaButton.primary:hover {
+.primary:hover {
     background: var(--brand-teal-dark);
     transform: translateY(-2px);
     box-shadow: 0 8px 24px rgba(47, 164, 169, 0.4);
 }
 
-.ctaButton.secondary {
+.secondary {
     background: var(--brand-white);
     color: var(--brand-navy);
     border: 2px solid var(--brand-navy);
 }
 
-.ctaButton.secondary:hover {
+.secondary:hover {
     background: var(--brand-navy);
     color: var(--brand-white);
     transform: translateY(-2px);
@@ -544,11 +544,17 @@
 
     .ctaButtons {
         flex-direction: column;
+        align-items: center;
+        width: 100%;
     }
 
     .ctaButton {
-        width: 100%;
-        max-width: 300px;
+        width: min(100%, 340px);
+        max-width: 340px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto;
     }
 }
 
@@ -595,11 +601,25 @@
     }
 
     .timeline {
-        padding-left: 1.5rem;
+        padding-left: 2rem;
+    }
+
+    .timeline::before {
+        left: 8px;
     }
 
     .milestoneItem {
-        padding-left: 1.5rem;
+        padding-left: 2rem;
+        padding-bottom: 2.5rem;
+    }
+
+    .milestoneItem::before {
+        left: -1.95rem;
+        top: 0.35rem;
+        width: 14px;
+        height: 14px;
+        border-width: 2px;
+        box-shadow: 0 0 0 2px var(--brand-teal-light);
     }
 
     .statsBanner {
@@ -620,5 +640,9 @@
 
     .ctaDescription {
         font-size: 1rem;
+    }
+
+    .ctaButtons {
+        gap: 0.875rem;
     }
 }
