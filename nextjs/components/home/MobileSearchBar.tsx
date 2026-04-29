@@ -135,6 +135,18 @@ export default function MobileSearchBar({
     activateStep("guests");
   };
 
+  const handleSearchAction = () => {
+    if (!selectedCity || !startDate || !endDate || totalGuests <= 0) {
+      openFromSummary();
+      return;
+    }
+
+    if (isOpen) {
+      closeSheet();
+    }
+    onSearch();
+  };
+
   const closeSheet = () => {
     setIsVisible(false);
     window.setTimeout(() => setIsOpen(false), 220);
@@ -176,8 +188,7 @@ export default function MobileSearchBar({
       return;
     }
 
-    closeSheet();
-    onSearch();
+    handleSearchAction();
   };
 
   const stepButtonLabel = useMemo(() => {
@@ -267,7 +278,7 @@ export default function MobileSearchBar({
             </button>
           </div>
 
-          <button type="button" className={styles.searchButton} onClick={openFromSummary}>
+          <button type="button" className={styles.searchButton} onClick={handleSearchAction}>
             <FiSearch className={styles.searchButtonIcon} />
             <span>{propertyType === "villas" ? "Search villas" : "Search apartments"}</span>
           </button>
