@@ -28,6 +28,7 @@ export interface ServiceApartmentFiltersState {
   maxPrice: string;
   guests: string;
   children: string;
+  infants: string;
   bedrooms: string;
   checkin: string;
   checkout: string;
@@ -63,6 +64,7 @@ export default function ServiceApartmentFilters({
     filters.city !== "",
     filters.guests !== "",
     filters.children !== "",
+    filters.infants !== "",
     filters.bedrooms !== "",
     filters.minPrice !== "",
     filters.maxPrice !== "",
@@ -203,9 +205,11 @@ export default function ServiceApartmentFilters({
   const getCapacityText = () => {
     const guests = parseInt(filters.guests || "0");
     const children = parseInt(filters.children || "0");
+    const infants = parseInt(filters.infants || "0");
     const parts = [];
     if (guests > 0) parts.push(`${guests} Adults`);
     if (children > 0) parts.push(`${children} Children`);
+    if (infants > 0) parts.push(`${infants} ${infants === 1 ? "Infant" : "Infants"}`);
     return parts.length > 0 ? parts.join(", ") : "Any Capacity";
   };
 

@@ -88,10 +88,18 @@ function ServiceApartmentsContent() {
     const cityParam = searchParams.get("city");
     const areaParam = searchParams.get("area");
     const guestsParam = searchParams.get("guests");
+    const adultsParam = searchParams.get("adults");
     const childrenParam = searchParams.get("children");
+    const infantsParam = searchParams.get("infants");
     const checkinParam = searchParams.get("checkin");
     const checkoutParam = searchParams.get("checkout");
     const bedroomsParam = searchParams.get("bedrooms");
+
+    const guestsFromUrl = parseInt(guestsParam || "0", 10);
+    const childrenFromUrl = parseInt(childrenParam || "0", 10);
+    const adultsFromUrl = adultsParam
+      ? parseInt(adultsParam, 10)
+      : Math.max(0, guestsFromUrl - childrenFromUrl);
 
     const formattedCity = cityParam
       ? cityParam.charAt(0).toUpperCase() + cityParam.slice(1)
@@ -102,8 +110,9 @@ function ServiceApartmentsContent() {
       area: areaParam || "",
       minPrice: "",
       maxPrice: "",
-      guests: guestsParam || "",
+      guests: adultsFromUrl > 0 ? adultsFromUrl.toString() : "",
       children: childrenParam || "",
+      infants: infantsParam || "",
       bedrooms: bedroomsParam || "",
       checkin: checkinParam || "",
       checkout: checkoutParam || "",
@@ -262,6 +271,7 @@ function ServiceApartmentsContent() {
       maxPrice: "",
       guests: "",
       children: "",
+      infants: "",
       bedrooms: "",
       checkin: "",
       checkout: "",

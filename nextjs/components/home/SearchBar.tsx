@@ -528,9 +528,16 @@ export default function SearchBar() {
       }
     }
 
-    // Pass total guests (adults + children) — this matches the `guests` param
-    // both properties and service-apartments pages use to filter by max_guests.
-    // (totalGuests is already calculated above for validation)
+    // Keep adults/children/infants as explicit params for accurate UI badges
+    // on listing filter bars, and keep combined `guests` for capacity filtering.
+    if (adults > 0) {
+      params.append("adults", adults.toString());
+    }
+    if (children > 0) {
+      params.append("children", children.toString());
+    }
+
+    // Pass combined guests (adults + children) for backend max_guests filtering.
     if (totalGuests > 0) {
       params.append("guests", totalGuests.toString());
     }
