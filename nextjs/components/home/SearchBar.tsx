@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useRef, useEffect, useMemo } from "react";
-import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import {
   FiSearch,
@@ -17,6 +16,7 @@ import DateRangeSelector from "@/components/DateRangeSelector";
 import { City } from "@/types";
 import { formatDateForAPI } from "@/lib/utils";
 import { api } from "@/lib/axios";
+import MobileSearchBar from "./MobileSearchBar";
 import styles from "./SearchBar-modern.module.css";
 
 type PropertyType = "villas" | "apartments";
@@ -376,6 +376,12 @@ export default function SearchBar() {
     setSelectedIndex(-1);
   };
 
+  const beginDestinationEdit = () => {
+    if (selectedCity) {
+      setSearchInput("");
+    }
+  };
+
   const handleSearch = () => {
     // ============================================
     // CRITICAL FIX: Date & Guest Validation
@@ -552,6 +558,37 @@ export default function SearchBar() {
       }
     }
   };
+
+  if (isMobile) {
+    return (
+      <MobileSearchBar
+        propertyType={propertyType}
+        onPropertyTypeChange={setPropertyType}
+        selectedCity={selectedCity}
+        searchInput={searchInput}
+        onSearchInputChange={setSearchInput}
+        onSelectCity={selectCity}
+        onClearCity={clearCity}
+        onBeginDestinationEdit={beginDestinationEdit}
+        renderList={renderList}
+        checkin={checkin}
+        checkout={checkout}
+        onCheckinChange={setCheckin}
+        onCheckoutChange={setCheckout}
+        moveInDate={moveInDate}
+        moveOutDate={moveOutDate}
+        onMoveInDateChange={setMoveInDate}
+        onMoveOutDateChange={setMoveOutDate}
+        adults={adults}
+        childCount={children}
+        infants={infants}
+        onAdultsChange={setAdults}
+        onChildCountChange={setChildren}
+        onInfantsChange={setInfants}
+        onSearch={handleSearch}
+      />
+    );
+  }
 
   return (
     <>
@@ -976,112 +1013,6 @@ export default function SearchBar() {
         </div>
       </div>
 
-      {/* ── Mobile calendar portal ────────────────────────────────────────
-           Rendered as a direct child of document.body so it lives at the
-           ROOT stacking context — no ancestor stacking context can trap
-           it, and z-index:999999 wins over everything on the page.
-      ──────────────────────────────────────────────────────────────── */}
-      {showDatesDropdown &&
-        isMobile &&
-        createPortal(
-          <>
-            {/* Invisible backdrop — tap outside to close */}
-            <div
-              style={{
-                position: "fixed",
-                inset: 0,
-                zIndex: 999998,
-                background: "transparent",
-              }}
-              onClick={() => {
-                setShowDatesDropdown(false);
-                setActiveField(null);
-              }}
-            />
-
-            {/* Calendar panel */}
-            <div
-              ref={calendarPortalRef}
-              style={{
-                position: "fixed",
-                top: "110px",
-                left: "50%",
-                transform: "translateX(-50%)",
-                zIndex: 999999,
-                background: "#ffffff",
-                borderRadius: "16px",
-                boxShadow:
-                  "0 20px 60px rgba(0,0,0,0.2), 0 8px 24px rgba(31,58,95,0.12), 0 0 0 1px rgba(31,58,95,0.06)",
-                padding: "16px",
-                width: "min(95vw, 380px)",
-                maxHeight: "calc(100vh - 130px)",
-                overflowY: "auto",
-              }}
-            >
-              {propertyType === "villas" ? (
-                <DateRangeSelector
-                  checkIn={checkin}
-                  checkOut={checkout}
-                  onCheckInChange={(date) => {
-                    setCheckin(date);
-                  }}
-                  onCheckOutChange={(date) => {
-                    setCheckout(date);
-                    if (checkin && date) {
-                      setShowDatesDropdown(false);
-                      setActiveField(null);
-                    }
-                  }}
-                  minDate={new Date()}
-                  calendarOnly={true}
-                  isOpen={showDatesDropdown}
-                  onOpenChange={setShowDatesDropdown}
-                />
-              ) : (
-                <DateRangeSelector
-                  checkIn={moveInDate}
-                  checkOut={moveOutDate}
-                  onCheckInChange={(date) => {
-                    setMoveInDate(date);
-                  }}
-                  onCheckOutChange={(date) => {
-                    setMoveOutDate(date);
-                    if (moveInDate && date) {
-                      setShowDatesDropdown(false);
-                      setActiveField(null);
-                    }
-                  }}
-                  minDate={new Date()}
-                  calendarOnly={true}
-                  isOpen={showDatesDropdown}
-                  onOpenChange={setShowDatesDropdown}
-                />
-              )}
-              {((propertyType === "villas" && (checkin || checkout)) ||
-                (propertyType === "apartments" &&
-                  (moveInDate || moveOutDate))) && (
-                <div className={styles.calendarFooter}>
-                  <button
-                    type="button"
-                    className={styles.clearDatesBtn}
-                    onClick={() => {
-                      if (propertyType === "villas") {
-                        setCheckin(null);
-                        setCheckout(null);
-                      } else {
-                        setMoveInDate(null);
-                        setMoveOutDate(null);
-                      }
-                    }}
-                  >
-                    Clear dates
-                  </button>
-                </div>
-              )}
-            </div>
-          </>,
-          document.body,
-        )}
     </>
   );
 }
