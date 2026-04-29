@@ -88,6 +88,13 @@ const getAmenityIcon = (amenity: string) => {
   return <FiCheck />;
 };
 
+const formatJoinedInLabel = (joinedAt?: string) => {
+  if (!joinedAt) return "Joined recently";
+  const joinedDate = new Date(joinedAt);
+  if (Number.isNaN(joinedDate.getTime())) return "Joined recently";
+  return `Joined in ${joinedDate.getFullYear()}`;
+};
+
 function PropertyDetailContent() {
   const params = useParams();
   const router = useRouter();
@@ -298,6 +305,8 @@ function PropertyDetailContent() {
           // Phase 3 fields
           property_type: data.property_type,
           vendor_name: data.vendor_name,
+          vendor_avatar: data.vendor_avatar,
+          vendor_created_at: data.vendor_created_at,
           // Phase 4 fields
           min_stay_days: data.min_stay_days,
           max_stay_days: data.max_stay_days,
@@ -1542,13 +1551,23 @@ function PropertyDetailContent() {
                 <div className={luxuryStyles.hostCard}>
                   <div className={luxuryStyles.hostHeader}>
                     <div className={luxuryStyles.hostAvatar}>
-                      <FiUser />
+                      {property.vendor_avatar ? (
+                        <img
+                          src={getImageUrl(property.vendor_avatar)}
+                          alt={`${property.vendor_name || "Host"} avatar`}
+                          className={luxuryStyles.hostAvatarImage}
+                        />
+                      ) : (
+                        <FiUser />
+                      )}
                     </div>
                     <div className={luxuryStyles.hostInfo}>
                       <h3 className={luxuryStyles.hostName}>
                         {property.vendor_name || "Zevio Villas"}
                       </h3>
-                      <p className={luxuryStyles.hostJoined}>Joined in 2024</p>
+                      <p className={luxuryStyles.hostJoined}>
+                        {formatJoinedInLabel(property.vendor_created_at)}
+                      </p>
                     </div>
                     {property.rating >= 4.8 && (
                       <div className={luxuryStyles.superhostBadge}>
@@ -1560,19 +1579,20 @@ function PropertyDetailContent() {
                     <div className={luxuryStyles.hostStat}>
                       <FiStar className={luxuryStyles.statIconHost} />
                       <div>
-                        <strong>{property.reviews_count}</strong> Reviews
+                        <strong>{Number(property.rating || 0).toFixed(1)}</strong>{" "}
+                        Rating
+                      </div>
+                    </div>
+                    <div className={luxuryStyles.hostStat}>
+                      <FiUsers className={luxuryStyles.statIconHost} />
+                      <div>
+                        <strong>{property.reviews_count || 0}</strong> Reviews
                       </div>
                     </div>
                     <div className={luxuryStyles.hostStat}>
                       <FiShield className={luxuryStyles.statIconHost} />
                       <div>
                         <strong>Identity verified</strong>
-                      </div>
-                    </div>
-                    <div className={luxuryStyles.hostStat}>
-                      <FiCheck className={luxuryStyles.statIconHost} />
-                      <div>
-                        <strong>92%</strong> Response rate
                       </div>
                     </div>
                   </div>

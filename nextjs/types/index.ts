@@ -81,6 +81,8 @@ export interface Property {
   check_out_time?: string;
   property_type?: string;
   vendor_name?: string;
+  vendor_avatar?: string;
+  vendor_created_at?: string;
   // Phase 4: Booking flexibility and featured property fields
   min_stay_days?: number;
   max_stay_days?: number;

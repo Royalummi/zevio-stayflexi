@@ -300,6 +300,8 @@ export const getPropertyDetails = asyncHandler(async (req, res) => {
       p.status,
       c.id as city_id,
       v.name as vendor_name,
+      v.avatar as vendor_avatar,
+      v.created_at as vendor_created_at,
       p.min_stay_days,
       p.max_stay_days,
       p.same_day_booking_allowed,

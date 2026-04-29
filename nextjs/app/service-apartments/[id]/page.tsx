@@ -31,6 +31,8 @@ import {
   FiWind,
   FiDroplet,
   FiZap,
+  FiUser,
+  FiStar,
 } from "react-icons/fi";
 import { MdOutlineElevator } from "react-icons/md";
 import { useCorporateUser } from "@/hooks/useCorporateUser";
@@ -89,6 +91,13 @@ const getAmenityIcon = (amenity: string) => {
   )
     return <FiBriefcase />;
   return <FiCheck />;
+};
+
+const formatJoinedInLabel = (joinedAt?: string) => {
+  if (!joinedAt) return "Joined recently";
+  const joinedDate = new Date(joinedAt);
+  if (Number.isNaN(joinedDate.getTime())) return "Joined recently";
+  return `Joined in ${joinedDate.getFullYear()}`;
 };
 
 interface PriceBreakdown {
@@ -180,6 +189,8 @@ interface Property {
   // Phase 3: Property info
   property_type?: string;
   vendor_name?: string;
+  vendor_avatar?: string;
+  vendor_created_at?: string;
   // Phase 4: Booking flexibility
   same_day_booking_allowed?: boolean | number;
   max_booking_days?: number | null;
@@ -1381,6 +1392,63 @@ function ServiceApartmentDetailContent() {
               </div>
             </details>
           )}
+
+          {/* Host Information */}
+          <div className={styles.section}>
+            <div className={styles.sectionHeader}>
+              <h2>Hosted By</h2>
+              <div className={styles.sectionDivider}></div>
+            </div>
+            <div className={styles.hostCard}>
+              <div className={styles.hostHeader}>
+                <div className={styles.hostAvatar}>
+                  {property.vendor_avatar ? (
+                    <img
+                      src={getImageUrl(property.vendor_avatar)}
+                      alt={`${property.vendor_name || "Host"} avatar`}
+                      className={styles.hostAvatarImage}
+                    />
+                  ) : (
+                    <FiUser />
+                  )}
+                </div>
+                <div className={styles.hostInfo}>
+                  <h3 className={styles.hostName}>
+                    {property.vendor_name || "Zevio Host"}
+                  </h3>
+                  <p className={styles.hostJoined}>
+                    {formatJoinedInLabel(property.vendor_created_at)}
+                  </p>
+                </div>
+                {Number(property.rating || 0) >= 4.8 && (
+                  <div className={styles.superhostBadge}>
+                    <FiStar /> Superhost
+                  </div>
+                )}
+              </div>
+              <div className={styles.hostStats}>
+                <div className={styles.hostStat}>
+                  <FiStar className={styles.hostStatIcon} />
+                  <div>
+                    <strong>{Number(property.rating || 0).toFixed(1)}</strong>{" "}
+                    Rating
+                  </div>
+                </div>
+                <div className={styles.hostStat}>
+                  <FiUsers className={styles.hostStatIcon} />
+                  <div>
+                    <strong>{property.reviews_count || 0}</strong> Reviews
+                  </div>
+                </div>
+                <div className={styles.hostStat}>
+                  <FiShield className={styles.hostStatIcon} />
+                  <div>
+                    <strong>Identity verified</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Booking Card */}

@@ -800,6 +800,8 @@ export const getServiceApartmentDetails = async (req, res) => {
         p.status,
         c.id as city_id,
         v.name as vendor_name,
+        v.avatar as vendor_avatar,
+        v.created_at as vendor_created_at,
         ${getPricingSelectClause("pr")},
         ${getAmenitiesSelectClause("p", "pa", "a")},
         ${featuresService.getFeaturesSelectClause("p", "pf", "f")}

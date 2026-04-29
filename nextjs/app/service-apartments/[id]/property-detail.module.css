@@ -586,6 +586,99 @@
     margin: 0;
 }
 
+/* Host Section */
+.hostCard {
+    background: #f8fafc;
+    border: 1px solid #E6E9EE;
+    border-radius: 12px;
+    padding: 1.25rem;
+}
+
+.hostHeader {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.hostAvatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: #1F3A5F;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.hostAvatarImage {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.hostInfo {
+    flex: 1;
+    min-width: 0;
+}
+
+.hostName {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #1F3A5F;
+    margin: 0 0 0.25rem;
+}
+
+.hostJoined {
+    font-size: 0.875rem;
+    color: #5F6B7A;
+    margin: 0;
+}
+
+.superhostBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.65rem;
+    border-radius: 999px;
+    border: 1px solid #E6B800;
+    background: #FFF3CD;
+    color: #1F3A5F;
+    font-size: 0.75rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.hostStats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 0.6rem;
+}
+
+.hostStat {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.7rem 0.8rem;
+    border: 1px solid #E6E9EE;
+    border-radius: 10px;
+    background: #ffffff;
+    color: #1F3A5F;
+    font-size: 0.9rem;
+}
+
+.hostStatIcon {
+    color: #2FA4A9;
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
 /* Amenities */
 .amenitiesGrid {
     display: grid;
