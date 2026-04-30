@@ -385,33 +385,21 @@ export default function SearchBar() {
   const getDesktopDateValueText = () => {
     if (propertyType === "villas") {
       if (checkin && checkout) {
-        const nights = Math.max(
-          1,
-          Math.ceil(
-            (checkout.getTime() - checkin.getTime()) / (1000 * 60 * 60 * 24),
-          ),
-        );
-        return `${formatDateLabel(checkin)} - ${formatDateLabel(checkout)} · ${nights} ${nights === 1 ? "night" : "nights"}`;
+        return `${formatDateLabel(checkin)} - ${formatDateLabel(checkout)}`;
       }
       if (checkin && !checkout) {
-        return `Check-in ${formatDateLabel(checkin)}, select check-out`;
+        return `${formatDateLabel(checkin)} - Check-out`;
       }
-      return "Select check-in first";
+      return "Check-in - Check-out";
     }
 
     if (moveInDate && moveOutDate) {
-      const nights = Math.max(
-        1,
-        Math.ceil(
-          (moveOutDate.getTime() - moveInDate.getTime()) / (1000 * 60 * 60 * 24),
-        ),
-      );
-      return `${formatDateLabel(moveInDate)} - ${formatDateLabel(moveOutDate)} · ${nights} ${nights === 1 ? "day" : "days"}`;
+      return `${formatDateLabel(moveInDate)} - ${formatDateLabel(moveOutDate)}`;
     }
     if (moveInDate && !moveOutDate) {
-      return `Move-in ${formatDateLabel(moveInDate)}, select move-out`;
+      return `${formatDateLabel(moveInDate)} - Move-out`;
     }
-    return "Select move-in first";
+    return "Move-in - Move-out";
   };
 
   const getDateStepHint = () => {
