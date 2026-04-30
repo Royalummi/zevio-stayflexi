@@ -871,9 +871,6 @@ export default function SearchBar() {
                     onOpenChange={setShowDatesDropdown}
                   />
                 )}
-                <div className={styles.dateStepHint} aria-live="polite">
-                  {getDateStepHint()}
-                </div>
                 {((propertyType === "villas" && (checkin || checkout)) ||
                   (propertyType === "apartments" &&
                     (moveInDate || moveOutDate))) && (
