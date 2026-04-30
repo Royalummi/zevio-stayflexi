@@ -109,18 +109,24 @@ export default function ServiceApartmentFilters({
   const amenitiesRef = useRef<HTMLDivElement>(null);
   const sortRef = useRef<HTMLDivElement>(null);
 
+  const availableCities = useMemo(() => {
+    const citiesArray = Array.isArray(cities) ? cities : [];
+    return citiesArray.filter(
+      (city) => city.property_count === undefined || city.property_count > 0,
+    );
+  }, [cities]);
+
   // Filtered cities for search
   const filteredCities = useMemo(() => {
-    const citiesArray = Array.isArray(cities) ? cities : [];
     if (!citySearchInput.trim()) {
-      return citiesArray;
+      return availableCities;
     }
-    return citiesArray.filter(
+    return availableCities.filter(
       (city) =>
         city.name.toLowerCase().includes(citySearchInput.toLowerCase()) ||
         city.state.toLowerCase().includes(citySearchInput.toLowerCase()),
     );
-  }, [citySearchInput, cities]);
+  }, [citySearchInput, availableCities]);
 
   // Click outside handler
   useEffect(() => {
@@ -195,7 +201,7 @@ export default function ServiceApartmentFilters({
   // Display text helpers
   const getCityText = () => {
     if (!filters.city) return "All Cities";
-    const selectedCity = cities.find((c) => c.name === filters.city);
+    const selectedCity = availableCities.find((c) => c.name === filters.city);
     return selectedCity
       ? `${selectedCity.name}, ${selectedCity.state}`
       : filters.city;
@@ -362,7 +368,7 @@ export default function ServiceApartmentFilters({
             </button>
 
             {openDropdown === "city" && (
-              <div className={styles.dropdown}>
+              <div className={`${styles.dropdown} ${styles.cityDropdown}`}>
                 <div className={styles.searchBox}>
                   <input
                     type="text"

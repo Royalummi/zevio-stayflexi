@@ -196,6 +196,12 @@
     animation: dropdownFadeIn 0.2s ease;
 }
 
+.cityDropdown {
+    min-width: 360px;
+    width: max-content;
+    max-width: min(92vw, 520px);
+}
+
 /* Override DateRangeSelector positioning inside filters */
 .dropdown :global(.DateRangeSelector-module__EnZQlG__wrapper) {
     position: static;
@@ -262,6 +268,9 @@
     min-height: 44px;
     display: flex;
     align-items: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .dropdownItem:hover {
@@ -270,8 +279,8 @@
 }
 
 .dropdownItem.selected {
-    background: linear-gradient(135deg, #2FA4A9 0%, #1F3A5F 100%);
-    color: #FFFFFF;
+    background: #E6F7F8;
+    color: #1F3A5F;
     font-weight: 600;
 }
 
@@ -473,6 +482,8 @@
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+    max-height: 280px;
+    overflow-y: auto;
 }
 
 .amenityItem {
@@ -507,6 +518,9 @@
     font-size: 0.875rem;
     color: #1F3A5F;
     font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* DatePicker Styling for Inline Calendar */

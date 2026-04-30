@@ -127,18 +127,23 @@ export default function PropertyFilters({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const availableCities = useMemo(
+    () => cities.filter((city) => city.property_count === undefined || city.property_count > 0),
+    [cities],
+  );
+
   // Filter cities based on search
   const filteredCities = useMemo(() => {
     if (citySearchInput.trim() === "") {
-      return cities;
+      return availableCities;
     }
     const searchLower = citySearchInput.toLowerCase();
-    return cities.filter(
+    return availableCities.filter(
       (city) =>
         city.name.toLowerCase().includes(searchLower) ||
         city.state.toLowerCase().includes(searchLower),
     );
-  }, [citySearchInput, cities]);
+  }, [citySearchInput, availableCities]);
 
   const toggleDropdown = (dropdown: string) => {
     setOpenDropdown(openDropdown === dropdown ? null : dropdown);
@@ -187,7 +192,7 @@ export default function PropertyFilters({
   // Get display text helpers
   const getCityText = () => {
     if (!filters.city) return "All Cities";
-    const selectedCity = cities.find((c) => c.name === filters.city);
+    const selectedCity = availableCities.find((c) => c.name === filters.city);
     return selectedCity
       ? `${selectedCity.name}, ${selectedCity.state}`
       : filters.city;
@@ -354,7 +359,7 @@ export default function PropertyFilters({
             </button>
 
             {openDropdown === "city" && (
-              <div className={styles.dropdown}>
+              <div className={`${styles.dropdown} ${styles.cityDropdown}`}>
                 <div className={styles.searchBox}>
                   <input
                     type="text"

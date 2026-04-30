@@ -182,6 +182,12 @@
     animation: dropdownFadeIn 0.2s ease;
 }
 
+.cityDropdown {
+    min-width: 360px;
+    width: max-content;
+    max-width: min(92vw, 520px);
+}
+
 @keyframes dropdownFadeIn {
     from {
         opacity: 0;
@@ -230,6 +236,9 @@
     color: #5F6B7A;
     cursor: pointer;
     transition: all 0.15s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .dropdownItem:hover {
@@ -238,8 +247,8 @@
 }
 
 .dropdownItem.selected {
-    background: linear-gradient(135deg, #2FA4A9 0%, #1F3A5F 100%);
-    color: #FFFFFF;
+    background: #E6F7F8;
+    color: #1F3A5F;
     font-weight: 600;
 }
 
