@@ -298,15 +298,7 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
   );
 
   const quillFormats = useMemo(
-    () => [
-      "header",
-      "bold",
-      "italic",
-      "underline",
-      "list",
-      "bullet",
-      "link",
-    ],
+    () => ["header", "bold", "italic", "underline", "list", "bullet", "link"],
     [],
   );
 
@@ -843,9 +835,13 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
         payload = {
           ...restFormData,
           ...guidelines,
-          safety_information: sanitizeGuidelineHtml(guidelines.safety_information),
+          safety_information: sanitizeGuidelineHtml(
+            guidelines.safety_information,
+          ),
           local_area_info: sanitizeGuidelineHtml(guidelines.local_area_info),
-          emergency_contacts: sanitizeGuidelineHtml(guidelines.emergency_contacts),
+          emergency_contacts: sanitizeGuidelineHtml(
+            guidelines.emergency_contacts,
+          ),
           amenities: formData.amenities || [],
           primary_incharge_name: formData.primary_incharge_name || "",
           primary_incharge_phone: formData.primary_incharge_phone || "",
@@ -877,9 +873,13 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
         payload = {
           ...restFormData,
           ...guidelines,
-          safety_information: sanitizeGuidelineHtml(guidelines.safety_information),
+          safety_information: sanitizeGuidelineHtml(
+            guidelines.safety_information,
+          ),
           local_area_info: sanitizeGuidelineHtml(guidelines.local_area_info),
-          emergency_contacts: sanitizeGuidelineHtml(guidelines.emergency_contacts),
+          emergency_contacts: sanitizeGuidelineHtml(
+            guidelines.emergency_contacts,
+          ),
           // Include amenities for new properties
           amenities: formData.amenities || [],
           // Include incharge contacts
@@ -1698,7 +1698,7 @@ const AdminPropertyForm = ({ propertyId = null, onSuccess, onCancel }) => {
           <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
             <p className="text-sm text-blue-900 dark:text-blue-200">
               <strong className="font-semibold">Note:</strong> Infants (0-2
-              years) are always FREE and unlimited
+              years) are always FREE
             </p>
           </div>
 

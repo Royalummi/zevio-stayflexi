@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{SUBJECT}}</title>
+    <style>
+      /* ───── Base Reset ───── */
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: #f4f6f9;
+        color: #333;
+        -webkit-font-smoothing: antialiased;
+      }
+      .wrapper {
+        max-width: 600px;
+        margin: 0 auto;
+        background: #ffffff;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+      }
+
+      /* ───── Header ───── */
+      .header {
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        padding: 32px 24px;
+        text-align: center;
+      }
+      .header img {
+        height: 36px;
+        margin-bottom: 8px;
+      }
+      .header h1 {
+        margin: 0;
+        font-size: 22px;
+        color: #ffffff;
+        font-weight: 700;
+        letter-spacing: -0.3px;
+      }
+      .header p {
+        margin: 6px 0 0;
+        font-size: 14px;
+        color: rgba(255, 255, 255, 0.85);
+      }
+
+      /* ───── Body ───── */
+      .body {
+        padding: 32px 24px;
+      }
+      .body p {
+        margin: 0 0 16px;
+        line-height: 1.65;
+        font-size: 15px;
+      }
+      .body h2 {
+        margin: 0 0 12px;
+        font-size: 18px;
+        color: #1a1a2e;
+      }
+      .body h3 {
+        margin: 20px 0 8px;
+        font-size: 15px;
+        color: #4f46e5;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      /* ───── Info Card ───── */
+      .info-card {
+        background: #f8f9fc;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 16px 20px;
+        margin: 16px 0;
+      }
+      .info-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px solid #f0f0f0;
+        font-size: 14px;
+      }
+      .info-row:last-child {
+        border-bottom: none;
+      }
+      .info-label {
+        color: #6b7280;
+        font-weight: 500;
+      }
+      .info-value {
+        color: #1a1a2e;
+        font-weight: 600;
+        text-align: right;
+      }
+
+      /* ───── CTA Button ───── */
+      .cta-wrap {
+        text-align: center;
+        margin: 24px 0;
+      }
+      .cta {
+        display: inline-block;
+        padding: 12px 28px;
+        background: linear-gradient(135deg, #4f46e5, #7c3aed);
+        color: #ffffff !important;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 15px;
+        letter-spacing: 0.2px;
+      }
+
+      /* ───── Badge ───── */
+      .badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .badge-success {
+        background: #dcfce7;
+        color: #15803d;
+      }
+      .badge-warning {
+        background: #fef3c7;
+        color: #92400e;
+      }
+      .badge-danger {
+        background: #fee2e2;
+        color: #991b1b;
+      }
+      .badge-info {
+        background: #dbeafe;
+        color: #1e40af;
+      }
+
+      /* ───── Footer ───── */
+      .footer {
+        background: #f9fafb;
+        padding: 24px;
+        text-align: center;
+        border-top: 1px solid #e5e7eb;
+      }
+      .footer p {
+        margin: 0 0 4px;
+        font-size: 12px;
+        color: #9ca3af;
+      }
+      .footer a {
+        color: #4f46e5;
+        text-decoration: none;
+      }
+      .social-links {
+        margin: 12px 0 0;
+      }
+      .social-links a {
+        display: inline-block;
+        margin: 0 6px;
+        color: #6b7280;
+        font-size: 13px;
+        text-decoration: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div style="padding: 20px 12px">
+      <div class="wrapper">
+        <!-- Header -->
+        <div class="header">
+          <h1>ZEVIO</h1>
+          <p>{{HEADER_SUBTITLE}}</p>
+        </div>
+
+        <!-- Body -->
+        <div class="body">{{CONTENT}}</div>
+
+        <!-- Footer -->
+        <div class="footer">
+          <p>&copy; {{YEAR}} Zevio. All rights reserved.</p>
+          <p>
+            This is an automated message — please do not reply to this email.
+          </p>
+          <div class="social-links">
+            <a href="https://zevio.in">Website</a> &middot;
+            <a href="mailto:hello@zevio.in">Contact Us</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

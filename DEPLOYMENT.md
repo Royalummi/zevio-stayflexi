@@ -2,11 +2,11 @@
 
 ## Architecture
 
-| App                | Domain              | Method             | Port |
-| ------------------ | ------------------- | ------------------ | ---- |
-| User Next.js       | `zevio.cloud`       | PM2 → Nginx proxy  | 8000 |
-| Admin/Vendor React | `admin.zevio.cloud` | Nginx static files | —    |
-| Backend API        | `api.zevio.cloud`   | PM2 → Nginx proxy  | 5000 |
+| App                | Domain           | Method             | Port |
+| ------------------ | ---------------- | ------------------ | ---- |
+| User Next.js       | `zevio.in`       | PM2 -> Nginx proxy | 8000 |
+| Admin/Vendor React | `admin.zevio.in` | Nginx static files | —    |
+| Backend API        | `api.zevio.in`   | PM2 -> Nginx proxy | 5000 |
 
 **Auto-deploy:** Every push to `main` triggers GitHub Actions → SSH into VPS → pulls code → rebuilds → reloads.
 
@@ -110,25 +110,27 @@ mysql -u root -p
 Inside MySQL:
 
 ```sql
-CREATE DATABASE zevio;
+CREATE DATABASE zevio_production;
 -- If using root user, just set the password:
 ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'YOUR_MYSQL_PASSWORD';
 FLUSH PRIVILEGES;
 EXIT;
 ```
 
-Import your schema:
+Import your schema only for a fresh environment:
 
 ```bash
-mysql -u root -p zevio < /var/www/zevio/Database.sql
+mysql -u root -p zevio_production < /var/www/zevio/Database.sql
 ```
+
+For an existing live environment, do **not** import `Database.sql` blindly. Production may contain forward-only schema changes that are not present in the dump.
 
 ---
 
 ### Step 6 — Get SSL Certificates (HTTPS)
 
 ```bash
-certbot --nginx -d zevio.cloud -d www.zevio.cloud -d admin.zevio.cloud -d api.zevio.cloud
+certbot --nginx -d zevio.in -d www.zevio.in -d admin.zevio.in -d api.zevio.in
 ```
 
 Follow the prompts, enter your email when asked.  
@@ -150,9 +152,9 @@ pm2 logs nextjs --lines 20
 nginx -t
 
 # Test URLs (should return HTTP 200 or appropriate response)
-curl -I https://zevio.cloud
-curl -I https://admin.zevio.cloud
-curl https://api.zevio.cloud/health
+curl -I https://zevio.in
+curl -I https://admin.zevio.in
+curl https://api.zevio.in/health
 ```
 
 ---

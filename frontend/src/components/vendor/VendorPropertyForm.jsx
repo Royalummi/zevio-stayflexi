@@ -1567,7 +1567,7 @@ const VendorPropertyForm = ({
           <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
             <p className="text-sm text-blue-900 dark:text-blue-200">
               <strong className="font-semibold">Note:</strong> Infants (0-2
-              years) are always FREE and unlimited
+              years) are always FREE
             </p>
           </div>
 
@@ -2397,10 +2397,10 @@ const VendorPropertyForm = ({
                     <Loader2 className="h-4 w-4 animate-spin" />
                     Saving...
                   </span>
+                ) : !propertyId || propertyStatus === "draft" ? (
+                  "Save as Draft"
                 ) : (
-                  !propertyId || propertyStatus === "draft"
-                    ? "Save as Draft"
-                    : "Save Changes"
+                  "Save Changes"
                 )}
               </button>
               <button
@@ -2414,10 +2414,10 @@ const VendorPropertyForm = ({
                     <Loader2 className="h-4 w-4 animate-spin" />
                     {termsLoading ? "Loading T&C..." : "Submitting..."}
                   </span>
+                ) : !propertyId || propertyStatus === "draft" ? (
+                  "Submit for Approval"
                 ) : (
-                  !propertyId || propertyStatus === "draft"
-                    ? "Submit for Approval"
-                    : "Resubmit for Approval"
+                  "Resubmit for Approval"
                 )}
               </button>
             </>
