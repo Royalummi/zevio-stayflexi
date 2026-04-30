@@ -30,6 +30,7 @@ interface PropertyCardProps {
   initialWishlistState?: boolean;
   checkin?: string;
   checkout?: string;
+  detailBasePath?: string;
 }
 
 export default function PropertyCard({
@@ -38,6 +39,7 @@ export default function PropertyCard({
   initialWishlistState = false,
   checkin,
   checkout,
+  detailBasePath = "/properties",
 }: PropertyCardProps) {
   const router = useRouter();
   const { user } = useAuth();
@@ -183,7 +185,7 @@ export default function PropertyCard({
   const handleCardClick = () => {
     const dateParams =
       checkin && checkout ? `?checkIn=${checkin}&checkOut=${checkout}` : "";
-    router.push(`/properties/${property.id}${dateParams}`);
+    router.push(`${detailBasePath}/${property.id}${dateParams}`);
   };
 
   // Two-layer crossfade: old image stays visible, new one pixel-reveals on top

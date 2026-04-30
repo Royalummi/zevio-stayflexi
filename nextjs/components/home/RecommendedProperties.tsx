@@ -1,20 +1,13 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import Link from "next/link";
-import Image from "next/image";
-import {
-  FiStar,
-  FiMapPin,
-  FiUsers,
-  FiChevronDown,
-  FiChevronUp,
-} from "react-icons/fi";
+import { FiStar, FiChevronDown, FiChevronUp } from "react-icons/fi";
 import { api } from "@/lib/axios";
-import { getPropertyMainImage } from "@/lib/imageUtils";
+import PropertyCard from "@/components/properties/PropertyCard";
+import type { Property as SharedProperty } from "@/types";
 import styles from "./RecommendedProperties.module.css";
 
-interface Property {
+interface RecommendedProperty {
   id: string;
   title: string;
   description: string;
@@ -29,6 +22,8 @@ interface Property {
   reviews_count: number;
   photos: string[];
   images: Array<{ id: string; image_url: string }>;
+  original_price?: number | string | null;
+  corporate_discount_percentage?: number;
 }
 
 interface RecommendedPropertiesProps {
@@ -44,10 +39,47 @@ export default function RecommendedProperties({
   description = "Hand-picked properties curated by our experts for exceptional stays",
   className = "",
 }: RecommendedPropertiesProps) {
-  const [properties, setProperties] = useState<Property[]>([]);
+  const [properties, setProperties] = useState<RecommendedProperty[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAll, setShowAll] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const detailBasePath =
+    propertyType === "service_apartment"
+      ? "/service-apartments"
+      : "/properties";
+
+  const toPropertyCardShape = (
+    property: RecommendedProperty,
+  ): SharedProperty => ({
+    id: property.id,
+    name: property.title,
+    title: property.title,
+    description: property.description || "",
+    address: "",
+    area: property.area,
+    city: property.city,
+    state: property.state,
+    pincode: "",
+    maps_location: property.maps_location,
+    price_per_night: property.price_per_night,
+    original_price: property.original_price,
+    max_guests: property.max_guests,
+    bedrooms: property.bedrooms,
+    bathrooms: 0,
+    amenities: [],
+    photos:
+      Array.isArray(property.photos) && property.photos.length > 0
+        ? property.photos
+        : Array.isArray(property.images)
+          ? property.images.map((image) => image.image_url)
+          : [],
+    rating: property.rating || 0,
+    reviews_count: property.reviews_count || 0,
+    status: "active",
+    corporate_discount_percentage: property.corporate_discount_percentage,
+    property_type: propertyType,
+  });
 
   const fetchRecommendedProperties = useCallback(async () => {
     try {
@@ -105,72 +137,12 @@ export default function RecommendedProperties({
         {/* Properties Grid */}
         <div className={styles.grid}>
           {visibleProperties.map((property) => (
-            <Link
-              key={property.id}
-              href={`/properties/${property.id}`}
-              className={styles.card}
-            >
-              {/* Image */}
-              <div className={styles.imageWrapper}>
-                <Image
-                  src={getPropertyMainImage(property)}
-                  alt={property.title}
-                  fill
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                  className={styles.image}
-                  unoptimized
-                />
-                {/* Recommended Badge */}
-                <div className={styles.recommendedBadge}>
-                  <FiStar /> Recommended
-                </div>
-              </div>
-
-              {/* Content */}
-              <div className={styles.cardContent}>
-                {/* Location */}
-                <div
-                  className={styles.location}
-                >
-                  <FiMapPin />
-                  <span>
-                    {property.area
-                      ? `${property.area}, ${property.city}`
-                      : `${property.city}, ${property.state}`}
-                  </span>
-                </div>
-
-                {/* Title */}
-                <h3 className={styles.propertyTitle}>{property.title}</h3>
-
-                {/* Stats */}
-                <div className={styles.stats}>
-                  <span className={styles.stat}>{property.bedrooms} BHK</span>
-                  <span className={styles.stat}>
-                    <FiUsers /> {property.max_guests} Guests
-                  </span>
-                </div>
-
-                {/* Footer */}
-                <div className={styles.footer}>
-                  <div className={styles.price}>
-                    <span className={styles.amount}>
-                      ₹{(property.price_per_night || 0).toLocaleString("en-IN")}
-                    </span>
-                    <span className={styles.period}>/ night</span>
-                  </div>
-                  {property.rating && property.rating > 0 && (
-                    <div className={styles.rating}>
-                      <FiStar />
-                      <span>{Number(property.rating).toFixed(1)}</span>
-                      <span className={styles.reviewsCount}>
-                        ({property.reviews_count || 0})
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </Link>
+            <div key={property.id} className={styles.cardSlot}>
+              <PropertyCard
+                property={toPropertyCardShape(property)}
+                detailBasePath={detailBasePath}
+              />
+            </div>
           ))}
         </div>
 
