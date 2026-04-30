@@ -602,22 +602,13 @@
     .filterGrid {
         display: flex;
         flex-wrap: nowrap;
-        overflow-x: auto;
         gap: 0.75rem;
         padding-bottom: 0.5rem;
-        /* Hide scrollbar but keep functionality */
-        scrollbar-width: none;
-        -ms-overflow-style: none;
-    }
-
-    .filterGrid::-webkit-scrollbar {
-        display: none;
     }
 
     .filterItem {
-        flex-shrink: 0;
-        min-width: 170px;
-        max-width: 220px;
+        flex: 1 1 0;
+        min-width: 0;
     }
 }
 
@@ -628,21 +619,13 @@
     .filterGrid {
         display: flex;
         flex-wrap: nowrap;
-        overflow-x: auto;
         gap: 0.75rem;
         padding-bottom: 0.5rem;
-        scrollbar-width: none;
-        -ms-overflow-style: none;
-    }
-
-    .filterGrid::-webkit-scrollbar {
-        display: none;
     }
 
     .filterItem {
-        flex-shrink: 0;
-        min-width: 170px;
-        max-width: 240px;
+        flex: 1 1 0;
+        min-width: 0;
     }
 }
 
