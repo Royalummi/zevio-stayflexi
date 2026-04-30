@@ -531,10 +531,8 @@
 
 /* Guests Dropdown - Compact Design */
 .guestsDropdownModern {
-    max-width: 340px;
-    right: 0;
-    left: auto;
-    min-width: 300px;
+    left: 0;
+    right: auto;
     padding: 18px;
     backdrop-filter: blur(20px);
 }
