@@ -131,6 +131,12 @@ export default function DateRangeSelector({
     onOpenChange?.(newState);
   };
 
+  const getSelectionHintText = () => {
+    if (!checkIn) return "Step 1 of 2: Select check-in date";
+    if (!checkOut) return "Step 2 of 2: Select check-out date";
+    return `${formatDisplayDate(checkIn)} -> ${formatDisplayDate(checkOut)}`;
+  };
+
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -337,6 +343,11 @@ export default function DateRangeSelector({
               </button>
             </div>
 
+            {/* Selection hint */}
+            <div className={styles.selectionHint} aria-live="polite">
+              {getSelectionHintText()}
+            </div>
+
             {/* Days of week header */}
             <div className={styles.daysOfWeek}>
               {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
@@ -434,12 +445,8 @@ export default function DateRangeSelector({
         </div>
 
         {/* Selection hint */}
-        <div className={styles.selectionHint}>
-          {!checkIn
-            ? "Select check-in date"
-            : !checkOut
-              ? "Select check-out date"
-              : `${formatDisplayDate(checkIn)} → ${formatDisplayDate(checkOut)}`}
+        <div className={styles.selectionHint} aria-live="polite">
+          {getSelectionHintText()}
         </div>
         {/* Range error message */}
         {rangeError && <div className={styles.rangeError}>{rangeError}</div>}
@@ -549,12 +556,8 @@ export default function DateRangeSelector({
           </div>
 
           {/* Selection hint */}
-          <div className={styles.selectionHint}>
-            {!checkIn
-              ? "Select check-in date"
-              : !checkOut
-                ? "Select check-out date"
-                : `${formatDisplayDate(checkIn)} → ${formatDisplayDate(checkOut)}`}
+          <div className={styles.selectionHint} aria-live="polite">
+            {getSelectionHintText()}
           </div>
 
           {/* Days of week header */}

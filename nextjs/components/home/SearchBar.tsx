@@ -376,6 +376,56 @@ export default function SearchBar() {
     setSelectedIndex(-1);
   };
 
+  const formatDateLabel = (date: Date) =>
+    date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+    });
+
+  const getDesktopDateValueText = () => {
+    if (propertyType === "villas") {
+      if (checkin && checkout) {
+        const nights = Math.max(
+          1,
+          Math.ceil(
+            (checkout.getTime() - checkin.getTime()) / (1000 * 60 * 60 * 24),
+          ),
+        );
+        return `${formatDateLabel(checkin)} - ${formatDateLabel(checkout)} · ${nights} ${nights === 1 ? "night" : "nights"}`;
+      }
+      if (checkin && !checkout) {
+        return `Check-in ${formatDateLabel(checkin)}, select check-out`;
+      }
+      return "Select check-in first";
+    }
+
+    if (moveInDate && moveOutDate) {
+      const nights = Math.max(
+        1,
+        Math.ceil(
+          (moveOutDate.getTime() - moveInDate.getTime()) / (1000 * 60 * 60 * 24),
+        ),
+      );
+      return `${formatDateLabel(moveInDate)} - ${formatDateLabel(moveOutDate)} · ${nights} ${nights === 1 ? "day" : "days"}`;
+    }
+    if (moveInDate && !moveOutDate) {
+      return `Move-in ${formatDateLabel(moveInDate)}, select move-out`;
+    }
+    return "Select move-in first";
+  };
+
+  const getDateStepHint = () => {
+    if (propertyType === "villas") {
+      if (!checkin) return "Step 1 of 2: Select check-in date";
+      if (!checkout) return "Step 2 of 2: Select check-out date";
+      return "Dates selected. You can continue to guests and search.";
+    }
+
+    if (!moveInDate) return "Step 1 of 2: Select move-in date";
+    if (!moveOutDate) return "Step 2 of 2: Select move-out date";
+    return "Dates selected. You can continue to guests and search.";
+  };
+
   const beginDestinationEdit = () => {
     if (selectedCity) {
       setSearchInput("");
@@ -784,24 +834,7 @@ export default function SearchBar() {
                   {propertyType === "villas" ? "Dates" : "Duration"}
                 </label>
                 <div className={styles.fieldValueModern}>
-                  {propertyType === "villas"
-                    ? checkin && checkout
-                      ? `${checkin.toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                        })} - ${checkout.toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                        })}`
-                      : "Select dates"
-                    : moveInDate && moveOutDate
-                      ? `${moveInDate.toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                        })} - ${moveOutDate.toLocaleDateString("en-US", {
-                          month: "short",
-                        })}`
-                      : "Select dates"}
+                  {getDesktopDateValueText()}
                 </div>
               </div>
             </div>
@@ -850,6 +883,9 @@ export default function SearchBar() {
                     onOpenChange={setShowDatesDropdown}
                   />
                 )}
+                <div className={styles.dateStepHint} aria-live="polite">
+                  {getDateStepHint()}
+                </div>
                 {((propertyType === "villas" && (checkin || checkout)) ||
                   (propertyType === "apartments" &&
                     (moveInDate || moveOutDate))) && (
