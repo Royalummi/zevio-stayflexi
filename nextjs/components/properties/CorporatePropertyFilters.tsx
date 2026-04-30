@@ -8,7 +8,6 @@ import {
   FiChevronDown,
   FiMapPin,
   FiUsers,
-  FiDollarSign,
   FiHome,
   FiMinus,
   FiPlus,
@@ -170,7 +169,7 @@ export default function CorporatePropertyFilters({
     const parts = [];
     if (filters.adults > 0) parts.push(`${filters.adults} Adults`);
     if (filters.children > 0) parts.push(`${filters.children} Children`);
-    return parts.length > 0 ? parts.join(", ") : "Any Capacity";
+    return parts.length > 0 ? parts.join(", ") : "Capacity";
   };
 
   // Get display text for price
@@ -182,12 +181,12 @@ export default function CorporatePropertyFilters({
       return `₹${parseInt(filters.minPrice).toLocaleString()}+`;
     if (filters.maxPrice)
       return `Up to ₹${parseInt(filters.maxPrice).toLocaleString()}`;
-    return "Any Price";
+    return "Price";
   };
 
   // Get display text for bedrooms
   const getBedroomsText = () => {
-    if (!filters.bedrooms) return "Any Bedrooms";
+    if (!filters.bedrooms) return "Bedrooms";
     return `${filters.bedrooms}+ Bedrooms`;
   };
 
@@ -389,7 +388,7 @@ export default function CorporatePropertyFilters({
               className={`${styles.filterButton} ${filters.minPrice || filters.maxPrice ? styles.active : ""}`}
               onClick={() => toggleDropdown("price")}
             >
-              <FiDollarSign className={styles.icon} />
+              <span className={styles.icon}>₹</span>
               <span className={styles.label}>{getPriceText()}</span>
               <FiChevronDown className={styles.chevron} />
             </button>
@@ -460,7 +459,7 @@ export default function CorporatePropertyFilters({
                   className={`${styles.dropdownItem} ${!filters.bedrooms ? styles.selected : ""}`}
                   onClick={() => handleBedroomSelect("")}
                 >
-                  Any Bedrooms
+                  Bedrooms
                 </button>
                 {["1", "2", "3", "4", "5"].map((num) => (
                   <button

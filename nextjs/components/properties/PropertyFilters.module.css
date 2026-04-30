@@ -622,6 +622,31 @@
 }
 
 /* ==========================================================================
+   DESKTOP (≥1025px): Horizontal single-line filter chips
+   ========================================================================== */
+@media (min-width: 1025px) {
+    .filterGrid {
+        display: flex;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        gap: 0.75rem;
+        padding-bottom: 0.5rem;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+
+    .filterGrid::-webkit-scrollbar {
+        display: none;
+    }
+
+    .filterItem {
+        flex-shrink: 0;
+        min-width: 170px;
+        max-width: 240px;
+    }
+}
+
+/* ==========================================================================
    MOBILE (≤640px): Bottom-sheet dropdowns, 2-column chip grid
    ========================================================================== */
 @media (max-width: 640px) {
@@ -669,6 +694,7 @@
     }
 
     .filterGrid {
+        display: grid;
         grid-template-columns: repeat(2, 1fr);
         gap: 0.5rem;
         padding-top: 0.75rem;

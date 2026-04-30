@@ -13,7 +13,6 @@ import {
   FiCoffee,
   FiTruck,
   FiCalendar,
-  FiDollarSign,
   FiMinus,
   FiPlus,
 } from "react-icons/fi";
@@ -210,7 +209,7 @@ export default function ServiceApartmentFilters({
     if (guests > 0) parts.push(`${guests} Adults`);
     if (children > 0) parts.push(`${children} Children`);
     if (infants > 0) parts.push(`${infants} ${infants === 1 ? "Infant" : "Infants"}`);
-    return parts.length > 0 ? parts.join(", ") : "Any Capacity";
+    return parts.length > 0 ? parts.join(", ") : "Capacity";
   };
 
   const getPriceText = () => {
@@ -221,11 +220,11 @@ export default function ServiceApartmentFilters({
       return `₹${parseInt(filters.minPrice).toLocaleString()}+`;
     if (filters.maxPrice)
       return `Up to ₹${parseInt(filters.maxPrice).toLocaleString()}`;
-    return "Any Price";
+    return "Price";
   };
 
   const getBedroomsText = () => {
-    if (!filters.bedrooms) return "Any Bedrooms";
+    if (!filters.bedrooms) return "Bedrooms";
     return `${filters.bedrooms}+ Bedrooms`;
   };
 
@@ -531,7 +530,7 @@ export default function ServiceApartmentFilters({
               className={`${styles.filterButton} ${filters.minPrice || filters.maxPrice ? styles.active : ""}`}
               onClick={() => toggleDropdown("price")}
             >
-              <FiDollarSign className={styles.icon} />
+              <span className={styles.icon}>₹</span>
               <span className={styles.label}>{getPriceText()}</span>
               <FiChevronDown className={styles.chevron} />
             </button>
@@ -610,7 +609,7 @@ export default function ServiceApartmentFilters({
                   className={`${styles.dropdownItem} ${!filters.bedrooms ? styles.selected : ""}`}
                   onClick={() => handleBedroomSelect("")}
                 >
-                  Any Bedrooms
+                  Bedrooms
                 </button>
                 <button
                   className={`${styles.dropdownItem} ${filters.bedrooms === "1" ? styles.selected : ""}`}
