@@ -9,15 +9,11 @@ import {
   FiChevronDown,
   FiMapPin,
   FiUsers,
-  FiBriefcase,
-  FiCoffee,
-  FiTruck,
   FiCalendar,
   FiMinus,
   FiPlus,
 } from "react-icons/fi";
 import { IoBed } from "react-icons/io5";
-import { MdOutlineElevator, MdFitnessCenter } from "react-icons/md";
 import styles from "./ServiceApartmentFilters.module.css";
 
 export interface ServiceApartmentFiltersState {
@@ -32,20 +28,16 @@ export interface ServiceApartmentFiltersState {
   checkin: string;
   checkout: string;
   sortBy: string;
-  hasWorkspace: boolean;
-  hasHousekeeping: boolean;
-  hasElevator: boolean;
-  hasGym: boolean;
-  hasParking: boolean;
-  allowCorporateBooking: boolean;
+  selectedAmenities: string[];
 }
 
 interface ServiceApartmentFiltersProps {
   cities: City[];
+  availableAmenities: string[];
   filters: ServiceApartmentFiltersState;
   onFilterChange: (
     key: keyof ServiceApartmentFiltersState,
-    value: string | boolean,
+    value: string | string[],
   ) => void;
   onClearFilters: () => void;
   resultsCount: number;
@@ -53,6 +45,7 @@ interface ServiceApartmentFiltersProps {
 
 export default function ServiceApartmentFilters({
   cities,
+  availableAmenities,
   filters,
   onFilterChange,
   onClearFilters,
@@ -67,12 +60,7 @@ export default function ServiceApartmentFilters({
     filters.bedrooms !== "",
     filters.minPrice !== "",
     filters.maxPrice !== "",
-    filters.hasWorkspace,
-    filters.hasHousekeeping,
-    filters.hasElevator,
-    filters.hasGym,
-    filters.hasParking,
-    filters.allowCorporateBooking,
+    filters.selectedAmenities.length > 0,
   ].filter(Boolean).length;
 
   // Auto-expand filters if any are active on initial load
@@ -190,6 +178,20 @@ export default function ServiceApartmentFilters({
     setOpenDropdown(null);
   };
 
+  const handleAmenityToggle = (amenity: string, checked: boolean) => {
+    const nextAmenities = checked
+      ? [...filters.selectedAmenities, amenity]
+      : filters.selectedAmenities.filter((item) => item !== amenity);
+    onFilterChange("selectedAmenities", nextAmenities);
+  };
+
+  const formatAmenityLabel = (amenity: string) =>
+    amenity
+      .replace(/[_-]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .replace(/\b\w/g, (char) => char.toUpperCase());
+
   const handleDateChange = (dates: [Date | null, Date | null]) => {
     const [start, end] = dates;
     setCheckinDate(start);
@@ -258,14 +260,7 @@ export default function ServiceApartmentFilters({
   };
 
   const getAmenitiesText = () => {
-    const count = [
-      filters.hasWorkspace,
-      filters.hasHousekeeping,
-      filters.hasElevator,
-      filters.hasGym,
-      filters.hasParking,
-      filters.allowCorporateBooking,
-    ].filter(Boolean).length;
+    const count = filters.selectedAmenities.length;
     if (count === 0) return "All Amenities";
     return `${count} Amenity${count > 1 ? "ies" : ""}`;
   };
@@ -657,7 +652,7 @@ export default function ServiceApartmentFilters({
               className={`${styles.filterButton} ${getAmenitiesText() !== "All Amenities" ? styles.active : ""}`}
               onClick={() => toggleDropdown("amenities")}
             >
-              <FiBriefcase className={styles.icon} />
+              <FiFilter className={styles.icon} />
               <span className={styles.label}>{getAmenitiesText()}</span>
               <FiChevronDown className={styles.chevron} />
             </button>
@@ -665,75 +660,18 @@ export default function ServiceApartmentFilters({
             {openDropdown === "amenities" && (
               <div className={styles.dropdown}>
                 <div className={styles.amenitiesSection}>
-                  <label className={styles.amenityItem}>
-                    <input
-                      type="checkbox"
-                      checked={filters.hasWorkspace}
-                      onChange={(e) =>
-                        onFilterChange("hasWorkspace", e.target.checked)
-                      }
-                    />
-                    <FiBriefcase className={styles.amenityIcon} />
-                    <span>Workspace</span>
-                  </label>
-                  <label className={styles.amenityItem}>
-                    <input
-                      type="checkbox"
-                      checked={filters.hasHousekeeping}
-                      onChange={(e) =>
-                        onFilterChange("hasHousekeeping", e.target.checked)
-                      }
-                    />
-                    <FiCoffee className={styles.amenityIcon} />
-                    <span>Housekeeping</span>
-                  </label>
-                  <label className={styles.amenityItem}>
-                    <input
-                      type="checkbox"
-                      checked={filters.hasElevator}
-                      onChange={(e) =>
-                        onFilterChange("hasElevator", e.target.checked)
-                      }
-                    />
-                    <MdOutlineElevator className={styles.amenityIcon} />
-                    <span>Elevator</span>
-                  </label>
-                  <label className={styles.amenityItem}>
-                    <input
-                      type="checkbox"
-                      checked={filters.hasGym}
-                      onChange={(e) =>
-                        onFilterChange("hasGym", e.target.checked)
-                      }
-                    />
-                    <MdFitnessCenter className={styles.amenityIcon} />
-                    <span>Gym</span>
-                  </label>
-                  <label className={styles.amenityItem}>
-                    <input
-                      type="checkbox"
-                      checked={filters.hasParking}
-                      onChange={(e) =>
-                        onFilterChange("hasParking", e.target.checked)
-                      }
-                    />
-                    <FiTruck className={styles.amenityIcon} />
-                    <span>Parking</span>
-                  </label>
-                  <label className={styles.amenityItem}>
-                    <input
-                      type="checkbox"
-                      checked={filters.allowCorporateBooking}
-                      onChange={(e) =>
-                        onFilterChange(
-                          "allowCorporateBooking",
-                          e.target.checked,
-                        )
-                      }
-                    />
-                    <FiBriefcase className={styles.amenityIcon} />
-                    <span>Corporate Booking</span>
-                  </label>
+                  {availableAmenities.map((amenity) => (
+                    <label className={styles.amenityItem} key={amenity}>
+                      <input
+                        type="checkbox"
+                        checked={filters.selectedAmenities.includes(amenity)}
+                        onChange={(e) =>
+                          handleAmenityToggle(amenity, e.target.checked)
+                        }
+                      />
+                      <span>{formatAmenityLabel(amenity)}</span>
+                    </label>
+                  ))}
                 </div>
               </div>
             )}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { api } from "@/lib/axios";
 import type { City } from "@/types";
@@ -80,7 +80,6 @@ function ServiceApartmentsContent() {
   const [filteredProperties, setFilteredProperties] = useState<
     ServiceApartment[]
   >([]);
-  const [cities, setCities] = useState<City[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Initialize filters from URL search params
@@ -117,27 +116,50 @@ function ServiceApartmentsContent() {
       checkin: checkinParam || "",
       checkout: checkoutParam || "",
       sortBy: "recommended",
-      hasWorkspace: false,
-      hasHousekeeping: false,
-      hasElevator: false,
-      hasGym: false,
-      hasParking: false,
-      allowCorporateBooking: false,
+      selectedAmenities: [],
     };
   });
 
-  useEffect(() => {
-    const fetchCities = async () => {
-      try {
-        const response = await api.get("/public/cities");
-        setCities(response.data.data.cities || []);
-      } catch (error) {
-        console.error("Error fetching cities:", error);
-      }
-    };
+  const getPropertyAmenities = (property: ServiceApartment): string[] => {
+    const fromAmenities = Array.isArray(property.amenities)
+      ? property.amenities
+      : [];
+    const fromFeatures = Array.isArray(property.features) ? property.features : [];
+    return [...fromAmenities, ...fromFeatures]
+      .map((item) => item.toLowerCase().trim())
+      .filter(Boolean);
+  };
 
-    fetchCities();
-  }, []);
+  const availableCities = useMemo(() => {
+    const cityMap = new Map<string, City>();
+    properties.forEach((property) => {
+      const cityName = property.city?.trim();
+      if (!cityName) return;
+      const key = cityName.toLowerCase();
+      if (!cityMap.has(key)) {
+        cityMap.set(key, {
+          id: key,
+          name: cityName,
+          state: property.state || "",
+          status: "active",
+          property_count: 1,
+        });
+      }
+    });
+    return Array.from(cityMap.values()).sort((a, b) =>
+      a.name.localeCompare(b.name),
+    );
+  }, [properties]);
+
+  const availableAmenities = useMemo(() => {
+    const amenitiesSet = new Set<string>();
+    properties.forEach((property) => {
+      getPropertyAmenities(property).forEach((amenity) =>
+        amenitiesSet.add(amenity),
+      );
+    });
+    return Array.from(amenitiesSet).sort((a, b) => a.localeCompare(b));
+  }, [properties]);
 
   useEffect(() => {
     const fetchProperties = async () => {
@@ -221,24 +243,14 @@ function ServiceApartmentsContent() {
       );
     }
 
-    // Filter by amenities
-    if (filters.hasWorkspace) {
-      filtered = filtered.filter((p) => p.has_workspace);
-    }
-    if (filters.hasHousekeeping) {
-      filtered = filtered.filter((p) => p.has_housekeeping);
-    }
-    if (filters.hasElevator) {
-      filtered = filtered.filter((p) => p.has_elevator);
-    }
-    if (filters.hasGym) {
-      filtered = filtered.filter((p) => p.has_gym);
-    }
-    if (filters.hasParking) {
-      filtered = filtered.filter((p) => p.has_parking);
-    }
-    if (filters.allowCorporateBooking) {
-      filtered = filtered.filter((p) => p.allow_corporate_booking);
+    // Filter by selected amenities
+    if (filters.selectedAmenities.length > 0) {
+      filtered = filtered.filter((property) => {
+        const amenities = getPropertyAmenities(property);
+        return filters.selectedAmenities.every((requiredAmenity) =>
+          amenities.some((item) => item.includes(requiredAmenity)),
+        );
+      });
     }
 
     // Sorting
@@ -255,7 +267,7 @@ function ServiceApartmentsContent() {
 
   const handleFilterChange = (
     key: keyof ServiceApartmentFiltersState,
-    value: string | boolean,
+    value: string | string[],
   ) => {
     setFilters((prev: ServiceApartmentFiltersState) => ({
       ...prev,
@@ -276,12 +288,7 @@ function ServiceApartmentsContent() {
       checkin: "",
       checkout: "",
       sortBy: "recommended",
-      hasWorkspace: false,
-      hasHousekeeping: false,
-      hasElevator: false,
-      hasGym: false,
-      hasParking: false,
-      allowCorporateBooking: false,
+      selectedAmenities: [],
     });
   };
 
@@ -298,7 +305,8 @@ function ServiceApartmentsContent() {
     <div className={styles.serviceApartmentsPage}>
       {/* Filters Component */}
       <ServiceApartmentFilters
-        cities={cities}
+        cities={availableCities}
+        availableAmenities={availableAmenities}
         filters={filters}
         onFilterChange={handleFilterChange}
         onClearFilters={clearFilters}

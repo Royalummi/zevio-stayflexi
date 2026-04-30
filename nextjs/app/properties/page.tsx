@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { api } from "@/lib/axios";
 import type { City, Property } from "@/types";
@@ -18,7 +18,6 @@ function PropertiesContent() {
   const toast = useToast();
   const [properties, setProperties] = useState<Property[]>([]);
   const [filteredProperties, setFilteredProperties] = useState<Property[]>([]);
-  const [cities, setCities] = useState<City[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Initialize filters from URL search params (from SearchBar)
@@ -62,30 +61,61 @@ function PropertiesContent() {
       checkin: checkinParam || "",
       checkout: checkoutParam || "",
       sortBy: "recommended",
-      hasPool: false,
-      hasParking: false,
-      hasGym: false,
-      hasWifi: false,
-      hasPetFriendly: false,
-      hasGarden: false,
+      selectedAmenities: [],
     };
   });
 
-  useEffect(() => {
-    const fetchCities = async () => {
+  const parseAmenities = (amenities: string[] | string): string[] => {
+    if (Array.isArray(amenities)) {
+      return amenities.map((item) => item.toLowerCase().trim()).filter(Boolean);
+    }
+    if (typeof amenities === "string") {
       try {
-        const response = await api.get("/public/cities");
-        console.log("Cities API response:", response.data);
-        console.log("Cities data:", response.data.data);
-        console.log("Cities array:", response.data.data.cities);
-        setCities(response.data.data.cities || []);
-      } catch (error) {
-        console.error("Error fetching cities:", error);
+        const parsed = JSON.parse(amenities);
+        if (Array.isArray(parsed)) {
+          return parsed.map((item: string) => item.toLowerCase().trim()).filter(Boolean);
+        }
+      } catch {
+        // fall back to comma-separated text format
       }
-    };
+      return amenities
+        .split(",")
+        .map((item) => item.toLowerCase().trim())
+        .filter(Boolean);
+    }
+    return [];
+  };
 
-    fetchCities();
-  }, []);
+  const availableCities = useMemo(() => {
+    const cityMap = new Map<string, City>();
+    properties.forEach((property) => {
+      const cityName = property.city?.trim();
+      if (!cityName) return;
+      const key = cityName.toLowerCase();
+      if (!cityMap.has(key)) {
+        cityMap.set(key, {
+          id: key,
+          name: cityName,
+          state: property.state || "",
+          status: "active",
+          property_count: 1,
+        });
+      }
+    });
+    return Array.from(cityMap.values()).sort((a, b) =>
+      a.name.localeCompare(b.name),
+    );
+  }, [properties]);
+
+  const availableAmenities = useMemo(() => {
+    const amenitiesSet = new Set<string>();
+    properties.forEach((property) => {
+      parseAmenities(property.amenities).forEach((amenity) =>
+        amenitiesSet.add(amenity),
+      );
+    });
+    return Array.from(amenitiesSet).sort((a, b) => a.localeCompare(b));
+  }, [properties]);
 
   useEffect(() => {
     const fetchProperties = async () => {
@@ -160,34 +190,11 @@ function PropertiesContent() {
     }
 
     // Filter by amenities
-    const getPropertyAmenities = (amenities: string[] | string): string[] => {
-      if (Array.isArray(amenities))
-        return amenities.map((a) => a.toLowerCase());
-      if (typeof amenities === "string") {
-        try {
-          const parsed = JSON.parse(amenities);
-          if (Array.isArray(parsed))
-            return parsed.map((a: string) => a.toLowerCase());
-        } catch {}
-        return amenities.split(",").map((a) => a.trim().toLowerCase());
-      }
-      return [];
-    };
-    const requiredAmenities: string[] = [
-      [filters.hasPool, "swimming pool"],
-      [filters.hasParking, "parking"],
-      [filters.hasGym, "gym"],
-      [filters.hasWifi, "wifi"],
-      [filters.hasPetFriendly, "pet friendly"],
-      [filters.hasGarden, "garden"],
-    ]
-      .filter(([active]) => active)
-      .map(([, name]) => name as string);
-    if (requiredAmenities.length > 0) {
+    if (filters.selectedAmenities.length > 0) {
       filtered = filtered.filter((p) => {
-        const propAmenities = getPropertyAmenities(p.amenities);
-        return requiredAmenities.every((a) =>
-          propAmenities.some((pa) => pa.includes(a)),
+        const propAmenities = parseAmenities(p.amenities);
+        return filters.selectedAmenities.every((requiredAmenity) =>
+          propAmenities.some((item) => item.includes(requiredAmenity)),
         );
       });
     }
@@ -206,7 +213,7 @@ function PropertiesContent() {
 
   const handleFilterChange = (
     key: keyof PropertyFiltersState,
-    value: string | boolean,
+    value: string | string[],
   ) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
   };
@@ -224,12 +231,7 @@ function PropertiesContent() {
       checkin: "",
       checkout: "",
       sortBy: "recommended",
-      hasPool: false,
-      hasParking: false,
-      hasGym: false,
-      hasWifi: false,
-      hasPetFriendly: false,
-      hasGarden: false,
+      selectedAmenities: [],
     });
   };
 
@@ -237,7 +239,8 @@ function PropertiesContent() {
     <div className={styles.propertiesPage}>
       {/* Filters Component */}
       <PropertyFilters
-        cities={cities}
+        cities={availableCities}
+        availableAmenities={availableAmenities}
         filters={filters}
         onFilterChange={handleFilterChange}
         onClearFilters={clearFilters}
