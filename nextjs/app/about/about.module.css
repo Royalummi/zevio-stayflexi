@@ -128,6 +128,17 @@
     align-items: start;
     padding: 1.25rem 0;
     border-bottom: 1px solid var(--brand-border-light);
+    border-radius: 12px;
+}
+
+.valueGridItem:nth-child(4n + 1),
+.valueGridItem:nth-child(4n + 4) {
+    background: rgba(255, 255, 255, 0.58);
+}
+
+.valueGridItem:nth-child(4n + 2),
+.valueGridItem:nth-child(4n + 3) {
+    background: rgba(47, 164, 169, 0.05);
 }
 
 .valueGridItem:last-child,
@@ -550,7 +561,7 @@
     .valueGridItem {
         grid-template-columns: 52px 1fr;
         gap: 0.875rem;
-        padding: 1rem 0;
+        padding: 1rem 0.75rem;
     }
 
     .statsBannerContainer {
@@ -617,6 +628,7 @@
 
     .valueGridItem {
         grid-template-columns: 50px 1fr;
+        padding: 0.9rem 0.65rem;
     }
 
     .valueTitle,

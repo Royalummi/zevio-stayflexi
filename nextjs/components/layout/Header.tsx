@@ -2,7 +2,14 @@
 
 import Link from "next/link";
 import { useMemo, useState, useEffect } from "react";
-import { FiMenu, FiX, FiUser, FiLogOut, FiHome } from "react-icons/fi";
+import {
+  FiMenu,
+  FiX,
+  FiUser,
+  FiLogOut,
+  FiHome,
+  FiChevronDown,
+} from "react-icons/fi";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAuthModals } from "@/contexts/AuthModalContext";
 import styles from "./Header.module.css";
@@ -186,6 +193,12 @@ export default function Header() {
                 ) : (
                   <FiUser size={20} />
                 )}
+                <FiChevronDown
+                  size={12}
+                  className={`${styles.mobileProfileChevron} ${
+                    showMobileProfileMenu ? styles.open : ""
+                  }`}
+                />
               </button>
 
               {showMobileProfileMenu && (
@@ -203,6 +216,12 @@ export default function Header() {
                       </div>
                     ) : isAuthenticated && user ? (
                       <>
+                        <div className={styles.mobileProfileHeader}>
+                          <p className={styles.mobileProfileName}>
+                            Hi, {user.full_name?.split(" ")[0] || "Guest"}
+                          </p>
+                          <p className={styles.mobileProfileEmail}>{user.email}</p>
+                        </div>
                         <Link
                           href="/dashboard"
                           onClick={() => setShowMobileProfileMenu(false)}

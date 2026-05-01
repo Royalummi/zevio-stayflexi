@@ -330,6 +330,8 @@
     display: flex;
     align-items: center;
     gap: 0.35rem;
+    margin-left: auto;
+    flex-shrink: 0;
 }
 
 .mobileProfileWrap {
@@ -340,6 +342,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: 0.2rem;
     min-width: 40px;
     height: 40px;
     border-radius: 999px;
@@ -348,6 +351,15 @@
     color: var(--brand-navy);
     cursor: pointer;
     transition: var(--transition-base);
+}
+
+.mobileProfileChevron {
+    color: var(--brand-text-dark);
+    transition: transform 0.2s ease;
+}
+
+.mobileProfileChevron.open {
+    transform: rotate(180deg);
 }
 
 .mobileProfileButton:hover {
@@ -374,7 +386,8 @@
     position: absolute;
     top: calc(100% + 0.5rem);
     right: 0;
-    min-width: 170px;
+    min-width: 210px;
+    max-width: min(88vw, 280px);
     background: var(--brand-white);
     border: 1px solid var(--brand-border);
     border-radius: var(--radius-lg);
@@ -384,6 +397,27 @@
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
+}
+
+.mobileProfileHeader {
+    padding: 0.5rem 0.65rem 0.65rem;
+    border-bottom: 1px solid var(--brand-border);
+    margin-bottom: 0.15rem;
+}
+
+.mobileProfileName {
+    margin: 0;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--brand-navy);
+}
+
+.mobileProfileEmail {
+    margin: 0.2rem 0 0;
+    font-size: 0.75rem;
+    color: var(--brand-text-dark);
+    line-height: 1.2;
+    word-break: break-word;
 }
 
 .mobileProfileMenuLink {
