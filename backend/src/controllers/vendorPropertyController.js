@@ -4,6 +4,8 @@ import { generateUUID } from "../utils/helpers.js";
 import { sanitizeRichText } from "../utils/sanitize.js";
 import { notifyAdmin } from "../services/notificationEmailService.js";
 
+const MAX_PROPERTY_IMAGES = 40;
+
 /**
  * @route   POST /api/vendor/properties
  * @desc    Create new property (vendor)
@@ -75,6 +77,27 @@ export const createProperty = asyncHandler(async (req, res) => {
   // Minimal validation - allow draft saving
   if (!title) {
     return sendError(res, "Property title is required", 400);
+  }
+
+  // Enforce max image limit when photos are provided in payload.
+  let normalizedPhotos = [];
+  try {
+    if (Array.isArray(photos)) {
+      normalizedPhotos = photos;
+    } else if (typeof photos === "string" && photos.trim()) {
+      const parsedPhotos = JSON.parse(photos);
+      normalizedPhotos = Array.isArray(parsedPhotos) ? parsedPhotos : [];
+    }
+  } catch {
+    return sendError(res, "Invalid photos format", 400);
+  }
+
+  if (normalizedPhotos.length > MAX_PROPERTY_IMAGES) {
+    return sendError(
+      res,
+      `Image limit exceeded. Maximum ${MAX_PROPERTY_IMAGES} images allowed per property.`,
+      400,
+    );
   }
 
   // XSS Protection - Sanitize rich text fields

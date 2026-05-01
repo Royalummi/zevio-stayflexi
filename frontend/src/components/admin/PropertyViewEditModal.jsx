@@ -148,8 +148,6 @@ const PropertyViewEditModal = ({
     bathrooms: "",
     check_in_time: "",
     check_out_time: "",
-    is_featured: false,
-    recommended_priority: 0,
   });
 
   // Validation errors
@@ -186,8 +184,6 @@ const PropertyViewEditModal = ({
         bathrooms: data.bathrooms || "",
         check_in_time: data.check_in_time || "1:00 PM",
         check_out_time: data.check_out_time || "11:00 AM",
-        is_featured: data.is_featured || false,
-        recommended_priority: data.recommended_priority || 0,
       });
 
       setHasUnsavedChanges(false);
@@ -277,9 +273,9 @@ const PropertyViewEditModal = ({
         bathrooms: parseInt(formData.bathrooms),
         check_in_time: formData.check_in_time,
         check_out_time: formData.check_out_time,
-        // ── Recommendation (pass through; recommended_priority editable) ──
+        // ── Recommendation (managed separately; keep current value) ──
         is_recommended: d.is_recommended || false,
-        recommended_priority: parseInt(formData.recommended_priority),
+        recommended_priority: d.recommended_priority || 0,
         // ── Pass-through: location ──
         address: d.address ?? null,
         area: d.area ?? null,
@@ -353,14 +349,6 @@ const PropertyViewEditModal = ({
 
       // Save main property fields
       await api.put(`/admin/properties/${property.id}`, updatePayload);
-
-      // Save is_featured separately via dedicated endpoint (if changed)
-      const featuredChanged = formData.is_featured !== (d.is_featured || false);
-      if (featuredChanged) {
-        await api.patch(`/admin/properties/${property.id}/featured`, {
-          is_featured: formData.is_featured,
-        });
-      }
 
       toast.success("Property updated successfully! 🎉");
       setHasUnsavedChanges(false);
@@ -441,8 +429,6 @@ const PropertyViewEditModal = ({
           bathrooms: fullPropertyData.bathrooms || "",
           check_in_time: fullPropertyData.check_in_time || "1:00 PM",
           check_out_time: fullPropertyData.check_out_time || "11:00 AM",
-          is_featured: fullPropertyData.is_featured || false,
-          recommended_priority: fullPropertyData.recommended_priority || 0,
         });
       }
       setHasUnsavedChanges(false);
@@ -917,44 +903,6 @@ const PropertyViewEditModal = ({
                         </div>
                       </div>
 
-                      {/* Checkboxes */}
-                      <div className="space-y-3">
-                        <label className="flex items-center gap-2">
-                          <input
-                            type="checkbox"
-                            checked={formData.is_featured}
-                            onChange={(e) =>
-                              handleInputChange("is_featured", e.target.checked)
-                            }
-                            className="rounded"
-                          />
-                          <Home className="h-4 w-4" />
-                          <span>Featured Property</span>
-                        </label>
-                      </div>
-
-                      {/* Recommended Priority */}
-                      <div>
-                        <Label htmlFor="priority">
-                          Recommended Priority (0-100)
-                        </Label>
-                        <Input
-                          id="priority"
-                          type="number"
-                          min="0"
-                          max="100"
-                          value={formData.recommended_priority}
-                          onChange={(e) =>
-                            handleInputChange(
-                              "recommended_priority",
-                              e.target.value,
-                            )
-                          }
-                        />
-                        <p className="text-xs text-gray-500 mt-1">
-                          Higher values appear first
-                        </p>
-                      </div>
                     </div>
                   ) : (
                     <div className="space-y-3">

@@ -17,6 +17,8 @@ import {
 } from "../utils/r2Storage.js";
 import { generateSecurePassword, hashPassword } from "../utils/password.js";
 
+const MAX_PROPERTY_IMAGES = 40;
+
 // SESSION 41: Replaced Razorpay with Cashfree for refunds
 // SESSION 56.7: Added Cloudflare R2 for image storage
 
@@ -2519,6 +2521,27 @@ export const createProperty = asyncHandler(async (req, res) => {
     );
   }
 
+  // Enforce max image limit when photos are provided in payload.
+  let normalizedPhotos = [];
+  try {
+    if (Array.isArray(photos)) {
+      normalizedPhotos = photos;
+    } else if (typeof photos === "string" && photos.trim()) {
+      const parsedPhotos = JSON.parse(photos);
+      normalizedPhotos = Array.isArray(parsedPhotos) ? parsedPhotos : [];
+    }
+  } catch {
+    return sendError(res, "Invalid photos format", 400);
+  }
+
+  if (normalizedPhotos.length > MAX_PROPERTY_IMAGES) {
+    return sendError(
+      res,
+      `Image limit exceeded. Maximum ${MAX_PROPERTY_IMAGES} images allowed per property.`,
+      400,
+    );
+  }
+
   // XSS Protection - Sanitize rich text fields
   const safeSafetyInfo = safety_information
     ? sanitizeRichText(safety_information)
@@ -3594,6 +3617,17 @@ export const uploadPropertyImages = asyncHandler(async (req, res) => {
   } catch (error) {
     console.error("Error parsing existing photos:", error);
     existingPhotos = [];
+  }
+
+  // Enforce total image cap across existing + new uploads.
+  const totalAfterUpload = existingPhotos.length + req.files.length;
+  if (totalAfterUpload > MAX_PROPERTY_IMAGES) {
+    const remainingSlots = Math.max(0, MAX_PROPERTY_IMAGES - existingPhotos.length);
+    return sendError(
+      res,
+      `Image limit exceeded. Maximum ${MAX_PROPERTY_IMAGES} images allowed per property. You can upload ${remainingSlots} more image(s).`,
+      400,
+    );
   }
 
   // Note: We APPEND new images to existing ones (don't delete old images)

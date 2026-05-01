@@ -7,6 +7,8 @@ import fs from "fs";
 import { fileURLToPath } from "url";
 import { uploadToR2, isR2Configured } from "../utils/r2Storage.js";
 
+const MAX_PROPERTY_IMAGES = 40;
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -32,6 +34,22 @@ export const uploadPropertyImages = asyncHandler(async (req, res) => {
   // Check if files were uploaded
   if (!req.files || req.files.length === 0) {
     return sendError(res, "No images uploaded", 400);
+  }
+
+  // Enforce total image cap across existing + new uploads.
+  const [[{ existingCount }]] = await db.query(
+    `SELECT COUNT(*) AS existingCount FROM property_images WHERE property_id = ?`,
+    [id],
+  );
+
+  const totalAfterUpload = Number(existingCount || 0) + req.files.length;
+  if (totalAfterUpload > MAX_PROPERTY_IMAGES) {
+    const remainingSlots = Math.max(0, MAX_PROPERTY_IMAGES - Number(existingCount || 0));
+    return sendError(
+      res,
+      `Image limit exceeded. Maximum ${MAX_PROPERTY_IMAGES} images allowed per property. You can upload ${remainingSlots} more image(s).`,
+      400,
+    );
   }
 
   // Get current max sort_order
