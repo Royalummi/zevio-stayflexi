@@ -10,6 +10,7 @@ import styles from "./Header.module.css";
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showMobileProfileMenu, setShowMobileProfileMenu] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const { user, isAuthenticated, logout, isLoading } = useAuth();
   const { openLoginModal, openSignupModal } = useAuthModals();
@@ -58,7 +59,15 @@ export default function Header() {
   const handleLogout = () => {
     logout();
     setShowUserMenu(false);
+    setShowMobileProfileMenu(false);
   };
+
+  const userAvatar =
+    (user as unknown as { profile_picture?: string; avatar_url?: string })
+      ?.profile_picture ||
+    (user as unknown as { profile_picture?: string; avatar_url?: string })
+      ?.avatar_url ||
+    "";
 
   return (
     <header className={styles.header}>
@@ -159,18 +168,98 @@ export default function Header() {
             )}
           </div>
 
-          {/* Mobile Menu Button */}
-          <button
-            type="button"
-            onClick={toggleMobileMenu}
-            aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
-            aria-expanded={mobileMenuOpen}
-            className={`${styles.mobileMenuButton} ${
-              mobileMenuOpen ? styles.active : ""
-            }`}
-          >
-            {mobileMenuOpen ? <FiX size={24} /> : <FiMenu size={24} />}
-          </button>
+          <div className={styles.mobileActions}>
+            <div className={styles.mobileProfileWrap}>
+              <button
+                type="button"
+                onClick={() => setShowMobileProfileMenu((prev) => !prev)}
+                aria-label="Profile options"
+                aria-expanded={showMobileProfileMenu}
+                className={styles.mobileProfileButton}
+              >
+                {isAuthenticated && userAvatar ? (
+                  <img
+                    src={userAvatar}
+                    alt="User profile"
+                    className={styles.mobileProfileImage}
+                  />
+                ) : (
+                  <FiUser size={20} />
+                )}
+              </button>
+
+              {showMobileProfileMenu && (
+                <>
+                  <div
+                    className={styles.mobileProfileOverlay}
+                    onClick={() => setShowMobileProfileMenu(false)}
+                    aria-hidden="true"
+                  />
+                  <div className={styles.mobileProfileDropdown}>
+                    {!isMounted || isLoading ? (
+                      <div className={styles.mobileLoadingSkeleton}>
+                        <div className={styles.mobileSkeletonButton}></div>
+                        <div className={styles.mobileSkeletonButton}></div>
+                      </div>
+                    ) : isAuthenticated && user ? (
+                      <>
+                        <Link
+                          href="/dashboard"
+                          onClick={() => setShowMobileProfileMenu(false)}
+                          className={styles.mobileProfileMenuLink}
+                        >
+                          <FiHome size={16} />
+                          <span>My Dashboard</span>
+                        </Link>
+                        <button
+                          onClick={handleLogout}
+                          className={styles.mobileProfileMenuLogout}
+                        >
+                          <FiLogOut size={16} />
+                          <span>Logout</span>
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => {
+                            openLoginModal();
+                            setShowMobileProfileMenu(false);
+                          }}
+                          className={styles.mobileProfileMenuLink}
+                        >
+                          <FiUser size={16} />
+                          <span>Sign In</span>
+                        </button>
+                        <button
+                          onClick={() => {
+                            openSignupModal();
+                            setShowMobileProfileMenu(false);
+                          }}
+                          className={styles.mobileProfileMenuPrimary}
+                        >
+                          Sign Up
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Mobile Menu Button */}
+            <button
+              type="button"
+              onClick={toggleMobileMenu}
+              aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+              aria-expanded={mobileMenuOpen}
+              className={`${styles.mobileMenuButton} ${
+                mobileMenuOpen ? styles.active : ""
+              }`}
+            >
+              {mobileMenuOpen ? <FiX size={24} /> : <FiMenu size={24} />}
+            </button>
+          </div>
         </div>
       </div>
 

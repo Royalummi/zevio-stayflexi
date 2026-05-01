@@ -121,19 +121,23 @@
     gap: 2rem;
 }
 
-.valueCard {
-    background: var(--brand-white);
-    padding: 2.5rem 2rem;
-    border-radius: 16px;
-    box-shadow: 0 2px 8px rgba(31, 58, 95, 0.08);
-    border: 1px solid var(--brand-border-light);
-    transition: all 0.3s ease;
+.valueGridItem {
+    display: grid;
+    grid-template-columns: 60px 1fr;
+    gap: 1rem;
+    align-items: start;
+    padding: 1.25rem 0;
+    border-bottom: 1px solid var(--brand-border-light);
 }
 
-.valueCard:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 12px 32px rgba(31, 58, 95, 0.15);
-    border-color: var(--brand-teal-light);
+.valueGridItem:last-child,
+.valueGridItem:nth-last-child(2):nth-child(odd) {
+    border-bottom: none;
+}
+
+.valueIconWrap {
+    display: flex;
+    justify-content: center;
 }
 
 .valueIcon {
@@ -146,7 +150,10 @@
     justify-content: center;
     font-size: 1.75rem;
     color: var(--brand-white);
-    margin-bottom: 1.5rem;
+}
+
+.valueContent {
+    min-width: 0;
 }
 
 .valueTitle {
@@ -323,12 +330,18 @@
     background: rgba(255, 255, 255, 0.1);
     border-radius: 12px;
     border: 1px solid rgba(255, 255, 255, 0.2);
+    min-height: 96px;
 }
 
 .statIcon {
     font-size: 2.5rem;
     color: var(--brand-teal);
     flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .statContent {
@@ -534,12 +547,19 @@
         grid-template-columns: 1fr;
     }
 
+    .valueGridItem {
+        grid-template-columns: 52px 1fr;
+        gap: 0.875rem;
+        padding: 1rem 0;
+    }
+
     .statsBannerContainer {
         grid-template-columns: 1fr;
     }
 
     .statItem {
-        justify-content: center;
+        justify-content: flex-start;
+        gap: 1rem;
     }
 
     .ctaButtons {
@@ -593,6 +613,10 @@
         width: 50px;
         height: 50px;
         font-size: 1.5rem;
+    }
+
+    .valueGridItem {
+        grid-template-columns: 50px 1fr;
     }
 
     .valueTitle,

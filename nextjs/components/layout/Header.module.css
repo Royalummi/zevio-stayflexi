@@ -326,7 +326,130 @@
     background: var(--brand-grey-lightest);
 }
 
+.mobileActions {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.mobileProfileWrap {
+    position: relative;
+}
+
+.mobileProfileButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    height: 40px;
+    border-radius: 999px;
+    border: 1px solid var(--brand-border);
+    background: var(--brand-white);
+    color: var(--brand-navy);
+    cursor: pointer;
+    transition: var(--transition-base);
+}
+
+.mobileProfileButton:hover {
+    border-color: var(--brand-teal);
+    color: var(--brand-teal);
+    background: var(--brand-grey-lightest);
+}
+
+.mobileProfileImage {
+    width: 100%;
+    height: 100%;
+    border-radius: 999px;
+    object-fit: cover;
+}
+
+.mobileProfileOverlay {
+    position: fixed;
+    inset: 72px 0 0 0;
+    z-index: 996;
+    background: transparent;
+}
+
+.mobileProfileDropdown {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    right: 0;
+    min-width: 170px;
+    background: var(--brand-white);
+    border: 1px solid var(--brand-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    z-index: 997;
+    padding: 0.4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.mobileProfileMenuLink {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.65rem 0.75rem;
+    border-radius: var(--radius-md);
+    border: none;
+    background: transparent;
+    color: var(--brand-navy);
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    text-align: left;
+}
+
+.mobileProfileMenuLink:hover {
+    background: var(--brand-grey-lightest);
+    color: var(--brand-teal);
+}
+
+.mobileProfileMenuPrimary {
+    width: 100%;
+    border: none;
+    border-radius: var(--radius-md);
+    padding: 0.65rem 0.75rem;
+    background: var(--brand-teal);
+    color: var(--brand-white);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+}
+
+.mobileProfileMenuPrimary:hover {
+    background: var(--brand-teal-dark);
+}
+
+.mobileProfileMenuLogout {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.65rem 0.75rem;
+    border-radius: var(--radius-md);
+    border: none;
+    background: transparent;
+    color: #dc2626;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    text-align: left;
+}
+
+.mobileProfileMenuLogout:hover {
+    background: #fef2f2;
+}
+
 @media (min-width: 768px) {
+    .mobileActions {
+        display: none;
+    }
+
     .mobileMenuButton {
         display: none;
     }

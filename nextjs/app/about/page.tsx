@@ -221,10 +221,14 @@ export default function AboutPage() {
 
           <div className={styles.valuesGrid}>
             {values.map((value, index) => (
-              <div key={index} className={styles.valueCard}>
-                <div className={styles.valueIcon}>{value.icon}</div>
-                <h3 className={styles.valueTitle}>{value.title}</h3>
-                <p className={styles.valueDescription}>{value.description}</p>
+              <div key={index} className={styles.valueGridItem}>
+                <div className={styles.valueIconWrap}>
+                  <div className={styles.valueIcon}>{value.icon}</div>
+                </div>
+                <div className={styles.valueContent}>
+                  <h3 className={styles.valueTitle}>{value.title}</h3>
+                  <p className={styles.valueDescription}>{value.description}</p>
+                </div>
               </div>
             ))}
           </div>
