@@ -3616,7 +3616,11 @@ export const uploadPropertyImages = asyncHandler(async (req, res) => {
         });
         newImageUrls.push(imageUrl);
       } catch (error) {
-        console.error("❌ R2 upload failed for file:", file.originalname, error);
+        console.error(
+          "❌ R2 upload failed for file:",
+          file.originalname,
+          error,
+        );
         failedUploads.push({
           filename: file.originalname,
           error: error?.message || "Upload failed",

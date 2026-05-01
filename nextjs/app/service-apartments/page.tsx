@@ -124,7 +124,9 @@ function ServiceApartmentsContent() {
     const fromAmenities = Array.isArray(property.amenities)
       ? property.amenities
       : [];
-    const fromFeatures = Array.isArray(property.features) ? property.features : [];
+    const fromFeatures = Array.isArray(property.features)
+      ? property.features
+      : [];
     return [...fromAmenities, ...fromFeatures]
       .map((item) => item.toLowerCase().trim())
       .filter(Boolean);

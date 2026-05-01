@@ -138,7 +138,7 @@ test.describe("Corporate Features", () => {
       // Try to click first property if available
       const firstProperty = page
         .locator(
-          '[class*="serviceApartmentCard"], [class*="propertyCard"], a[href*="service-apartments"]'
+          '[class*="serviceApartmentCard"], [class*="propertyCard"], a[href*="service-apartments"]',
         )
         .first();
       const isVisible = await firstProperty.isVisible().catch(() => false);
@@ -172,7 +172,7 @@ test.describe("Corporate Features", () => {
 
       const firstProperty = page
         .locator(
-          '[class*="serviceApartmentCard"], [class*="propertyCard"], a[href*="service-apartments"]'
+          '[class*="serviceApartmentCard"], [class*="propertyCard"], a[href*="service-apartments"]',
         )
         .first();
       const isVisible = await firstProperty.isVisible().catch(() => false);
@@ -330,7 +330,7 @@ test.describe("Corporate Features", () => {
 
       // Check that properties have required data
       const propertyCards = page.locator(
-        '[class*="propertyCard"], [class*="grid"] > div'
+        '[class*="propertyCard"], [class*="grid"] > div',
       );
       const count = await propertyCards.count();
 

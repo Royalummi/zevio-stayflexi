@@ -207,7 +207,9 @@ export default function MobileSearchBar({
     totalGuests === 0
       ? "Add guests"
       : `${totalGuests} ${totalGuests === 1 ? "guest" : "guests"}${
-          infants > 0 ? `, ${infants} ${infants === 1 ? "infant" : "infants"}` : ""
+          infants > 0
+            ? `, ${infants} ${infants === 1 ? "infant" : "infants"}`
+            : ""
         }`;
 
   return (
@@ -242,7 +244,9 @@ export default function MobileSearchBar({
             className={styles.heroButton}
             onClick={openFromSummary}
           >
-            <div className={styles.heroIcon}><FiSearch /></div>
+            <div className={styles.heroIcon}>
+              <FiSearch />
+            </div>
             <div className={styles.heroText}>
               <span className={styles.heroLabel}>Search stay</span>
             </div>
@@ -256,7 +260,9 @@ export default function MobileSearchBar({
               onClick={() => activateStep("where")}
             >
               <span className={styles.summaryLabel}>Where</span>
-              <span className={styles.summaryValue}>{formatLocation(selectedCity)}</span>
+              <span className={styles.summaryValue}>
+                {formatLocation(selectedCity)}
+              </span>
             </button>
             <button
               type="button"
@@ -266,7 +272,9 @@ export default function MobileSearchBar({
               <span className={styles.summaryLabel}>
                 {propertyType === "villas" ? "Dates" : "Duration"}
               </span>
-              <span className={styles.summaryValue}>{formatDateRange(startDate, endDate)}</span>
+              <span className={styles.summaryValue}>
+                {formatDateRange(startDate, endDate)}
+              </span>
             </button>
             <button
               type="button"
@@ -278,12 +286,18 @@ export default function MobileSearchBar({
             </button>
           </div>
 
-          <button type="button" className={styles.searchButton} onClick={handleSearchAction}>
+          <button
+            type="button"
+            className={styles.searchButton}
+            onClick={handleSearchAction}
+          >
             <FiSearch className={styles.searchButtonIcon} />
-            <span>{propertyType === "villas" ? "Search villas" : "Search apartments"}</span>
+            <span>
+              {propertyType === "villas"
+                ? "Search villas"
+                : "Search apartments"}
+            </span>
           </button>
-
-
         </div>
       </div>
 
@@ -293,12 +307,18 @@ export default function MobileSearchBar({
             className={`${styles.backdrop} ${isVisible ? styles.backdropVisible : ""}`}
             onClick={closeSheet}
           />
-          <div className={`${styles.sheet} ${isVisible ? styles.sheetVisible : ""}`}>
+          <div
+            className={`${styles.sheet} ${isVisible ? styles.sheetVisible : ""}`}
+          >
             <div className={styles.sheetHeader}>
               <div>
                 <h3 className={styles.sheetTitle}>Find your stay faster</h3>
               </div>
-              <button type="button" className={styles.closeButton} onClick={closeSheet}>
+              <button
+                type="button"
+                className={styles.closeButton}
+                onClick={closeSheet}
+              >
                 <FiX />
               </button>
             </div>
@@ -310,7 +330,9 @@ export default function MobileSearchBar({
                 onClick={() => activateStep("where")}
               >
                 <span className={styles.stepTabLabel}>Where</span>
-                <span className={styles.stepTabValue}>{formatLocation(selectedCity)}</span>
+                <span className={styles.stepTabValue}>
+                  {formatLocation(selectedCity)}
+                </span>
               </button>
               <button
                 type="button"
@@ -318,7 +340,9 @@ export default function MobileSearchBar({
                 onClick={() => activateStep("dates")}
               >
                 <span className={styles.stepTabLabel}>When</span>
-                <span className={styles.stepTabValue}>{formatDateRange(startDate, endDate)}</span>
+                <span className={styles.stepTabValue}>
+                  {formatDateRange(startDate, endDate)}
+                </span>
               </button>
               <button
                 type="button"
@@ -348,7 +372,11 @@ export default function MobileSearchBar({
                       onChange={(e) => onSearchInputChange(e.target.value)}
                     />
                     {searchInput && (
-                      <button type="button" className={styles.clearButton} onClick={onClearCity}>
+                      <button
+                        type="button"
+                        className={styles.clearButton}
+                        onClick={onClearCity}
+                      >
                         <FiX />
                       </button>
                     )}
@@ -371,7 +399,9 @@ export default function MobileSearchBar({
                         return (
                           <button
                             type="button"
-                            key={city.area ? `${city.id}-${city.area}` : city.id}
+                            key={
+                              city.area ? `${city.id}-${city.area}` : city.id
+                            }
                             className={`${styles.locationRow} ${
                               isSelected ? styles.locationRowSelected : ""
                             }`}
@@ -404,7 +434,11 @@ export default function MobileSearchBar({
               {activeStep === "dates" && (
                 <div className={styles.stepPanel}>
                   <div className={styles.stepHeader}>
-                    <h4>{propertyType === "villas" ? "Select stay dates" : "Select move-in and move-out"}</h4>
+                    <h4>
+                      {propertyType === "villas"
+                        ? "Select stay dates"
+                        : "Select move-in and move-out"}
+                    </h4>
                   </div>
 
                   <div className={styles.calendarPanel}>
@@ -456,7 +490,9 @@ export default function MobileSearchBar({
                         <button
                           type="button"
                           className={styles.counterButton}
-                          onClick={() => onAdultsChange(Math.max(1, adults - 1))}
+                          onClick={() =>
+                            onAdultsChange(Math.max(1, adults - 1))
+                          }
                           disabled={adults <= 1}
                         >
                           −
@@ -465,7 +501,9 @@ export default function MobileSearchBar({
                         <button
                           type="button"
                           className={styles.counterButton}
-                          onClick={() => onAdultsChange(Math.min(16, adults + 1))}
+                          onClick={() =>
+                            onAdultsChange(Math.min(16, adults + 1))
+                          }
                           disabled={adults >= 16}
                         >
                           +
@@ -482,16 +520,22 @@ export default function MobileSearchBar({
                         <button
                           type="button"
                           className={styles.counterButton}
-                          onClick={() => onChildCountChange(Math.max(0, childCount - 1))}
+                          onClick={() =>
+                            onChildCountChange(Math.max(0, childCount - 1))
+                          }
                           disabled={childCount <= 0}
                         >
                           −
                         </button>
-                        <span className={styles.counterValue}>{childCount}</span>
+                        <span className={styles.counterValue}>
+                          {childCount}
+                        </span>
                         <button
                           type="button"
                           className={styles.counterButton}
-                          onClick={() => onChildCountChange(Math.min(10, childCount + 1))}
+                          onClick={() =>
+                            onChildCountChange(Math.min(10, childCount + 1))
+                          }
                           disabled={childCount >= 10}
                         >
                           +
@@ -508,7 +552,9 @@ export default function MobileSearchBar({
                         <button
                           type="button"
                           className={styles.counterButton}
-                          onClick={() => onInfantsChange(Math.max(0, infants - 1))}
+                          onClick={() =>
+                            onInfantsChange(Math.max(0, infants - 1))
+                          }
                           disabled={infants <= 0}
                         >
                           −
@@ -517,7 +563,9 @@ export default function MobileSearchBar({
                         <button
                           type="button"
                           className={styles.counterButton}
-                          onClick={() => onInfantsChange(Math.min(5, infants + 1))}
+                          onClick={() =>
+                            onInfantsChange(Math.min(5, infants + 1))
+                          }
                           disabled={infants >= 5}
                         >
                           +
@@ -530,7 +578,11 @@ export default function MobileSearchBar({
             </div>
 
             <div className={styles.sheetFooter}>
-              <button type="button" className={styles.primaryButton} onClick={handleStepAction}>
+              <button
+                type="button"
+                className={styles.primaryButton}
+                onClick={handleStepAction}
+              >
                 {stepButtonLabel}
               </button>
             </div>

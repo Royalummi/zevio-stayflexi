@@ -45,9 +45,7 @@ export default function RecommendedProperties({
   const [error, setError] = useState<string | null>(null);
 
   const detailBasePath =
-    propertyType === "service_apartment"
-      ? "/service-apartments"
-      : "/villas";
+    propertyType === "service_apartment" ? "/service-apartments" : "/villas";
 
   const toPropertyCardShape = (
     property: RecommendedProperty,

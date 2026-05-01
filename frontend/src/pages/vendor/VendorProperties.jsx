@@ -251,9 +251,7 @@ const VendorProperties = () => {
   };
 
   const canQuickSubmit = (status) =>
-    ["draft", "inactive", "rejected", "changes_requested"].includes(
-      status,
-    );
+    ["draft", "inactive", "rejected", "changes_requested"].includes(status);
 
   const handleQuickSubmit = async (property) => {
     try {
@@ -295,12 +293,30 @@ const VendorProperties = () => {
 
   const getStatusBadge = (status) => {
     const config = {
-      draft: { cls: "bg-gray-100 text-gray-800 border-gray-300", label: "Draft" },
-      pending_approval: { cls: "bg-yellow-100 text-yellow-800 border-yellow-300", label: "Pending Approval" },
-      approved: { cls: "bg-green-100 text-green-800 border-green-300", label: "Approved" },
-      inactive: { cls: "bg-red-100 text-red-800 border-red-300", label: "Inactive" },
-      rejected: { cls: "bg-red-100 text-red-800 border-red-300", label: "Rejected" },
-      changes_requested: { cls: "bg-orange-100 text-orange-800 border-orange-300", label: "Changes Requested" },
+      draft: {
+        cls: "bg-gray-100 text-gray-800 border-gray-300",
+        label: "Draft",
+      },
+      pending_approval: {
+        cls: "bg-yellow-100 text-yellow-800 border-yellow-300",
+        label: "Pending Approval",
+      },
+      approved: {
+        cls: "bg-green-100 text-green-800 border-green-300",
+        label: "Approved",
+      },
+      inactive: {
+        cls: "bg-red-100 text-red-800 border-red-300",
+        label: "Inactive",
+      },
+      rejected: {
+        cls: "bg-red-100 text-red-800 border-red-300",
+        label: "Rejected",
+      },
+      changes_requested: {
+        cls: "bg-orange-100 text-orange-800 border-orange-300",
+        label: "Changes Requested",
+      },
     };
     const { cls, label } = config[status] || config.draft;
     return (

@@ -36,17 +36,20 @@ export default function FavoritesPage() {
       });
 
       const data = response.data.data;
-      
+
       // Parse photos if they come as JSON string from backend
-      const parsedWishlists = (data.wishlists || []).map((property: Property) => ({
-        ...property,
-        photos: typeof property.photos === 'string'
-          ? JSON.parse(property.photos as string)
-          : Array.isArray(property.photos)
-          ? property.photos
-          : [],
-      }));
-      
+      const parsedWishlists = (data.wishlists || []).map(
+        (property: Property) => ({
+          ...property,
+          photos:
+            typeof property.photos === "string"
+              ? JSON.parse(property.photos as string)
+              : Array.isArray(property.photos)
+                ? property.photos
+                : [],
+        }),
+      );
+
       setFavorites(parsedWishlists);
       setTotalPages(data.pagination?.totalPages || 1);
     } catch (err) {
@@ -54,7 +57,7 @@ export default function FavoritesPage() {
       console.error("Failed to fetch favorites:", error);
       setError(
         error.response?.data?.message ||
-          "Failed to load favorites. Please try again."
+          "Failed to load favorites. Please try again.",
       );
     } finally {
       setLoading(false);

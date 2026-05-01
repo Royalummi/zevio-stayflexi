@@ -95,7 +95,10 @@ export default function CorporatePropertyFilters({
   }, []);
 
   const availableCities = useMemo(
-    () => cities.filter((city) => city.property_count === undefined || city.property_count > 0),
+    () =>
+      cities.filter(
+        (city) => city.property_count === undefined || city.property_count > 0,
+      ),
     [cities],
   );
 

@@ -216,7 +216,8 @@ export default function ServiceApartmentFilters({
     const parts = [];
     if (guests > 0) parts.push(`${guests} Adults`);
     if (children > 0) parts.push(`${children} Children`);
-    if (infants > 0) parts.push(`${infants} ${infants === 1 ? "Infant" : "Infants"}`);
+    if (infants > 0)
+      parts.push(`${infants} ${infants === 1 ? "Infant" : "Infants"}`);
     return parts.length > 0 ? parts.join(", ") : "Capacity";
   };
 

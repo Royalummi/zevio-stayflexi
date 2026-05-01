@@ -1689,6 +1689,7 @@
 
 /* ===== MOBILE FONT SIZE REDUCTIONS (max-width: 767px) ===== */
 @media (max-width: 767px) {
+
     .statsTitle,
     .descriptionTitle,
     .amenitiesTitle {
@@ -1701,6 +1702,7 @@
 }
 
 @media (max-width: 480px) {
+
     .statsTitle,
     .descriptionTitle,
     .amenitiesTitle {
