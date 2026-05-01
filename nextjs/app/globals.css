@@ -392,7 +392,7 @@ button {
 }
 
 .hero-title {
-  font-size: 36px;
+  font-size: 28px;
   font-weight: 900;
   line-height: 1.2;
   color: white;
@@ -401,7 +401,7 @@ button {
 
 @media (min-width: 480px) {
   .hero-title {
-    font-size: 42px;
+    font-size: 34px;
   }
 }
 
@@ -519,7 +519,7 @@ button {
 }
 
 .section-title {
-  font-size: 28px;
+  font-size: 22px;
   font-weight: var(--font-bold);
   color: var(--text-primary);
   margin-bottom: var(--space-3);
@@ -528,7 +528,7 @@ button {
 
 @media (min-width: 480px) {
   .section-title {
-    font-size: 32px;
+    font-size: 26px;
   }
 }
 
@@ -540,7 +540,7 @@ button {
 }
 
 .section-description {
-  font-size: 16px;
+  font-size: 14px;
   line-height: var(--leading-relaxed);
   color: var(--text-secondary);
   max-width: 700px;
@@ -640,6 +640,16 @@ button {
   color: var(--text-secondary);
 }
 
+@media (max-width: 767px) {
+  .card-title {
+    font-size: 16px;
+  }
+
+  .card-text {
+    font-size: 14px;
+  }
+}
+
 /* Destination Card - Modern Style */
 .destination-card {
   position: relative;
@@ -677,8 +687,8 @@ button {
   bottom: 0;
   left: 0;
   right: 0;
-  padding: 16px;
-  font-size: 18px;
+  padding: 12px;
+  font-size: 14px;
   font-weight: 600;
   color: white;
 }
@@ -708,7 +718,7 @@ button {
 }
 
 .cta-title {
-  font-size: 28px;
+  font-size: 22px;
   font-weight: 900;
   line-height: 1.2;
   max-width: 900px;
@@ -718,7 +728,7 @@ button {
 
 @media (min-width: 480px) {
   .cta-title {
-    font-size: 36px;
+    font-size: 28px;
   }
 }
 
@@ -736,7 +746,7 @@ button {
 }
 
 .cta-description {
-  font-size: 16px;
+  font-size: 14px;
   line-height: 1.6;
   opacity: 0.95;
   max-width: 800px;
