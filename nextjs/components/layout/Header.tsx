@@ -86,8 +86,8 @@ export default function Header() {
             <Image
               src="/brand/zevio-logo-color.png"
               alt="Zevio"
-              width={220}
-              height={52}
+              width={280}
+              height={64}
               priority
               className={styles.logoImage}
             />

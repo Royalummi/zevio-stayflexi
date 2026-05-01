@@ -850,7 +850,7 @@ button {
 
 .footer-brand-image {
   width: auto;
-  height: 50px;
+  height: 72px;
   object-fit: contain;
 }
 
@@ -960,7 +960,7 @@ button {
   }
 
   .footer-brand-image {
-    height: 44px;
+    height: 60px;
   }
 
   .footer-bottom {

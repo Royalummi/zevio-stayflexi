@@ -78,8 +78,8 @@ export default function Footer() {
               <Image
                 src="/brand/zevio-logo-white.png"
                 alt="Zevio"
-                width={210}
-                height={52}
+                width={268}
+                height={72}
                 className="footer-brand-image"
               />
             </Link>
