@@ -159,6 +159,8 @@ function PropertyDetailContent() {
   });
   const [nights, setNights] = useState(0);
   const [isSaved, setIsSaved] = useState(false);
+  const [showFullDescription, setShowFullDescription] = useState(false);
+  const [showAllAmenities, setShowAllAmenities] = useState(false);
 
   // SESSION 30: Pending Booking Management
   const [pendingBooking, setPendingBooking] = useState<{
@@ -878,8 +880,18 @@ function PropertyDetailContent() {
                   About This Place
                 </h2>
                 <p className={luxuryStyles.descriptionTextLuxury}>
-                  {property.description}
+                  {showFullDescription || (property.description?.length ?? 0) <= 300
+                    ? property.description
+                    : `${property.description?.slice(0, 300).trimEnd()}...`}
                 </p>
+                {(property.description?.length ?? 0) > 300 && (
+                  <button
+                    className={luxuryStyles.readMoreBtn}
+                    onClick={() => setShowFullDescription(!showFullDescription)}
+                  >
+                    {showFullDescription ? "Show less" : "Read more"}
+                  </button>
+                )}
               </section>
 
               {/* Amenities & Features */}
@@ -889,7 +901,7 @@ function PropertyDetailContent() {
                     Amenities & Features
                   </h2>
                   <div className={luxuryStyles.amenitiesGridLuxury}>
-                    {allFeatures.map((amenity: string, index: number) => (
+                    {(showAllAmenities ? allFeatures : allFeatures.slice(0, 10)).map((amenity: string, index: number) => (
                       <div
                         key={index}
                         className={luxuryStyles.amenityItemLuxury}
@@ -903,6 +915,16 @@ function PropertyDetailContent() {
                       </div>
                     ))}
                   </div>
+                  {allFeatures.length > 10 && (
+                    <button
+                      className={luxuryStyles.viewMoreBtn}
+                      onClick={() => setShowAllAmenities(!showAllAmenities)}
+                    >
+                      {showAllAmenities
+                        ? "View Less"
+                        : `View More (${allFeatures.length - 10} more)`}
+                    </button>
+                  )}
                 </section>
               )}
 

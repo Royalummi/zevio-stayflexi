@@ -1262,7 +1262,7 @@
     }
 
     .amenitiesGridLuxury {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
         gap: 0.75rem;
     }
 
@@ -2693,6 +2693,57 @@
 
     .descriptionTextLuxury {
         font-size: 0.9375rem;
+    }
+}
+
+/* ===== READ MORE BUTTON (About This Place) ===== */
+.readMoreBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-top: 0.875rem;
+    padding: 0;
+    background: none;
+    border: none;
+    color: var(--brand-teal);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    transition: color 0.2s ease;
+}
+
+.readMoreBtn:hover {
+    color: var(--brand-navy);
+}
+
+/* ===== VIEW MORE BUTTON (Amenities & Features) ===== */
+.viewMoreBtn {
+    display: block;
+    width: 100%;
+    margin-top: 1.25rem;
+    padding: 0.75rem 1.5rem;
+    background: transparent;
+    border: 2px solid var(--brand-teal);
+    border-radius: 0.75rem;
+    color: var(--brand-teal);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.25s ease;
+}
+
+.viewMoreBtn:hover {
+    background: var(--brand-teal);
+    color: var(--brand-white);
+}
+
+@media (min-width: 640px) {
+    .viewMoreBtn {
+        width: auto;
+        display: inline-block;
     }
 }
 

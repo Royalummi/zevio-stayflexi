@@ -249,6 +249,8 @@ function ServiceApartmentDetailContent() {
   const [calculatingPrice, setCalculatingPrice] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [hasShownInvalidToast, setHasShownInvalidToast] = useState(false);
+  const [showFullDescription, setShowFullDescription] = useState(false);
+  const [showAllAmenities, setShowAllAmenities] = useState(false);
 
   // Removed: showCalendar, isCorporate checkbox, tabs state
 
@@ -829,7 +831,19 @@ function ServiceApartmentDetailContent() {
               <div className={styles.sectionDivider}></div>
             </div>
             <div className={styles.descriptionContent}>
-              <p>{property.description}</p>
+              <p>
+                {showFullDescription || (property.description?.length ?? 0) <= 300
+                  ? property.description
+                  : `${property.description?.slice(0, 300).trimEnd()}...`}
+              </p>
+              {(property.description?.length ?? 0) > 300 && (
+                <button
+                  className={styles.readMoreBtn}
+                  onClick={() => setShowFullDescription(!showFullDescription)}
+                >
+                  {showFullDescription ? "Show less" : "Read more"}
+                </button>
+              )}
             </div>
           </div>
 
@@ -839,65 +853,49 @@ function ServiceApartmentDetailContent() {
               <h2>Amenities & Features</h2>
               <div className={styles.sectionDivider}></div>
             </div>
-            <div className={styles.amenitiesGrid}>
-              {property.has_workspace && (
-                <div className={styles.amenity}>
-                  <FiBriefcase />
-                  <span>Dedicated Workspace</span>
-                </div>
-              )}
-              {property.has_housekeeping && (
-                <div className={styles.amenity}>
-                  <FiCoffee />
-                  <span>Housekeeping</span>
-                </div>
-              )}
-              {property.has_elevator && (
-                <div className={styles.amenity}>
-                  <MdOutlineElevator />
-                  <span>Elevator</span>
-                </div>
-              )}
-              {property.has_gym && (
-                <div className={styles.amenity}>
-                  <FiBox />
-                  <span>Gym/Fitness Center</span>
-                </div>
-              )}
-              {property.has_parking && (
-                <div className={styles.amenity}>
-                  <FiTruck />
-                  <span>Free Parking</span>
-                </div>
-              )}
-              {property.amenities
-                ?.filter((amenity) => {
-                  const lower = amenity.toLowerCase();
-                  if (property.has_workspace && lower.includes("workspace"))
-                    return false;
-                  if (
-                    property.has_housekeeping &&
-                    lower.includes("housekeeping")
-                  )
-                    return false;
-                  if (property.has_elevator && lower.includes("elevator"))
-                    return false;
-                  if (
-                    property.has_gym &&
-                    (lower.includes("gym") || lower.includes("fitness"))
-                  )
-                    return false;
-                  if (property.has_parking && lower.includes("parking"))
-                    return false;
-                  return true;
-                })
-                .map((amenity, index) => (
-                  <div key={index} className={styles.amenity}>
-                    {getAmenityIcon(amenity)}
-                    <span>{amenity}</span>
+            {(() => {
+              const allAmenities = [
+                ...(property.has_workspace ? [{ icon: <FiBriefcase />, label: "Dedicated Workspace" }] : []),
+                ...(property.has_housekeeping ? [{ icon: <FiCoffee />, label: "Housekeeping" }] : []),
+                ...(property.has_elevator ? [{ icon: <MdOutlineElevator />, label: "Elevator" }] : []),
+                ...(property.has_gym ? [{ icon: <FiBox />, label: "Gym/Fitness Center" }] : []),
+                ...(property.has_parking ? [{ icon: <FiTruck />, label: "Free Parking" }] : []),
+                ...(property.amenities
+                  ?.filter((amenity) => {
+                    const lower = amenity.toLowerCase();
+                    if (property.has_workspace && lower.includes("workspace")) return false;
+                    if (property.has_housekeeping && lower.includes("housekeeping")) return false;
+                    if (property.has_elevator && lower.includes("elevator")) return false;
+                    if (property.has_gym && (lower.includes("gym") || lower.includes("fitness"))) return false;
+                    if (property.has_parking && lower.includes("parking")) return false;
+                    return true;
+                  })
+                  .map((amenity) => ({ icon: getAmenityIcon(amenity), label: amenity })) ?? []),
+              ];
+              const visibleAmenities = showAllAmenities ? allAmenities : allAmenities.slice(0, 10);
+              return (
+                <>
+                  <div className={styles.amenitiesGrid}>
+                    {visibleAmenities.map((item, index) => (
+                      <div key={index} className={styles.amenity}>
+                        {item.icon}
+                        <span>{item.label}</span>
+                      </div>
+                    ))}
                   </div>
-                ))}
-            </div>
+                  {allAmenities.length > 10 && (
+                    <button
+                      className={styles.viewMoreBtn}
+                      onClick={() => setShowAllAmenities(!showAllAmenities)}
+                    >
+                      {showAllAmenities
+                        ? "View Less"
+                        : `View More (${allAmenities.length - 10} more)`}
+                    </button>
+                  )}
+                </>
+              );
+            })()}
           </div>
 
           {/* Phase 2: Service Apartment Specific Details */}
