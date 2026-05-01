@@ -114,7 +114,10 @@ export default function PropertyFilters({
   }, []);
 
   const availableCities = useMemo(
-    () => cities.filter((city) => city.property_count === undefined || city.property_count > 0),
+    () =>
+      cities.filter(
+        (city) => city.property_count === undefined || city.property_count > 0,
+      ),
     [cities],
   );
 
@@ -205,7 +208,8 @@ export default function PropertyFilters({
     const parts = [];
     if (guests > 0) parts.push(`${guests} Adults`);
     if (children > 0) parts.push(`${children} Children`);
-    if (infants > 0) parts.push(`${infants} ${infants === 1 ? "Infant" : "Infants"}`);
+    if (infants > 0)
+      parts.push(`${infants} ${infants === 1 ? "Infant" : "Infants"}`);
     return parts.length > 0 ? parts.join(", ") : "Capacity";
   };
 
@@ -292,7 +296,7 @@ export default function PropertyFilters({
 
         <div className={styles.resultsActions}>
           <div className={styles.resultsCount}>
-            <strong>{resultsCount}</strong> properties found
+            <strong>{resultsCount}</strong> villas found
           </div>
 
           {/* Sort Dropdown */}

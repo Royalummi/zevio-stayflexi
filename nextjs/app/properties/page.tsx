@@ -73,7 +73,9 @@ function PropertiesContent() {
       try {
         const parsed = JSON.parse(amenities);
         if (Array.isArray(parsed)) {
-          return parsed.map((item: string) => item.toLowerCase().trim()).filter(Boolean);
+          return parsed
+            .map((item: string) => item.toLowerCase().trim())
+            .filter(Boolean);
         }
       } catch {
         // fall back to comma-separated text format
@@ -252,7 +254,7 @@ function PropertiesContent() {
         {loading ? (
           <div className={styles.loadingContainer}>
             <div className={styles.loadingSpinner}></div>
-            <p className={styles.loadingText}>Loading amazing properties...</p>
+            <p className={styles.loadingText}>Loading amazing villas...</p>
           </div>
         ) : filteredProperties.length === 0 ? (
           <div className={styles.emptyState}>
@@ -260,12 +262,12 @@ function PropertiesContent() {
               <FiHome />
             </div>
             <h3 className={styles.emptyTitle}>
-              {filters.area ? "Coming Soon" : "No Properties Found"}
+              {filters.area ? "Coming Soon" : "No Villas Found"}
             </h3>
             <p className={styles.emptyMessage}>
               {filters.area
-                ? `We're expanding to ${filters.area} soon. Stay tuned for exciting properties in this area!`
-                : "We couldn't find any properties matching your criteria. Try adjusting your filters."}
+                ? `We're expanding to ${filters.area} soon. Stay tuned for exciting villas in this area!`
+                : "We couldn't find any villas matching your criteria. Try adjusting your filters."}
             </p>
             <button onClick={clearFilters} className={styles.emptyCtaBtn}>
               Clear All Filters
@@ -296,7 +298,7 @@ export default function PropertiesPage() {
         <div className={styles.pageContainer}>
           <div className={styles.loadingContainer}>
             <div className={styles.spinner}></div>
-            <p>Loading properties...</p>
+            <p>Loading villas...</p>
           </div>
         </div>
       }

@@ -600,7 +600,7 @@ function PropertyDetailContent() {
       navigator
         .share({
           title: property?.name,
-          text: `Check out this amazing property: ${property?.name}`,
+          text: `Check out this amazing villa: ${property?.name}`,
           url: window.location.href,
         })
         .catch((error) => console.log("Error sharing:", error));
@@ -673,7 +673,7 @@ function PropertyDetailContent() {
       <div className={propertyStyles.loadingPage}>
         <div className={propertyStyles.loadingSpinnerDetail}></div>
         <p className={propertyStyles.loadingTextDetail}>
-          Loading property details...
+          Loading villa details...
         </p>
       </div>
     );
@@ -686,16 +686,16 @@ function PropertyDetailContent() {
           <div className={propertyStyles.notFoundIcon}>
             <FiHome />
           </div>
-          <h2 className={propertyStyles.notFoundTitle}>Property Not Found</h2>
+          <h2 className={propertyStyles.notFoundTitle}>Villa Not Found</h2>
           <p className={propertyStyles.notFoundMessage}>
-            The property you&apos;re looking for doesn&apos;t exist or has been
+            The villa you&apos;re looking for doesn&apos;t exist or has been
             removed.
           </p>
           <button
             onClick={() => router.push("/properties")}
             className={propertyStyles.notFoundBtn}
           >
-            Back to Properties
+            Back to Villas
           </button>
         </div>
       </div>
@@ -816,7 +816,7 @@ function PropertyDetailContent() {
               {/* Property Overview */}
               <section className={luxuryStyles.overviewSectionLuxury}>
                 <h2 className={luxuryStyles.sectionTitleLuxury}>
-                  Property Overview
+                  Villa Overview
                 </h2>
                 <div className={luxuryStyles.statsGridLuxury}>
                   <div className={luxuryStyles.statCardLuxury}>
@@ -909,7 +909,7 @@ function PropertyDetailContent() {
               {/* Comprehensive Property Information - Unified UI */}
               <section className={luxuryStyles.bookingInfoSection}>
                 <h2 className={luxuryStyles.sectionTitleLuxury}>
-                  Property Information
+                  Villa Information
                 </h2>
                 <div className={luxuryStyles.infoList}>
                   {/* Check-in & Check-out Times */}
@@ -1062,8 +1062,6 @@ function PropertyDetailContent() {
                         </div>
                       </div>
                     )}
-
-
 
                   {/* Maximum Booking Period */}
                   {property.max_booking_days && (
@@ -1579,7 +1577,9 @@ function PropertyDetailContent() {
                     <div className={luxuryStyles.hostStat}>
                       <FiStar className={luxuryStyles.statIconHost} />
                       <div>
-                        <strong>{Number(property.rating || 0).toFixed(1)}</strong>{" "}
+                        <strong>
+                          {Number(property.rating || 0).toFixed(1)}
+                        </strong>{" "}
                         Rating
                       </div>
                     </div>

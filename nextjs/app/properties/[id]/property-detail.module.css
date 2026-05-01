@@ -1686,3 +1686,28 @@
     color: #4b5563;
     margin-top: 1rem;
 }
+
+/* ===== MOBILE FONT SIZE REDUCTIONS (max-width: 767px) ===== */
+@media (max-width: 767px) {
+    .statsTitle,
+    .descriptionTitle,
+    .amenitiesTitle {
+        font-size: 1.1rem;
+    }
+
+    .statValue {
+        font-size: 1.4rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .statsTitle,
+    .descriptionTitle,
+    .amenitiesTitle {
+        font-size: 1rem;
+    }
+
+    .statValue {
+        font-size: 1.25rem;
+    }
+}
