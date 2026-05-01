@@ -86,8 +86,8 @@ export default function Header() {
             <Image
               src="/brand/zevio-logo-color.png"
               alt="Zevio"
-              width={180}
-              height={38}
+              width={220}
+              height={52}
               priority
               className={styles.logoImage}
             />
@@ -228,7 +228,9 @@ export default function Header() {
                           <p className={styles.mobileProfileName}>
                             Hi, {user.full_name?.split(" ")[0] || "Guest"}
                           </p>
-                          <p className={styles.mobileProfileEmail}>{user.email}</p>
+                          <p className={styles.mobileProfileEmail}>
+                            {user.email}
+                          </p>
                         </div>
                         <Link
                           href="/dashboard"
