@@ -141,6 +141,7 @@ export default function RecommendedProperties({
               <PropertyCard
                 property={toPropertyCardShape(property)}
                 detailBasePath={detailBasePath}
+                forceVertical={true}
               />
             </div>
           ))}

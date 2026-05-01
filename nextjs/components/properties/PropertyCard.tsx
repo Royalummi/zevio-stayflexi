@@ -31,6 +31,7 @@ interface PropertyCardProps {
   checkin?: string;
   checkout?: string;
   detailBasePath?: string;
+  forceVertical?: boolean;
 }
 
 export default function PropertyCard({
@@ -40,6 +41,7 @@ export default function PropertyCard({
   checkin,
   checkout,
   detailBasePath = "/properties",
+  forceVertical = false,
 }: PropertyCardProps) {
   const router = useRouter();
   const { user } = useAuth();
@@ -228,7 +230,7 @@ export default function PropertyCard({
   };
 
   return (
-    <div className={styles.propertyCard} onClick={handleCardClick}>
+    <div className={`${styles.propertyCard}${forceVertical ? ` ${styles.propertyCardVertical}` : ""}`} onClick={handleCardClick}>
       {/* Image Container with Carousel */}
       <div
         className={styles.propertyCardImageContainer}
@@ -347,9 +349,7 @@ export default function PropertyCard({
       <div className={styles.propertyCardContent}>
         {/* Location & Rating Row */}
         <div className={styles.propertyCardHeader}>
-          <div
-            className={styles.propertyLocation}
-          >
+          <div className={styles.propertyLocation}>
             <FiMapPin className={styles.locationIcon} />
             <span className={styles.locationText}>
               {property.area

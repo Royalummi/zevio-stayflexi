@@ -671,6 +671,33 @@
   }
 }
 
+/* Force vertical layout (used by home page recommended section) */
+@media (max-width: 640px) {
+  .propertyCardVertical {
+    flex-direction: column;
+  }
+
+  .propertyCardVertical .propertyCardImageContainer {
+    width: 100%;
+    min-width: 0;
+    height: 0;
+    padding-bottom: 66.67%;
+    border-radius: 12px 12px 0 0;
+  }
+
+  .propertyCardVertical .propertyCardContent {
+    padding: 14px 16px;
+  }
+
+  .propertyCardVertical .photoNavBtn {
+    display: flex;
+  }
+
+  .propertyCardVertical .photoIndicators {
+    display: flex;
+  }
+}
+
 @media (max-width: 480px) {
   .propertyCard {
     border-radius: 10px;
