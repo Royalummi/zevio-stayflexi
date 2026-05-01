@@ -391,13 +391,13 @@ describe("SearchBar Component", () => {
   // ─── Search / Navigation ─────────────────────────────────────────────────
 
   describe("Search behaviour", () => {
-    it("navigates to /properties when Search is clicked with no filters", async () => {
+    it("navigates to /villas when Search is clicked with no filters", async () => {
       const user = userEvent.setup();
       renderSearchBar();
       await user.click(screen.getByRole("button", { name: /search/i }));
       // URL always includes query params (adults=2 etc.) — just check base path
       expect(mockRouterPush).toHaveBeenCalledWith(
-        expect.stringContaining("/properties"),
+        expect.stringContaining("/villas"),
       );
     });
 
@@ -418,7 +418,7 @@ describe("SearchBar Component", () => {
       );
     });
 
-    it("alerts (not navigates to /properties) when apartments mode has no dates", async () => {
+    it("alerts (not navigates to /villas) when apartments mode has no dates", async () => {
       const alertMock = vi.spyOn(window, "alert").mockImplementation(() => {});
       const user = userEvent.setup();
       renderSearchBar();
@@ -426,7 +426,7 @@ describe("SearchBar Component", () => {
       await user.click(screen.getByRole("button", { name: /search/i }));
       expect(alertMock).toHaveBeenCalled();
       expect(mockRouterPush).not.toHaveBeenCalledWith(
-        expect.stringContaining("/properties"),
+        expect.stringContaining("/villas"),
       );
       alertMock.mockRestore();
     });

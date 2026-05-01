@@ -917,7 +917,7 @@ export default function BookingsEnhanced() {
                       <>
                         <button
                           onClick={() =>
-                            router.push(`/properties/${booking.property_id}`)
+                            router.push(`/villas/${booking.property_id}`)
                           }
                           className={`${styles.actionBtn} ${styles.actionBtnSecondary}`}
                         >
@@ -998,11 +998,11 @@ export default function BookingsEnhanced() {
                 : "Start exploring our luxury villas and make your first booking!"}
             </p>
             <button
-              onClick={() => router.push("/properties")}
+              onClick={() => router.push("/villas")}
               className={styles.emptyAction}
             >
               <FiHome size={18} />
-              Browse Properties
+              Browse Villas
             </button>
           </div>
         )}

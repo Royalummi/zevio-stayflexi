@@ -11,7 +11,7 @@ import PropertyFilters, {
 import { FiHome } from "react-icons/fi";
 import { useToast } from "@/hooks/useToast";
 import ToastContainer from "@/components/ui/ToastContainer";
-import styles from "./properties.module.css";
+import styles from "../properties/properties.module.css";
 
 function PropertiesContent() {
   const searchParams = useSearchParams();

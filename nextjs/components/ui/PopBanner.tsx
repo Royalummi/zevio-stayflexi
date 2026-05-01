@@ -63,7 +63,7 @@ function markDismissed(banner: Banner) {
 
 // Build the button/link href — property deeplink takes precedence over button_link
 function resolveButtonHref(banner: Banner): string | undefined {
-  if (banner.property_id) return `/properties/${banner.property_id}`;
+  if (banner.property_id) return `/villas/${banner.property_id}`;
   if (banner.button_text && banner.button_link)
     return normalizeExternalUrl(banner.button_link);
   return undefined;

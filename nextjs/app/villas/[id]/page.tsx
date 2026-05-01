@@ -40,9 +40,9 @@ import {
   FiUserMinus,
 } from "react-icons/fi";
 import { IoBed } from "react-icons/io5";
-import propertyStyles from "./property-detail.module.css";
-import luxuryStyles from "./luxury-property.module.css";
-import PropertyGallery from "./PropertyGallery";
+import propertyStyles from "../../properties/[id]/property-detail.module.css";
+import luxuryStyles from "../../properties/[id]/luxury-property.module.css";
+import PropertyGallery from "../../properties/[id]/PropertyGallery";
 import DateRangeSelector from "@/components/DateRangeSelector";
 import { getImageUrl } from "@/lib/imageUtils";
 import { sanitizeHtml } from "@/lib/sanitize";
@@ -692,7 +692,7 @@ function PropertyDetailContent() {
             removed.
           </p>
           <button
-            onClick={() => router.push("/properties")}
+            onClick={() => router.push("/villas")}
             className={propertyStyles.notFoundBtn}
           >
             Back to Villas
@@ -786,7 +786,7 @@ function PropertyDetailContent() {
                 <span>Wishlist</span>
               </button>
               <button
-                onClick={() => router.push("/properties")}
+                onClick={() => router.push("/villas")}
                 className={propertyStyles.backBtn}
               >
                 <FiArrowLeft />

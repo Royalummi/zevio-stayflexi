@@ -130,10 +130,10 @@ export default function FavoritesPage() {
             favorites
           </p>
           <button
-            onClick={() => router.push("/properties")}
+            onClick={() => router.push("/villas")}
             className={styles.exploreBtn}
           >
-            Explore Properties
+            Explore Villas
           </button>
         </div>
       )}

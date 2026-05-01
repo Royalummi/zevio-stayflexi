@@ -328,7 +328,7 @@ export default function AboutPage() {
           </p>
           <div className={styles.ctaButtons}>
             <button
-              onClick={() => router.push("/properties")}
+              onClick={() => router.push("/villas")}
               className={`${styles.ctaButton} ${styles.primary}`}
             >
               Explore Villas

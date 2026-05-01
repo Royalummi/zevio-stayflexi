@@ -40,7 +40,7 @@ export default function PropertyCard({
   initialWishlistState = false,
   checkin,
   checkout,
-  detailBasePath = "/properties",
+  detailBasePath = "/villas",
   forceVertical = false,
 }: PropertyCardProps) {
   const router = useRouter();

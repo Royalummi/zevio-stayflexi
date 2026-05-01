@@ -15,7 +15,7 @@ test.describe("Corporate Features", () => {
     test("Regular user should NOT see corporate badges on properties listing", async ({
       page,
     }) => {
-      await page.goto("/properties");
+      await page.goto("/villas");
 
       // Wait for properties to load
       await page.waitForSelector('[class*="propertyCard"]', { timeout: 10000 });
@@ -28,7 +28,7 @@ test.describe("Corporate Features", () => {
     test("Regular user should NOT see corporate pricing on properties listing", async ({
       page,
     }) => {
-      await page.goto("/properties");
+      await page.goto("/villas");
 
       // Wait for properties to load
       await page.waitForSelector('[class*="propertyCard"]', { timeout: 10000 });

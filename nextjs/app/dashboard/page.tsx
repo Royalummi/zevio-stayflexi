@@ -434,10 +434,10 @@ export default function Dashboard() {
                 Start exploring our luxury villas and make your first booking!
               </p>
               <button
-                onClick={() => router.push("/properties")}
+                onClick={() => router.push("/villas")}
                 className={`${styles.btn} ${styles.btnPrimary}`}
               >
-                Browse Properties
+                Browse Villas
               </button>
             </div>
           )}

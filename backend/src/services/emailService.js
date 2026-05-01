@@ -86,7 +86,7 @@ export const _brandFooter = () =>
   </table>`;
 
 // Shared design tokens
-const _F  = `'Inter','Segoe UI',Arial,sans-serif`;       // body
+const _F = `'Inter','Segoe UI',Arial,sans-serif`; // body
 const _FH = `'Poppins','Inter','Segoe UI',Arial,sans-serif`; // headings
 const _GF = `https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap`;
 
@@ -99,14 +99,15 @@ const _emailOpen = (title = "Zevio") =>
   `<tr><td align="center"><table cellpadding="0" cellspacing="0" width="100%" style="max-width:620px;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(31,58,95,0.08);">`;
 
 /** Close the email shell */
-const _emailClose = () =>
-  `</table></td></tr></table></body></html>`;
+const _emailClose = () => `</table></td></tr></table></body></html>`;
 
 /** Navy header row with logo + teal label */
 const _emailHeader = (label = "") =>
   `<tr><td style="background:#1F3A5F;padding:32px 36px;text-align:center;">` +
   `${_logoImg}` +
-  (label ? `<div style="margin-top:14px;font-family:${_FH};font-size:11px;font-weight:700;color:#2FA4A9;letter-spacing:2.5px;text-transform:uppercase;">${label}</div>` : ``) +
+  (label
+    ? `<div style="margin-top:14px;font-family:${_FH};font-size:11px;font-weight:700;color:#2FA4A9;letter-spacing:2.5px;text-transform:uppercase;">${label}</div>`
+    : ``) +
   `</td></tr>`;
 
 /** Teal section title */
@@ -373,11 +374,11 @@ export const sendCancellationEmail = async (bookingId) => {
           ${_st("Cancelled Booking")}
           ${_box(
             `<strong style="font-family:${_F};color:#1F3A5F;display:block;margin-bottom:8px;">${booking.property_title}</strong>` +
-            `<span style="font-family:${_F};">Booking ID: <strong>${booking.id}</strong></span>`
+              `<span style="font-family:${_F};">Booking ID: <strong>${booking.id}</strong></span>`,
           )}
           ${_notice(
             "If you are entitled to a refund, the amount will be processed within 5–7 business days. " +
-            `For any questions, reach us at <a href="mailto:support@zevio.in" style="color:#2FA4A9;">support@zevio.in</a>.`
+              `For any questions, reach us at <a href="mailto:support@zevio.in" style="color:#2FA4A9;">support@zevio.in</a>.`,
           )}
           <p style="font-size:13px;color:#5F6B7A;margin:16px 0 0;font-family:${_F};">— Team Zevio</p>
         </td></tr>` +
@@ -439,7 +440,7 @@ export const sendRefundEmail = async (bookingId, refundAmount) => {
           </table>
           ${_notice(
             "⏱️ The amount will be credited to your original payment method within <strong>5–7 business days</strong>. " +
-            `For queries, contact <a href="mailto:support@zevio.in" style="color:#2FA4A9;">support@zevio.in</a>.`
+              `For queries, contact <a href="mailto:support@zevio.in" style="color:#2FA4A9;">support@zevio.in</a>.`,
           )}
           <p style="font-size:13px;color:#5F6B7A;margin:16px 0 0;font-family:${_F};">— Team Zevio</p>
         </td></tr>` +
@@ -582,14 +583,18 @@ export const sendCheckInReminderEmail = async (
                   ${booking.primary_incharge_alt_contact ? `<div class="contact-row"><span class="contact-lbl">Alt. Contact</span><span><a href="tel:${booking.primary_incharge_alt_contact}">${booking.primary_incharge_alt_contact}</a></span></div>` : ""}
                 </div>
 
-                ${booking.secondary_incharge_name ? `
+                ${
+                  booking.secondary_incharge_name
+                    ? `
                 <div class="contact-card secondary">
                   <h4>Secondary Contact (Backup)</h4>
                   <div class="contact-row"><span class="contact-lbl">Name</span><span>${booking.secondary_incharge_name}</span></div>
                   ${booking.secondary_incharge_phone ? `<div class="contact-row"><span class="contact-lbl">Phone</span><span><a href="tel:${booking.secondary_incharge_phone}">${booking.secondary_incharge_phone}</a></span></div>` : ""}
                   ${booking.secondary_incharge_email ? `<div class="contact-row"><span class="contact-lbl">Email</span><span><a href="mailto:${booking.secondary_incharge_email}">${booking.secondary_incharge_email}</a></span></div>` : ""}
                   ${booking.secondary_incharge_whatsapp ? `<div class="contact-row"><span class="contact-lbl">WhatsApp</span><span><a href="https://wa.me/${booking.secondary_incharge_whatsapp.replace(/[^0-9]/g, "")}">${booking.secondary_incharge_whatsapp}</a></span></div>` : ""}
-                </div>` : ""}
+                </div>`
+                    : ""
+                }
 
                 ${booking.safety_information ? `<p class="st">🛡️ Safety Information</p><div class="guide-box">${booking.safety_information}</div>` : ""}
                 ${booking.local_area_info ? `<p class="st">📍 Local Area Information</p><div class="guide-box">${booking.local_area_info}</div>` : ""}
@@ -744,8 +749,8 @@ export const sendReviewRequestEmail = async (bookingId) => {
             Your feedback helps us improve and helps other travelers make better decisions.
           </p>
           ${_btn(
-            `${process.env.FRONTEND_URL || process.env.NEXTJS_URL}/properties/${booking.property_id}?review=true&booking=${booking.id}`,
-            "Leave a Review"
+            `${process.env.FRONTEND_URL || process.env.NEXTJS_URL}/villas/${booking.property_id}?review=true&booking=${booking.id}`,
+            "Leave a Review",
           )}
           <p style="font-size:13px;color:#5F6B7A;margin:24px 0 0;font-family:${_F};text-align:left;">We'd love to host you again soon! — Team Zevio</p>
         </td></tr>` +
@@ -812,11 +817,11 @@ export const sendBookingExpiryEmail = async (bookingId) => {
             ${_dr("Status", _badge("EXPIRED", "#dc2626"), true)}
           </table>
           ${_notice(
-            "💡 <strong>No worries!</strong> You can create a new booking anytime — the property may still be available for your preferred dates."
+            "💡 <strong>No worries!</strong> You can create a new booking anytime — the property may still be available for your preferred dates.",
           )}
           ${_btn(
-            `${process.env.NEXTJS_URL || "https://zevio.in"}/properties/${booking.property_id}`,
-            "Browse Property Again"
+            `${process.env.NEXTJS_URL || "https://zevio.in"}/villas/${booking.property_id}`,
+            "Browse Property Again",
           )}
           <p style="font-size:13px;color:#5F6B7A;margin:16px 0 0;font-family:${_F};">— Team Zevio</p>
         </td></tr>` +

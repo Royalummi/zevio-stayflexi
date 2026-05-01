@@ -591,9 +591,9 @@ export default function SearchBar() {
     // Route to appropriate page based on property type
     if (propertyType === "villas") {
       if (query) {
-        router.push(`/properties?${query}`);
+        router.push(`/villas?${query}`);
       } else {
-        router.push("/properties");
+        router.push("/villas");
       }
     } else {
       if (query) {
@@ -1040,7 +1040,6 @@ export default function SearchBar() {
           </div>
         </div>
       </div>
-
     </>
   );
 }

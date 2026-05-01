@@ -41,7 +41,7 @@ export default function Header() {
 
   const navItems = useMemo(
     () => [
-      { href: "/properties", label: "Villas" },
+      { href: "/villas", label: "Villas" },
       { href: "/service-apartments", label: "Service Apartments" },
       { href: "/corporate-offers", label: "Corporate" },
       { href: "/destinations", label: "Destinations" },

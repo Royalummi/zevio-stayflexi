@@ -47,7 +47,7 @@ export default function RecommendedProperties({
   const detailBasePath =
     propertyType === "service_apartment"
       ? "/service-apartments"
-      : "/properties";
+      : "/villas";
 
   const toPropertyCardShape = (
     property: RecommendedProperty,

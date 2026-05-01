@@ -593,7 +593,7 @@ export default function BookingDetailsPage() {
 
               {/* View Property Button */}
               <Link
-                href={`/properties/${booking.property_id}`}
+                href={`/villas/${booking.property_id}`}
                 className={styles.viewPropertyButton}
               >
                 <FiMapPin />

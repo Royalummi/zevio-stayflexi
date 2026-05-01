@@ -228,10 +228,10 @@ export default function WhyZevioPage() {
             your perfect getaway.
           </p>
           <button
-            onClick={() => router.push("/properties")}
+            onClick={() => router.push("/villas")}
             className={styles.ctaButton}
           >
-            Explore Properties
+            Explore Villas
           </button>
         </div>
       </section>

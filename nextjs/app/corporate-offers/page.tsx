@@ -370,7 +370,7 @@ export default function CorporateOffersPage() {
 
     // Corporate user - navigate directly to detail page
     if (property.propertyType === "villa") {
-      router.push(`/properties/${property.id}`);
+      router.push(`/villas/${property.id}`);
     } else {
       router.push(`/service-apartments/${property.id}`);
     }

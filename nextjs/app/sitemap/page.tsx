@@ -9,7 +9,7 @@ const sitemapSections = [
     title: "Main Pages",
     links: [
       { name: "Home", href: "/" },
-      { name: "Properties", href: "/properties" },
+      { name: "Villas", href: "/villas" },
       { name: "Destinations", href: "/destinations" },
       { name: "Service Apartments", href: "/service-apartments" },
       { name: "About Us", href: "/about" },

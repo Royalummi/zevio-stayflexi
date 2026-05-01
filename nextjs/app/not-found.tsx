@@ -43,8 +43,8 @@ export default function NotFound() {
           <div className={styles.quickLinks}>
             <p className={styles.quickLinksTitle}>Quick Links</p>
             <div className={styles.quickLinksGrid}>
-              <Link href="/properties" className={styles.quickLink}>
-                Browse Properties
+              <Link href="/villas" className={styles.quickLink}>
+                Browse Villas
               </Link>
               <Link href="/destinations" className={styles.quickLink}>
                 Destinations

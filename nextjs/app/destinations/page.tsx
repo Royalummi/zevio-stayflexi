@@ -145,10 +145,10 @@ export default function DestinationsPage() {
 
   const handleDestinationClick = (destination: Destination) => {
     if (destination.comingSoon) {
-      router.push(`/properties?area=${encodeURIComponent(destination.area)}`);
+      router.push(`/villas?area=${encodeURIComponent(destination.area)}`);
       return;
     }
-    router.push(`/properties?area=${encodeURIComponent(destination.area)}`);
+    router.push(`/villas?area=${encodeURIComponent(destination.area)}`);
   };
 
   return (

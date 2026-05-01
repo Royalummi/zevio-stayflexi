@@ -83,7 +83,7 @@ export default async function Home() {
             {destinations.map((destination) => (
               <Link
                 key={destination.name}
-                href={`/properties?area=${encodeURIComponent(destination.area || destination.name)}`}
+                href={`/villas?area=${encodeURIComponent(destination.area || destination.name)}`}
                 className="destination-card"
               >
                 <Image
@@ -191,10 +191,10 @@ export default async function Home() {
           </p>
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto">
             <Link
-              href="/properties"
+              href="/villas"
               className="btn btn-white btn-lg w-full sm:w-auto"
             >
-              Explore Properties
+              Explore Villas
             </Link>
             <Link
               href="#why-zevio"
