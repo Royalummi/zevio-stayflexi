@@ -880,7 +880,8 @@ function PropertyDetailContent() {
                   About This Place
                 </h2>
                 <p className={luxuryStyles.descriptionTextLuxury}>
-                  {showFullDescription || (property.description?.length ?? 0) <= 300
+                  {showFullDescription ||
+                  (property.description?.length ?? 0) <= 300
                     ? property.description
                     : `${property.description?.slice(0, 300).trimEnd()}...`}
                 </p>
@@ -901,7 +902,10 @@ function PropertyDetailContent() {
                     Amenities & Features
                   </h2>
                   <div className={luxuryStyles.amenitiesGridLuxury}>
-                    {(showAllAmenities ? allFeatures : allFeatures.slice(0, 10)).map((amenity: string, index: number) => (
+                    {(showAllAmenities
+                      ? allFeatures
+                      : allFeatures.slice(0, 10)
+                    ).map((amenity: string, index: number) => (
                       <div
                         key={index}
                         className={luxuryStyles.amenityItemLuxury}

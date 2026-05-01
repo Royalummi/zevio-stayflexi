@@ -274,6 +274,21 @@ button {
   transform: translateY(-2px);
 }
 
+/* White button 2 for dark backgrounds */
+.btn-white-2 {
+  background: var(--brand-white);
+  color: var(--brand-navy);
+  border: 2px solid var(--brand-white);
+  box-shadow: var(--shadow-xl);
+}
+
+.btn-white-2:hover {
+  background: var(--brand-navy-dark);
+  color: var(--brand-white);
+  border-color: var(--brand-navy-dark);
+  transform: translateY(-2px);
+}
+
 .btn-lg {
   padding: 14px 32px;
   font-size: 16px;
@@ -784,12 +799,12 @@ button {
 }
 
 /* Brand column: full width on mobile */
-.footer-grid > div:first-child {
+.footer-grid>div:first-child {
   grid-column: 1 / -1;
 }
 
 /* Contact column: full width on mobile */
-.footer-grid > div:last-child {
+.footer-grid>div:last-child {
   grid-column: 1 / -1;
 }
 
@@ -800,12 +815,12 @@ button {
   }
 
   /* Brand spans full row on tablet 2-col layout */
-  .footer-grid > div:first-child {
+  .footer-grid>div:first-child {
     grid-column: 1 / -1;
   }
 
   /* Contact takes 1 col on tablet */
-  .footer-grid > div:last-child {
+  .footer-grid>div:last-child {
     grid-column: auto;
   }
 }
@@ -817,11 +832,11 @@ button {
   }
 
   /* Reset spans on desktop — all columns equal */
-  .footer-grid > div:first-child {
+  .footer-grid>div:first-child {
     grid-column: auto;
   }
 
-  .footer-grid > div:last-child {
+  .footer-grid>div:last-child {
     grid-column: auto;
   }
 }
@@ -866,6 +881,7 @@ button {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  list-style: none;
 }
 
 .footer-link {

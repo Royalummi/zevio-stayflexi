@@ -832,7 +832,8 @@ function ServiceApartmentDetailContent() {
             </div>
             <div className={styles.descriptionContent}>
               <p>
-                {showFullDescription || (property.description?.length ?? 0) <= 300
+                {showFullDescription ||
+                (property.description?.length ?? 0) <= 300
                   ? property.description
                   : `${property.description?.slice(0, 300).trimEnd()}...`}
               </p>
@@ -855,24 +856,50 @@ function ServiceApartmentDetailContent() {
             </div>
             {(() => {
               const allAmenities = [
-                ...(property.has_workspace ? [{ icon: <FiBriefcase />, label: "Dedicated Workspace" }] : []),
-                ...(property.has_housekeeping ? [{ icon: <FiCoffee />, label: "Housekeeping" }] : []),
-                ...(property.has_elevator ? [{ icon: <MdOutlineElevator />, label: "Elevator" }] : []),
-                ...(property.has_gym ? [{ icon: <FiBox />, label: "Gym/Fitness Center" }] : []),
-                ...(property.has_parking ? [{ icon: <FiTruck />, label: "Free Parking" }] : []),
+                ...(property.has_workspace
+                  ? [{ icon: <FiBriefcase />, label: "Dedicated Workspace" }]
+                  : []),
+                ...(property.has_housekeeping
+                  ? [{ icon: <FiCoffee />, label: "Housekeeping" }]
+                  : []),
+                ...(property.has_elevator
+                  ? [{ icon: <MdOutlineElevator />, label: "Elevator" }]
+                  : []),
+                ...(property.has_gym
+                  ? [{ icon: <FiBox />, label: "Gym/Fitness Center" }]
+                  : []),
+                ...(property.has_parking
+                  ? [{ icon: <FiTruck />, label: "Free Parking" }]
+                  : []),
                 ...(property.amenities
                   ?.filter((amenity) => {
                     const lower = amenity.toLowerCase();
-                    if (property.has_workspace && lower.includes("workspace")) return false;
-                    if (property.has_housekeeping && lower.includes("housekeeping")) return false;
-                    if (property.has_elevator && lower.includes("elevator")) return false;
-                    if (property.has_gym && (lower.includes("gym") || lower.includes("fitness"))) return false;
-                    if (property.has_parking && lower.includes("parking")) return false;
+                    if (property.has_workspace && lower.includes("workspace"))
+                      return false;
+                    if (
+                      property.has_housekeeping &&
+                      lower.includes("housekeeping")
+                    )
+                      return false;
+                    if (property.has_elevator && lower.includes("elevator"))
+                      return false;
+                    if (
+                      property.has_gym &&
+                      (lower.includes("gym") || lower.includes("fitness"))
+                    )
+                      return false;
+                    if (property.has_parking && lower.includes("parking"))
+                      return false;
                     return true;
                   })
-                  .map((amenity) => ({ icon: getAmenityIcon(amenity), label: amenity })) ?? []),
+                  .map((amenity) => ({
+                    icon: getAmenityIcon(amenity),
+                    label: amenity,
+                  })) ?? []),
               ];
-              const visibleAmenities = showAllAmenities ? allAmenities : allAmenities.slice(0, 10);
+              const visibleAmenities = showAllAmenities
+                ? allAmenities
+                : allAmenities.slice(0, 10);
               return (
                 <>
                   <div className={styles.amenitiesGrid}>

@@ -176,8 +176,7 @@ export default async function Home() {
         id="support"
         className="section cta-section"
         style={{
-          background:
-            "linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%)",
+          background: "var(--brand-teal)",
           color: "white",
           textAlign: "center",
         }}
@@ -192,7 +191,7 @@ export default async function Home() {
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto">
             <Link
               href="/villas"
-              className="btn btn-white btn-lg w-full sm:w-auto"
+              className="btn btn-white-2 btn-lg w-full sm:w-auto"
             >
               Explore Villas
             </Link>

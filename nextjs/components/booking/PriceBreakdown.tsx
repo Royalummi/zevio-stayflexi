@@ -254,8 +254,7 @@ export default function PriceBreakdown({
               </div>
               <div className={styles.taxItem}>
                 <span className={styles.taxItemLabel}>
-                  Service Charge (5%)
-                  <span className={styles.taxNote}>no GST</span>
+                  Service Charge (5% Inclusive of GST)
                 </span>
                 <span className={styles.taxItemValue}>
                   {formatCurrency(pricingBreakdown.serviceCharge)}
