@@ -51,15 +51,27 @@
 
 /* Logo */
 .logo {
-    font-size: var(--text-2xl);
-    font-weight: 700;
-    color: var(--brand-navy);
+    display: inline-flex;
+    align-items: center;
+    height: 40px;
     text-decoration: none;
     transition: var(--transition-base);
 }
 
 .logo:hover {
-    color: var(--brand-teal);
+    opacity: 0.9;
+}
+
+.logoImage {
+    width: auto;
+    height: 34px;
+    object-fit: contain;
+}
+
+@media (max-width: 480px) {
+    .logoImage {
+        height: 30px;
+    }
 }
 
 /* Navigation */

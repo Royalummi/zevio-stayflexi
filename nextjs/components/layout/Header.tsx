@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState, useEffect } from "react";
 import {
@@ -82,7 +83,14 @@ export default function Header() {
         <div className={styles.headerInner}>
           {/* Logo */}
           <Link href="/" className={styles.logo}>
-            Zevio
+            <Image
+              src="/brand/zevio-logo-color.png"
+              alt="Zevio"
+              width={180}
+              height={38}
+              priority
+              className={styles.logoImage}
+            />
           </Link>
 
           {/* Desktop Navigation */}

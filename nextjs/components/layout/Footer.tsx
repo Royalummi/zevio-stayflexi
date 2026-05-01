@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import {
   FiFacebook,
@@ -73,7 +74,15 @@ export default function Footer() {
         <div className="footer-grid">
           {/* Brand */}
           <div>
-            <div className="footer-brand">Zevio</div>
+            <Link href="/" className="footer-brand" aria-label="Zevio home">
+              <Image
+                src="/brand/zevio-logo-white.png"
+                alt="Zevio"
+                width={170}
+                height={38}
+                className="footer-brand-image"
+              />
+            </Link>
             <p className="footer-description">
               Book verified villas &amp; service apartments across Bangalore.
               Not just a stay — a better living experience.

@@ -842,11 +842,16 @@ button {
 }
 
 .footer-brand {
-  font-size: 1.5rem;
-  font-weight: var(--font-bold);
-  color: white;
-  letter-spacing: -0.02em;
-  margin-bottom: 10px;
+  display: inline-flex;
+  align-items: center;
+  margin-bottom: 12px;
+  text-decoration: none;
+}
+
+.footer-brand-image {
+  width: auto;
+  height: 34px;
+  object-fit: contain;
 }
 
 .footer-title {
@@ -952,6 +957,10 @@ button {
 @media (max-width: 639px) {
   .footer {
     padding: 40px 0 0;
+  }
+
+  .footer-brand-image {
+    height: 30px;
   }
 
   .footer-bottom {
