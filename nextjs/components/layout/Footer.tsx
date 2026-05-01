@@ -76,7 +76,7 @@ export default function Footer() {
           <div>
             <Link href="/" className="footer-brand" aria-label="Zevio home">
               <Image
-                src="/brand/zevio-logo-white.png"
+                src="/brand/zevio-logo-white-20260501.png"
                 alt="Zevio"
                 width={268}
                 height={72}

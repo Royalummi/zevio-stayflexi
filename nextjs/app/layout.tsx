@@ -20,9 +20,9 @@ export const metadata: Metadata = {
   keywords:
     "luxury villas, villa rentals, vacation homes, Goa villas, Lonavala villas, Alibaug villas, India vacation rentals",
   icons: {
-    icon: "/brand/zevio-logo-color.png",
-    apple: "/brand/zevio-logo-color.png",
-    shortcut: "/brand/zevio-logo-color.png",
+    icon: "/brand/zevio-logo-color-20260501.png",
+    apple: "/brand/zevio-logo-color-20260501.png",
+    shortcut: "/brand/zevio-logo-color-20260501.png",
   },
   openGraph: {
     title: "Zevio - Luxury Villa Rentals",
@@ -31,7 +31,7 @@ export const metadata: Metadata = {
     locale: "en_IN",
     images: [
       {
-        url: "/brand/zevio-logo-color.png",
+        url: "/brand/zevio-logo-color-20260501.png",
         width: 1200,
         height: 630,
         alt: "Zevio - Luxury Villa Rentals",
@@ -42,7 +42,7 @@ export const metadata: Metadata = {
     card: "summary",
     title: "Zevio - Luxury Villa Rentals",
     description: "Discover and book stunning luxury villas in Bangalore",
-    images: ["/brand/zevio-logo-color.png"],
+    images: ["/brand/zevio-logo-color-20260501.png"],
   },
 };
 

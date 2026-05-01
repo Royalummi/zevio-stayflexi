@@ -84,7 +84,7 @@ export default function Header() {
           {/* Logo */}
           <Link href="/" className={styles.logo}>
             <Image
-              src="/brand/zevio-logo-color.png"
+              src="/brand/zevio-logo-color-20260501.png"
               alt="Zevio"
               width={280}
               height={64}
