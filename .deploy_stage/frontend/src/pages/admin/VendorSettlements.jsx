@@ -144,11 +144,11 @@ export default function VendorSettlements() {
 
   const pendingAmount = settlements
     .filter((s) => s.status === "pending")
-    .reduce((sum, s) => sum + s.amount, 0);
+    .reduce((sum, s) => sum + parseFloat(s.amount || 0), 0);
 
   const paidAmount = settlements
     .filter((s) => s.status === "paid")
-    .reduce((sum, s) => sum + s.amount, 0);
+    .reduce((sum, s) => sum + parseFloat(s.amount || 0), 0);
 
   return (
     <div className="space-y-6">
@@ -235,7 +235,7 @@ export default function VendorSettlements() {
           <CardContent>
             <div className="text-2xl font-bold">
               {formatCurrency(
-                settlements.reduce((sum, s) => sum + s.amount, 0),
+                settlements.reduce((sum, s) => sum + parseFloat(s.amount || 0), 0),
               )}
             </div>
             <p className="text-xs text-gray-500 mt-1">
