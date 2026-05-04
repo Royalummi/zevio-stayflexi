@@ -61,6 +61,21 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    // Do not run refresh/redirect logic for public auth endpoints.
+    // These endpoints can legitimately return 401 (e.g. invalid credentials),
+    // and forcing a redirect to /login hides the actual error message.
+    const requestUrl = originalRequest?.url || "";
+    const isPublicAuthEndpoint =
+      requestUrl.includes("/auth/login") ||
+      requestUrl.includes("/auth/register") ||
+      requestUrl.includes("/auth/forgot-password") ||
+      requestUrl.includes("/auth/reset-password") ||
+      requestUrl.includes("/auth/verify-email");
+
+    if (isPublicAuthEndpoint) {
+      return Promise.reject(error);
+    }
+
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
