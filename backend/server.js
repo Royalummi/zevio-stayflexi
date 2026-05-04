@@ -75,6 +75,10 @@ const allowedOrigins = [
   "https://www.zevio.in",
   "https://api.zevio.in",
   "https://admin.zevio.in",
+  "https://zevio.cloud",
+  "https://www.zevio.cloud",
+  "https://api.zevio.cloud",
+  "https://admin.zevio.cloud",
 ];
 
 const isAllowedOrigin = (origin) => {
