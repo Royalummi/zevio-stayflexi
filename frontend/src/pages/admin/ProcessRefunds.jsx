@@ -112,7 +112,7 @@ export default function ProcessRefunds() {
 
   const calculateRefundAmount = () => {
     if (!selectedBooking) return 0;
-    return (selectedBooking.total_amount * refundPercentage) / 100;
+    return (parseFloat(selectedBooking.total_amount || 0) * refundPercentage) / 100;
   };
 
   const getStatusBadge = (status) => {
@@ -198,7 +198,7 @@ export default function ProcessRefunds() {
             <div className="text-2xl font-bold">
               {formatCurrency(
                 bookings.reduce(
-                  (sum, booking) => sum + booking.total_amount,
+                  (sum, booking) => sum + parseFloat(booking.total_amount || 0),
                   0,
                 ),
               )}
@@ -216,7 +216,7 @@ export default function ProcessRefunds() {
             <div className="text-2xl font-bold">
               {formatCurrency(
                 bookings.reduce(
-                  (sum, booking) => sum + booking.total_amount * 0.8,
+                  (sum, booking) => sum + parseFloat(booking.total_amount || 0) * 0.8,
                   0,
                 ) / (bookings.length || 1),
               )}
