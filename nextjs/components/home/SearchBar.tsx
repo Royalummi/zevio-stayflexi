@@ -246,20 +246,24 @@ export default function SearchBar() {
         const response = await api.get(url);
 
         // Showcase destinations to highlight (these appear even if no properties yet)
-        const showcaseDestinations = [
+        const showcaseDestinations: City[] = [
           {
+            id: "showcase-nandi-hills",
             name: "Nandi Hills",
             area: "Nandi Hills",
             city: "Nandi Hills",
             state: "Karnataka",
+            status: "active",
           },
           {
+            id: "showcase-bangalore-airport",
             name: "Bangalore Airport",
             area: "Bangalore Airport",
             city: "Bangalore",
             state: "Karnataka",
+            status: "active",
           },
-          { name: "Hosur", area: "Hosur", city: "Hosur", state: "Tamil Nadu" },
+          { id: "showcase-hosur", name: "Hosur", area: "Hosur", city: "Hosur", state: "Tamil Nadu", status: "active" },
         ];
 
         if (response.data.success && response.data.data) {
@@ -274,18 +278,22 @@ export default function SearchBar() {
         console.error("Failed to fetch areas:", error);
         setAreas([
           {
+            id: "showcase-nandi-hills",
             name: "Nandi Hills",
             area: "Nandi Hills",
             city: "Nandi Hills",
             state: "Karnataka",
+            status: "active",
           },
           {
+            id: "showcase-bangalore-airport",
             name: "Bangalore Airport",
             area: "Bangalore Airport",
             city: "Bangalore",
             state: "Karnataka",
+            status: "active",
           },
-          { name: "Hosur", area: "Hosur", city: "Hosur", state: "Tamil Nadu" },
+          { id: "showcase-hosur", name: "Hosur", area: "Hosur", city: "Hosur", state: "Tamil Nadu", status: "active" },
         ]);
       }
     };
