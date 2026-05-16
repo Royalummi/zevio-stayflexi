@@ -19,7 +19,9 @@ export default function CorporateOffersPage() {
   const router = useRouter();
 
   // HIDDEN: Corporate Offers — re-enable by removing the 2 lines below when feature is live
-  useEffect(() => { router.replace("/villas"); }, [router]);
+  useEffect(() => {
+    router.replace("/villas");
+  }, [router]);
   return null;
 
   // Original page below (kept intact for re-enabling later):

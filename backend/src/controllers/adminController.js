@@ -3622,7 +3622,10 @@ export const uploadPropertyImages = asyncHandler(async (req, res) => {
   // Enforce total image cap across existing + new uploads.
   const totalAfterUpload = existingPhotos.length + req.files.length;
   if (totalAfterUpload > MAX_PROPERTY_IMAGES) {
-    const remainingSlots = Math.max(0, MAX_PROPERTY_IMAGES - existingPhotos.length);
+    const remainingSlots = Math.max(
+      0,
+      MAX_PROPERTY_IMAGES - existingPhotos.length,
+    );
     return sendError(
       res,
       `Image limit exceeded. Maximum ${MAX_PROPERTY_IMAGES} images allowed per property. You can upload ${remainingSlots} more image(s).`,

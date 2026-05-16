@@ -5,7 +5,7 @@ import sharp from "sharp";
 import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
-import { uploadToR2, isR2Configured } from "../utils/r2Storage.js";
+import { uploadToR2, deleteFromR2, isR2Configured } from "../utils/r2Storage.js";
 
 const MAX_PROPERTY_IMAGES = 40;
 
@@ -44,7 +44,10 @@ export const uploadPropertyImages = asyncHandler(async (req, res) => {
 
   const totalAfterUpload = Number(existingCount || 0) + req.files.length;
   if (totalAfterUpload > MAX_PROPERTY_IMAGES) {
-    const remainingSlots = Math.max(0, MAX_PROPERTY_IMAGES - Number(existingCount || 0));
+    const remainingSlots = Math.max(
+      0,
+      MAX_PROPERTY_IMAGES - Number(existingCount || 0),
+    );
     return sendError(
       res,
       `Image limit exceeded. Maximum ${MAX_PROPERTY_IMAGES} images allowed per property. You can upload ${remainingSlots} more image(s).`,
@@ -170,10 +173,19 @@ export const deletePropertyImage = asyncHandler(async (req, res) => {
     return sendError(res, "Image not found", 404);
   }
 
-  // Delete file from filesystem (optional - can skip if using cloud storage)
-  const imagePath = path.join(__dirname, "../..", images[0].image_url);
-  if (fs.existsSync(imagePath)) {
-    fs.unlinkSync(imagePath);
+  // Delete file from storage (R2 or local)
+  const imageUrl = images[0].image_url;
+  if (isR2Configured() && imageUrl.startsWith("http")) {
+    // Delete from Cloudflare R2
+    await deleteFromR2(imageUrl).catch((err) =>
+      console.error("R2 delete failed (non-fatal):", err.message),
+    );
+  } else {
+    // Delete from local filesystem fallback
+    const imagePath = path.join(__dirname, "../..", imageUrl);
+    if (fs.existsSync(imagePath)) {
+      fs.unlinkSync(imagePath);
+    }
   }
 
   // Delete from database

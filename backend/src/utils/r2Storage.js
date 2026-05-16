@@ -56,8 +56,9 @@ export const uploadToR2 = async (
     const uniqueFilename = filename || `${folder}-${uuidv4()}.${ext}`;
     const key = `${folder}/${uniqueFilename}`;
 
-    // Optimize image with sharp (convert to WebP, compress)
+    // Optimize image with sharp (auto-rotate for EXIF orientation, convert to WebP, compress)
     const optimizedBuffer = await sharp(fileBuffer)
+      .rotate() // Auto-rotate based on EXIF orientation (fixes tilted phone photos)
       .webp({ quality: options.quality || 85 })
       .resize(options.maxWidth || 1920, options.maxHeight || 1080, {
         fit: "inside",

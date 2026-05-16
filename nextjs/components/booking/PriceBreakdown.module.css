@@ -469,6 +469,7 @@
   .taxHeader {
     background: #1f2937;
   }
+
   .taxHeader:hover {
     background: #374151;
   }
@@ -530,12 +531,12 @@
   gap: 12px;
 }
 
-.taxItem + .taxItem {
+.taxItem+.taxItem {
   border-top: 1px solid #f3f4f6;
 }
 
 @media (prefers-color-scheme: dark) {
-  .taxItem + .taxItem {
+  .taxItem+.taxItem {
     border-top-color: #1f2937;
   }
 }

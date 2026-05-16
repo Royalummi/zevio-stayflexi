@@ -189,7 +189,9 @@ const PropertyViewEditModal = ({
       setHasUnsavedChanges(false);
     } catch (error) {
       console.error("Error fetching property:", error);
-      const msg = error.response?.data?.message || "Failed to load property details. Please try again.";
+      const msg =
+        error.response?.data?.message ||
+        "Failed to load property details. Please try again.";
       toast.error(msg);
     } finally {
       setLoading(false);
@@ -235,15 +237,19 @@ const PropertyViewEditModal = ({
     const validationErrors = validateForm();
     if (Object.keys(validationErrors).length > 0) {
       const messages = Object.values(validationErrors).slice(0, 2).join(" · ");
-      const extra = Object.keys(validationErrors).length > 2
-        ? ` (+${Object.keys(validationErrors).length - 2} more)`
-        : "";
+      const extra =
+        Object.keys(validationErrors).length > 2
+          ? ` (+${Object.keys(validationErrors).length - 2} more)`
+          : "";
       toast.warning(`${messages}${extra}`);
       // Scroll to first error field
       const firstKey = Object.keys(validationErrors)[0];
       setTimeout(() => {
         const el = document.getElementById(firstKey);
-        if (el) { el.scrollIntoView({ behavior: "smooth", block: "center" }); el.focus(); }
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+          el.focus();
+        }
       }, 100);
       return;
     }
@@ -364,7 +370,10 @@ const PropertyViewEditModal = ({
     } catch (error) {
       console.error("Error updating property:", error);
       if (error.response?.status === 400) {
-        toast.warning(error.response.data?.message || "Invalid input — please check the form fields.");
+        toast.warning(
+          error.response.data?.message ||
+            "Invalid input — please check the form fields.",
+        );
       } else if (error.response?.status === 401) {
         toast.error("Session expired. Please log in again.");
       } else if (error.response?.status === 403) {
@@ -372,7 +381,10 @@ const PropertyViewEditModal = ({
       } else if (error.response?.status === 404) {
         toast.error("Property not found — it may have been deleted.");
       } else {
-        toast.error(error.response?.data?.message || "Failed to update property. Please try again.");
+        toast.error(
+          error.response?.data?.message ||
+            "Failed to update property. Please try again.",
+        );
       }
     } finally {
       setLoading(false);
@@ -669,7 +681,9 @@ const PropertyViewEditModal = ({
                             handleInputChange("description", e.target.value)
                           }
                           rows={4}
-                          className={errors.description ? "border-destructive" : ""}
+                          className={
+                            errors.description ? "border-destructive" : ""
+                          }
                         />
                         {errors.description && (
                           <p className="text-sm text-destructive mt-1">
@@ -775,7 +789,9 @@ const PropertyViewEditModal = ({
                           onChange={(e) =>
                             handleInputChange("max_guests", e.target.value)
                           }
-                          className={errors.max_guests ? "border-destructive" : ""}
+                          className={
+                            errors.max_guests ? "border-destructive" : ""
+                          }
                         />
                         {errors.max_guests && (
                           <p className="text-sm text-destructive mt-1">
@@ -794,7 +810,9 @@ const PropertyViewEditModal = ({
                           onChange={(e) =>
                             handleInputChange("bedrooms", e.target.value)
                           }
-                          className={errors.bedrooms ? "border-destructive" : ""}
+                          className={
+                            errors.bedrooms ? "border-destructive" : ""
+                          }
                         />
                         {errors.bedrooms && (
                           <p className="text-sm text-destructive mt-1">
@@ -813,7 +831,9 @@ const PropertyViewEditModal = ({
                           onChange={(e) =>
                             handleInputChange("bathrooms", e.target.value)
                           }
-                          className={errors.bathrooms ? "border-destructive" : ""}
+                          className={
+                            errors.bathrooms ? "border-destructive" : ""
+                          }
                         />
                         {errors.bathrooms && (
                           <p className="text-sm text-destructive mt-1">
@@ -902,7 +922,6 @@ const PropertyViewEditModal = ({
                           />
                         </div>
                       </div>
-
                     </div>
                   ) : (
                     <div className="space-y-3">

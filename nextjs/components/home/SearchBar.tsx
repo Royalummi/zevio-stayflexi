@@ -244,11 +244,49 @@ export default function SearchBar() {
             ? `/public/areas`
             : `/public/areas?property_type=service_apartment`;
         const response = await api.get(url);
+
+        // Showcase destinations to highlight (these appear even if no properties yet)
+        const showcaseDestinations = [
+          {
+            name: "Nandi Hills",
+            area: "Nandi Hills",
+            city: "Nandi Hills",
+            state: "Karnataka",
+          },
+          {
+            name: "Bangalore Airport",
+            area: "Bangalore Airport",
+            city: "Bangalore",
+            state: "Karnataka",
+          },
+          { name: "Hosur", area: "Hosur", city: "Hosur", state: "Tamil Nadu" },
+        ];
+
         if (response.data.success && response.data.data) {
-          setAreas(response.data.data.areas || []);
+          const backendAreas = response.data.data.areas || [];
+          // Combine showcase destinations with backend areas (showcase first for alphabetical sorting)
+          const allAreas = [...showcaseDestinations, ...backendAreas];
+          setAreas(allAreas);
+        } else {
+          setAreas(showcaseDestinations);
         }
       } catch (error) {
         console.error("Failed to fetch areas:", error);
+        setAreas([
+          {
+            name: "Nandi Hills",
+            area: "Nandi Hills",
+            city: "Nandi Hills",
+            state: "Karnataka",
+          },
+          {
+            name: "Bangalore Airport",
+            area: "Bangalore Airport",
+            city: "Bangalore",
+            state: "Karnataka",
+          },
+          { name: "Hosur", area: "Hosur", city: "Hosur", state: "Tamil Nadu" },
+        ]);
       }
     };
     fetchAreas();
@@ -279,6 +317,7 @@ export default function SearchBar() {
   }, [searchInput, areas]);
 
   // Flat list: cities first (no area), then areas sorted by city then area name
+  // Nandi Hills is pinned to the top
   const renderList = useMemo((): City[] => {
     const cityItems = filteredCities
       .filter((c) => !c.area)
@@ -290,7 +329,23 @@ export default function SearchBar() {
         if (cityComp !== 0) return cityComp;
         return (a.area || "").localeCompare(b.area || "");
       });
-    return [...cityItems, ...areaItems];
+
+    const allItems = [...cityItems, ...areaItems];
+
+    // Pin Nandi Hills to the top if it exists in results
+    const nandiHillsIndex = allItems.findIndex(
+      (item) => item.name === "Nandi Hills",
+    );
+    if (nandiHillsIndex > -1) {
+      const nandiHills = allItems[nandiHillsIndex];
+      const remainingItems = [
+        ...allItems.slice(0, nandiHillsIndex),
+        ...allItems.slice(nandiHillsIndex + 1),
+      ];
+      return [nandiHills, ...remainingItems];
+    }
+
+    return allItems;
   }, [filteredCities]);
 
   // Used for keyboard navigation (renderList is already all City items)

@@ -1554,16 +1554,7 @@ function PropertyDetailContent() {
                   </h2>
                   <div className={luxuryStyles.locationCard}>
                     <div className={luxuryStyles.locationDetails}>
-                      <div
-                        className={`${luxuryStyles.locationAddress}${property.maps_location ? ` ${luxuryStyles.locationClickable}` : ""}`}
-                        onClick={() => {
-                          if (property.maps_location) {
-                            window.open(property.maps_location, "_blank");
-                          }
-                        }}
-                        title={property.maps_location ? "View on Google Maps" : ""}
-                        style={property.maps_location ? { cursor: "pointer" } : undefined}
-                      >
+                      <div className={luxuryStyles.locationAddress}>
                         <strong>Address:</strong>
                         <p>
                           {property.area && <span>{property.area}, </span>}
@@ -1572,11 +1563,6 @@ function PropertyDetailContent() {
                             <span> - {property.pincode}</span>
                           )}
                         </p>
-                        {property.maps_location && (
-                          <span style={{ fontSize: "0.85rem", color: "#4285F4", marginTop: "0.25rem", display: "inline-block" }}>
-                            📍 View on Google Maps
-                          </span>
-                        )}
                       </div>
                     </div>
                   </div>
