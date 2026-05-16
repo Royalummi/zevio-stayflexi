@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useMemo, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useState, useEffect, useMemo, useRef, useCallback, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { api } from "@/lib/axios";
 import type { City } from "@/types";
 import ServiceApartmentCard from "@/components/properties/ServiceApartmentCard";
@@ -76,11 +76,14 @@ const parseFeatures = (
 function ServiceApartmentsContent() {
   const searchParams = useSearchParams();
   const toast = useToast();
+  const PAGE_SIZE = 12;
   const [properties, setProperties] = useState<ServiceApartment[]>([]);
-  const [filteredProperties, setFilteredProperties] = useState<
-    ServiceApartment[]
-  >([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [totalCount, setTotalCount] = useState(0);
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
   // Initialize filters from URL search params
   const [filters, setFilters] = useState<ServiceApartmentFiltersState>(() => {
@@ -115,7 +118,7 @@ function ServiceApartmentsContent() {
       bedrooms: bedroomsParam || "",
       checkin: checkinParam || "",
       checkout: checkoutParam || "",
-      sortBy: "recommended",
+      sortBy: "title-az",
       selectedAmenities: [],
     };
   });
@@ -167,6 +170,8 @@ function ServiceApartmentsContent() {
     const fetchProperties = async () => {
       try {
         setLoading(true);
+        setCurrentPage(1);
+        setHasMore(true);
         // Build API params — server handles availability (checkin/checkout)
         // and guest-capacity filtering; everything else stays client-side.
         const apiParams: Record<string, string> = {};
@@ -178,16 +183,20 @@ function ServiceApartmentsContent() {
         const totalGuests =
           parseInt(filters.guests || "0") + parseInt(filters.children || "0");
         if (totalGuests > 0) apiParams.guests = totalGuests.toString();
+        apiParams.limit = String(PAGE_SIZE);
+        apiParams.page = "1";
         const response = await api.get("/service-apartments", {
           params: apiParams,
         });
         const fetchedProperties = response.data.data.properties || [];
+        const total = response.data.data.total ?? response.data.data.pagination?.total ?? 0;
 
         // Parse features array into boolean flags for each property
         const parsedProperties = fetchedProperties.map(parseFeatures);
 
         setProperties(parsedProperties);
-        setFilteredProperties(parsedProperties);
+        setTotalCount(total);
+        setHasMore(parsedProperties.length === PAGE_SIZE && parsedProperties.length < total);
       } catch (error) {
         console.error("Error fetching service apartments:", error);
         toast.error("Failed to load properties");
@@ -206,7 +215,57 @@ function ServiceApartmentsContent() {
     filters.children,
   ]);
 
+  const loadMore = useCallback(async () => {
+    if (loadingMore || !hasMore) return;
+    try {
+      setLoadingMore(true);
+      const nextPage = currentPage + 1;
+      const apiParams: Record<string, string> = {};
+      if (filters.city) apiParams.city = filters.city;
+      if (filters.area) apiParams.area = filters.area;
+      if (filters.checkin) apiParams.checkin = filters.checkin;
+      if (filters.checkout) apiParams.checkout = filters.checkout;
+      const totalGuests =
+        parseInt(filters.guests || "0") + parseInt(filters.children || "0");
+      if (totalGuests > 0) apiParams.guests = totalGuests.toString();
+      apiParams.limit = String(PAGE_SIZE);
+      apiParams.page = String(nextPage);
+      const response = await api.get("/service-apartments", { params: apiParams });
+      const fetchedProperties = (response.data.data.properties || []).map(parseFeatures);
+      const total = response.data.data.total ?? response.data.data.pagination?.total ?? 0;
+
+      setProperties((prev) => {
+        const existingIds = new Set(prev.map((p) => p.id));
+        const newOnes = fetchedProperties.filter((p: ServiceApartment) => !existingIds.has(p.id));
+        return [...prev, ...newOnes];
+      });
+      setCurrentPage(nextPage);
+      setTotalCount(total);
+      setHasMore(fetchedProperties.length === PAGE_SIZE && (currentPage + 1) * PAGE_SIZE < total);
+    } catch (error) {
+      console.error("Error loading more service apartments:", error);
+    } finally {
+      setLoadingMore(false);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loadingMore, hasMore, currentPage, filters]);
+
   useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loading && !loadingMore) {
+          loadMore();
+        }
+      },
+      { rootMargin: "200px" }
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore, loading, loadingMore, loadMore]);
+
+  const filteredProperties = useMemo(() => {
     let filtered = [...properties];
 
     // Filter by city
@@ -256,7 +315,11 @@ function ServiceApartmentsContent() {
     }
 
     // Sorting
-    if (filters.sortBy === "price-low") {
+    if (filters.sortBy === "title-az" || filters.sortBy === "recommended") {
+      filtered.sort((a, b) => (a.title || "").localeCompare(b.title || ""));
+    } else if (filters.sortBy === "title-za") {
+      filtered.sort((a, b) => (b.title || "").localeCompare(a.title || ""));
+    } else if (filters.sortBy === "price-low") {
       filtered.sort((a, b) => a.price_per_night - b.price_per_night);
     } else if (filters.sortBy === "price-high") {
       filtered.sort((a, b) => b.price_per_night - a.price_per_night);
@@ -264,7 +327,7 @@ function ServiceApartmentsContent() {
       filtered.sort((a, b) => b.rating - a.rating);
     }
 
-    setFilteredProperties(filtered);
+    return filtered;
   }, [filters, properties]);
 
   const handleFilterChange = (
@@ -289,7 +352,7 @@ function ServiceApartmentsContent() {
       bedrooms: "",
       checkin: "",
       checkout: "",
-      sortBy: "recommended",
+      sortBy: "title-az",
       selectedAmenities: [],
     });
   };
@@ -349,6 +412,24 @@ function ServiceApartmentsContent() {
             ))}
           </div>
         )}
+
+        {/* Infinite scroll sentinel */}
+        <div ref={sentinelRef} style={{ height: 1 }} />
+
+        {/* Loading more indicator */}
+        {loadingMore && (
+          <div className={styles.loadingContainer}>
+            <div className={styles.loadingSpinner}></div>
+            <p className={styles.loadingText}>Loading more...</p>
+          </div>
+        )}
+
+        {/* End of list */}
+        {!hasMore && filteredProperties.length > 0 && (
+          <p style={{ textAlign: "center", color: "#888", padding: "1.5rem 0", fontSize: "0.9rem" }}>
+            You&apos;ve seen all {filteredProperties.length} service apartments
+          </p>
+        )}
       </div>
       <ToastContainer toasts={toast.toasts} removeToast={toast.removeToast} />
     </div>
@@ -356,6 +437,13 @@ function ServiceApartmentsContent() {
 }
 
 export default function ServiceApartmentsPage() {
+  // HIDDEN: Service Apartments — re-enable by removing the 3 lines below when feature is live
+  const router = useRouter();
+  useEffect(() => { router.replace("/villas"); }, [router]);
+  return null;
+
+  // Original page below (kept intact for re-enabling later):
+  // eslint-disable-next-line no-unreachable
   return (
     <Suspense
       fallback={

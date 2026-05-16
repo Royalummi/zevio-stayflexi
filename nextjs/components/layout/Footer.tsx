@@ -84,7 +84,8 @@ export default function Footer() {
               />
             </Link>
             <p className="footer-description">
-              Book verified villas &amp; service apartments across Bangalore.
+              {/* HIDDEN: old tagline — Book verified villas &amp; service apartments across Bangalore. */}
+              Book verified villas across Bangalore.
               Not just a stay — a better living experience.
             </p>
             <div className="flex gap-4">

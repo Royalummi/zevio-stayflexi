@@ -70,10 +70,90 @@ export const getProperties = asyncHandler(async (req, res) => {
     limit = 12,
   } = req.query;
 
-  let query = `
-    SELECT 
-      p.id, 
-      p.title, 
+  const pageNum = Math.max(1, parseInt(page) || 1);
+  const limitNum = Math.min(Math.max(1, parseInt(limit) || 12), 100); // cap at 100
+  const offset = (pageNum - 1) * limitNum;
+
+  // Build WHERE conditions and a single shared params array used by both
+  // the count query and the data query (pagination params appended separately).
+  const whereConditions = [
+    `p.status = 'approved'`,
+    `p.deleted_at IS NULL`,
+    `p.property_type_id = 'pt-001'`,
+    `COALESCE(pr.price_per_night, 0) > 0`,
+  ];
+  const sharedParams = [];
+
+  if (city) {
+    whereConditions.push(`LOWER(c.name) = LOWER(?)`);
+    sharedParams.push(city);
+  }
+
+  // Area filter (for area-wise search)
+  if (area) {
+    whereConditions.push(`p.area = ?`);
+    sharedParams.push(area);
+  }
+
+  // Validate and parse price filters
+  const minPriceNum = parseFloat(min_price);
+  if (min_price && !isNaN(minPriceNum) && minPriceNum >= 0) {
+    whereConditions.push(`pr.price_per_night >= ?`);
+    sharedParams.push(minPriceNum);
+  }
+
+  const maxPriceNum = parseFloat(max_price);
+  if (max_price && !isNaN(maxPriceNum) && maxPriceNum >= 0) {
+    whereConditions.push(`pr.price_per_night <= ?`);
+    sharedParams.push(maxPriceNum);
+  }
+
+  if (search) {
+    whereConditions.push(`(p.title LIKE ? OR p.description LIKE ?)`);
+    sharedParams.push(`%${search}%`, `%${search}%`);
+  }
+
+  // Filter by guest capacity
+  const guestsNum = parseInt(guests);
+  if (guests && !isNaN(guestsNum) && guestsNum > 0) {
+    whereConditions.push(`p.max_guests >= ?`);
+    sharedParams.push(guestsNum);
+  }
+
+  // Availability filter — use NOT EXISTS (faster than NOT IN for large tables)
+  if (checkin && checkout) {
+    whereConditions.push(`
+      NOT EXISTS (
+        SELECT 1 FROM bookings b
+        WHERE b.property_id = p.id
+          AND b.status IN ('confirmed', 'completed')
+          AND b.check_in < ? AND b.check_out > ?
+      )`);
+    whereConditions.push(`
+      NOT EXISTS (
+        SELECT 1 FROM property_blackout_dates pbd
+        WHERE pbd.property_id = p.id
+          AND pbd.start_date <= ? AND pbd.end_date >= ?
+      )`);
+    sharedParams.push(checkout, checkin, checkout, checkin);
+  }
+
+  const whereClause = `WHERE ${whereConditions.join(" AND ")}`;
+
+  // Count query — uses sharedParams only (no pagination params)
+  const countQuery = `
+    SELECT COUNT(DISTINCT p.id) AS total
+    FROM properties p
+    INNER JOIN cities c ON p.city_id = c.id
+    ${getPricingJoinClause("p", "pr")}
+    ${whereClause}
+  `;
+
+  // Data query — same WHERE clause, appends LIMIT/OFFSET
+  const dataQuery = `
+    SELECT
+      p.id,
+      p.title,
       p.description,
       p.address,
       p.area,
@@ -97,101 +177,19 @@ export const getProperties = asyncHandler(async (req, res) => {
     ${getPricingJoinClause("p", "pr")}
     ${getAmenitiesJoinClause("p", "pa", "a")}
     ${featuresService.getFeaturesJoinClause("p", "pf", "f")}
-    WHERE p.status = 'approved' 
-    AND p.deleted_at IS NULL
-    AND p.property_type_id = 'pt-001'
-    AND COALESCE(pr.price_per_night, 0) > 0
+    ${whereClause}
+    GROUP BY p.id
+    ORDER BY p.created_at DESC
+    LIMIT ? OFFSET ?
   `;
 
-  const params = [];
+  // Run count and data queries in parallel — saves one round-trip to DB
+  const [[countResult], [properties]] = await Promise.all([
+    db.query(countQuery, sharedParams),
+    db.query(dataQuery, [...sharedParams, limitNum, offset]),
+  ]);
 
-  if (city) {
-    query += ` AND LOWER(c.name) = LOWER(?)`;
-    params.push(city);
-  }
-
-  // Area filter (for area-wise search)
-  if (area) {
-    query += ` AND p.area = ?`;
-    params.push(area);
-  }
-
-  // Validate and parse price filters
-  const minPriceNum = parseFloat(min_price);
-  if (min_price && !isNaN(minPriceNum) && minPriceNum >= 0) {
-    query += ` AND pr.price_per_night >= ?`;
-    params.push(minPriceNum);
-  }
-
-  const maxPriceNum = parseFloat(max_price);
-  if (max_price && !isNaN(maxPriceNum) && maxPriceNum >= 0) {
-    query += ` AND pr.price_per_night <= ?`;
-    params.push(maxPriceNum);
-  }
-
-  if (search) {
-    query += ` AND (p.title LIKE ? OR p.description LIKE ?)`;
-    params.push(`%${search}%`, `%${search}%`);
-  }
-
-  // Filter by guest capacity
-  const guestsNum = parseInt(guests);
-  if (guests && !isNaN(guestsNum) && guestsNum > 0) {
-    query += ` AND p.max_guests >= ?`;
-    params.push(guestsNum);
-  }
-
-  // Availability filter — exclude properties with overlapping confirmed bookings
-  // or blackout dates during the requested stay period.
-  if (checkin && checkout) {
-    query += `
-      AND p.id NOT IN (
-        SELECT b.property_id FROM bookings b
-        WHERE b.status IN ('confirmed', 'completed')
-          AND b.check_in < ? AND b.check_out > ?
-      )
-      AND p.id NOT IN (
-        SELECT pbd.property_id FROM property_blackout_dates pbd
-        WHERE pbd.start_date <= ? AND pbd.end_date >= ?
-      )`;
-    params.push(checkout, checkin, checkout, checkin);
-  }
-  query += ` GROUP BY p.id`;
-
-  // Count total (need to count distinct properties)
-  let countQuery = `
-    SELECT COUNT(DISTINCT p.id) as total
-    FROM properties p
-    INNER JOIN cities c ON p.city_id = c.id
-    ${getPricingJoinClause("p", "pr")}
-    WHERE p.status = 'approved' 
-    AND p.deleted_at IS NULL
-    AND p.property_type_id = 'pt-001'
-    AND COALESCE(pr.price_per_night, 0) > 0
-  `;
-
-  if (city) {
-    countQuery += " AND LOWER(c.name) = LOWER(?)";
-  }
-  if (min_price && !isNaN(parseFloat(min_price))) {
-    countQuery += " AND pr.price_per_night >= ?";
-  }
-  if (max_price && !isNaN(parseFloat(max_price))) {
-    countQuery += " AND pr.price_per_night <= ?";
-  }
-  if (search) {
-    countQuery += " AND (p.title LIKE ? OR p.description LIKE ?)";
-  }
-
-  const [countResult] = await db.query(countQuery, params);
   const total = countResult[0].total;
-
-  // Add pagination
-  const offset = (parseInt(page) - 1) * parseInt(limit);
-  query += ` ORDER BY p.created_at DESC LIMIT ? OFFSET ?`;
-  params.push(parseInt(limit), offset);
-
-  const [properties] = await db.query(query, params);
 
   // Fetch first image from property_images table for all returned properties
   let propertyImagesMap = {};
@@ -249,11 +247,12 @@ export const getProperties = asyncHandler(async (req, res) => {
     {
       properties: parsedProperties,
       pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
+        page: pageNum,
+        limit: limitNum,
         total,
-        totalPages: Math.ceil(total / parseInt(limit)),
+        totalPages: Math.ceil(total / limitNum),
       },
+      total,
     },
     "Properties fetched successfully",
     200,

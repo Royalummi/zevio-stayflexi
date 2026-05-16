@@ -18,15 +18,14 @@ const destinations = [
       "https://pub-6c324d7c9f5e49859e5016309646ff83.r2.dev/destinations/bangalore-airport.jpeg",
   },
   {
-    name: "Whitefield",
+    name: "Hosur",
+    area: "Hosur",
     image:
-      "https://pub-6c324d7c9f5e49859e5016309646ff83.r2.dev/destinations/whitefield.jpeg",
+      "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&q=80",
   },
-  {
-    name: "Koramangala",
-    image:
-      "https://pub-6c324d7c9f5e49859e5016309646ff83.r2.dev/destinations/koramangala.jpeg",
-  },
+  // HIDDEN: re-enable when needed
+  // { name: "Whitefield", image: "https://pub-6c324d7c9f5e49859e5016309646ff83.r2.dev/destinations/whitefield.jpeg" },
+  // { name: "Koramangala", image: "https://pub-6c324d7c9f5e49859e5016309646ff83.r2.dev/destinations/koramangala.jpeg" },
 ];
 
 export default async function Home() {
@@ -79,7 +78,7 @@ export default async function Home() {
             </p>
           </div>
 
-          <div className="grid grid-2 grid-4">
+          <div className="grid grid-2 grid-3">
             {destinations.map((destination) => (
               <Link
                 key={destination.name}
@@ -108,13 +107,13 @@ export default async function Home() {
         description="Hand-picked luxury villas curated by our experts for exceptional experiences"
       />
 
-      {/* Recommended Service Apartments */}
-      <RecommendedProperties
+      {/* HIDDEN: Recommended Service Apartments — re-enable when feature is live */}
+      {/* <RecommendedProperties
         className="bg-gray"
         propertyType="service_apartment"
         title="Recommended Service Apartments"
         description="Premium service apartments perfect for extended stays and corporate bookings"
-      />
+      /> */}
 
       {/* Why Choose Zevio */}
       <section id="why-zevio" className="section">
@@ -123,7 +122,7 @@ export default async function Home() {
             <span className="section-badge">The Zevio promise</span>
             <h2 className="section-title">Why guests choose Zevio</h2>
             <p className="section-description">
-              We&apos;re committed to providing exceptional experiences with
+              We are committed to providing exceptional experiences with
               verified stays, transparent pricing, and dedicated support.
             </p>
           </div>

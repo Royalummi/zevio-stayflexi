@@ -93,8 +93,6 @@ export const listServiceApartments = async (req, res) => {
       sort_order = "ASC",
     } = req.query;
 
-    const offset = (parseInt(page) - 1) * parseInt(limit);
-
     // Build WHERE clause dynamically
     let whereConditions = [
       "p.property_type_id = 'pt-002'",
@@ -147,15 +145,17 @@ export const listServiceApartments = async (req, res) => {
     // Availability filter — exclude properties with overlapping confirmed bookings
     // or blackout dates during the requested stay period.
     if (checkin && checkout) {
-      whereConditions.push(`p.id NOT IN (
-        SELECT b.property_id FROM bookings b
-        WHERE b.status IN ('confirmed', 'completed')
+      whereConditions.push(`NOT EXISTS (
+        SELECT 1 FROM bookings b
+        WHERE b.property_id = p.id
+          AND b.status IN ('confirmed', 'completed')
           AND b.check_in < ? AND b.check_out > ?
       )`);
       queryParams.push(checkout, checkin);
-      whereConditions.push(`p.id NOT IN (
-        SELECT pbd.property_id FROM property_blackout_dates pbd
-        WHERE pbd.start_date <= ? AND pbd.end_date >= ?
+      whereConditions.push(`NOT EXISTS (
+        SELECT 1 FROM property_blackout_dates pbd
+        WHERE pbd.property_id = p.id
+          AND pbd.start_date <= ? AND pbd.end_date >= ?
       )`);
       queryParams.push(checkout, checkin);
     }
@@ -182,6 +182,10 @@ export const listServiceApartments = async (req, res) => {
       : "price_per_night";
     const sortDirection = sort_order.toUpperCase() === "DESC" ? "DESC" : "ASC";
 
+    const limitNum = Math.min(Math.max(1, parseInt(limit) || 10), 100);
+    const pageNum = Math.max(1, parseInt(page) || 1);
+    const offsetNum = (pageNum - 1) * limitNum;
+
     // Get total count
     const countQuery = `
       SELECT COUNT(*) as total
@@ -190,8 +194,6 @@ export const listServiceApartments = async (req, res) => {
       LEFT JOIN cities c ON p.city_id = c.id
       WHERE ${whereClause}
     `;
-    const [countResult] = await db.query(countQuery, queryParams);
-    const totalProperties = countResult[0].total;
 
     // Get properties with pagination
     const propertiesQuery = `
@@ -250,11 +252,11 @@ export const listServiceApartments = async (req, res) => {
       LIMIT ? OFFSET ?
     `;
 
-    const [properties] = await db.query(propertiesQuery, [
-      ...queryParams,
-      parseInt(limit),
-      offset,
+    const [[countResult], [properties]] = await Promise.all([
+      db.query(countQuery, queryParams),
+      db.query(propertiesQuery, [...queryParams, limitNum, offsetNum]),
     ]);
+    const totalProperties = countResult[0].total;
 
     // Parse JSON fields and format response
     const formattedProperties = properties.map((property) => ({
@@ -279,10 +281,11 @@ export const listServiceApartments = async (req, res) => {
         properties: formattedProperties,
         pagination: {
           total: totalProperties,
-          page: parseInt(page),
-          limit: parseInt(limit),
-          totalPages: Math.ceil(totalProperties / parseInt(limit)),
+          page: pageNum,
+          limit: limitNum,
+          totalPages: Math.ceil(totalProperties / limitNum),
         },
+        total: totalProperties,
       },
     });
   } catch (error) {

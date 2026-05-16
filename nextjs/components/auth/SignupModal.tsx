@@ -251,8 +251,8 @@ export default function SignupModal({
                 </div>
               )}
 
-              {/* ── Corporate Toggle ── */}
-              <div
+              {/* HIDDEN: Corporate Toggle — re-enable when corporate registration is live */}
+              {/* <div
                 className={`${styles.corporateToggle} ${
                   isCorporate ? styles.corporateToggleActive : ""
                 }`}
@@ -283,7 +283,7 @@ export default function SignupModal({
                     verified.
                   </p>
                 )}
-              </div>
+              </div> */}
 
               {/* ── Full Name ── */}
               <div className={styles.authFormGroup}>

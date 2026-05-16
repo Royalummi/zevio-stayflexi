@@ -1031,8 +1031,8 @@ function PropertyDetailContent() {
                     </div>
                   )}
 
-                  {/* Corporate Bookings */}
-                  {Boolean(property.allow_corporate_booking) && (
+                  {/* HIDDEN: Corporate Bookings — re-enable when corporate feature is live */}
+                  {/* {Boolean(property.allow_corporate_booking) && (
                     <div className={luxuryStyles.infoItem}>
                       <div className={luxuryStyles.infoIcon}>
                         <FiCheckCircle />
@@ -1062,7 +1062,7 @@ function PropertyDetailContent() {
                         </div>
                       </div>
                     </div>
-                  )}
+                  )} */}
 
                   {/* Children Policy */}
                   {propertyPricing.max_children !== undefined &&
@@ -1554,7 +1554,16 @@ function PropertyDetailContent() {
                   </h2>
                   <div className={luxuryStyles.locationCard}>
                     <div className={luxuryStyles.locationDetails}>
-                      <div className={luxuryStyles.locationAddress}>
+                      <div
+                        className={`${luxuryStyles.locationAddress}${property.maps_location ? ` ${luxuryStyles.locationClickable}` : ""}`}
+                        onClick={() => {
+                          if (property.maps_location) {
+                            window.open(property.maps_location, "_blank");
+                          }
+                        }}
+                        title={property.maps_location ? "View on Google Maps" : ""}
+                        style={property.maps_location ? { cursor: "pointer" } : undefined}
+                      >
                         <strong>Address:</strong>
                         <p>
                           {property.area && <span>{property.area}, </span>}
@@ -1563,6 +1572,11 @@ function PropertyDetailContent() {
                             <span> - {property.pincode}</span>
                           )}
                         </p>
+                        {property.maps_location && (
+                          <span style={{ fontSize: "0.85rem", color: "#4285F4", marginTop: "0.25rem", display: "inline-block" }}>
+                            📍 View on Google Maps
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>

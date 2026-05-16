@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, Suspense } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { api } from "@/lib/axios";
 import type { City, Property } from "@/types";
@@ -13,12 +13,18 @@ import { useToast } from "@/hooks/useToast";
 import ToastContainer from "@/components/ui/ToastContainer";
 import styles from "../properties/properties.module.css";
 
+const PAGE_SIZE = 12;
+
 function PropertiesContent() {
   const searchParams = useSearchParams();
   const toast = useToast();
   const [properties, setProperties] = useState<Property[]>([]);
-  const [filteredProperties, setFilteredProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [totalCount, setTotalCount] = useState(0);
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
   // Initialize filters from URL search params (from SearchBar)
   const [filters, setFilters] = useState<PropertyFiltersState>(() => {
@@ -60,7 +66,7 @@ function PropertiesContent() {
       bedrooms: "",
       checkin: checkinParam || "",
       checkout: checkoutParam || "",
-      sortBy: "recommended",
+      sortBy: "title-az",
       selectedAmenities: [],
     };
   });
@@ -123,6 +129,8 @@ function PropertiesContent() {
     const fetchProperties = async () => {
       try {
         setLoading(true);
+        setCurrentPage(1);
+        setHasMore(true);
         // Build API params — server handles availability (checkin/checkout)
         // and guest-capacity filtering; everything else stays client-side.
         const apiParams: Record<string, string> = {};
@@ -134,12 +142,16 @@ function PropertiesContent() {
         const totalGuests =
           parseInt(filters.guests || "0") + parseInt(filters.children || "0");
         if (totalGuests > 0) apiParams.guests = totalGuests.toString();
+        apiParams.limit = String(PAGE_SIZE);
+        apiParams.page = "1";
         const response = await api.get("/public/properties", {
           params: apiParams,
         });
         const fetchedProperties = response.data.data.properties || [];
+        const total = response.data.data.total || fetchedProperties.length;
         setProperties(fetchedProperties);
-        setFilteredProperties(fetchedProperties);
+        setTotalCount(total);
+        setHasMore(fetchedProperties.length === PAGE_SIZE && fetchedProperties.length < total);
       } catch (error) {
         console.error("Error fetching properties:", error);
       } finally {
@@ -157,7 +169,56 @@ function PropertiesContent() {
     filters.children,
   ]);
 
+  const loadMore = useCallback(async () => {
+    if (loadingMore || !hasMore) return;
+    try {
+      setLoadingMore(true);
+      const nextPage = currentPage + 1;
+      const apiParams: Record<string, string> = {};
+      if (filters.city) apiParams.city = filters.city.toLowerCase();
+      if (filters.area) apiParams.area = filters.area;
+      if (filters.checkin) apiParams.checkin = filters.checkin;
+      if (filters.checkout) apiParams.checkout = filters.checkout;
+      const totalGuests =
+        parseInt(filters.guests || "0") + parseInt(filters.children || "0");
+      if (totalGuests > 0) apiParams.guests = totalGuests.toString();
+      apiParams.limit = String(PAGE_SIZE);
+      apiParams.page = String(nextPage);
+      const response = await api.get("/public/properties", {
+        params: apiParams,
+      });
+      const newProperties = response.data.data.properties || [];
+      const total = response.data.data.total || 0;
+      setProperties((prev) => {
+        const existingIds = new Set(prev.map((p) => p.id));
+        const unique = newProperties.filter((p: Property) => !existingIds.has(p.id));
+        return [...prev, ...unique];
+      });
+      setCurrentPage(nextPage);
+      setHasMore(newProperties.length === PAGE_SIZE && (currentPage * PAGE_SIZE + newProperties.length) < total);
+    } catch (error) {
+      console.error("Error loading more properties:", error);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [currentPage, hasMore, loadingMore, filters]);
+
+  // IntersectionObserver — triggers loadMore when sentinel div enters viewport
   useEffect(() => {
+    if (!sentinelRef.current) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loading && !loadingMore) {
+          loadMore();
+        }
+      },
+      { rootMargin: "200px" },
+    );
+    observer.observe(sentinelRef.current);
+    return () => observer.disconnect();
+  }, [hasMore, loading, loadingMore, loadMore]);
+
+  const filteredProperties = useMemo(() => {
     let filtered = [...properties];
 
     // City is already filtered server-side — skip client-side city filter
@@ -202,7 +263,11 @@ function PropertiesContent() {
     }
 
     // Sorting
-    if (filters.sortBy === "price-low") {
+    if (filters.sortBy === "title-az" || filters.sortBy === "recommended") {
+      filtered.sort((a, b) => (a.title || a.name || "").localeCompare(b.title || b.name || ""));
+    } else if (filters.sortBy === "title-za") {
+      filtered.sort((a, b) => (b.title || b.name || "").localeCompare(a.title || a.name || ""));
+    } else if (filters.sortBy === "price-low") {
       filtered.sort((a, b) => a.price_per_night - b.price_per_night);
     } else if (filters.sortBy === "price-high") {
       filtered.sort((a, b) => b.price_per_night - a.price_per_night);
@@ -210,7 +275,7 @@ function PropertiesContent() {
       filtered.sort((a, b) => b.rating - a.rating);
     }
 
-    setFilteredProperties(filtered);
+    return filtered;
   }, [filters, properties]);
 
   const handleFilterChange = (
@@ -232,7 +297,7 @@ function PropertiesContent() {
       bedrooms: "",
       checkin: "",
       checkout: "",
-      sortBy: "recommended",
+      sortBy: "title-az",
       selectedAmenities: [],
     });
   };
@@ -274,16 +339,31 @@ function PropertiesContent() {
             </button>
           </div>
         ) : (
-          <div className={styles.propertiesGrid}>
-            {filteredProperties.map((property) => (
-              <PropertyCard
-                key={property.id}
-                property={property}
-                checkin={filters.checkin}
-                checkout={filters.checkout}
-              />
-            ))}
-          </div>
+          <>
+            <div className={styles.propertiesGrid}>
+              {filteredProperties.map((property) => (
+                <PropertyCard
+                  key={property.id}
+                  property={property}
+                  checkin={filters.checkin}
+                  checkout={filters.checkout}
+                />
+              ))}
+            </div>
+            {/* Infinite scroll sentinel */}
+            <div ref={sentinelRef} style={{ height: 1 }} />
+            {loadingMore && (
+              <div className={styles.loadingContainer} style={{ paddingTop: "1rem", paddingBottom: "2rem" }}>
+                <div className={styles.loadingSpinner}></div>
+                <p className={styles.loadingText}>Loading more villas...</p>
+              </div>
+            )}
+            {!hasMore && filteredProperties.length > 0 && (
+              <p style={{ textAlign: "center", color: "#888", padding: "2rem 0", fontSize: "0.9rem" }}>
+                You&apos;ve seen all {filteredProperties.length} villas
+              </p>
+            )}
+          </>
         )}
       </div>
       <ToastContainer toasts={toast.toasts} removeToast={toast.removeToast} />

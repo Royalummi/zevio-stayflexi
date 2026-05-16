@@ -53,28 +53,22 @@ const destinationsData: Destination[] = [
   },
   {
     id: 3,
-    name: "Ramanagar",
-    area: "Ramanagar",
+    name: "Hosur",
+    area: "Hosur",
     description:
-      "Adventure hub famous for rocky hills, trekking, and rappelling",
+      "Fast-growing city on the Bangalore-Chennai highway with scenic green surroundings",
     image:
-      "https://images.unsplash.com/photo-1675780385252-14b6a7287a22?w=800&q=80",
+      "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&q=80",
     properties: 0,
-    highlights: ["Rock Climbing", "Trekking", "Adventure Sports", "Nature"],
+    highlights: [
+      "Highway Connectivity",
+      "Near Bangalore",
+      "Industrial Hub",
+      "Scenic Surroundings",
+    ],
   },
   {
     id: 4,
-    name: "Koramangala",
-    area: "Koramangala",
-    description:
-      "Vibrant urban neighbourhood with cafes, startups, and nightlife",
-    image:
-      "https://images.unsplash.com/photo-1708067077797-74f83eaa8231?w=800&q=80",
-    properties: 0,
-    highlights: ["Cafes", "Nightlife", "Shopping", "Urban Living"],
-  },
-  {
-    id: 5,
     name: "Whitefield",
     area: "Whitefield",
     description:
@@ -85,33 +79,45 @@ const destinationsData: Destination[] = [
     highlights: ["Tech Hub", "Modern Living", "Parks", "Corporate Stays"],
   },
   {
-    id: 6,
-    name: "Electronic City",
-    area: "Electronic City",
+    id: 5,
+    name: "Koramangala",
+    area: "Koramangala",
     description:
-      "Major IT hub with excellent connectivity and modern infrastructure",
+      "Vibrant urban neighbourhood with cafes, startups, and nightlife",
     image:
-      "https://images.unsplash.com/photo-1741769971460-aad286ffe96b?w=800&q=80",
+      "https://images.unsplash.com/photo-1708067077797-74f83eaa8231?w=800&q=80",
     properties: 0,
-    highlights: [
-      "IT Corridor",
-      "Business Hub",
-      "Metro Access",
-      "Modern Amenities",
-    ],
+    highlights: ["Cafes", "Nightlife", "Shopping", "Urban Living"],
   },
-  {
-    id: 7,
-    name: "Indiranagar",
-    area: "Indiranagar",
-    description:
-      "Upscale neighbourhood known for trendy restaurants and boutiques",
-    image:
-      "https://images.unsplash.com/photo-1737450768947-30d0abebe63e?w=800&q=80",
-    properties: 0,
-    highlights: ["Restaurants", "Boutiques", "Pubs", "Art & Culture"],
-    comingSoon: true,
-  },
+  // HIDDEN: re-enable when needed
+  // {
+  //   id: 6,
+  //   name: "Ramanagar",
+  //   area: "Ramanagar",
+  //   description: "Adventure hub famous for rocky hills, trekking, and rappelling",
+  //   image: "https://images.unsplash.com/photo-1675780385252-14b6a7287a22?w=800&q=80",
+  //   properties: 0,
+  //   highlights: ["Rock Climbing", "Trekking", "Adventure Sports", "Nature"],
+  // },
+  // {
+  //   id: 7,
+  //   name: "Electronic City",
+  //   area: "Electronic City",
+  //   description: "Major IT hub with excellent connectivity and modern infrastructure",
+  //   image: "https://images.unsplash.com/photo-1741769971460-aad286ffe96b?w=800&q=80",
+  //   properties: 0,
+  //   highlights: ["IT Corridor", "Business Hub", "Metro Access", "Modern Amenities"],
+  // },
+  // {
+  //   id: 8,
+  //   name: "Indiranagar",
+  //   area: "Indiranagar",
+  //   description: "Upscale neighbourhood known for trendy restaurants and boutiques",
+  //   image: "https://images.unsplash.com/photo-1737450768947-30d0abebe63e?w=800&q=80",
+  //   properties: 0,
+  //   highlights: ["Restaurants", "Boutiques", "Pubs", "Art & Culture"],
+  //   comingSoon: true,
+  // },
 ];
 
 export default function DestinationsPage() {

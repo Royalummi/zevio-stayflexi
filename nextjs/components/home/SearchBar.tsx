@@ -675,7 +675,8 @@ export default function SearchBar() {
             <FiHome className={styles.toggleIconInBar} />
             <span>Villas</span>
           </button>
-          <button
+          {/* HIDDEN: Apartments tab — re-enable when service apartments feature is live */}
+          {/* <button
             className={`${styles.togglePillInBar} ${
               propertyType === "apartments" ? styles.active : ""
             }`}
@@ -684,7 +685,7 @@ export default function SearchBar() {
           >
             <BsBuilding className={styles.toggleIconInBar} />
             <span>Apartments</span>
-          </button>
+          </button> */}
         </div>
         <div className={styles.searchWrapper}>
           <div className={styles.dividerModern} />

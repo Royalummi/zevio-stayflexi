@@ -51,8 +51,9 @@ export default function Header() {
   const navItems = useMemo(
     () => [
       { href: "/villas", label: "Villas" },
-      { href: "/service-apartments", label: "Service Apartments" },
-      { href: "/corporate-offers", label: "Corporate" },
+      // HIDDEN: Service Apartments & Corporate — re-enable when feature is live
+      // { href: "/service-apartments", label: "Service Apartments" },
+      // { href: "/corporate-offers", label: "Corporate" },
       { href: "/destinations", label: "Destinations" },
       { href: "/why-zevio", label: "Why Zevio" },
       { href: "/support", label: "Support" },

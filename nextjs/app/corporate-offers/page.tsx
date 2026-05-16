@@ -17,6 +17,13 @@ import type { City } from "@/types";
 
 export default function CorporateOffersPage() {
   const router = useRouter();
+
+  // HIDDEN: Corporate Offers — re-enable by removing the 2 lines below when feature is live
+  useEffect(() => { router.replace("/villas"); }, [router]);
+  return null;
+
+  // Original page below (kept intact for re-enabling later):
+  // eslint-disable-next-line no-unreachable
   const [properties, setProperties] = useState<CorporateProperty[]>([]);
   const [allProperties, setAllProperties] = useState<CorporateProperty[]>([]);
   const [cities, setCities] = useState<City[]>([]);

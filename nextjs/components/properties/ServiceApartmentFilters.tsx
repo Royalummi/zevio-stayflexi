@@ -253,11 +253,13 @@ export default function ServiceApartmentFilters({
   const getSortText = () => {
     const sortOptions: { [key: string]: string } = {
       recommended: "Recommended",
+      "title-az": "Title: A to Z",
+      "title-za": "Title: Z to A",
       "price-low": "Price: Low to High",
       "price-high": "Price: High to Low",
       rating: "Rating: High to Low",
     };
-    return sortOptions[filters.sortBy] || "Recommended";
+    return sortOptions[filters.sortBy] || "Title: A to Z";
   };
 
   const getAmenitiesText = () => {
@@ -324,6 +326,18 @@ export default function ServiceApartmentFilters({
                   onClick={() => handleSortSelect("recommended")}
                 >
                   Recommended
+                </button>
+                <button
+                  className={`${styles.dropdownItem} ${filters.sortBy === "title-az" ? styles.selected : ""}`}
+                  onClick={() => handleSortSelect("title-az")}
+                >
+                  Title: A to Z
+                </button>
+                <button
+                  className={`${styles.dropdownItem} ${filters.sortBy === "title-za" ? styles.selected : ""}`}
+                  onClick={() => handleSortSelect("title-za")}
+                >
+                  Title: Z to A
                 </button>
                 <button
                   className={`${styles.dropdownItem} ${filters.sortBy === "price-low" ? styles.selected : ""}`}
