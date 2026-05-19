@@ -23,8 +23,12 @@ const destinations = [
     image:
       "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&q=80",
   },
-  // HIDDEN: re-enable when needed
-  // { name: "Whitefield", image: "https://pub-6c324d7c9f5e49859e5016309646ff83.r2.dev/destinations/whitefield.jpeg" },
+  {
+    name: "Whitefield",
+    image:
+      "https://pub-6c324d7c9f5e49859e5016309646ff83.r2.dev/destinations/whitefield.jpeg",
+    comingSoon: true,
+  },
   // { name: "Koramangala", image: "https://pub-6c324d7c9f5e49859e5016309646ff83.r2.dev/destinations/koramangala.jpeg" },
 ];
 
@@ -78,23 +82,57 @@ export default async function Home() {
             </p>
           </div>
 
-          <div className="grid grid-2 grid-3">
-            {destinations.map((destination) => (
-              <Link
-                key={destination.name}
-                href={`/villas?area=${encodeURIComponent(destination.area || destination.name)}`}
-                className="destination-card"
-              >
-                <Image
-                  src={destination.image}
-                  alt={destination.name}
-                  fill
-                  sizes="(max-width: 768px) 50vw, (max-width: 1200px) 25vw, 280px"
-                />
-                <div className="destination-overlay" />
-                <div className="destination-name">{destination.name}</div>
-              </Link>
-            ))}
+          <div className="grid grid-4">
+            {destinations.map((destination) =>
+              destination.comingSoon ? (
+                <div
+                  key={destination.name}
+                  className="destination-card"
+                  style={{ cursor: "not-allowed", filter: "grayscale(60%)" }}
+                >
+                  <Image
+                    src={destination.image}
+                    alt={destination.name}
+                    fill
+                    sizes="(max-width: 768px) 50vw, (max-width: 1200px) 25vw, 280px"
+                  />
+                  <div className="destination-overlay" />
+                  <div className="destination-name">{destination.name}</div>
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "12px",
+                      right: "12px",
+                      background: "rgba(0,0,0,0.55)",
+                      color: "#fff",
+                      fontSize: "11px",
+                      fontWeight: 600,
+                      letterSpacing: "0.05em",
+                      padding: "3px 10px",
+                      borderRadius: "999px",
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    Coming Soon
+                  </div>
+                </div>
+              ) : (
+                <Link
+                  key={destination.name}
+                  href={`/villas?area=${encodeURIComponent(destination.area || destination.name)}`}
+                  className="destination-card"
+                >
+                  <Image
+                    src={destination.image}
+                    alt={destination.name}
+                    fill
+                    sizes="(max-width: 768px) 50vw, (max-width: 1200px) 25vw, 280px"
+                  />
+                  <div className="destination-overlay" />
+                  <div className="destination-name">{destination.name}</div>
+                </Link>
+              ),
+            )}
           </div>
         </div>
       </section>

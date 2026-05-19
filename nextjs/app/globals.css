@@ -582,6 +582,10 @@ button {
   grid-template-columns: repeat(1, 1fr);
 }
 
+.grid-4 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
 @media (min-width: 640px) {
   .grid-3 {
     grid-template-columns: repeat(2, 1fr);

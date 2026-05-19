@@ -263,7 +263,14 @@ export default function SearchBar() {
             state: "Karnataka",
             status: "active",
           },
-          { id: "showcase-hosur", name: "Hosur", area: "Hosur", city: "Hosur", state: "Tamil Nadu", status: "active" },
+          {
+            id: "showcase-hosur",
+            name: "Hosur",
+            area: "Hosur",
+            city: "Hosur",
+            state: "Tamil Nadu",
+            status: "active",
+          },
         ];
 
         if (response.data.success && response.data.data) {
@@ -293,7 +300,14 @@ export default function SearchBar() {
             state: "Karnataka",
             status: "active",
           },
-          { id: "showcase-hosur", name: "Hosur", area: "Hosur", city: "Hosur", state: "Tamil Nadu", status: "active" },
+          {
+            id: "showcase-hosur",
+            name: "Hosur",
+            area: "Hosur",
+            city: "Hosur",
+            state: "Tamil Nadu",
+            status: "active",
+          },
         ]);
       }
     };

@@ -5,7 +5,11 @@ import sharp from "sharp";
 import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
-import { uploadToR2, deleteFromR2, isR2Configured } from "../utils/r2Storage.js";
+import {
+  uploadToR2,
+  deleteFromR2,
+  isR2Configured,
+} from "../utils/r2Storage.js";
 
 const MAX_PROPERTY_IMAGES = 40;
 
