@@ -300,7 +300,7 @@ export default function SearchBar() {
 
     // Pin Nandi Hills to the top if it exists in results
     const nandiHillsIndex = allItems.findIndex(
-      (item) => item.name === "Nandi Hills",
+      (item) => item.name === "Nandi Hills" || item.area === "Nandi Hills",
     );
     if (nandiHillsIndex > -1) {
       const nandiHills = allItems[nandiHillsIndex];
