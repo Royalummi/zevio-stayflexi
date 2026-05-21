@@ -186,11 +186,26 @@ function BookingReviewContent() {
     if (
       !bookingData &&
       !fetchingBooking &&
-      !searchParams.get("bookingId") &&
-      !searchParams.get("propertyId")
+      !searchParams.get("bookingId")
     ) {
-      toast.error("No booking data found");
-      router.push("/");
+      const propertyId = searchParams.get("propertyId");
+      if (propertyId) {
+        // Page was refreshed — booking context lost. Redirect back to property page
+        // with the same dates/guests so user can re-confirm and proceed.
+        const params = new URLSearchParams();
+        const checkIn = searchParams.get("checkIn");
+        const checkOut = searchParams.get("checkOut");
+        const adults = searchParams.get("adults");
+        const children = searchParams.get("children");
+        if (checkIn) params.set("checkIn", checkIn);
+        if (checkOut) params.set("checkOut", checkOut);
+        if (adults) params.set("adults", adults);
+        if (children) params.set("children", children);
+        router.replace(`/properties/${propertyId}?${params.toString()}`);
+      } else {
+        toast.error("No booking data found");
+        router.push("/");
+      }
       return;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
