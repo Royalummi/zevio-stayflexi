@@ -431,27 +431,18 @@ function PropertyDetailContent() {
         const extraChildrenCharges =
           extraChildren * propertyPricing.extra_child_charge * calculatedNights;
 
-        // Subtotal before GST
+        // Subtotal (no GST or service charge)
         const subtotal = baseAmount + extraGuestCharges + extraChildrenCharges;
 
-        // Calculate GST (use dynamic percentage from property or default to 18%)
-        const gstPercentage = property.gst_percentage
-          ? parseFloat(property.gst_percentage.toString()) / 100
-          : 0.18;
-        const gstAmount = subtotal * gstPercentage;
-
-        // Service charge (5% of subtotal)
-        const serviceChargeAmount = Math.round(subtotal * 0.05);
-
         // Total amount
-        const totalAmount = subtotal + gstAmount + serviceChargeAmount;
+        const totalAmount = subtotal;
 
         setPriceBreakdown({
           baseAmount,
           extraGuestCharges,
           extraChildrenCharges,
-          gstAmount,
-          serviceChargeAmount,
+          gstAmount: 0,
+          serviceChargeAmount: 0,
           totalAmount,
         });
 
@@ -531,8 +522,8 @@ function PropertyDetailContent() {
         baseAmount: priceBreakdown.baseAmount,
         extraGuestCharges: priceBreakdown.extraGuestCharges,
         extraChildrenCharges: priceBreakdown.extraChildrenCharges,
-        gstAmount: priceBreakdown.gstAmount,
-        serviceCharge: priceBreakdown.serviceChargeAmount,
+        gstAmount: 0,
+        serviceCharge: 0,
         totalAmount: priceBreakdown.totalAmount,
         pricePerNight: Number(property.price_per_night),
         minGuests: propertyPricing.min_guests,
@@ -1948,32 +1939,7 @@ function PropertyDetailContent() {
                             </span>
                           </div>
                         )}
-                        <div className={luxuryStyles.breakdownItem}>
-                          <span>
-                            GST (
-                            {property.gst_percentage
-                              ? parseFloat(property.gst_percentage.toString())
-                              : 18}
-                            %)
-                          </span>
-                          <span>
-                            ₹
-                            {(priceBreakdown.gstAmount || 0).toLocaleString(
-                              "en-IN",
-                            )}
-                          </span>
-                        </div>
-                        {priceBreakdown.serviceChargeAmount > 0 && (
-                          <div className={luxuryStyles.breakdownItem}>
-                            <span>Service Charge (5%)</span>
-                            <span>
-                              ₹
-                              {(
-                                priceBreakdown.serviceChargeAmount || 0
-                              ).toLocaleString("en-IN")}
-                            </span>
-                          </div>
-                        )}
+
                         <div className={luxuryStyles.breakdownTotal}>
                           <span>Total</span>
                           <span>

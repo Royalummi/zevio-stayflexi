@@ -226,7 +226,8 @@ export default function MobileSearchBar({
             <FiHome className={styles.toggleIcon} />
             <span>Villas</span>
           </button>
-          <button
+          {/* HIDDEN: Apartments tab — re-enable when service apartments feature is live */}
+          {/* <button
             type="button"
             className={`${styles.togglePill} ${
               propertyType === "apartments" ? styles.togglePillActive : ""
@@ -235,7 +236,7 @@ export default function MobileSearchBar({
           >
             <BsBuilding className={styles.toggleIcon} />
             <span>Apartments</span>
-          </button>
+          </button> */}
         </div>
 
         <div className={styles.summaryCard}>

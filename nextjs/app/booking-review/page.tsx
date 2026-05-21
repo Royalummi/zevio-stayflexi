@@ -359,8 +359,17 @@ function BookingReviewContent() {
             paymentDetails?: { orderId: string };
           }) => {
             if (result.error) {
-              console.error("Payment error:", result.error);
-              toast.error(result.error.message || "Payment failed");
+              const errMsg = result.error.message || "";
+              const isAborted =
+                errMsg.toLowerCase().includes("aborted") ||
+                errMsg.toLowerCase().includes("cancelled") ||
+                errMsg.toLowerCase().includes("canceled");
+              if (isAborted) {
+                toast.info("Payment was cancelled. You can try again.");
+              } else {
+                console.error("Payment error:", result.error);
+                toast.error(errMsg || "Payment failed. Please try again.");
+              }
               setLoading(false);
               return;
             }

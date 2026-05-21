@@ -2,12 +2,12 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   FiFacebook,
-  FiTwitter,
   FiInstagram,
   FiLinkedin,
   FiMail,
   FiPhone,
 } from "react-icons/fi";
+import { FaXTwitter } from "react-icons/fa6";
 
 const GopafyLogo = () => (
   <svg
@@ -62,7 +62,7 @@ const GopafyLogo = () => (
 export default function Footer() {
   const socialLinks = [
     { href: "https://facebook.com", label: "Facebook", icon: FiFacebook },
-    { href: "https://x.com", label: "Twitter", icon: FiTwitter },
+    { href: "https://x.com", label: "X (Twitter)", icon: FaXTwitter },
     { href: "https://instagram.com", label: "Instagram", icon: FiInstagram },
     { href: "https://linkedin.com", label: "LinkedIn", icon: FiLinkedin },
   ];

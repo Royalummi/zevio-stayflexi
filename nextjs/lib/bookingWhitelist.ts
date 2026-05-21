@@ -16,6 +16,7 @@ export const BOOKING_WHITELIST: string[] = [
   "mahendrasimha.rs@gmail.com",
   "mithunmanju77@gmail.com",
   "shashankmanjunath13@gmail.com",
+  "testuser@zevio.in",
 ];
 
 /**

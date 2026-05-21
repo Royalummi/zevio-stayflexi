@@ -13,14 +13,15 @@
 import { Cashfree, CFEnvironment } from "cashfree-pg";
 import crypto from "crypto";
 
-// Initialize Cashfree with constructor
-const cashfree = new Cashfree(
-  process.env.CASHFREE_ENV === "PROD"
-    ? CFEnvironment.PRODUCTION
-    : CFEnvironment.SANDBOX,
-  process.env.CASHFREE_APP_ID,
-  process.env.CASHFREE_SECRET_KEY,
-);
+// Lazy-initialize Cashfree so credentials are read after dotenv.config() runs
+const getCashfree = () =>
+  new Cashfree(
+    process.env.CASHFREE_ENV === "PROD"
+      ? CFEnvironment.PRODUCTION
+      : CFEnvironment.SANDBOX,
+    process.env.CASHFREE_APP_ID,
+    process.env.CASHFREE_SECRET_KEY,
+  );
 
 /**
  * Create a new payment order
@@ -55,7 +56,7 @@ export const createOrder = async (orderData) => {
     };
 
     // Create order using Cashfree SDK
-    const response = await cashfree.PGCreateOrder(request);
+    const response = await getCashfree().PGCreateOrder(request);
 
     return {
       success: true,
@@ -108,7 +109,7 @@ export const verifyWebhookSignature = (signature, timestamp, body) => {
  */
 export const getOrder = async (orderId) => {
   try {
-    const response = await cashfree.PGFetchOrder(orderId);
+    const response = await getCashfree().PGFetchOrder(orderId);
     return {
       success: true,
       order: response.data,
@@ -126,7 +127,7 @@ export const getOrder = async (orderId) => {
  */
 export const getPayments = async (orderId) => {
   try {
-    const response = await cashfree.PGOrderFetchPayments(orderId);
+    const response = await getCashfree().PGOrderFetchPayments(orderId);
     return {
       success: true,
       payments: response.data,
@@ -152,7 +153,7 @@ export const processRefund = async (refundData) => {
       refund_note: refundNote || "Booking cancellation refund",
     };
 
-    const response = await cashfree.PGOrderCreateRefund(orderId, request);
+    const response = await getCashfree().PGOrderCreateRefund(orderId, request);
 
     return {
       success: true,

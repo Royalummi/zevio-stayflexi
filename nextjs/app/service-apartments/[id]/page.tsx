@@ -601,8 +601,9 @@ function ServiceApartmentDetailContent() {
     // Calculate amounts - use priceBreakdown if available, otherwise calculate
     const baseAmount =
       priceBreakdown?.base_total || property!.price_per_night * nights;
-    const gstAmount = priceBreakdown?.gst_amount || baseAmount * 0.18;
-    const totalAmount = priceBreakdown?.total_amount || baseAmount + gstAmount;
+    const totalAmount = priceBreakdown
+      ? priceBreakdown.total_amount - priceBreakdown.gst_amount
+      : baseAmount;
 
     // Use booking context to set booking data
     setBookingData({
@@ -623,7 +624,7 @@ function ServiceApartmentDetailContent() {
       baseAmount,
       extraGuestCharges: 0,
       extraChildrenCharges: 0,
-      gstAmount,
+      gstAmount: 0,
       totalAmount,
       minGuests: property!.base_occupancy || 1,
       maxGuests: property!.max_guests || property!.max_occupancy || 4,
@@ -1670,22 +1671,15 @@ function ServiceApartmentDetailContent() {
                   </div>
                 )}
 
-              <div className={styles.breakdownRow}>
-                <span>GST (18%)</span>
-                <span>
-                  ₹
-                  {parseFloat(
-                    String(priceBreakdown.gst_amount || 0),
-                  ).toLocaleString("en-IN")}
-                </span>
-              </div>
-
               <div className={styles.breakdownTotal}>
                 <span>Total</span>
                 <span>
                   ₹
                   {parseFloat(
-                    String(priceBreakdown.total_amount || 0),
+                    String(
+                      priceBreakdown.total_amount - priceBreakdown.gst_amount ||
+                        0,
+                    ),
                   ).toLocaleString("en-IN")}
                 </span>
               </div>
@@ -1717,7 +1711,10 @@ function ServiceApartmentDetailContent() {
                   nights · ₹
                   {priceBreakdown
                     ? parseFloat(
-                        String(priceBreakdown.total_amount || 0),
+                        String(
+                          priceBreakdown.total_amount -
+                            priceBreakdown.gst_amount || 0,
+                        ),
                       ).toLocaleString("en-IN")
                     : (
                         parseFloat(String(property.price_per_night || 0)) *

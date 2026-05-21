@@ -59,10 +59,8 @@ try {
   ).toString("base64");
 } catch (_) {}
 
-/** Logo <img> or text fallback */
-export const _logoImg = _logoBase64
-  ? `<img src="data:image/png;base64,${_logoBase64}" alt="Zevio" width="160" style="display:block;max-width:160px;height:auto;" />`
-  : `<span style="font-family:'Inter','Segoe UI',Arial,sans-serif;font-size:28px;font-weight:800;letter-spacing:3px;color:#ffffff;">ZEVIO</span>`;
+/** Logo text fallback for email clients that strip data URIs */
+export const _logoImg = `<span style="font-family:'Poppins','Inter','Segoe UI',Arial,sans-serif;font-size:28px;font-weight:800;letter-spacing:3px;color:#ffffff;">ZEVIO</span>`;
 
 /** Branded footer table */
 export const _brandFooter = () =>
@@ -130,7 +128,7 @@ const _notice = (content) =>
 /** CTA button */
 const _btn = (url, text, bg = "#2FA4A9") =>
   `<table width="100%" cellpadding="0" cellspacing="0" style="margin:20px 0;"><tr><td align="center">` +
-  `<a href="${url}" style="display:inline-block;padding:14px 40px;background:${bg};color:#ffffff;text-decoration:none;border-radius:8px;font-family:${_FH};font-weight:600;font-size:14px;">${text}</a>` +
+  `<a href="${url}" style="display:inline-block;padding:14px 40px;background:${bg};color:#ffffff !important;text-decoration:none;border-radius:8px;font-family:${_FH};font-weight:700;font-size:15px;line-height:1.2;mso-padding-alt:0;">${text}</a>` +
   `</td></tr></table>`;
 
 /** Status badge pill */
@@ -1104,19 +1102,22 @@ export const sendForgotPasswordLinkEmail = async (email, name, resetToken) => {
 
     const html =
       _emailOpen("Reset Your Password") +
-      _emailHeader("RESET YOUR PASSWORD") +
-      `<tr><td style="padding:36px 36px 28px;">
-        <p style="font-size:15px;color:#5F6B7A;margin:0 0 6px;font-family:${_F};line-height:1.6;">Hello <strong style="color:#1F3A5F;">${name}</strong>! 👋</p>
-        <p style="font-size:14px;color:#4a5666;margin:0 0 20px;font-family:${_F};line-height:1.6;">
-          We received a request to reset the password for your Zevio account. Click the button below to set a new password.
-        </p>
-        ${_btn(resetUrl, "Reset Password")}
-        <p style="font-size:13px;color:#4a5666;margin:16px 0;font-family:${_F};">
-          Or copy and paste this link into your browser:<br>
-          <a href="${resetUrl}" style="color:#2FA4A9;word-break:break-all;">${resetUrl}</a>
-        </p>
-        ${_notice(`<strong style="color:#1F3A5F;">🔒 Security Notice:</strong><br><span style="font-size:13px;color:#4a5666;font-family:${_F};">This link expires in <strong>1 hour</strong>. If you did not request a password reset, you can safely ignore this email — your password will remain unchanged.</span>`)}
-      </td></tr>` +
+      `<tr><td style="background:#1F3A5F;padding:28px 36px;text-align:center;">` +
+      `<div style="font-family:${_FH};font-size:28px;font-weight:800;letter-spacing:3px;color:#ffffff;line-height:1;">ZEVIO</div>` +
+      `<div style="margin-top:10px;font-family:${_FH};font-size:11px;font-weight:700;color:#2FA4A9;letter-spacing:2.5px;text-transform:uppercase;">RESET YOUR PASSWORD</div>` +
+      `</td></tr>` +
+      `<tr><td style="padding:36px 36px 28px;background:#ffffff;">` +
+      `<p style="font-size:15px;color:#5F6B7A;margin:0 0 6px;font-family:${_F};line-height:1.6;">Hello <strong style="color:#1F3A5F;">${name}</strong>! 👋</p>` +
+      `<p style="font-size:14px;color:#4a5666;margin:0 0 20px;font-family:${_F};line-height:1.6;">` +
+      `We received a request to reset the password for your Zevio account. Click the button below to set a new password.` +
+      `</p>` +
+      `${_btn(resetUrl, "Reset Password")}` +
+      `<p style="font-size:13px;color:#4a5666;margin:16px 0 0;font-family:${_F};line-height:1.6;">` +
+      `Or copy and paste this link into your browser:<br>` +
+      `<a href="${resetUrl}" style="color:#2FA4A9;word-break:break-all;">${resetUrl}</a>` +
+      `</p>` +
+      `${_notice(`<strong style="color:#1F3A5F;">🔒 Security Notice:</strong><br><span style="font-size:13px;color:#4a5666;font-family:${_F};">This link expires in <strong>1 hour</strong>. If you did not request a password reset, you can safely ignore this email — your password will remain unchanged.</span>`)} ` +
+      `</td></tr>` +
       `<tr><td>${_brandFooter()}</td></tr>` +
       _emailClose();
 

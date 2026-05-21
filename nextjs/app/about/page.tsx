@@ -291,14 +291,14 @@ export default function AboutPage() {
           <div className={styles.statItem}>
             <FiMapPin className={styles.statIcon} />
             <div className={styles.statContent}>
-              <div className={styles.statNumber}>10+</div>
+              <div className={styles.statNumber}>3+</div>
               <div className={styles.statLabel}>Locations</div>
             </div>
           </div>
           <div className={styles.statItem}>
             <FiShield className={styles.statIcon} />
             <div className={styles.statContent}>
-              <div className={styles.statNumber}>50+</div>
+              <div className={styles.statNumber}>25+</div>
               <div className={styles.statLabel}>Verified Properties</div>
             </div>
           </div>

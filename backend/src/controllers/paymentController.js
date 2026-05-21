@@ -117,7 +117,7 @@ export const createPaymentOrder = asyncHandler(async (req, res) => {
         name: user.full_name || "Guest User",
       },
       orderMeta: {
-        returnUrl: `${process.env.FRONTEND_URL}/booking-success?bookingId=${booking_id}`,
+        returnUrl: `${process.env.CASHFREE_RETURN_BASE_URL || process.env.FRONTEND_URL}/booking-success?bookingId=${booking_id}`,
         notifyUrl: `${process.env.BACKEND_URL}/api/payments/webhook`,
         paymentMethods: "cc,dc,nb,upi,wallet",
       },
