@@ -82,6 +82,9 @@ function BookingReviewContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
+  // Track existing booking status to decide whether to skip POST /bookings in handlePayment
+  const [existingBookingStatus, setExistingBookingStatus] = useState<string | null>(null);
+
   // SESSION 64: Coupon system state
   const [appliedCouponCode, setAppliedCouponCode] = useState<string>("");
   const [appliedCouponId, setAppliedCouponId] = useState<string>("");
@@ -107,6 +110,9 @@ function BookingReviewContent() {
             router.push("/dashboard");
             return;
           }
+
+          // Store status so handlePayment can skip POST /bookings for pending_payment bookings
+          setExistingBookingStatus(booking.status);
 
           // Check if booking has expired
           if (booking.expires_at) {
@@ -197,7 +203,9 @@ function BookingReviewContent() {
         if (checkOut) params.set("checkOut", checkOut);
         if (adults) params.set("adults", adults);
         if (children) params.set("children", children);
-        router.replace(`/properties/${propertyId}?${params.toString()}`);
+        const propertyType = searchParams.get("propertyType");
+        const propertyPath = propertyType === "service-apartment" ? "service-apartments" : "villas";
+        router.replace(`/${propertyPath}/${propertyId}?${params.toString()}`);
       } else {
         toast.error("No booking data found");
         router.push("/");
@@ -271,48 +279,59 @@ function BookingReviewContent() {
         return;
       }
 
-      // Create booking and get Cashfree order
-      let response;
-      try {
-        response = await api.post("/bookings", {
-          property_id: bookingData?.propertyId,
-          property_type_id: bookingData?.propertyTypeId,
-          check_in: bookingData?.checkIn,
-          check_out: bookingData?.checkOut,
-          guest_count: bookingData?.adults,
-          children_count: bookingData?.children,
-          infants_count: 0,
-          // SESSION 64: Include coupon data if applied
-          coupon_code: appliedCouponCode || undefined,
-          coupon_id: appliedCouponId || undefined,
-        });
-      } catch (bookingError: unknown) {
-        let errorMsg = "Failed to create booking";
-        if (
-          bookingError &&
-          typeof bookingError === "object" &&
-          "response" in bookingError
-        ) {
-          const axiosErr = bookingError as {
-            response?: { data?: { message?: string; error?: string } };
-          };
-          errorMsg =
-            axiosErr.response?.data?.message ||
-            axiosErr.response?.data?.error ||
-            errorMsg;
+      // If the booking is already in pending_payment status (continuing a pending payment),
+      // skip POST /bookings entirely and go straight to payment.
+      // This avoids the "check-in date in the past" error when the stored booking dates are stale.
+      const existingBookingId = searchParams.get("bookingId");
+      let booking_id: string;
+
+      if (existingBookingId && existingBookingStatus === "pending_payment") {
+        booking_id = existingBookingId;
+      } else {
+        // Create booking and get Cashfree order
+        let response;
+        try {
+          response = await api.post("/bookings", {
+            property_id: bookingData?.propertyId,
+            property_type_id: bookingData?.propertyTypeId,
+            check_in: bookingData?.checkIn,
+            check_out: bookingData?.checkOut,
+            guest_count: bookingData?.adults,
+            children_count: bookingData?.children,
+            infants_count: 0,
+            // SESSION 64: Include coupon data if applied
+            coupon_code: appliedCouponCode || undefined,
+            coupon_id: appliedCouponId || undefined,
+          });
+        } catch (bookingError: unknown) {
+          let errorMsg = "Failed to create booking";
+          if (
+            bookingError &&
+            typeof bookingError === "object" &&
+            "response" in bookingError
+          ) {
+            const axiosErr = bookingError as {
+              response?: { data?: { message?: string; error?: string } };
+            };
+            errorMsg =
+              axiosErr.response?.data?.message ||
+              axiosErr.response?.data?.error ||
+              errorMsg;
+          }
+          toast.error(errorMsg);
+          setLoading(false);
+          return;
         }
-        toast.error(errorMsg);
-        setLoading(false);
-        return;
-      }
 
-      const { booking_id, isUpdate } = response.data.data;
+        const { booking_id: newBookingId, isUpdate } = response.data.data;
+        booking_id = newBookingId;
 
-      // Show appropriate message if booking was updated
-      if (isUpdate) {
-        toast.info(
-          "Your pending booking has been updated with new dates/guests",
-        );
+        // Show appropriate message if booking was updated
+        if (isUpdate) {
+          toast.info(
+            "Your pending booking has been updated with new dates/guests",
+          );
+        }
       }
 
       // Create payment order
@@ -345,7 +364,7 @@ function BookingReviewContent() {
 
       // Initialize Cashfree Drop-in checkout — SDK is loaded dynamically from CDN
       const cashfree = window.Cashfree!({
-        mode: "sandbox", // Use "sandbox" for TEST, "production" for PROD
+        mode: "production",
       });
 
       const checkoutOptions = {
@@ -510,7 +529,7 @@ function BookingReviewContent() {
                 const propertyPath =
                   bookingData.propertyType === "service-apartment"
                     ? "service-apartments"
-                    : "properties";
+                    : "villas";
 
                 router.push(
                   `/${propertyPath}/${bookingData.propertyId}?${params.toString()}`,
@@ -786,8 +805,8 @@ function BookingReviewContent() {
                   <div className={styles.comingSoonIcon}>🚀</div>
                   <div className={styles.comingSoonTitle}>Coming Soon</div>
                   <div className={styles.comingSoonText}>
-                    Online booking is launching very soon. Stay tuned — we will
-                    notify you the moment it will be live!
+                    Online booking is launching very soon. Stay tuned — we'll
+                    notify you the moment it's live!
                   </div>
                 </div>
               )}

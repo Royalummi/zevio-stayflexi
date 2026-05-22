@@ -541,6 +541,7 @@ function PropertyDetailContent() {
         checkOut: formatDateForAPI(checkOut),
         adults: adults.toString(),
         children: children.toString(),
+        propertyType: "villa",
       });
       router.push(`/booking-review?${queryParams.toString()}`);
     }
