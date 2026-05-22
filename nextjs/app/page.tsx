@@ -15,7 +15,7 @@ const destinations = [
     name: "Bangalore Airport",
     area: "Bangalore International Airport",
     image:
-      "https://pub-6c324d7c9f5e49859e5016309646ff83.r2.dev/destinations/bangalore-airport.jpeg",
+      "https://pub-6c324d7c9f5e49859e5016309646ff83.r2.dev/destinations/bangalore-airport.webp",
   },
   {
     name: "Hosur",

@@ -42,7 +42,7 @@ const destinationsData: Destination[] = [
     description:
       "Convenient stays near Kempegowda International Airport for travellers",
     image:
-      "https://images.unsplash.com/photo-1664892843718-186acc045805?w=800&q=80",
+      "https://pub-6c324d7c9f5e49859e5016309646ff83.r2.dev/destinations/bangalore-airport.webp",
     properties: 0,
     highlights: [
       "Airport Proximity",
