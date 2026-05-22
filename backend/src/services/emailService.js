@@ -775,7 +775,7 @@ export const sendBookingExpiryEmail = async (bookingId) => {
         b.id, 
         b.user_id, 
         u.email, 
-        u.first_name,
+        u.full_name,
         b.property_id, 
         p.title as property_name,
         b.total_amount,
@@ -804,7 +804,7 @@ export const sendBookingExpiryEmail = async (bookingId) => {
         _emailOpen("Booking Expired") +
         _emailHeader("BOOKING EXPIRED") +
         `<tr><td style="padding:36px 36px 28px;">
-          <p style="font-size:15px;color:#5F6B7A;margin:0 0 6px;font-family:${_F};line-height:1.6;">Hi <strong style="color:#1F3A5F;">${booking.first_name}</strong>,</p>
+          <p style="font-size:15px;color:#5F6B7A;margin:0 0 6px;font-family:${_F};line-height:1.6;">Hi <strong style="color:#1F3A5F;">${booking.full_name}</strong>,</p>
           <p style="font-size:14px;color:#4a5666;margin:0 0 20px;font-family:${_F};line-height:1.6;">
             Unfortunately, your pending booking has expired because payment was not completed in time.
           </p>

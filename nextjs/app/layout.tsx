@@ -14,6 +14,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://zevio.in"),
   title:
     "Zevio - Luxury Villa Rentals near Bangalore | Nandi Hills, Hosur, Whitefield",
   description:
