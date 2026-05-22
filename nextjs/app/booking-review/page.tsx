@@ -183,11 +183,7 @@ function BookingReviewContent() {
     }
 
     // Only redirect if no booking data AND not currently fetching AND no recovery params
-    if (
-      !bookingData &&
-      !fetchingBooking &&
-      !searchParams.get("bookingId")
-    ) {
+    if (!bookingData && !fetchingBooking && !searchParams.get("bookingId")) {
       const propertyId = searchParams.get("propertyId");
       if (propertyId) {
         // Page was refreshed — booking context lost. Redirect back to property page
@@ -348,7 +344,6 @@ function BookingReviewContent() {
       const { order_id, payment_session_id } = paymentResponse.data.data;
 
       // Initialize Cashfree Drop-in checkout — SDK is loaded dynamically from CDN
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const cashfree = window.Cashfree!({
         mode: "sandbox", // Use "sandbox" for TEST, "production" for PROD
       });
@@ -791,8 +786,8 @@ function BookingReviewContent() {
                   <div className={styles.comingSoonIcon}>🚀</div>
                   <div className={styles.comingSoonTitle}>Coming Soon</div>
                   <div className={styles.comingSoonText}>
-                    Online booking is launching very soon. Stay tuned — we'll
-                    notify you the moment it's live!
+                    Online booking is launching very soon. Stay tuned — we will
+                    notify you the moment it will be live!
                   </div>
                 </div>
               )}
