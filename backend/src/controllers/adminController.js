@@ -941,7 +941,10 @@ export const getPropertyDetails = asyncHandler(async (req, res) => {
 
   // Get blackout dates
   const [blackoutDates] = await db.query(
-    `SELECT id, start_date, end_date, reason, created_by, created_at 
+    `SELECT id,
+            DATE_FORMAT(start_date, '%Y-%m-%d') AS start_date,
+            DATE_FORMAT(end_date,   '%Y-%m-%d') AS end_date,
+            reason, created_by, created_at 
      FROM property_blackout_dates 
      WHERE property_id = ? 
      ORDER BY start_date DESC`,

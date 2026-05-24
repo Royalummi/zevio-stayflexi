@@ -22,7 +22,10 @@ export const getPropertyBlackouts = asyncHandler(async (req, res) => {
 
   // Get manual blackout dates (vendor + admin created)
   const [blackouts] = await db.query(
-    `SELECT id, start_date, end_date, reason, created_by, created_at
+    `SELECT id,
+            DATE_FORMAT(start_date, '%Y-%m-%d') AS start_date,
+            DATE_FORMAT(end_date,   '%Y-%m-%d') AS end_date,
+            reason, created_by, created_at
      FROM property_blackout_dates
      WHERE property_id = ?
      ORDER BY start_date ASC`,
@@ -31,8 +34,10 @@ export const getPropertyBlackouts = asyncHandler(async (req, res) => {
 
   // Get upcoming confirmed/pending bookings (read-only display)
   const [bookings] = await db.query(
-    `SELECT b.id, b.check_in as start_date, b.check_out as end_date, b.status,
-            b.created_at, u.full_name as guest_name
+    `SELECT b.id,
+            DATE_FORMAT(b.check_in,  '%Y-%m-%d') AS start_date,
+            DATE_FORMAT(b.check_out, '%Y-%m-%d') AS end_date,
+            b.status, b.created_at, u.full_name as guest_name
      FROM bookings b
      LEFT JOIN users u ON b.user_id = u.id
      WHERE b.property_id = ?
@@ -189,7 +194,10 @@ export const adminGetPropertyBlackouts = asyncHandler(async (req, res) => {
   if (props.length === 0) return sendError(res, "Property not found", 404);
 
   const [blackouts] = await db.query(
-    `SELECT id, start_date, end_date, reason, created_by, created_at
+    `SELECT id,
+            DATE_FORMAT(start_date, '%Y-%m-%d') AS start_date,
+            DATE_FORMAT(end_date,   '%Y-%m-%d') AS end_date,
+            reason, created_by, created_at
      FROM property_blackout_dates
      WHERE property_id = ?
      ORDER BY start_date ASC`,
@@ -197,8 +205,10 @@ export const adminGetPropertyBlackouts = asyncHandler(async (req, res) => {
   );
 
   const [bookings] = await db.query(
-    `SELECT b.id, b.check_in as start_date, b.check_out as end_date, b.status,
-            b.created_at, u.full_name as guest_name
+    `SELECT b.id,
+            DATE_FORMAT(b.check_in,  '%Y-%m-%d') AS start_date,
+            DATE_FORMAT(b.check_out, '%Y-%m-%d') AS end_date,
+            b.status, b.created_at, u.full_name as guest_name
      FROM bookings b
      LEFT JOIN users u ON b.user_id = u.id
      WHERE b.property_id = ?
