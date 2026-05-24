@@ -9,6 +9,14 @@ import {
   sendBookingExpiryEmail,
 } from "../services/emailService.js";
 
+// IST is UTC+5:30 (19800 seconds). Compute a YYYY-MM-DD date string relative to
+// today in IST, avoiding UTC drift when the cron fires at midnight IST.
+function istDateOffset(days = 0) {
+  return new Date(Date.now() + 19800000 + days * 86400000)
+    .toISOString()
+    .split("T")[0];
+}
+
 // ==========================================
 // SESSION 30 + SESSION 47: EXPIRED BOOKINGS CRON JOB
 // Runs every 5 minutes to auto-cancel expired pending bookings (reduced from 1 minute for performance)
@@ -108,9 +116,7 @@ export const dailyBookingProcessor = cron.schedule(
 
     try {
       // 1. Mark completed bookings (check-out date has passed)
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      const yesterdayDate = yesterday.toISOString().split("T")[0];
+      const yesterdayDate = istDateOffset(-1);
 
       await db.query(
         `UPDATE bookings 
@@ -129,6 +135,7 @@ export const dailyBookingProcessor = cron.schedule(
         b.gst_amount,
         b.service_charge,
         b.total_amount,
+        COALESCE(b.discount_amount, 0) as discount_amount,
         p.vendor_id,
         v.is_gst_registered
        FROM bookings b
@@ -150,6 +157,7 @@ export const dailyBookingProcessor = cron.schedule(
           gstAmount: parseFloat(booking.gst_amount) || 0,
           serviceCharge: parseFloat(booking.service_charge) || 0,
           totalAmount: parseFloat(booking.total_amount) || 0,
+          discountAmount: parseFloat(booking.discount_amount) || 0,
           isVendorGst: !!booking.is_gst_registered,
         });
 
@@ -157,9 +165,10 @@ export const dailyBookingProcessor = cron.schedule(
           `INSERT INTO vendor_settlements (
             id, vendor_id, booking_id,
             booking_base_amount, booking_gst_amount, booking_service_charge, booking_total_amount,
+            booking_discount_amount,
             vendor_gross_amount, platform_fee, platform_fee_gst, total_deduction, is_vendor_gst,
             amount, status
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
           [
             generateUUID(),
             booking.vendor_id,
@@ -168,6 +177,7 @@ export const dailyBookingProcessor = cron.schedule(
             booking.gst_amount,
             booking.service_charge,
             booking.total_amount,
+            booking.discount_amount,
             settlement.vendorGrossAmount,
             settlement.platformFee,
             settlement.platformFeeGst,
@@ -281,10 +291,8 @@ export const checkInReminderJob24h = cron.schedule(
     const today = new Date().toISOString().split("T")[0];
 
     try {
-      // Get bookings with check-in tomorrow
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      const tomorrowDate = tomorrow.toISOString().split("T")[0];
+      // Get bookings with check-in tomorrow (IST)
+      const tomorrowDate = istDateOffset(1);
 
       const [bookings] = await db.query(
         `SELECT id, user_id, property_id, check_in 
@@ -423,10 +431,8 @@ export const checkOutReminderJob = cron.schedule(
     const today = new Date().toISOString().split("T")[0];
 
     try {
-      // Get bookings with check-out tomorrow
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      const tomorrowDate = tomorrow.toISOString().split("T")[0];
+      // Get bookings with check-out tomorrow (IST)
+      const tomorrowDate = istDateOffset(1);
 
       const [bookings] = await db.query(
         `SELECT id, user_id, property_id, check_out 

@@ -639,6 +639,8 @@ export const sendCheckInReminderEmail = async (
     const [bookings] = await db.query(
       `SELECT 
         b.*,
+        DATE_FORMAT(b.check_in,  '%Y-%m-%d') AS check_in_date,
+        DATE_FORMAT(b.check_out, '%Y-%m-%d') AS check_out_date,
         u.full_name, u.email, u.phone,
         p.title as property_title,
         p.address, c.name as city, c.state as state, p.pincode,
@@ -664,8 +666,17 @@ export const sendCheckInReminderEmail = async (
     const booking = bookings[0];
     const reminderType = hoursBeforeCheckIn === 24 ? "24 hours" : "6 hours";
 
+    // Parse YYYY-MM-DD string into a local Date (no UTC drift)
+    const fmtDate = (s) => {
+      if (!s) return "N/A";
+      const [y, m, d] = String(s).split("-").map(Number);
+      return new Date(y, m - 1, d).toLocaleDateString("en-IN", {
+        weekday: "long", year: "numeric", month: "long", day: "numeric",
+      });
+    };
+
     const mailOptions = {
-      from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
+      from: SENDERS.BOOKINGS,
       to: booking.email,
       subject: `Check-in Reminder (${reminderType}) - ${booking.property_title}`,
       html: `
@@ -730,9 +741,9 @@ export const sendCheckInReminderEmail = async (
                   <tr><td class="lbl">Booking ID</td><td class="val" style="font-family:'Courier New',monospace;font-size:12px;color:#1F3A5F;font-weight:700;">${booking.id}</td></tr>
                   <tr><td class="lbl">Property</td><td class="val"><strong style="color:#1F3A5F;">${booking.property_title}</strong></td></tr>
                   <tr><td class="lbl">Address</td><td class="val">${booking.address}, ${booking.city}, ${booking.state} − ${booking.pincode}</td></tr>
-                  <tr><td class="lbl">Check-in</td><td class="val"><strong>${new Date(booking.check_in).toLocaleDateString("en-IN", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</strong></td></tr>
+                  <tr><td class="lbl">Check-in</td><td class="val"><strong>${fmtDate(booking.check_in_date)}</strong></td></tr>
                   <tr><td class="lbl">Check-in Time</td><td class="val">${booking.check_in_time || "2:00 PM"} onwards</td></tr>
-                  <tr><td class="lbl">Check-out</td><td class="val">${new Date(booking.check_out).toLocaleDateString("en-IN", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</td></tr>
+                  <tr><td class="lbl">Check-out</td><td class="val">${fmtDate(booking.check_out_date)}</td></tr>
                   <tr><td class="lbl">Check-out Time</td><td class="val">${booking.check_out_time || "11:00 AM"}</td></tr>
                   <tr><td class="lbl">Guests</td><td class="val">${booking.guest_count || 1} Adults${booking.children_count > 0 ? `, ${booking.children_count} Children` : ""}${booking.infants_count > 0 ? `, ${booking.infants_count} Infants` : ""}</td></tr>
                   <tr><td class="lbl">Total Nights</td><td class="val">${booking.nights}</td></tr>
