@@ -36,22 +36,25 @@ export default function ContactPage() {
     e.preventDefault();
     setFormStatus("sending");
 
-    // Simulate API call
-    setTimeout(() => {
-      setFormStatus("success");
-      setFormData({
-        name: "",
-        email: "",
-        phone: "",
-        subject: "",
-        message: "",
+    try {
+      const apiUrl =
+        process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+      const res = await fetch(`${apiUrl}/public/contact`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
       });
-
-      // Reset success message after 5 seconds
-      setTimeout(() => {
-        setFormStatus("idle");
-      }, 5000);
-    }, 1500);
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setFormStatus("success");
+        setFormData({ name: "", email: "", phone: "", subject: "", message: "" });
+        setTimeout(() => setFormStatus("idle"), 6000);
+      } else {
+        setFormStatus("error");
+      }
+    } catch {
+      setFormStatus("error");
+    }
   };
 
   return (
@@ -77,7 +80,7 @@ export default function ContactPage() {
                 <FiMail />
               </div>
               <h3 className={styles.infoTitle}>Email Us</h3>
-              <p className={styles.infoText}>support@zevio.com</p>
+              <p className={styles.infoText}>support@zevio.in</p>
               <p className={styles.infoDescription}>
                 We&apos;ll respond within 24 hours
               </p>
@@ -99,7 +102,7 @@ export default function ContactPage() {
                 <FiMapPin />
               </div>
               <h3 className={styles.infoTitle}>Visit Us</h3>
-              <p className={styles.infoText}>Mumbai, Maharashtra</p>
+              <p className={styles.infoText}>Bengaluru, Karnataka</p>
               <p className={styles.infoDescription}>India</p>
             </div>
           </div>
@@ -217,7 +220,7 @@ export default function ContactPage() {
                 <div className={styles.formError}>
                   <p>
                     ✗ Something went wrong. Please try again or contact us
-                    directly at support@zevio.com
+                    directly at support@zevio.in
                   </p>
                 </div>
               )}

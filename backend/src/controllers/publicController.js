@@ -9,6 +9,7 @@ import {
   getAmenitiesJoinClause,
 } from "../services/amenitiesService.js";
 import featuresService from "../services/featuresService.js";
+import { sendContactEmail } from "../services/emailService.js";
 
 // Get all active cities
 export const getCities = asyncHandler(async (req, res) => {
@@ -601,4 +602,30 @@ export const getPropertyBlockedDates = asyncHandler(async (req, res) => {
     { blackouts: taggedBlackouts, bookings: taggedBookings },
     "Blocked dates retrieved",
   );
+});
+
+/**
+ * @route   POST /api/public/contact
+ * @desc    Submit contact form — forwards to support@zevio.in
+ * @access  Public
+ */
+export const submitContactForm = asyncHandler(async (req, res) => {
+  const { name, email, phone, subject, message } = req.body;
+
+  // Basic validation
+  if (!name || !email || !subject || !message) {
+    return sendError(res, "Name, email, subject and message are required", 400);
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return sendError(res, "Invalid email address", 400);
+  }
+
+  if (message.length > 2000) {
+    return sendError(res, "Message is too long (max 2000 characters)", 400);
+  }
+
+  await sendContactEmail({ name, email, phone: phone || "", subject, message });
+  sendSuccess(res, null, "Your message has been sent. We'll get back to you within 24 hours.");
 });

@@ -8,6 +8,7 @@ import {
   checkAvailability,
   getRecommendedProperties,
   getPropertyBlockedDates,
+  submitContactForm,
 } from "../controllers/publicController.js";
 import {
   getAllAmenities,
@@ -39,5 +40,6 @@ router.get(
   getPublicCalendarPricing,
 ); // Public price calendar for detail pages
 router.get("/properties/:id/blocked-dates", getPropertyBlockedDates); // Blocked/booked dates for customer calendar
+router.post("/contact", submitContactForm); // Contact form → support@zevio.in
 
 export default router;

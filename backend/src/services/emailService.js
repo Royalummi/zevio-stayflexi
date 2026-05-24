@@ -454,6 +454,56 @@ export const sendRefundEmail = async (bookingId, refundAmount) => {
   }
 };
 
+// Send contact form enquiry to support@zevio.in
+export const sendContactEmail = async ({ name, email, phone, subject, message }) => {
+  if (!transporter) {
+    console.log("⚠️  Contact email not sent: Email service not configured");
+    return false;
+  }
+
+  const subjectLabels = {
+    general: "General Inquiry",
+    booking: "Booking Support",
+    property: "Property Listing",
+    payment: "Payment Issue",
+    feedback: "Feedback",
+    other: "Other",
+  };
+  const subjectLabel = subjectLabels[subject] || subject || "Contact Form";
+
+  const mailOptions = {
+    from: SENDERS.SYSTEM,
+    to: "support@zevio.in",
+    replyTo: `"${name}" <${email}>`,
+    subject: `[Contact] ${subjectLabel} — ${name}`,
+    html:
+      _emailOpen("Contact Form Submission") +
+      _emailHeader("CONTACT FORM") +
+      `<tr><td style="padding:36px 36px 28px;">
+        <p style="font-size:15px;color:#5F6B7A;margin:0 0 20px;font-family:${_F};line-height:1.6;">
+          A new contact form submission has been received.
+        </p>
+        ${_st("Sender Details")}
+        <table width="100%" cellpadding="0" cellspacing="0">
+          ${_dr("Name", name)}
+          ${_dr("Email", `<a href="mailto:${email}" style="color:#2FA4A9;text-decoration:none;">${email}</a>`)}
+          ${phone ? _dr("Phone", phone) : ""}
+          ${_dr("Subject", subjectLabel, true)}
+        </table>
+        ${_st("Message")}
+        ${_box(`<span style="white-space:pre-wrap;">${message.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</span>`)}
+        ${_notice("Reply directly to this email to respond to the sender.")}
+        <p style="font-size:13px;color:#5F6B7A;margin:16px 0 0;font-family:${_F};">— Zevio Website</p>
+      </td></tr>` +
+      `<tr><td>${_brandFooter()}</td></tr>` +
+      _emailClose(),
+  };
+
+  await transporter.sendMail(mailOptions);
+  console.log(`✅ Contact form email forwarded to support@zevio.in (from: ${email})`);
+  return true;
+};
+
 export default transporter;
 
 // Send check-in reminder email (24h or 6h before check-in)
