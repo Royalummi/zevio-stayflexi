@@ -644,17 +644,25 @@ export const sendCheckInReminderEmail = async (
         u.full_name, u.email, u.phone,
         p.title as property_title,
         p.address, c.name as city, c.state as state, p.pincode,
+        p.maps_location,
         p.check_in_time, p.check_out_time,
-        p.primary_incharge_name, p.primary_incharge_phone, 
-        p.primary_incharge_email, p.primary_incharge_whatsapp, p.primary_incharge_alt_contact,
-        p.secondary_incharge_name, p.secondary_incharge_phone,
-        p.secondary_incharge_email, p.secondary_incharge_whatsapp,
+        pc1.name  AS primary_incharge_name,
+        pc1.phone AS primary_incharge_phone,
+        pc1.email AS primary_incharge_email,
+        pc1.whatsapp AS primary_incharge_whatsapp,
+        pc1.alt_contact AS primary_incharge_alt_contact,
+        pc2.name  AS secondary_incharge_name,
+        pc2.phone AS secondary_incharge_phone,
+        pc2.email AS secondary_incharge_email,
+        pc2.whatsapp AS secondary_incharge_whatsapp,
         p.safety_information, p.local_area_info, p.emergency_contacts,
         c.name as city_name
       FROM bookings b
       INNER JOIN users u ON b.user_id = u.id
       INNER JOIN properties p ON b.property_id = p.id
       INNER JOIN cities c ON p.city_id = c.id
+      LEFT JOIN property_contacts pc1 ON pc1.property_id = p.id AND pc1.contact_type_id = 1 AND pc1.is_active = 1
+      LEFT JOIN property_contacts pc2 ON pc2.property_id = p.id AND pc2.contact_type_id = 2 AND pc2.is_active = 1
       WHERE b.id = ?`,
       [bookingId],
     );
@@ -741,6 +749,7 @@ export const sendCheckInReminderEmail = async (
                   <tr><td class="lbl">Booking ID</td><td class="val" style="font-family:'Courier New',monospace;font-size:12px;color:#1F3A5F;font-weight:700;">${booking.id}</td></tr>
                   <tr><td class="lbl">Property</td><td class="val"><strong style="color:#1F3A5F;">${booking.property_title}</strong></td></tr>
                   <tr><td class="lbl">Address</td><td class="val">${booking.address}, ${booking.city}, ${booking.state} − ${booking.pincode}</td></tr>
+                  ${booking.maps_location ? `<tr><td class="lbl">Google Maps</td><td class="val"><a href="${booking.maps_location}" style="color:#2FA4A9;font-weight:600;text-decoration:none;">📍 Open in Google Maps</a></td></tr>` : ""}
                   <tr><td class="lbl">Check-in</td><td class="val"><strong>${fmtDate(booking.check_in_date)}</strong></td></tr>
                   <tr><td class="lbl">Check-in Time</td><td class="val">${booking.check_in_time || "2:00 PM"} onwards</td></tr>
                   <tr><td class="lbl">Check-out</td><td class="val">${fmtDate(booking.check_out_date)}</td></tr>
