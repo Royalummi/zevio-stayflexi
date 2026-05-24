@@ -578,11 +578,27 @@ export const getPropertyBlockedDates = asyncHandler(async (req, res) => {
     `SELECT check_in AS start_date, check_out AS end_date
      FROM bookings
      WHERE property_id = ?
-       AND status IN ('confirmed', 'pending_payment')
+       AND (
+         status = 'confirmed'
+         OR (
+           status = 'pending_payment'
+           AND (expires_at IS NULL OR expires_at > NOW())
+         )
+       )
        AND check_out >= CURDATE()
      ORDER BY check_in ASC`,
     [id],
   );
 
-  sendSuccess(res, { blackouts, bookings }, "Blocked dates retrieved");
+  // Tag each range so the client can apply correct end-date inclusion logic:
+  // blackouts: end_date is INCLUSIVE (the last blocked day)
+  // bookings:  end_date is the check-out day — available for new check-ins
+  const taggedBlackouts = blackouts.map((b) => ({ ...b, type: "blackout" }));
+  const taggedBookings = bookings.map((b) => ({ ...b, type: "booking" }));
+
+  sendSuccess(
+    res,
+    { blackouts: taggedBlackouts, bookings: taggedBookings },
+    "Blocked dates retrieved",
+  );
 });

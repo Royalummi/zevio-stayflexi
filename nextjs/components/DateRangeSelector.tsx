@@ -12,6 +12,8 @@ interface PriceEntry {
 interface BlockedRange {
   start_date: string;
   end_date: string;
+  /** 'booking' = end_date is check-out (available for new check-ins); 'blackout' = end_date is last blocked day (inclusive) */
+  type?: "booking" | "blackout";
 }
 
 interface DateRangeSelectorProps {
@@ -110,6 +112,8 @@ export default function DateRangeSelector({
         );
         const json = await res.json();
         if (json.success && json.data) {
+          // Preserve the type tag added by the backend so isBlocked can
+          // apply the correct end-date logic for each range.
           const ranges: BlockedRange[] = [
             ...(json.data.blackouts || []),
             ...(json.data.bookings || []),
@@ -222,11 +226,17 @@ export default function DateRangeSelector({
   const isBlocked = (date: Date): boolean => {
     if (blockedRanges.length === 0) return false;
     const key = toKey(date);
-    return blockedRanges.some(
-      (r) =>
-        key >= r.start_date.substring(0, 10) &&
-        key <= r.end_date.substring(0, 10),
-    );
+    return blockedRanges.some((r) => {
+      const start = r.start_date.substring(0, 10);
+      const end = r.end_date.substring(0, 10);
+      if (r.type === "booking") {
+        // The check-out date itself is NOT blocked — a new guest can check in
+        // on the same day a previous guest checks out.
+        return key >= start && key < end;
+      }
+      // Blackouts: every day from start_date to end_date (inclusive) is blocked.
+      return key >= start && key <= end;
+    });
   };
 
   /** Returns true if any date strictly between fromDate and toDate (exclusive) is blocked */
