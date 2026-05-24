@@ -267,104 +267,102 @@ export default function VendorSettlements() {
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 border-b">
+            <div className="overflow-x-auto rounded-lg border border-gray-200">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap w-28">
                       Settlement ID
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap w-44">
                       Vendor Details
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide w-52">
                       Booking Info
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap w-36">
                       Guest Paid
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap w-32">
                       Vendor Gross
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap w-28">
                       Service Fee
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap w-36">
                       Settlement Amount
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap w-24">
                       GST Status
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap w-24">
                       Status
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap w-28">
                       Created Date
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap w-28">
                       Action
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="divide-y divide-gray-100">
                   {settlements.map((settlement) => (
-                    <tr key={settlement.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-4 text-sm">
-                        <div className="font-mono text-xs text-gray-600">
-                          {settlement.id.substring(0, 8)}...
-                        </div>
+                    <tr key={settlement.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-4 py-4">
+                        <span className="font-mono text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                          {settlement.id.substring(0, 8)}…
+                        </span>
                       </td>
-                      <td className="px-4 py-4 text-sm">
-                        <div className="flex items-center gap-2">
-                          <User className="h-4 w-4 text-gray-400" />
-                          <div>
-                            <div className="font-medium">
+                      <td className="px-4 py-4">
+                        <div className="flex items-start gap-2">
+                          <div className="mt-0.5 flex-shrink-0">
+                            <User className="h-4 w-4 text-gray-400" />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="font-medium text-gray-900 truncate max-w-[160px]">
                               {settlement.vendor_name || "N/A"}
                             </div>
-                            <div className="text-xs text-gray-500">
+                            <div className="text-xs text-gray-500 truncate max-w-[160px]">
                               {settlement.vendor_email}
                             </div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 py-4 text-sm">
-                        <div className="flex items-center gap-2">
-                          <Home className="h-4 w-4 text-gray-400" />
-                          <div>
-                            <div className="font-medium">
-                              {settlement.property_title || "N/A"}
-                            </div>
-                            <div className="text-xs text-gray-500">
-                              Booking: {settlement.booking_id?.substring(0, 8)}
-                            </div>
+                      <td className="px-4 py-4">
+                        <div className="min-w-0">
+                          <div className="font-medium text-gray-900 leading-snug" style={{ maxWidth: "200px", overflowWrap: "break-word" }}>
+                            {settlement.property_title || "N/A"}
+                          </div>
+                          <div className="text-xs text-gray-400 mt-0.5">
+                            Booking #{settlement.booking_id?.substring(0, 8)}
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 py-4 text-sm">
-                        <div className="text-gray-700 dark:text-gray-300">
+                      <td className="px-4 py-4 text-right">
+                        <div className="font-semibold text-gray-800">
                           {formatCurrency(
                             settlement.booking_total_amount ||
                               settlement.booking_total,
                           )}
                         </div>
                         {settlement.booking_base_amount != null && (
-                          <div className="text-xs text-gray-400">
-                            Base:{" "}
-                            {formatCurrency(settlement.booking_base_amount)} +
-                            GST: {formatCurrency(settlement.booking_gst_amount)}
+                          <div className="text-xs text-gray-400 mt-0.5 space-y-0.5">
+                            <div>Base: {formatCurrency(settlement.booking_base_amount)}</div>
+                            <div>GST: {formatCurrency(settlement.booking_gst_amount)}</div>
                           </div>
                         )}
                       </td>
-                      <td className="px-4 py-4 text-sm">
-                        <div className="font-medium text-blue-600">
+                      <td className="px-4 py-4 text-right">
+                        <div className="font-semibold text-blue-600">
                           {formatCurrency(
                             settlement.vendor_gross_amount || settlement.amount,
                           )}
                         </div>
                       </td>
-                      <td className="px-4 py-4 text-sm">
+                      <td className="px-4 py-4 text-right">
                         {settlement.platform_fee != null ? (
-                          <div className="font-medium text-red-500 text-xs">
+                          <div className="font-semibold text-red-500">
                             -{formatCurrency(
                               settlement.total_deduction ||
                               (parseFloat(settlement.platform_fee || 0) + parseFloat(settlement.platform_fee_gst || 0))
@@ -374,12 +372,12 @@ export default function VendorSettlements() {
                           <span className="text-gray-400 text-xs">Legacy</span>
                         )}
                       </td>
-                      <td className="px-4 py-4 text-sm">
-                        <div className="font-semibold text-green-600">
+                      <td className="px-4 py-4 text-right">
+                        <div className="font-bold text-green-600 text-base">
                           {formatCurrency(settlement.amount)}
                         </div>
                       </td>
-                      <td className="px-4 py-4 text-sm">
+                      <td className="px-4 py-4 text-center">
                         <Badge
                           className={
                             settlement.is_vendor_gst
@@ -390,16 +388,15 @@ export default function VendorSettlements() {
                           {settlement.is_vendor_gst ? "GST" : "Non-GST"}
                         </Badge>
                       </td>
-                      <td className="px-4 py-4 text-sm">
+                      <td className="px-4 py-4 text-center">
                         {getStatusBadge(settlement.status)}
                       </td>
-                      <td className="px-4 py-4 text-sm">
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4 text-gray-400" />
-                          <span>{formatDate(settlement.created_at)}</span>
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-600">
+                          {formatDate(settlement.created_at)}
                         </div>
                       </td>
-                      <td className="px-4 py-4 text-sm">
+                      <td className="px-4 py-4 text-center">
                         {settlement.status === "pending" ? (
                           <Button
                             size="sm"
