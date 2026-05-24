@@ -332,7 +332,7 @@ const PropertyBlockoutCalendar = ({
             disabled: "text-muted-foreground opacity-25 cursor-not-allowed",
             range_middle:
               "aria-selected:bg-primary/15 aria-selected:text-foreground rounded-none",
-            hidden: "invisible",
+            hidden: "invisible w-9 p-0",
           }}
         />
       </div>
