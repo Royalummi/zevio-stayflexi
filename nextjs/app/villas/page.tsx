@@ -73,7 +73,7 @@ function PropertiesContent() {
       bedrooms: "",
       checkin: checkinParam || "",
       checkout: checkoutParam || "",
-      sortBy: "recommended",
+      sortBy: "title-az",
       selectedAmenities: [],
     };
   });
@@ -151,6 +151,7 @@ function PropertiesContent() {
         if (totalGuests > 0) apiParams.guests = totalGuests.toString();
         apiParams.limit = String(PAGE_SIZE);
         apiParams.page = "1";
+        apiParams.sort = filters.sortBy;
         const response = await api.get("/public/properties", {
           params: apiParams,
         });
@@ -177,6 +178,7 @@ function PropertiesContent() {
     filters.checkout,
     filters.guests,
     filters.children,
+    filters.sortBy,
   ]);
 
   const loadMore = useCallback(async () => {
@@ -194,6 +196,7 @@ function PropertiesContent() {
       if (totalGuests > 0) apiParams.guests = totalGuests.toString();
       apiParams.limit = String(PAGE_SIZE);
       apiParams.page = String(nextPage);
+      apiParams.sort = filters.sortBy;
       const response = await api.get("/public/properties", {
         params: apiParams,
       });
@@ -277,31 +280,10 @@ function PropertiesContent() {
       });
     }
 
-    // Sorting
-    if (filters.sortBy === "recommended") {
-      // Recommended-first: put flagged properties at top by priority, rest preserve server order
-      filtered.sort((a, b) => {
-        const aRec = a.is_recommended ? 1 : 0;
-        const bRec = b.is_recommended ? 1 : 0;
-        if (bRec !== aRec) return bRec - aRec;
-        return (b.recommended_priority || 0) - (a.recommended_priority || 0);
-      });
-    } else if (filters.sortBy === "title-az") {
-      filtered.sort((a, b) =>
-        (a.title || a.name || "").localeCompare(b.title || b.name || ""),
-      );
-    } else if (filters.sortBy === "title-za") {
-      filtered.sort((a, b) =>
-        (b.title || b.name || "").localeCompare(a.title || a.name || ""),
-      );
-    } else if (filters.sortBy === "price-low") {
-      filtered.sort((a, b) => a.price_per_night - b.price_per_night);
-    } else if (filters.sortBy === "price-high") {
-      filtered.sort((a, b) => b.price_per_night - a.price_per_night);
-    } else if (filters.sortBy === "rating") {
-      filtered.sort((a, b) => b.rating - a.rating);
-    }
-
+    // Sorting is handled server-side — the API receives the sort param and
+    // returns each page already in the correct order. Client-side sort is
+    // intentionally omitted to prevent visual re-ordering when new pages are
+    // appended during infinite scroll.
     return filtered;
   }, [filters, properties]);
 
@@ -324,7 +306,7 @@ function PropertiesContent() {
       bedrooms: "",
       checkin: "",
       checkout: "",
-      sortBy: "recommended",
+      sortBy: "title-az",
       selectedAmenities: [],
     });
   };
