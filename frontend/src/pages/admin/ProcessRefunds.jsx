@@ -430,12 +430,12 @@ export default function ProcessRefunds() {
 
       {/* Refund Processing Dialog */}
       <Dialog open={showRefundDialog} onOpenChange={setShowRefundDialog}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md flex flex-col max-h-[90vh]">
           <DialogHeader>
             <DialogTitle>Process Refund</DialogTitle>
           </DialogHeader>
           {selectedBooking && (
-            <div className="space-y-4">
+            <div className="space-y-4 overflow-y-auto flex-1 pr-1">
               {/* Booking Summary */}
               <Card>
                 <CardContent className="pt-4">
