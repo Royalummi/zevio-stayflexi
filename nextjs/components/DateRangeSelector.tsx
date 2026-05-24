@@ -74,6 +74,10 @@ export default function DateRangeSelector({
   const showDropdown =
     externalIsOpen !== undefined ? externalIsOpen : internalShowDropdown;
 
+  // True when user has selected check-in but not yet check-out.
+  // Blocked dates can be used as checkout in this state.
+  const selectingCheckOut = !!checkIn && !checkOut;
+
   // Fetch per-day pricing from public API when calendar opens or year changes
   useEffect(() => {
     if (!propertyId || !showDropdown) return;
@@ -256,7 +260,7 @@ export default function DateRangeSelector({
     selectedDate.setDate(day);
     selectedDate.setHours(0, 0, 0, 0);
 
-    if (isDisabled(selectedDate) || isBlocked(selectedDate)) return;
+    if (isDisabled(selectedDate) || (isBlocked(selectedDate) && !(selectingCheckOut && selectedDate > checkIn!))) return;
 
     setRangeError("");
 
@@ -387,6 +391,8 @@ export default function DateRangeSelector({
 
                 const disabled = isDisabled(date);
                 const blocked = !disabled && isBlocked(date);
+                // Allow blocked date as checkout when user is picking check-out and date is after check-in
+                const effectivelyBlocked = blocked && !(selectingCheckOut && !!checkIn && date > checkIn);
                 const selected = isSelected(date);
                 const inRange = isInRange(date);
                 const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
@@ -396,15 +402,15 @@ export default function DateRangeSelector({
                 return (
                   <button
                     key={day}
-                    onClick={() => !disabled && !blocked && handleDayClick(day)}
+                    onClick={() => !disabled && !effectivelyBlocked && handleDayClick(day)}
                     className={`${styles.day} ${
                       disabled ? styles.disabled : ""
                     } ${
-                      blocked ? styles.blocked : ""
+                      effectivelyBlocked ? styles.blocked : ""
                     } ${selected ? styles.selected : ""} ${
                       inRange ? styles.inRange : ""
                     }`}
-                    disabled={disabled || blocked}
+                    disabled={disabled || effectivelyBlocked}
                     aria-label={`${day}`}
                   >
                     <span className={styles.dayNumber}>{day}</span>
@@ -480,6 +486,8 @@ export default function DateRangeSelector({
             date.setHours(0, 0, 0, 0);
             const disabled = isDisabled(date);
             const blocked = !disabled && isBlocked(date);
+            // Allow blocked date as checkout when user is picking check-out and date is after check-in
+            const effectivelyBlocked = blocked && !(selectingCheckOut && !!checkIn && date > checkIn);
             const selected = isSelected(date);
             const inRange = isInRange(date);
             const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
@@ -488,9 +496,9 @@ export default function DateRangeSelector({
             return (
               <button
                 key={day}
-                onClick={() => !disabled && !blocked && handleDayClick(day)}
-                className={`${styles.day} ${disabled ? styles.disabled : ""} ${blocked ? styles.blocked : ""} ${selected ? styles.selected : ""} ${inRange ? styles.inRange : ""}`}
-                disabled={disabled || blocked}
+                onClick={() => !disabled && !effectivelyBlocked && handleDayClick(day)}
+                className={`${styles.day} ${disabled ? styles.disabled : ""} ${effectivelyBlocked ? styles.blocked : ""} ${selected ? styles.selected : ""} ${inRange ? styles.inRange : ""}`}
+                disabled={disabled || effectivelyBlocked}
                 aria-label={`${day}`}
               >
                 <span className={styles.dayNumber}>{day}</span>
@@ -596,6 +604,8 @@ export default function DateRangeSelector({
 
               const disabled = isDisabled(date);
               const blocked = !disabled && isBlocked(date);
+              // Allow blocked date as checkout when user is picking check-out and date is after check-in
+              const effectivelyBlocked = blocked && !(selectingCheckOut && !!checkIn && date > checkIn);
               const selected = isSelected(date);
               const inRange = isInRange(date);
               const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
@@ -605,15 +615,15 @@ export default function DateRangeSelector({
               return (
                 <button
                   key={day}
-                  onClick={() => !disabled && !blocked && handleDayClick(day)}
+                  onClick={() => !disabled && !effectivelyBlocked && handleDayClick(day)}
                   className={`${styles.day} ${
                     disabled ? styles.disabled : ""
                   } ${
-                    blocked ? styles.blocked : ""
+                    effectivelyBlocked ? styles.blocked : ""
                   } ${selected ? styles.selected : ""} ${
                     inRange ? styles.inRange : ""
                   }`}
-                  disabled={disabled || blocked}
+                  disabled={disabled || effectivelyBlocked}
                   aria-label={`${day}`}
                 >
                   <span className={styles.dayNumber}>{day}</span>

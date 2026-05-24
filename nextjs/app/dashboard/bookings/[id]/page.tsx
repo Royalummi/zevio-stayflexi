@@ -16,6 +16,7 @@ import {
   FiLoader,
 } from "react-icons/fi";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAuthModals } from "@/contexts/AuthModalContext";
 import { api } from "@/lib/axios";
 import ReviewForm from "@/components/reviews/ReviewForm";
 import styles from "./booking-detail.module.css";
@@ -65,7 +66,8 @@ interface BookingDetails {
 export default function BookingDetailsPage() {
   const params = useParams();
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
+  const { openLoginModal } = useAuthModals();
   const bookingId = params.id as string;
 
   const [booking, setBooking] = useState<BookingDetails | null>(null);
@@ -123,9 +125,20 @@ export default function BookingDetailsPage() {
     }
   }, [bookingId]);
 
+  // Only fetch when auth is ready and user is logged in
   useEffect(() => {
-    fetchBookingDetails();
-  }, [fetchBookingDetails]);
+    if (user) {
+      fetchBookingDetails();
+    }
+  }, [fetchBookingDetails, user]);
+
+  // Show login modal if auth is done loading but user is not logged in
+  useEffect(() => {
+    if (!authLoading && !user) {
+      setLoading(false);
+      openLoginModal();
+    }
+  }, [authLoading, user, openLoginModal]);
 
   // SESSION 64: Check if user has already submitted a review for completed bookings
   useEffect(() => {

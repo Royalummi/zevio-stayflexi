@@ -70,10 +70,10 @@ export default function PriceBreakdown({
 
     // Step 3: Calculate Tiered GST (5% if ≤₹7,500, 18% if >₹7,500)
     const gstRate = bookingAmount <= 7500 ? 5 : 18;
-    const gstAmount = Math.round((bookingAmount * gstRate) / 100);
+    const gstAmount = parseFloat(((bookingAmount * gstRate) / 100).toFixed(2));
 
     // Step 4: Calculate Service Charge (5% of booking amount, NO GST)
-    const serviceCharge = Math.round((bookingAmount * 5) / 100);
+    const serviceCharge = parseFloat(((bookingAmount * 5) / 100).toFixed(2));
 
     // Step 5: Total Amount
     const totalAmount = bookingAmount + gstAmount + serviceCharge;
