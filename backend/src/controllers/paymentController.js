@@ -6,7 +6,7 @@
 import db from "../config/database.js";
 import { asyncHandler, sendSuccess, sendError } from "../utils/response.js";
 import { generateUUID } from "../utils/helpers.js";
-import { sendBookingConfirmationEmail } from "../services/emailService.js";
+import { sendBookingConfirmationEmail, sendVendorBookingNotification } from "../services/emailService.js";
 import cashfreeService from "../services/cashfree.service.js";
 
 /**
@@ -295,12 +295,15 @@ export const verifyPayment = asyncHandler(async (req, res) => {
     await connection.commit();
     connection.release();
 
-    // Send confirmation email (outside transaction)
+    // Send confirmation emails (outside transaction)
     try {
       await sendBookingConfirmationEmail(booking_id);
     } catch (error) {
-      console.error("Failed to send confirmation email:", error);
+      console.error("Failed to send guest confirmation email:", error);
     }
+    sendVendorBookingNotification(booking_id).catch((err) =>
+      console.error("Failed to send vendor notification email:", err),
+    );
 
     sendSuccess(
       res,
@@ -614,9 +617,12 @@ async function handlePaymentSuccess(data) {
     await connection.commit();
     console.log(`✅ Booking ${bookingId} confirmed via webhook`);
 
-    // Send email asynchronously
+    // Send emails asynchronously
     sendBookingConfirmationEmail(bookingId).catch((err) =>
-      console.error("Email sending failed:", err),
+      console.error("Guest confirmation email failed:", err),
+    );
+    sendVendorBookingNotification(bookingId).catch((err) =>
+      console.error("Vendor notification email failed:", err),
     );
   } catch (error) {
     await connection.rollback();

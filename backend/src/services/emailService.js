@@ -331,6 +331,115 @@ export const sendBookingConfirmationEmail = async (bookingId) => {
   }
 };
 
+// Send booking notification email to the vendor
+export const sendVendorBookingNotification = async (bookingId) => {
+  if (!transporter) {
+    console.log("⚠️  Vendor notification not sent: Email service not configured");
+    return false;
+  }
+
+  try {
+    const [rows] = await db.query(
+      `SELECT
+         b.id,
+         DATE_FORMAT(b.check_in,  '%Y-%m-%d') AS check_in,
+         DATE_FORMAT(b.check_out, '%Y-%m-%d') AS check_out,
+         b.nights,
+         b.guest_count,
+         b.children_count,
+         b.infants_count,
+         u.full_name  AS guest_name,
+         p.title      AS property_title,
+         v.name       AS vendor_name,
+         v.email      AS vendor_email
+       FROM bookings b
+       INNER JOIN users       u ON b.user_id      = u.id
+       INNER JOIN properties  p ON b.property_id  = p.id
+       INNER JOIN vendors     v ON p.vendor_id     = v.id
+       WHERE b.id = ?`,
+      [bookingId],
+    );
+
+    if (rows.length === 0) {
+      console.warn(`⚠️  Vendor notification skipped: booking ${bookingId} not found`);
+      return false;
+    }
+
+    const b = rows[0];
+
+    if (!b.vendor_email) {
+      console.warn(`⚠️  Vendor notification skipped: no email for vendor of booking ${bookingId}`);
+      return false;
+    }
+
+    const formatDate = (d) =>
+      d
+        ? new Date(d).toLocaleDateString("en-IN", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+          })
+        : "N/A";
+
+    const guestStr = [
+      `${b.guest_count || 0} Adult${(b.guest_count || 0) !== 1 ? "s" : ""}`,
+      b.children_count > 0 ? `${b.children_count} Children` : null,
+      b.infants_count  > 0 ? `${b.infants_count} Infant${b.infants_count !== 1 ? "s" : ""}` : null,
+    ]
+      .filter(Boolean)
+      .join(", ");
+
+    const bookingRef = b.id.substring(0, 8).toUpperCase();
+
+    const html =
+      _emailOpen("New Booking – Zevio") +
+      _emailHeader("NEW BOOKING") +
+      `<tr><td style="background:#2FA4A9;padding:18px 36px;">
+         <h2 style="margin:0;font-family:'Poppins','Inter','Segoe UI',Arial,sans-serif;font-size:18px;font-weight:700;color:#fff;">🎉 You have a new booking!</h2>
+         <p style="margin:4px 0 0;font-family:'Inter','Segoe UI',Arial,sans-serif;font-size:13px;color:rgba(255,255,255,0.9);">
+           A guest has confirmed a stay at your property.
+         </p>
+       </td></tr>` +
+      `<tr><td style="padding:32px 36px 28px;">` +
+      `<p style="font-family:'Inter','Segoe UI',Arial,sans-serif;font-size:15px;color:#5F6B7A;margin:0 0 20px;line-height:1.6;">
+         Dear <strong style="color:#1F3A5F;">${b.vendor_name}</strong>,<br>
+         A new booking has been confirmed for your property. Here are the details:
+       </p>` +
+      _st("Booking Details") +
+      `<table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-bottom:24px;">` +
+      _dr("Booking ID",   `<span style="font-family:'Courier New',monospace;font-size:12px;font-weight:700;color:#1F3A5F;">${bookingRef}</span>`) +
+      _dr("Guest Name",   `<strong style="color:#1F3A5F;">${b.guest_name}</strong>`) +
+      _dr("Property",     b.property_title) +
+      _dr("Check-in",     formatDate(b.check_in)) +
+      _dr("Check-out",    formatDate(b.check_out)) +
+      _dr("Duration",     `${b.nights} Night${b.nights !== 1 ? "s" : ""}`) +
+      _dr("Guests",       guestStr, true) +
+      `</table>` +
+      _notice(`Please ensure the property is ready before the guest's check-in date.
+               If you have any questions, contact us at
+               <a href="mailto:support@zevio.in" style="color:#1F3A5F;font-weight:600;">support@zevio.in</a>.`) +
+      `<p style="font-family:'Inter','Segoe UI',Arial,sans-serif;font-size:13px;color:#5F6B7A;margin-top:20px;line-height:1.6;">
+         Thank you for being a part of Zevio!<br>— Team Zevio
+       </p>` +
+      `</td></tr>` +
+      _brandFooter() +
+      _emailClose();
+
+    await transporter.sendMail({
+      from:    SENDERS.BOOKINGS,
+      to:      b.vendor_email,
+      subject: `New Booking Confirmed – ${b.property_title} | Zevio`,
+      html,
+    });
+
+    console.log(`✅ Vendor booking notification sent to ${b.vendor_email}`);
+    return true;
+  } catch (error) {
+    console.error("Failed to send vendor booking notification:", error);
+    return false;
+  }
+};
+
 // Send cancellation email
 export const sendCancellationEmail = async (bookingId) => {
   if (!transporter) {
@@ -455,7 +564,13 @@ export const sendRefundEmail = async (bookingId, refundAmount) => {
 };
 
 // Send contact form enquiry to support@zevio.in
-export const sendContactEmail = async ({ name, email, phone, subject, message }) => {
+export const sendContactEmail = async ({
+  name,
+  email,
+  phone,
+  subject,
+  message,
+}) => {
   if (!transporter) {
     console.log("⚠️  Contact email not sent: Email service not configured");
     return false;
@@ -500,7 +615,9 @@ export const sendContactEmail = async ({ name, email, phone, subject, message })
   };
 
   await transporter.sendMail(mailOptions);
-  console.log(`✅ Contact form email forwarded to support@zevio.in (from: ${email})`);
+  console.log(
+    `✅ Contact form email forwarded to support@zevio.in (from: ${email})`,
+  );
   return true;
 };
 
