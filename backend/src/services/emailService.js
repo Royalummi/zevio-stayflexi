@@ -75,7 +75,7 @@ export const _brandFooter = () =>
             &nbsp;·&nbsp;
             <a href="https://zevio.in" style="color:#2FA4A9;text-decoration:none;">www.zevio.in</a>
           </td>
-          <td align="right" style="font-family:'Inter','Segoe UI',Arial,sans-serif;font-size:10px;color:#5F6B7A;vertical-align:bottom;">
+          <td align="right" style="font-family:'Inter','Segoe UI',Arial,sans-serif;font-size:10px;color:#E6E9EE;vertical-align:bottom;">
             © ${new Date().getFullYear()} Zevio. All rights reserved.
           </td>
         </tr>
@@ -296,7 +296,7 @@ export const sendBookingConfirmationEmail = async (bookingId) => {
                   </div>
 
                   <center>
-                    <a href="${process.env.FRONTEND_URL || "https://zevio.in"}/bookings/${booking.id}" class="cta-btn">View Booking Details</a>
+                    <a href="${process.env.FRONTEND_URL || "https://zevio.in"}/dashboard/bookings/${booking.id}" class="cta-btn">View Booking Details</a>
                   </center>
 
                   <p style="font-size:13px;color:#5F6B7A;margin-top:20px;font-family:'Inter','Segoe UI',Arial,sans-serif;line-height:1.6;">
