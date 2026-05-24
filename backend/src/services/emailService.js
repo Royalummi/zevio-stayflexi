@@ -68,14 +68,14 @@ export const _brandFooter = () =>
     <tr><td style="padding:24px 36px;">
       <table width="100%" cellpadding="0" cellspacing="0">
         <tr>
-          <td style="font-family:'Inter','Segoe UI',Arial,sans-serif;font-size:11px;color:#E6E9EE;line-height:1.7;">
+          <td width="65%" style="font-family:'Inter','Segoe UI',Arial,sans-serif;font-size:11px;color:#E6E9EE;line-height:1.7;">
             <strong style="color:#2FA4A9;">ZEVIO</strong> &nbsp;·&nbsp; Premium Villa Stays<br>
             Navarathna Agrahara, Bettahalasur Post, Bangalore North – 562157<br>
             <a href="mailto:support@zevio.in" style="color:#2FA4A9;text-decoration:none;">support@zevio.in</a>
             &nbsp;·&nbsp;
             <a href="https://zevio.in" style="color:#2FA4A9;text-decoration:none;">www.zevio.in</a>
           </td>
-          <td align="right" style="font-family:'Inter','Segoe UI',Arial,sans-serif;font-size:10px;color:#E6E9EE;vertical-align:bottom;">
+          <td width="35%" align="right" style="font-family:'Inter','Segoe UI',Arial,sans-serif;font-size:10px;color:#E6E9EE;vertical-align:bottom;">
             © ${new Date().getFullYear()} Zevio. All rights reserved.
           </td>
         </tr>
@@ -422,7 +422,7 @@ export const sendVendorBookingNotification = async (bookingId) => {
          Thank you for being a part of Zevio!<br>— Team Zevio
        </p>` +
       `</td></tr>` +
-      _brandFooter() +
+      `<tr><td style="padding:0;">${_brandFooter()}</td></tr>` +
       _emailClose();
 
     await transporter.sendMail({
