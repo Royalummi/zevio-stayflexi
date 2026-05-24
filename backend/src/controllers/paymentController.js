@@ -291,6 +291,18 @@ export const verifyPayment = asyncHandler(async (req, res) => {
       );
     }
 
+    // 13. Create admin notification
+    await connection.query(
+      "INSERT INTO notifications (id, recipient_id, recipient_role, title, message) VALUES (?, ?, ?, ?, ?)",
+      [
+        generateUUID(),
+        null,
+        "admin",
+        "New Booking Received",
+        `A new booking has been confirmed. Booking ID: ${booking_id}`,
+      ],
+    );
+
     // COMMIT TRANSACTION - All operations successful
     await connection.commit();
     connection.release();
@@ -613,6 +625,18 @@ async function handlePaymentSuccess(data) {
         ],
       );
     }
+
+    // Create admin notification
+    await connection.query(
+      "INSERT INTO notifications (id, recipient_id, recipient_role, title, message) VALUES (?, ?, ?, ?, ?)",
+      [
+        generateUUID(),
+        null,
+        "admin",
+        "New Booking Received",
+        `A new booking has been confirmed. Booking ID: ${bookingId}`,
+      ],
+    );
 
     await connection.commit();
     console.log(`✅ Booking ${bookingId} confirmed via webhook`);

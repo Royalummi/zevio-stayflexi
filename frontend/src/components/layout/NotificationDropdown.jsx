@@ -18,15 +18,17 @@ import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Badge } from "../ui/badge";
 import { Separator } from "../ui/separator";
 import api from "../../lib/api";
+import { useAuthStore } from "../../store/authStore";
 
 // ─── Map notification titles to routes & icons ─────────────────
-function getNotificationMeta(title) {
+function getNotificationMeta(title, userRole) {
   const t = (title || "").toLowerCase();
+  const isVendor = userRole === "vendor";
 
   if (t.includes("property change request") || t.includes("change request"))
     return {
       icon: FileEdit,
-      path: "/admin/change-requests",
+      path: isVendor ? "/vendor/properties" : "/admin/change-requests",
       color: "text-amber-500",
     };
   if (t.includes("new property") || t.includes("property submission"))
@@ -44,13 +46,13 @@ function getNotificationMeta(title) {
   if (t.includes("booking") || t.includes("cancellation"))
     return {
       icon: CreditCard,
-      path: "/admin/bookings",
+      path: isVendor ? "/vendor/bookings" : "/admin/bookings",
       color: "text-purple-500",
     };
   if (t.includes("settlement") || t.includes("refund"))
     return {
       icon: CreditCard,
-      path: "/admin/settlements",
+      path: isVendor ? "/vendor/settlements" : "/admin/settlements",
       color: "text-emerald-500",
     };
   if (t.includes("account"))
@@ -76,6 +78,8 @@ function timeAgo(dateStr) {
 
 const NotificationDropdown = () => {
   const navigate = useNavigate();
+  const { user } = useAuthStore();
+  const userRole = user?.role;
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -155,7 +159,7 @@ const NotificationDropdown = () => {
       setUnreadCount((c) => Math.max(0, c - 1));
     }
     // Navigate
-    const meta = getNotificationMeta(notif.title);
+    const meta = getNotificationMeta(notif.title, userRole);
     if (meta.path) {
       setOpen(false);
       navigate(meta.path);
@@ -216,7 +220,7 @@ const NotificationDropdown = () => {
             </div>
           ) : (
             notifications.map((notif) => {
-              const meta = getNotificationMeta(notif.title);
+              const meta = getNotificationMeta(notif.title, userRole);
               const Icon = meta.icon;
               const isUnread = !notif.is_read;
 
