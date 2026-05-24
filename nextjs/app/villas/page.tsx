@@ -1,6 +1,13 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef, useCallback, Suspense } from "react";
+import {
+  useState,
+  useEffect,
+  useMemo,
+  useRef,
+  useCallback,
+  Suspense,
+} from "react";
 import { useSearchParams } from "next/navigation";
 import { api } from "@/lib/axios";
 import type { City, Property } from "@/types";
@@ -66,7 +73,7 @@ function PropertiesContent() {
       bedrooms: "",
       checkin: checkinParam || "",
       checkout: checkoutParam || "",
-      sortBy: "title-az",
+      sortBy: "recommended",
       selectedAmenities: [],
     };
   });
@@ -151,7 +158,10 @@ function PropertiesContent() {
         const total = response.data.data.total || fetchedProperties.length;
         setProperties(fetchedProperties);
         setTotalCount(total);
-        setHasMore(fetchedProperties.length === PAGE_SIZE && fetchedProperties.length < total);
+        setHasMore(
+          fetchedProperties.length === PAGE_SIZE &&
+            fetchedProperties.length < total,
+        );
       } catch (error) {
         console.error("Error fetching properties:", error);
       } finally {
@@ -191,11 +201,16 @@ function PropertiesContent() {
       const total = response.data.data.total || 0;
       setProperties((prev) => {
         const existingIds = new Set(prev.map((p) => p.id));
-        const unique = newProperties.filter((p: Property) => !existingIds.has(p.id));
+        const unique = newProperties.filter(
+          (p: Property) => !existingIds.has(p.id),
+        );
         return [...prev, ...unique];
       });
       setCurrentPage(nextPage);
-      setHasMore(newProperties.length === PAGE_SIZE && (currentPage * PAGE_SIZE + newProperties.length) < total);
+      setHasMore(
+        newProperties.length === PAGE_SIZE &&
+          currentPage * PAGE_SIZE + newProperties.length < total,
+      );
     } catch (error) {
       console.error("Error loading more properties:", error);
     } finally {
@@ -263,10 +278,22 @@ function PropertiesContent() {
     }
 
     // Sorting
-    if (filters.sortBy === "title-az" || filters.sortBy === "recommended") {
-      filtered.sort((a, b) => (a.title || a.name || "").localeCompare(b.title || b.name || ""));
+    if (filters.sortBy === "recommended") {
+      // Recommended-first: put flagged properties at top by priority, rest preserve server order
+      filtered.sort((a, b) => {
+        const aRec = a.is_recommended ? 1 : 0;
+        const bRec = b.is_recommended ? 1 : 0;
+        if (bRec !== aRec) return bRec - aRec;
+        return (b.recommended_priority || 0) - (a.recommended_priority || 0);
+      });
+    } else if (filters.sortBy === "title-az") {
+      filtered.sort((a, b) =>
+        (a.title || a.name || "").localeCompare(b.title || b.name || ""),
+      );
     } else if (filters.sortBy === "title-za") {
-      filtered.sort((a, b) => (b.title || b.name || "").localeCompare(a.title || a.name || ""));
+      filtered.sort((a, b) =>
+        (b.title || b.name || "").localeCompare(a.title || a.name || ""),
+      );
     } else if (filters.sortBy === "price-low") {
       filtered.sort((a, b) => a.price_per_night - b.price_per_night);
     } else if (filters.sortBy === "price-high") {
@@ -297,7 +324,7 @@ function PropertiesContent() {
       bedrooms: "",
       checkin: "",
       checkout: "",
-      sortBy: "title-az",
+      sortBy: "recommended",
       selectedAmenities: [],
     });
   };
@@ -347,22 +374,40 @@ function PropertiesContent() {
                   property={property}
                   checkin={filters.checkin}
                   checkout={filters.checkout}
-                  adults={filters.guests ? parseInt(filters.guests, 10) : undefined}
-                  children={filters.children ? parseInt(filters.children, 10) : undefined}
-                  infants={filters.infants ? parseInt(filters.infants, 10) : undefined}
+                  adults={
+                    filters.guests ? parseInt(filters.guests, 10) : undefined
+                  }
+                  children={
+                    filters.children
+                      ? parseInt(filters.children, 10)
+                      : undefined
+                  }
+                  infants={
+                    filters.infants ? parseInt(filters.infants, 10) : undefined
+                  }
                 />
               ))}
             </div>
             {/* Infinite scroll sentinel */}
             <div ref={sentinelRef} style={{ height: 1 }} />
             {loadingMore && (
-              <div className={styles.loadingContainer} style={{ paddingTop: "1rem", paddingBottom: "2rem" }}>
+              <div
+                className={styles.loadingContainer}
+                style={{ paddingTop: "1rem", paddingBottom: "2rem" }}
+              >
                 <div className={styles.loadingSpinner}></div>
                 <p className={styles.loadingText}>Loading more villas...</p>
               </div>
             )}
             {!hasMore && filteredProperties.length > 0 && (
-              <p style={{ textAlign: "center", color: "#888", padding: "2rem 0", fontSize: "0.9rem" }}>
+              <p
+                style={{
+                  textAlign: "center",
+                  color: "#888",
+                  padding: "2rem 0",
+                  fontSize: "0.9rem",
+                }}
+              >
                 You&apos;ve seen all {filteredProperties.length} villas
               </p>
             )}
