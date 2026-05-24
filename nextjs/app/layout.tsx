@@ -50,6 +50,50 @@ export const metadata: Metadata = {
   },
 };
 
+const websiteJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "Zevio",
+  url: "https://zevio.in",
+  description:
+    "Discover and book luxury villas near Bangalore — Nandi Hills, Bangalore Airport, Hosur, and Whitefield.",
+  potentialAction: {
+    "@type": "SearchAction",
+    target: {
+      "@type": "EntryPoint",
+      urlTemplate: "https://zevio.in/villas?search={search_term_string}",
+    },
+    "query-input": "required name=search_term_string",
+  },
+  hasPart: [
+    {
+      "@type": "WebPage",
+      name: "Luxury Villa Rentals",
+      url: "https://zevio.in/villas",
+      description: "Browse and book luxury villas near Bangalore",
+    },
+    {
+      "@type": "WebPage",
+      name: "Destinations",
+      url: "https://zevio.in/destinations",
+      description:
+        "Explore top destinations — Nandi Hills, Bangalore Airport, Hosur, and more",
+    },
+    {
+      "@type": "WebPage",
+      name: "About Us",
+      url: "https://zevio.in/about",
+      description: "Learn about Zevio and our mission",
+    },
+    {
+      "@type": "WebPage",
+      name: "Contact Us",
+      url: "https://zevio.in/contact",
+      description: "Get in touch with the Zevio team",
+    },
+  ],
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -62,6 +106,12 @@ export default function RootLayout({
       suppressHydrationWarning
       data-scroll-behavior="smooth"
     >
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
+        />
+      </head>
       <body
         className="antialiased min-h-screen flex flex-col"
         suppressHydrationWarning
