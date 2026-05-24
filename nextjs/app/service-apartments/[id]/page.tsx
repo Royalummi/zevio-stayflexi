@@ -1558,19 +1558,13 @@ function ServiceApartmentDetailContent() {
                         onClick={(e) => {
                           e.stopPropagation();
                           if (property) {
-                            setAdults(
-                              Math.min(
-                                property.max_guests ||
-                                  property.max_occupancy ||
-                                  4,
-                                adults + 1,
-                              ),
-                            );
+                            const maxG = property.max_guests || property.max_occupancy || 4;
+                            setAdults(Math.min(maxG - children, adults + 1));
                           }
                         }}
                         disabled={
                           !property ||
-                          adults >=
+                          adults + children >=
                             (property.max_guests || property.max_occupancy || 4)
                         }
                       >
@@ -1608,11 +1602,17 @@ function ServiceApartmentDetailContent() {
                         className={styles.counterBtn}
                         onClick={(e) => {
                           e.stopPropagation();
-                          setChildren(
-                            Math.min(property?.max_children || 5, children + 1),
-                          );
+                          if (property) {
+                            const maxG = property.max_guests || property.max_occupancy || 4;
+                            const maxC = property.max_children || 5;
+                            setChildren(Math.min(maxG - adults, maxC, children + 1));
+                          }
                         }}
-                        disabled={children >= (property?.max_children || 5)}
+                        disabled={
+                          !property ||
+                          adults + children >= (property.max_guests || property.max_occupancy || 4) ||
+                          children >= (property?.max_children || 5)
+                        }
                       >
                         +
                       </button>

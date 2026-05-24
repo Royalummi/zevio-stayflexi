@@ -1832,13 +1832,13 @@ function PropertyDetailContent() {
                                     e.stopPropagation();
                                     setAdults(
                                       Math.min(
-                                        propertyPricing.max_guests,
+                                        propertyPricing.max_guests - children,
                                         adults + 1,
                                       ),
                                     );
                                   }}
                                   disabled={
-                                    adults >= propertyPricing.max_guests
+                                    adults + children >= propertyPricing.max_guests
                                   }
                                 >
                                   +
@@ -1881,12 +1881,14 @@ function PropertyDetailContent() {
                                     e.stopPropagation();
                                     setChildren(
                                       Math.min(
+                                        propertyPricing.max_guests - adults,
                                         propertyPricing.max_children,
                                         children + 1,
                                       ),
                                     );
                                   }}
                                   disabled={
+                                    adults + children >= propertyPricing.max_guests ||
                                     children >= propertyPricing.max_children
                                   }
                                 >
