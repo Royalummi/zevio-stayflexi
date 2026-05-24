@@ -70,11 +70,11 @@ const benefits = [
     label: "Happy Customers",
   },
   {
-    number: "50+",
+    number: "25+",
     label: "Verified Properties",
   },
   {
-    number: "10+",
+    number: "3+",
     label: "Destinations",
   },
   {

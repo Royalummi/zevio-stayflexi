@@ -49,9 +49,9 @@ const milestones = [
   },
   {
     year: "2025",
-    title: "50+ Properties",
+    title: "25+ Properties",
     description:
-      "Expanded our portfolio to 10 different locations in Bangalore.",
+      "Expanded our portfolio to 3 different locations in Bangalore.",
   },
   {
     year: "2025",
@@ -63,7 +63,7 @@ const milestones = [
     year: "2026",
     title: "All Over Bangalore Presence",
     description:
-      "Operating in 10+ destinations with 50+ verified luxury properties.",
+      "Operating in 3+ locations with 25+ verified luxury properties.",
   },
 ];
 

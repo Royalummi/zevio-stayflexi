@@ -47,7 +47,13 @@ export default function ContactPage() {
       const data = await res.json();
       if (res.ok && data.success) {
         setFormStatus("success");
-        setFormData({ name: "", email: "", phone: "", subject: "", message: "" });
+        setFormData({
+          name: "",
+          email: "",
+          phone: "",
+          subject: "",
+          message: "",
+        });
         setTimeout(() => setFormStatus("idle"), 6000);
       } else {
         setFormStatus("error");
@@ -247,13 +253,7 @@ export default function ContactPage() {
         </div>
       </section>
 
-      {/* Map Section (Placeholder) */}
-      <section className={styles.mapSection}>
-        <div className={styles.mapPlaceholder}>
-          <FiMapPin className={styles.mapIcon} />
-          <p className={styles.mapText}>Map Integration Coming Soon</p>
-        </div>
-      </section>
+
     </div>
   );
 }
