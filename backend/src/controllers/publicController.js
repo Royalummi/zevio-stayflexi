@@ -568,7 +568,8 @@ export const getPropertyBlockedDates = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
   const [blackouts] = await db.query(
-    `SELECT start_date, end_date
+    `SELECT DATE_FORMAT(start_date, '%Y-%m-%d') AS start_date,
+            DATE_FORMAT(end_date,   '%Y-%m-%d') AS end_date
      FROM property_blackout_dates
      WHERE property_id = ? AND end_date >= CURDATE()
      ORDER BY start_date ASC`,
@@ -576,7 +577,8 @@ export const getPropertyBlockedDates = asyncHandler(async (req, res) => {
   );
 
   const [bookings] = await db.query(
-    `SELECT check_in AS start_date, check_out AS end_date
+    `SELECT DATE_FORMAT(check_in,  '%Y-%m-%d') AS start_date,
+            DATE_FORMAT(check_out, '%Y-%m-%d') AS end_date
      FROM bookings
      WHERE property_id = ?
        AND (
