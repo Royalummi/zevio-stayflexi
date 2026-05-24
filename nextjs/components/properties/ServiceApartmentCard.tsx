@@ -24,6 +24,9 @@ interface ServiceApartmentCardProps {
   onWishlistToggle: (propertyId: string, isWishlisted: boolean) => void;
   checkin?: string;
   checkout?: string;
+  adults?: number;
+  children?: number;
+  infants?: number;
 }
 
 export default function ServiceApartmentCard({
@@ -31,6 +34,9 @@ export default function ServiceApartmentCard({
   onWishlistToggle,
   checkin,
   checkout,
+  adults,
+  children,
+  infants,
 }: ServiceApartmentCardProps) {
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -138,12 +144,20 @@ export default function ServiceApartmentCard({
     0;
 
   const cardId = property.id || property.property_id;
-  const dateParams =
-    checkin && checkout ? `?checkIn=${checkin}&checkOut=${checkout}` : "";
+  const buildParams = () => {
+    const p = new URLSearchParams();
+    if (checkin) p.set("checkIn", checkin);
+    if (checkout) p.set("checkOut", checkout);
+    if (adults !== undefined && adults > 0) p.set("adults", String(adults));
+    if (children !== undefined && children > 0) p.set("children", String(children));
+    if (infants !== undefined && infants > 0) p.set("infants", String(infants));
+    const q = p.toString();
+    return q ? `?${q}` : "";
+  };
 
   return (
     <Link
-      href={`/service-apartments/${cardId}${dateParams}`}
+      href={`/service-apartments/${cardId}${buildParams()}`}
       className={styles.card}
     >
       {/* Image Section */}

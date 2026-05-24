@@ -30,6 +30,9 @@ interface PropertyCardProps {
   initialWishlistState?: boolean;
   checkin?: string;
   checkout?: string;
+  adults?: number;
+  children?: number;
+  infants?: number;
   detailBasePath?: string;
   forceVertical?: boolean;
 }
@@ -40,6 +43,9 @@ export default function PropertyCard({
   initialWishlistState = false,
   checkin,
   checkout,
+  adults,
+  children,
+  infants,
   detailBasePath = "/villas",
   forceVertical = false,
 }: PropertyCardProps) {
@@ -185,9 +191,14 @@ export default function PropertyCard({
   };
 
   const handleCardClick = () => {
-    const dateParams =
-      checkin && checkout ? `?checkIn=${checkin}&checkOut=${checkout}` : "";
-    router.push(`${detailBasePath}/${property.id}${dateParams}`);
+    const params = new URLSearchParams();
+    if (checkin) params.set("checkIn", checkin);
+    if (checkout) params.set("checkOut", checkout);
+    if (adults !== undefined && adults > 0) params.set("adults", String(adults));
+    if (children !== undefined && children > 0) params.set("children", String(children));
+    if (infants !== undefined && infants > 0) params.set("infants", String(infants));
+    const query = params.toString();
+    router.push(`${detailBasePath}/${property.id}${query ? `?${query}` : ""}`);
   };
 
   // Two-layer crossfade: old image stays visible, new one pixel-reveals on top

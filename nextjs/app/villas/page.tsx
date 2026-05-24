@@ -347,6 +347,9 @@ function PropertiesContent() {
                   property={property}
                   checkin={filters.checkin}
                   checkout={filters.checkout}
+                  adults={filters.guests ? parseInt(filters.guests, 10) : undefined}
+                  children={filters.children ? parseInt(filters.children, 10) : undefined}
+                  infants={filters.infants ? parseInt(filters.infants, 10) : undefined}
                 />
               ))}
             </div>

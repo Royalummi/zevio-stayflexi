@@ -234,8 +234,16 @@ function ServiceApartmentDetailContent() {
   const [loading, setLoading] = useState(true);
   const [checkIn, setCheckIn] = useState<Date | null>(null);
   const [checkOut, setCheckOut] = useState<Date | null>(null);
-  const [adults, setAdults] = useState(2);
-  const [children, setChildren] = useState(0);
+  const [adults, setAdults] = useState(() => {
+    const adultsParam = searchParams.get("adults");
+    const parsed = adultsParam ? parseInt(adultsParam, 10) : NaN;
+    return !isNaN(parsed) ? parsed : 2;
+  });
+  const [children, setChildren] = useState(() => {
+    const childrenParam = searchParams.get("children");
+    const parsed = childrenParam ? parseInt(childrenParam, 10) : NaN;
+    return !isNaN(parsed) ? parsed : 0;
+  });
 
   // Modern dropdown states - guests only
   const [showGuestsDropdown, setShowGuestsDropdown] = useState(false);
