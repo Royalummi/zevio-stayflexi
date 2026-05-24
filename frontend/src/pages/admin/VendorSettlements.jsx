@@ -287,7 +287,7 @@ export default function VendorSettlements() {
                       Vendor Gross
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Deductions
+                      Service Fee
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                       Settlement Amount
@@ -364,18 +364,11 @@ export default function VendorSettlements() {
                       </td>
                       <td className="px-4 py-4 text-sm">
                         {settlement.platform_fee != null ? (
-                          <div>
-                            <div className="text-red-500 text-xs">
-                              Fee: -{formatCurrency(settlement.platform_fee)}
-                            </div>
-                            <div className="text-red-500 text-xs">
-                              GST: -
-                              {formatCurrency(settlement.platform_fee_gst)}
-                            </div>
-                            <div className="font-medium text-red-600 text-xs border-t border-gray-200 pt-1 mt-1">
-                              Total: -
-                              {formatCurrency(settlement.total_deduction)}
-                            </div>
+                          <div className="font-medium text-red-500 text-xs">
+                            -{formatCurrency(
+                              settlement.total_deduction ||
+                              (parseFloat(settlement.platform_fee || 0) + parseFloat(settlement.platform_fee_gst || 0))
+                            )}
                           </div>
                         ) : (
                           <span className="text-gray-400 text-xs">Legacy</span>
@@ -533,6 +526,22 @@ export default function VendorSettlements() {
                             </span>
                           </div>
                           <div className="flex justify-between text-xs">
+                            <span className="text-gray-500">Base Price:</span>
+                            <span>
+                              {formatCurrency(
+                                selectedSettlement.booking_base_amount,
+                              )}
+                            </span>
+                          </div>
+                          {parseFloat(selectedSettlement.booking_discount_amount) > 0 && (
+                            <div className="flex justify-between text-xs">
+                              <span className="text-gray-500">Coupon Discount:</span>
+                              <span className="text-orange-500">
+                                -{formatCurrency(selectedSettlement.booking_discount_amount)}
+                              </span>
+                            </div>
+                          )}
+                          <div className="flex justify-between text-xs">
                             <span className="text-gray-500">Vendor Gross:</span>
                             <span className="text-blue-600">
                               {formatCurrency(
@@ -542,20 +551,12 @@ export default function VendorSettlements() {
                           </div>
                           <div className="flex justify-between text-xs">
                             <span className="text-gray-500">
-                              Platform Fee (3%):
+                              Service Fee:
                             </span>
                             <span className="text-red-500">
-                              -{formatCurrency(selectedSettlement.platform_fee)}
-                            </span>
-                          </div>
-                          <div className="flex justify-between text-xs">
-                            <span className="text-gray-500">
-                              GST on Fee (18%):
-                            </span>
-                            <span className="text-red-500">
-                              -
-                              {formatCurrency(
-                                selectedSettlement.platform_fee_gst,
+                              -{formatCurrency(
+                                selectedSettlement.total_deduction ||
+                                (parseFloat(selectedSettlement.platform_fee || 0) + parseFloat(selectedSettlement.platform_fee_gst || 0))
                               )}
                             </span>
                           </div>
