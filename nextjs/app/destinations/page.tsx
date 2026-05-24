@@ -136,7 +136,7 @@ export default function DestinationsPage() {
           prev.map((dest) => {
             const match = areas.find(
               (a: { area: string; property_count: number }) =>
-                a.area.toLowerCase() === dest.area.toLowerCase(),
+                a.area.toLowerCase().trim() === dest.area.toLowerCase().trim(),
             );
             return match ? { ...dest, properties: match.property_count } : dest;
           }),
