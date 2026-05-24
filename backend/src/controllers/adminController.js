@@ -80,6 +80,7 @@ export const getAllBookings = asyncHandler(async (req, res) => {
       u.full_name as user_name,
       u.email as user_email,
       u.phone as user_phone,
+      u.bank_details as user_bank_details,
       p.title as property_title,
       c.name as city_name,
       v.name as vendor_name
@@ -179,7 +180,7 @@ export const getBookingStats = asyncHandler(async (req, res) => {
 
 // Process refund
 export const processRefund = asyncHandler(async (req, res) => {
-  const { booking_id, refund_percentage } = req.body;
+  const { booking_id, refund_percentage, notes } = req.body;
   const adminId = req.user.id;
 
   if (!booking_id || !refund_percentage) {
@@ -229,14 +230,15 @@ export const processRefund = asyncHandler(async (req, res) => {
   // Create refund record
   const refundId = generateUUID();
   await db.query(
-    "INSERT INTO refunds (id, booking_id, payment_id, refund_percentage, refund_amount, status) VALUES (?, ?, ?, ?, ?, ?)",
+    "INSERT INTO refunds (id, booking_id, payment_id, refund_percentage, refund_amount, status, notes) VALUES (?, ?, ?, ?, ?, ?, ?)",
     [
       refundId,
       booking_id,
       payment.id,
       refund_percentage,
       refundAmount,
-      "initiated",
+      "pending_manual",
+      notes || null,
     ],
   );
 
@@ -245,59 +247,8 @@ export const processRefund = asyncHandler(async (req, res) => {
     booking_id,
   ]);
 
-  // Initiate actual refund with Cashfree
-  try {
-    // Get Cashfree payment ID from gateway_payment_id
-    const cashfreePaymentId = payment.gateway_payment_id;
-    const cashfreeOrderId = payment.gateway_order_id || booking_id;
-
-    if (!cashfreePaymentId) {
-      throw new Error("Cashfree payment ID not found");
-    }
-
-    // Create refund in Cashfree
-    const cashfreeRefund = await cashfreeService.processRefund({
-      orderId: cashfreeOrderId,
-      refundId: refundId,
-      refundAmount: parseFloat(refundAmount).toFixed(2),
-      refundNote: `Refund ${refund_percentage}% for booking ${booking_id}`,
-    });
-
-    if (!cashfreeRefund.success) {
-      throw new Error("Cashfree refund API call failed");
-    }
-
-    // Update refund record with Cashfree refund ID and mark as completed
-    await db.query(
-      'UPDATE refunds SET status = "completed", gateway_refund_id = ? WHERE id = ?',
-      [cashfreeRefund.refund.cf_refund_id, refundId],
-    );
-
-    console.log(
-      `✅ Refund processed successfully: ${cashfreeRefund.refund.cf_refund_id}`,
-    );
-  } catch (error) {
-    console.error("❌ Cashfree refund failed:", error);
-
-    // Mark refund as failed but don't stop the process
-    // Admin can manually process refund later
-    await db.query('UPDATE refunds SET status = "failed" WHERE id = ?', [
-      refundId,
-    ]);
-
-    // Log the error for admin review
-    await db.query(
-      "INSERT INTO activity_logs (id, actor_id, actor_role, action, entity, entity_id) VALUES (?, ?, ?, ?, ?, ?)",
-      [
-        generateUUID(),
-        req.user.id,
-        "admin",
-        `Refund failed: ${error.message}`,
-        "refund",
-        refundId,
-      ],
-    );
-  }
+  // Phase 1: Manual refund — admin will complete the bank transfer manually
+  console.log(`✅ Refund record created (pending_manual): ${refundId}. Admin to process bank transfer manually.`);
 
   // Create credit note
   await db.query(

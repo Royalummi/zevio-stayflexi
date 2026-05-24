@@ -15,6 +15,7 @@ import {
   FiXCircle,
   FiLoader,
 } from "react-icons/fi";
+import { useAuth } from "@/contexts/AuthContext";
 import { api } from "@/lib/axios";
 import ReviewForm from "@/components/reviews/ReviewForm";
 import styles from "./booking-detail.module.css";
@@ -64,6 +65,7 @@ interface BookingDetails {
 export default function BookingDetailsPage() {
   const params = useParams();
   const router = useRouter();
+  const { user } = useAuth();
   const bookingId = params.id as string;
 
   const [booking, setBooking] = useState<BookingDetails | null>(null);
@@ -166,6 +168,18 @@ export default function BookingDetailsPage() {
   };
 
   const handleCancelRequest = async () => {
+    // Check bank details before allowing cancellation so refund can be processed
+    const bankDetails = (user as any)?.bank_details;
+    if (!bankDetails?.account_number) {
+      setToast({
+        message:
+          "Please add your bank details in My Profile before requesting a cancellation.",
+        type: "error",
+      });
+      setTimeout(() => router.push("/dashboard/profile"), 2000);
+      return;
+    }
+
     if (
       !confirm(
         "Are you sure you want to request cancellation for this booking?",
@@ -178,7 +192,8 @@ export default function BookingDetailsPage() {
       setCanceling(true);
       await api.post(`/bookings/${bookingId}/cancel-request`);
       setToast({
-        message: "Cancellation request submitted successfully",
+        message:
+          "Cancellation request submitted. Your refund will be processed to your bank account.",
         type: "success",
       });
       fetchBookingDetails(); // Refresh data

@@ -44,6 +44,8 @@ export default function ProcessRefunds() {
   const [showRefundDialog, setShowRefundDialog] = useState(false);
   const [refundPercentage, setRefundPercentage] = useState(80);
   const [processingRefund, setProcessingRefund] = useState(false);
+  const [notes, setNotes] = useState("");
+  const [activeTab, setActiveTab] = useState("pending");
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 20,
@@ -52,13 +54,13 @@ export default function ProcessRefunds() {
 
   useEffect(() => {
     fetchCancellationRequests();
-  }, [filters, pagination.page]);
+  }, [filters, pagination.page, activeTab]);
 
   const fetchCancellationRequests = async () => {
     try {
       setLoading(true);
       const params = {
-        status: "cancel_requested",
+        status: activeTab === "pending" ? "cancel_requested" : "cancelled",
         page: pagination.page,
         limit: pagination.limit,
         ...filters,
@@ -69,7 +71,7 @@ export default function ProcessRefunds() {
         setBookings(response.data.data.bookings);
         setPagination((prev) => ({
           ...prev,
-          total: response.data.data.total,
+          total: response.data.data.pagination?.total || 0,
         }));
       }
     } catch (error) {
@@ -95,12 +97,14 @@ export default function ProcessRefunds() {
       const response = await api.post("/admin/refund", {
         booking_id: selectedBooking.id,
         refund_percentage: refundPercentage,
+        notes: notes.trim() || undefined,
       });
 
       if (response.data.success) {
-        toast.success("Refund processed successfully");
+        toast.success("Booking cancelled. Please complete the bank transfer manually.");
         setShowRefundDialog(false);
         setSelectedBooking(null);
+        setNotes("");
         fetchCancellationRequests();
       }
     } catch (error) {
@@ -210,7 +214,7 @@ export default function ProcessRefunds() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">
-              Avg. Refund (80%)
+              Est. Pending Refund
             </CardTitle>
             <IndianRupee className="h-4 w-4 text-blue-600" />
           </CardHeader>
@@ -219,9 +223,9 @@ export default function ProcessRefunds() {
               {formatCurrency(
                 bookings.reduce(
                   (sum, booking) =>
-                    sum + parseFloat(booking.total_amount || 0) * 0.8,
+                    sum + parseFloat(booking.total_amount || 0),
                   0,
-                ) / (bookings.length || 1),
+                ),
               )}
             </div>
           </CardContent>
@@ -231,7 +235,27 @@ export default function ProcessRefunds() {
       {/* Cancellation Requests Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Cancellation Requests</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle>{activeTab === "pending" ? "Pending Cancellation Requests" : "Processed Refunds"}</CardTitle>
+            <div className="flex gap-0 border border-gray-200 rounded-lg overflow-hidden">
+              <button
+                className={`px-4 py-1.5 text-sm font-medium transition-colors ${
+                  activeTab === "pending" ? "bg-blue-600 text-white" : "bg-white text-gray-600 hover:bg-gray-50"
+                }`}
+                onClick={() => { setActiveTab("pending"); setPagination(prev => ({ ...prev, page: 1 })); }}
+              >
+                Pending
+              </button>
+              <button
+                className={`px-4 py-1.5 text-sm font-medium transition-colors ${
+                  activeTab === "processed" ? "bg-blue-600 text-white" : "bg-white text-gray-600 hover:bg-gray-50"
+                }`}
+                onClick={() => { setActiveTab("processed"); setPagination(prev => ({ ...prev, page: 1 })); }}
+              >
+                Processed
+              </button>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -292,10 +316,10 @@ export default function ProcessRefunds() {
                           <User className="h-4 w-4 text-gray-400" />
                           <div>
                             <div className="font-medium">
-                              {booking.user?.full_name || "N/A"}
+                              {booking.user_name || "N/A"}
                             </div>
                             <div className="text-xs text-gray-500">
-                              {booking.user?.email}
+                              {booking.user_email}
                             </div>
                           </div>
                         </div>
@@ -305,10 +329,10 @@ export default function ProcessRefunds() {
                           <Home className="h-4 w-4 text-gray-400" />
                           <div>
                             <div className="font-medium">
-                              {booking.property?.title || "N/A"}
+                              {booking.property_title || "N/A"}
                             </div>
                             <div className="text-xs text-gray-500">
-                              {booking.property?.city?.name}
+                              {booking.city_name}
                             </div>
                           </div>
                         </div>
@@ -330,23 +354,29 @@ export default function ProcessRefunds() {
                         <div className="font-semibold text-gray-900 dark:text-white">
                           {formatCurrency(booking.total_amount)}
                         </div>
-                        <div className="text-xs text-green-600">
-                          Refund: {formatCurrency(booking.total_amount * 0.8)}
+                        <div className="text-xs text-gray-400">
+                          Paid amount
                         </div>
                       </td>
                       <td className="px-4 py-4 text-sm">
                         {getStatusBadge(booking.status)}
                       </td>
                       <td className="px-4 py-4 text-sm">
-                        <Button
-                          size="sm"
-                          onClick={() => {
-                            setSelectedBooking(booking);
-                            setShowRefundDialog(true);
-                          }}
-                        >
-                          Process Refund
-                        </Button>
+                        {activeTab === "pending" ? (
+                          <Button
+                            size="sm"
+                            onClick={() => {
+                              setSelectedBooking(booking);
+                              setShowRefundDialog(true);
+                            }}
+                          >
+                            Process Refund
+                          </Button>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-xs text-green-600 font-medium">
+                            <CheckCircle className="h-3.5 w-3.5" /> Cancelled
+                          </span>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -359,9 +389,9 @@ export default function ProcessRefunds() {
           {!loading && bookings.length > 0 && (
             <div className="flex justify-between items-center mt-6 pt-4 border-t">
               <p className="text-sm text-gray-600">
-                Showing {(pagination.page - 1) * pagination.limit + 1} to{" "}
+                Showing {pagination.total > 0 ? (pagination.page - 1) * pagination.limit + 1 : 0} to{" "}
                 {Math.min(pagination.page * pagination.limit, pagination.total)}{" "}
-                of {pagination.total} requests
+                of {pagination.total} {activeTab === "pending" ? "pending requests" : "processed refunds"}
               </p>
               <div className="flex gap-2">
                 <Button
@@ -419,13 +449,13 @@ export default function ProcessRefunds() {
                     <div className="flex justify-between">
                       <span className="text-gray-600">User:</span>
                       <span className="font-medium">
-                        {selectedBooking.user?.full_name}
+                        {selectedBooking.user_name || "N/A"}
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Property:</span>
                       <span className="font-medium">
-                        {selectedBooking.property?.title}
+                        {selectedBooking.property_title || "N/A"}
                       </span>
                     </div>
                     <div className="flex justify-between">
@@ -506,6 +536,41 @@ export default function ProcessRefunds() {
                 </CardContent>
               </Card>
 
+              {/* User Bank Details */}
+              {selectedBooking.user_bank_details ? (
+                <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm space-y-1">
+                  <p className="font-semibold text-blue-800 flex items-center gap-1 mb-1">
+                    <IndianRupee className="h-3.5 w-3.5" /> User Bank Details
+                  </p>
+                  <p className="text-blue-700"><span className="font-medium">Name:</span> {selectedBooking.user_bank_details.account_holder_name}</p>
+                  <p className="text-blue-700"><span className="font-medium">Bank:</span> {selectedBooking.user_bank_details.bank_name}</p>
+                  <p className="text-blue-700"><span className="font-medium">Account:</span> {selectedBooking.user_bank_details.account_number}</p>
+                  <p className="text-blue-700"><span className="font-medium">IFSC:</span> {selectedBooking.user_bank_details.ifsc_code}</p>
+                  {selectedBooking.user_bank_details.branch_name && (
+                    <p className="text-blue-700"><span className="font-medium">Branch:</span> {selectedBooking.user_bank_details.branch_name}</p>
+                  )}
+                </div>
+              ) : (
+                <div className="rounded-lg border border-orange-200 bg-orange-50 p-3 text-sm text-orange-700">
+                  ⚠️ User has not added bank details yet. Contact them before processing the refund.
+                </div>
+              )}
+
+              {/* Notes / Bank Transfer Reference */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Notes / Bank Transfer Reference{" "}
+                  <span className="text-gray-400 font-normal">(optional)</span>
+                </label>
+                <textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="e.g., NEFT transfer ref: XYZ, UPI: 123456..."
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  rows={2}
+                />
+              </div>
+
               {/* Actions */}
               <div className="flex gap-3 pt-4">
                 <Button
@@ -514,6 +579,7 @@ export default function ProcessRefunds() {
                   onClick={() => {
                     setShowRefundDialog(false);
                     setSelectedBooking(null);
+                    setNotes("");
                   }}
                   disabled={processingRefund}
                 >
@@ -542,8 +608,9 @@ export default function ProcessRefunds() {
               <div className="flex gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                 <AlertCircle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
                 <p className="text-sm text-yellow-800">
-                  This action will process the refund through Cashfree and mark
-                  the booking as cancelled. This action cannot be undone.
+                  This will cancel the booking and record the refund as pending.
+                  Please complete the bank transfer manually using the user's
+                  bank details above. This action cannot be undone.
                 </p>
               </div>
             </div>
