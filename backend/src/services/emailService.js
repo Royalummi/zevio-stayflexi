@@ -183,14 +183,16 @@ export const sendBookingConfirmationEmail = async (bookingId) => {
 
     const booking = bookings[0];
 
-    const formatDate = (d) =>
-      d
-        ? new Date(d).toLocaleDateString("en-IN", {
-            day: "2-digit",
-            month: "short",
-            year: "numeric",
-          })
-        : "N/A";
+    const formatDate = (d) => {
+      if (!d) return "N/A";
+      // mysql2 returns DATE columns as JS Date at midnight IST (= 18:30 UTC prev day).
+      // Add IST offset (+05:30) so the date displays correctly on a UTC server.
+      return new Date(new Date(d).getTime() + 19800000).toLocaleDateString("en-IN", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      });
+    };
     const formatCurrency = (amt) =>
       `₹${parseFloat(amt || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
