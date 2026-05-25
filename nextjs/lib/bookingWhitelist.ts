@@ -9,13 +9,11 @@
  * When you're ready to open bookings for everyone, set BOOKING_OPEN = true.
  */
 
-export const BOOKING_OPEN = false;
+export const BOOKING_OPEN = true;
 
 export const BOOKING_WHITELIST: string[] = [
-  "ranjith.gopafy@gmail.com",
   "mahendrasimha.rs@gmail.com",
   "mithunmanju77@gmail.com",
-  "shashankmanjunath13@gmail.com",
   "testuser@zevio.in",
   "priya@example.com",
 ];
