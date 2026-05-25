@@ -672,7 +672,7 @@ export const sendCheckInReminderEmail = async (
     }
 
     const booking = bookings[0];
-    const reminderType = hoursBeforeCheckIn === 24 ? "24 hours" : "6 hours";
+    const reminderType = hoursBeforeCheckIn === 24 ? "24 hours" : hoursBeforeCheckIn === 6 ? "6 hours" : `${hoursBeforeCheckIn} hour${hoursBeforeCheckIn !== 1 ? "s" : ""}`;
 
     // Parse YYYY-MM-DD string into a local Date (no UTC drift)
     const fmtDate = (s) => {
@@ -736,8 +736,8 @@ export const sendCheckInReminderEmail = async (
                 <div class="header-label">CHECK-IN REMINDER</div>
               </div>
 
-              <div class="urgency-bar ${hoursBeforeCheckIn === 24 ? "urgency-h24" : "urgency-h6"}">
-                <span class="urgency-text">⏰ &nbsp;Your stay begins ${hoursBeforeCheckIn === 24 ? "tomorrow" : "in just 6 hours"}! We look forward to welcoming you.</span>
+              <div class="urgency-bar ${hoursBeforeCheckIn >= 20 ? "urgency-h24" : "urgency-h6"}">
+                <span class="urgency-text">⏰ &nbsp;Your stay begins ${hoursBeforeCheckIn === 24 ? "tomorrow" : hoursBeforeCheckIn === 6 ? "in just 6 hours" : `in approximately ${hoursBeforeCheckIn} hour${hoursBeforeCheckIn !== 1 ? "s" : ""}`}! We look forward to welcoming you.</span>
               </div>
 
               <div class="content">

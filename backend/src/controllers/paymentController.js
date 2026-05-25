@@ -6,7 +6,7 @@
 import db from "../config/database.js";
 import { asyncHandler, sendSuccess, sendError } from "../utils/response.js";
 import { generateUUID } from "../utils/helpers.js";
-import { sendBookingConfirmationEmail, sendVendorBookingNotification } from "../services/emailService.js";
+import { sendBookingConfirmationEmail, sendVendorBookingNotification, sendCheckInReminderEmail } from "../services/emailService.js";
 import cashfreeService from "../services/cashfree.service.js";
 
 /**
@@ -316,6 +316,21 @@ export const verifyPayment = asyncHandler(async (req, res) => {
     sendVendorBookingNotification(booking_id).catch((err) =>
       console.error("Failed to send vendor notification email:", err),
     );
+
+    // Immediate check-in reminder if check-in is today or tomorrow
+    // (the 24h midnight cron would miss bookings made after midnight for these dates)
+    const _checkInIST = booking.check_in instanceof Date
+      ? new Date(booking.check_in.getTime() + 19800000).toISOString().split("T")[0]
+      : String(booking.check_in).substring(0, 10);
+    const _tomorrowIST = new Date(Date.now() + 19800000 + 86400000).toISOString().split("T")[0];
+    if (_checkInIST <= _tomorrowIST) {
+      const [_cy, _cm, _cd] = _checkInIST.split("-").map(Number);
+      const _checkInMidnightIST = Date.UTC(_cy, _cm - 1, _cd) - 19800000;
+      const _hoursUntil = Math.max(1, Math.floor((_checkInMidnightIST - Date.now()) / 3600000));
+      sendCheckInReminderEmail(booking_id, _hoursUntil).catch((err) =>
+        console.error("Failed to send immediate check-in reminder:", err),
+      );
+    }
 
     sendSuccess(
       res,
@@ -648,6 +663,20 @@ async function handlePaymentSuccess(data) {
     sendVendorBookingNotification(bookingId).catch((err) =>
       console.error("Vendor notification email failed:", err),
     );
+
+    // Immediate check-in reminder if check-in is today or tomorrow
+    const _checkInIST = booking.check_in instanceof Date
+      ? new Date(booking.check_in.getTime() + 19800000).toISOString().split("T")[0]
+      : String(booking.check_in).substring(0, 10);
+    const _tomorrowIST = new Date(Date.now() + 19800000 + 86400000).toISOString().split("T")[0];
+    if (_checkInIST <= _tomorrowIST) {
+      const [_cy, _cm, _cd] = _checkInIST.split("-").map(Number);
+      const _checkInMidnightIST = Date.UTC(_cy, _cm - 1, _cd) - 19800000;
+      const _hoursUntil = Math.max(1, Math.floor((_checkInMidnightIST - Date.now()) / 3600000));
+      sendCheckInReminderEmail(bookingId, _hoursUntil).catch((err) =>
+        console.error("Failed to send immediate check-in reminder (webhook):", err),
+      );
+    }
   } catch (error) {
     await connection.rollback();
     console.error("Webhook transaction failed:", error);
