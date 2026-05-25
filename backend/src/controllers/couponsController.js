@@ -405,13 +405,12 @@ export const validateCoupon = asyncHandler(async (req, res) => {
 
   const coupon = coupons[0];
 
-  // Check expiry date — compare as Date objects to avoid string vs Date coercion issues
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const validFrom = new Date(coupon.valid_from);
-  const validUntil = new Date(coupon.valid_until);
-  validUntil.setHours(23, 59, 59, 999); // include the full end day
-  if (today < validFrom || today > validUntil) {
+  // Check expiry date — compare as IST date strings to avoid UTC/IST offset issues on UTC server
+  // mysql2 returns DATE columns as JS Date objects at midnight IST (= 18:30 UTC prev day)
+  const nowIST = new Date(Date.now() + 19800000).toISOString().split("T")[0];
+  const validFromIST = new Date(new Date(coupon.valid_from).getTime() + 19800000).toISOString().split("T")[0];
+  const validUntilIST = new Date(new Date(coupon.valid_until).getTime() + 19800000).toISOString().split("T")[0];
+  if (nowIST < validFromIST || nowIST > validUntilIST) {
     return sendError(res, "Coupon has expired or not yet valid", 400);
   }
 

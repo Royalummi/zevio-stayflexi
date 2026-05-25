@@ -318,8 +318,8 @@ export const getCalendarAvailability = async (req, res) => {
       const lastDay = new Date(year, month, 0).getDate();
       endDate = `${year}-${String(month).padStart(2, "0")}-${lastDay}`;
     } else {
-      // Default to current month
-      const now = new Date();
+      // Default to current month — use IST date so month is correct on UTC server
+      const now = new Date(Date.now() + 19800000);
       const currentYear = now.getFullYear();
       const currentMonth = now.getMonth() + 1;
       startDate = `${currentYear}-${String(currentMonth).padStart(2, "0")}-01`;

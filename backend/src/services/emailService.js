@@ -927,8 +927,8 @@ export const sendReviewRequestEmail = async (bookingId) => {
             <p style="margin:0 0 6px;font-size:15px;font-weight:700;color:#1F3A5F;font-family:${_F};">${booking.property_title}</p>
             <p style="margin:0 0 4px;font-size:13px;color:#5F6B7A;font-family:${_F};">${booking.city_name || ""}</p>
             <p style="margin:4px 0 0;font-size:13px;color:#4a5666;font-family:${_F};">
-              Check-in: <strong>${new Date(booking.check_in).toLocaleDateString("en-IN")}</strong> &nbsp;|&nbsp;
-              Check-out: <strong>${new Date(booking.check_out).toLocaleDateString("en-IN")}</strong>
+              Check-in: <strong>${new Date(new Date(booking.check_in).getTime() + 19800000).toLocaleDateString("en-IN")}</strong> &nbsp;|&nbsp;
+              Check-out: <strong>${new Date(new Date(booking.check_out).getTime() + 19800000).toLocaleDateString("en-IN")}</strong>
             </p>
           `)}
           <p style="font-size:22px;letter-spacing:8px;margin:24px 0 8px;">⭐⭐⭐⭐⭐</p>
