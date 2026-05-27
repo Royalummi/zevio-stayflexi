@@ -818,7 +818,7 @@ export default function BookingDetailsPage() {
                           td,th{padding:10px;border:1px solid #ddd;text-align:left}
                           .total{font-weight:bold;font-size:1.1em}hr{margin:20px 0}</style></head>
                           <body>
-                            <h1>Zevio - Tax Invoice</h1>
+                            <h1>Zevio Pvt Ltd - Tax Invoice</h1>
                             <p><strong>Invoice #:</strong> ${inv?.invoice_number || booking.invoice?.invoice_number}</p>
                             <p><strong>Booking ID:</strong> ${booking.id.substring(0, 8).toUpperCase()}</p>
                             <p><strong>Property:</strong> ${booking.property_title}</p>
@@ -830,7 +830,7 @@ export default function BookingDetailsPage() {
                               ${parseFloat(String(booking.service_charge || 0)) > 0 ? `<tr><td>Service Charge (5%)</td><td>₹${fmt(booking.service_charge)}</td></tr>` : ""}
                               <tr class="total"><td><strong>Total</strong></td><td><strong>₹${fmt(booking.total_amount)}</strong></td></tr>
                             </table>
-                            <p style="color:#666;font-size:0.9em">Thank you for booking with Zevio. This is a computer-generated invoice.</p>
+                            <p style="color:#666;font-size:0.9em">Thank you for booking with Zevio Pvt Ltd. This is a computer-generated invoice.</p>
                             <script>window.print()</script>
                           </body></html>`);
                         invoiceWindow.document.close();

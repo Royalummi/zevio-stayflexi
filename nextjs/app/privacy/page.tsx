@@ -336,7 +336,7 @@ export default function PrivacyPage() {
             </p>
             <div className={styles.contactInfo}>
               <p>
-                <strong>Zevio - Privacy Team</strong>
+                <strong>Zevio Pvt Ltd - Privacy Team</strong>
               </p>
               <p>Email: privacy@zevio.com</p>
               <p>Phone: +91 99800 50909</p>

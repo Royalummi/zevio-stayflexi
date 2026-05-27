@@ -247,7 +247,7 @@ export default function BookingsEnhanced() {
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `bookings_${new Date().toISOString().split("T")[0]}.csv`;
+      link.download = `zevio_pvt_ltd_bookings_${new Date().toISOString().split("T")[0]}.csv`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

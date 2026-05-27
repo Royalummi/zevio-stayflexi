@@ -489,7 +489,7 @@ export default function TermsPage() {
             <h2 className={styles.sectionTitle}>Contact Details</h2>
             <div className={styles.contactInfo}>
               <p>
-                <strong>Zevio</strong>
+                <strong>Zevio Pvt Ltd</strong>
               </p>
               <p>
                 Email: <a href="mailto:support@zevio.com">support@zevio.com</a>
