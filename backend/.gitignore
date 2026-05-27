@@ -5,12 +5,6 @@ node_modules/
 .env
 .env.local
 .env.production
-.env.production.upload
-
-# Debug/test scripts
-check-cashfree.mjs
-check-payment.mjs
-reset-test-passwords.js
 
 # Logs
 logs

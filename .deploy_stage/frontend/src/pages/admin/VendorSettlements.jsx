@@ -545,7 +545,7 @@ export default function VendorSettlements() {
                           </div>
                           <div className="flex justify-between text-xs">
                             <span className="text-gray-500">
-                              Platform Fee (3%):
+                              Platform Fee (5%):
                             </span>
                             <span className="text-red-500">
                               -{formatCurrency(selectedSettlement.platform_fee)}

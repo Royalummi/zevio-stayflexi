@@ -84,7 +84,7 @@ CALL safe_add_column('vendor_settlements', 'booking_gst_amount', "DECIMAL(12,2) 
 CALL safe_add_column('vendor_settlements', 'booking_service_charge', "DECIMAL(12,2) DEFAULT NULL COMMENT 'Service charge from booking'");
 CALL safe_add_column('vendor_settlements', 'booking_total_amount', "DECIMAL(12,2) DEFAULT NULL COMMENT 'Total amount guest paid'");
 CALL safe_add_column('vendor_settlements', 'vendor_gross_amount', "DECIMAL(12,2) DEFAULT NULL COMMENT 'Vendor gross (base+GST for GST vendor, base only for non-GST)'");
-CALL safe_add_column('vendor_settlements', 'platform_fee', "DECIMAL(12,2) DEFAULT NULL COMMENT '3% of vendor gross amount'");
+CALL safe_add_column('vendor_settlements', 'platform_fee', "DECIMAL(12,2) DEFAULT NULL COMMENT '5% of vendor gross amount'");
 CALL safe_add_column('vendor_settlements', 'platform_fee_gst', "DECIMAL(12,2) DEFAULT NULL COMMENT '18% GST on platform fee'");
 CALL safe_add_column('vendor_settlements', 'total_deduction', "DECIMAL(12,2) DEFAULT NULL COMMENT 'platform_fee + platform_fee_gst'");
 CALL safe_add_column('vendor_settlements', 'is_vendor_gst', "TINYINT(1) DEFAULT 0 COMMENT 'Was vendor GST registered at time of settlement'");

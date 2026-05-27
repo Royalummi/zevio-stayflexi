@@ -1954,7 +1954,7 @@ CREATE TABLE `vendor_settlements` (
   `booking_service_charge` decimal(12,2) DEFAULT NULL COMMENT 'Service charge from booking',
   `booking_total_amount` decimal(12,2) DEFAULT NULL COMMENT 'Total guest paid',
   `vendor_gross_amount` decimal(12,2) DEFAULT NULL COMMENT 'Vendor gross amount',
-  `platform_fee` decimal(12,2) DEFAULT NULL COMMENT '3% of vendor gross',
+  `platform_fee` decimal(12,2) DEFAULT NULL COMMENT '5% of vendor gross',
   `platform_fee_gst` decimal(12,2) DEFAULT NULL COMMENT '18% GST on platform fee',
   `total_deduction` decimal(12,2) DEFAULT NULL COMMENT 'platform_fee + platform_fee_gst',
   `is_vendor_gst` tinyint(1) DEFAULT 0 COMMENT 'Vendor GST status at settlement time',

@@ -18,7 +18,7 @@ ADD COLUMN `booking_gst_amount` DECIMAL(12,2) DEFAULT NULL COMMENT 'GST amount f
 ADD COLUMN `booking_service_charge` DECIMAL(12,2) DEFAULT NULL COMMENT 'Service charge from booking' AFTER `booking_gst_amount`,
 ADD COLUMN `booking_total_amount` DECIMAL(12,2) DEFAULT NULL COMMENT 'Total amount guest paid' AFTER `booking_service_charge`,
 ADD COLUMN `vendor_gross_amount` DECIMAL(12,2) DEFAULT NULL COMMENT 'Vendor gross (base+GST for GST vendor, base only for non-GST)' AFTER `booking_total_amount`,
-ADD COLUMN `platform_fee` DECIMAL(12,2) DEFAULT NULL COMMENT '3% of vendor gross amount' AFTER `vendor_gross_amount`,
+ADD COLUMN `platform_fee` DECIMAL(12,2) DEFAULT NULL COMMENT '5% of vendor gross amount' AFTER `vendor_gross_amount`,
 ADD COLUMN `platform_fee_gst` DECIMAL(12,2) DEFAULT NULL COMMENT '18% GST on platform fee' AFTER `platform_fee`,
 ADD COLUMN `total_deduction` DECIMAL(12,2) DEFAULT NULL COMMENT 'platform_fee + platform_fee_gst' AFTER `platform_fee_gst`,
 ADD COLUMN `is_vendor_gst` TINYINT(1) DEFAULT 0 COMMENT 'Was vendor GST registered at time of settlement' AFTER `total_deduction`;

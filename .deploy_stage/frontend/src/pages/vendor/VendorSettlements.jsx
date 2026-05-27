@@ -436,7 +436,7 @@ const VendorSettlements = () => {
                           </div>
                           <div>
                             <p className="text-gray-500 dark:text-gray-400 text-xs">
-                              Platform Fee (3%)
+                              Platform Fee (5%)
                             </p>
                             <p className="font-medium text-red-500">
                               -{formatCurrency(settlement.platform_fee)}
