@@ -25,7 +25,7 @@ interface ServiceApartmentCardProps {
   checkin?: string;
   checkout?: string;
   adults?: number;
-  children?: number;
+  numChildren?: number;
   infants?: number;
 }
 
@@ -35,7 +35,7 @@ export default function ServiceApartmentCard({
   checkin,
   checkout,
   adults,
-  children,
+  numChildren,
   infants,
 }: ServiceApartmentCardProps) {
   const [isWishlisted, setIsWishlisted] = useState(false);
@@ -149,8 +149,8 @@ export default function ServiceApartmentCard({
     if (checkin) p.set("checkIn", checkin);
     if (checkout) p.set("checkOut", checkout);
     if (adults !== undefined && adults > 0) p.set("adults", String(adults));
-    if (children !== undefined && children > 0)
-      p.set("children", String(children));
+    if (numChildren !== undefined && numChildren > 0)
+      p.set("children", String(numChildren));
     if (infants !== undefined && infants > 0) p.set("infants", String(infants));
     const q = p.toString();
     return q ? `?${q}` : "";

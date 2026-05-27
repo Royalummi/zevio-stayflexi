@@ -31,7 +31,7 @@ interface PropertyCardProps {
   checkin?: string;
   checkout?: string;
   adults?: number;
-  children?: number;
+  numChildren?: number;
   infants?: number;
   detailBasePath?: string;
   forceVertical?: boolean;
@@ -44,7 +44,7 @@ export default function PropertyCard({
   checkin,
   checkout,
   adults,
-  children,
+  numChildren,
   infants,
   detailBasePath = "/villas",
   forceVertical = false,
@@ -196,8 +196,8 @@ export default function PropertyCard({
     if (checkout) params.set("checkOut", checkout);
     if (adults !== undefined && adults > 0)
       params.set("adults", String(adults));
-    if (children !== undefined && children > 0)
-      params.set("children", String(children));
+    if (numChildren !== undefined && numChildren > 0)
+      params.set("children", String(numChildren));
     if (infants !== undefined && infants > 0)
       params.set("infants", String(infants));
     const query = params.toString();

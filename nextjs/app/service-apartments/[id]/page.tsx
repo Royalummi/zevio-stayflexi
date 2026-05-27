@@ -35,6 +35,7 @@ import {
   FiStar,
 } from "react-icons/fi";
 import { MdOutlineElevator } from "react-icons/md";
+import Image from "next/image";
 import { useCorporateUser } from "@/hooks/useCorporateUser";
 import { useBooking } from "@/contexts/BookingContext";
 import { formatDateForAPI } from "@/lib/utils";
@@ -1437,10 +1438,13 @@ function ServiceApartmentDetailContent() {
               <div className={styles.hostHeader}>
                 <div className={styles.hostAvatar}>
                   {property.vendor_avatar ? (
-                    <img
+                    <Image
                       src={getImageUrl(property.vendor_avatar)}
                       alt={`${property.vendor_name || "Host"} avatar`}
                       className={styles.hostAvatarImage}
+                      width={64}
+                      height={64}
+                      style={{ objectFit: "cover" }}
                     />
                   ) : (
                     <FiUser />
@@ -1713,7 +1717,7 @@ function ServiceApartmentDetailContent() {
             {calculatingPrice ? "Calculating..." : "Reserve Now"}
           </button>
 
-          <p className={styles.disclaimer}>You won't be charged yet</p>
+          <p className={styles.disclaimer}>You wont be charged yet</p>
         </div>
       </div>
       {/* Mobile Floating Booking Bar */}

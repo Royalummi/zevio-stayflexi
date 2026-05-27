@@ -30,7 +30,6 @@ function PropertiesContent() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
-  const [totalCount, setTotalCount] = useState(0);
   const sentinelRef = useRef<HTMLDivElement>(null);
 
   // Initialize filters from URL search params (from SearchBar)
@@ -157,7 +156,6 @@ function PropertiesContent() {
         const fetchedProperties = response.data.data.properties || [];
         const total = response.data.data.total || fetchedProperties.length;
         setProperties(fetchedProperties);
-        setTotalCount(total);
         setHasMore(
           fetchedProperties.length === PAGE_SIZE &&
             fetchedProperties.length < total,
@@ -369,7 +367,7 @@ function PropertiesContent() {
                   adults={
                     filters.guests ? parseInt(filters.guests, 10) : undefined
                   }
-                  children={
+                  numChildren={
                     filters.children
                       ? parseInt(filters.children, 10)
                       : undefined

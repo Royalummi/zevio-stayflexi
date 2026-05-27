@@ -348,7 +348,7 @@ function ServiceApartmentsContent() {
                 adults={
                   filters.guests ? parseInt(filters.guests, 10) : undefined
                 }
-                children={
+                numChildren={
                   filters.children ? parseInt(filters.children, 10) : undefined
                 }
                 infants={
@@ -373,7 +373,6 @@ export default function ServiceApartmentsPage() {
   return null;
 
   // Original page below (kept intact for re-enabling later):
-  // eslint-disable-next-line no-unreachable
   return (
     <Suspense
       fallback={

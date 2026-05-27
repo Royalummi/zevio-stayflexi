@@ -810,8 +810,8 @@ function BookingReviewContent() {
                   <div className={styles.comingSoonIcon}>🚀</div>
                   <div className={styles.comingSoonTitle}>Coming Soon</div>
                   <div className={styles.comingSoonText}>
-                    Online booking is launching very soon. Stay tuned — we'll
-                    notify you the moment it's live!
+                    Online booking is launching very soon. Stay tuned — we will
+                    notify you the moment its live!
                   </div>
                 </div>
               )}

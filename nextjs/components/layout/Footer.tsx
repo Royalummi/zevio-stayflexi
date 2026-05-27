@@ -180,7 +180,9 @@ export default function Footer() {
 
         {/* Bottom bar */}
         <div className="footer-bottom">
-          <span>© {new Date().getFullYear()} Zevio Pvt Ltd | All rights reserved.</span>
+          <span>
+            © {new Date().getFullYear()} Zevio Pvt Ltd | All rights reserved.
+          </span>
           <span className="footer-credit">
             Designed &amp; Developed by{" "}
             <a
