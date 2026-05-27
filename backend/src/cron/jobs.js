@@ -9,14 +9,6 @@ import {
   sendBookingExpiryEmail,
 } from "../services/emailService.js";
 
-// IST is UTC+5:30 (19800 seconds). Compute a YYYY-MM-DD date string relative to
-// today in IST, avoiding UTC drift when the cron fires at midnight IST.
-function istDateOffset(days = 0) {
-  return new Date(Date.now() + 19800000 + days * 86400000)
-    .toISOString()
-    .split("T")[0];
-}
-
 // ==========================================
 // SESSION 30 + SESSION 47: EXPIRED BOOKINGS CRON JOB
 // Runs every 5 minutes to auto-cancel expired pending bookings (reduced from 1 minute for performance)
@@ -116,7 +108,9 @@ export const dailyBookingProcessor = cron.schedule(
 
     try {
       // 1. Mark completed bookings (check-out date has passed)
-      const yesterdayDate = istDateOffset(-1);
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayDate = yesterday.toISOString().split("T")[0];
 
       await db.query(
         `UPDATE bookings 
@@ -291,8 +285,10 @@ export const checkInReminderJob24h = cron.schedule(
     const today = new Date().toISOString().split("T")[0];
 
     try {
-      // Get bookings with check-in tomorrow (IST)
-      const tomorrowDate = istDateOffset(1);
+      // Get bookings with check-in tomorrow
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const tomorrowDate = tomorrow.toISOString().split("T")[0];
 
       const [bookings] = await db.query(
         `SELECT id, user_id, property_id, check_in 
@@ -431,8 +427,10 @@ export const checkOutReminderJob = cron.schedule(
     const today = new Date().toISOString().split("T")[0];
 
     try {
-      // Get bookings with check-out tomorrow (IST)
-      const tomorrowDate = istDateOffset(1);
+      // Get bookings with check-out tomorrow
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const tomorrowDate = tomorrow.toISOString().split("T")[0];
 
       const [bookings] = await db.query(
         `SELECT id, user_id, property_id, check_out 

@@ -1,8 +1,8 @@
 /**
  * Calculate vendor settlement based on GST registration status.
  *
- * GST Vendor: gets discounted_base + GST, minus (5% platform fee + 18% GST on fee)
- * Non-GST Vendor: gets discounted_base only, minus (5% platform fee + 18% GST on fee)
+ * GST Vendor: gets discounted_base + GST, minus (3% platform fee + 18% GST on fee)
+ * Non-GST Vendor: gets discounted_base only, minus (3% platform fee + 18% GST on fee)
  *
  * When a coupon is used the vendor is paid on the post-discount base amount.
  * The gstAmount stored in bookings is already calculated on the post-discount amount,
@@ -33,8 +33,8 @@ export function calculateSettlement({
     ? roundTo2(effectiveBase + gstAmount)
     : roundTo2(effectiveBase);
 
-  // Platform fee: 5% of vendor gross
-  const platformFee = roundTo2(vendorGrossAmount * 0.05);
+  // Platform fee: 3% of vendor gross
+  const platformFee = roundTo2(vendorGrossAmount * 0.03);
 
   // GST on platform fee: 18%
   const platformFeeGst = roundTo2(platformFee * 0.18);

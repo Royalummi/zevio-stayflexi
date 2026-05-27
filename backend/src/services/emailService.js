@@ -68,14 +68,14 @@ export const _brandFooter = () =>
     <tr><td style="padding:24px 36px;">
       <table width="100%" cellpadding="0" cellspacing="0">
         <tr>
-          <td width="65%" style="font-family:'Inter','Segoe UI',Arial,sans-serif;font-size:11px;color:#E6E9EE;line-height:1.7;">
+          <td style="font-family:'Inter','Segoe UI',Arial,sans-serif;font-size:11px;color:#E6E9EE;line-height:1.7;">
             <strong style="color:#2FA4A9;">ZEVIO</strong> &nbsp;·&nbsp; Premium Villa Stays<br>
             Navarathna Agrahara, Bettahalasur Post, Bangalore North – 562157<br>
             <a href="mailto:support@zevio.in" style="color:#2FA4A9;text-decoration:none;">support@zevio.in</a>
             &nbsp;·&nbsp;
             <a href="https://zevio.in" style="color:#2FA4A9;text-decoration:none;">www.zevio.in</a>
           </td>
-          <td width="35%" align="right" style="font-family:'Inter','Segoe UI',Arial,sans-serif;font-size:10px;color:#E6E9EE;vertical-align:bottom;">
+          <td align="right" style="font-family:'Inter','Segoe UI',Arial,sans-serif;font-size:10px;color:#5F6B7A;vertical-align:bottom;">
             © ${new Date().getFullYear()} Zevio. All rights reserved.
           </td>
         </tr>
@@ -183,19 +183,14 @@ export const sendBookingConfirmationEmail = async (bookingId) => {
 
     const booking = bookings[0];
 
-    const formatDate = (d) => {
-      if (!d) return "N/A";
-      // mysql2 returns DATE columns as JS Date at midnight IST (= 18:30 UTC prev day).
-      // Add IST offset (+05:30) so the date displays correctly on a UTC server.
-      return new Date(new Date(d).getTime() + 19800000).toLocaleDateString(
-        "en-IN",
-        {
-          day: "2-digit",
-          month: "short",
-          year: "numeric",
-        },
-      );
-    };
+    const formatDate = (d) =>
+      d
+        ? new Date(d).toLocaleDateString("en-IN", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+          })
+        : "N/A";
     const formatCurrency = (amt) =>
       `₹${parseFloat(amt || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
@@ -301,7 +296,7 @@ export const sendBookingConfirmationEmail = async (bookingId) => {
                   </div>
 
                   <center>
-                    <a href="${process.env.FRONTEND_URL || "https://zevio.in"}/dashboard/bookings/${booking.id}" class="cta-btn">View Booking Details</a>
+                    <a href="${process.env.FRONTEND_URL || "https://zevio.in"}/bookings/${booking.id}" class="cta-btn">View Booking Details</a>
                   </center>
 
                   <p style="font-size:13px;color:#5F6B7A;margin-top:20px;font-family:'Inter','Segoe UI',Arial,sans-serif;line-height:1.6;">
@@ -333,129 +328,6 @@ export const sendBookingConfirmationEmail = async (bookingId) => {
   } catch (error) {
     console.error("Failed to send booking confirmation email:", error);
     throw error;
-  }
-};
-
-// Send booking notification email to the vendor
-export const sendVendorBookingNotification = async (bookingId) => {
-  if (!transporter) {
-    console.log(
-      "⚠️  Vendor notification not sent: Email service not configured",
-    );
-    return false;
-  }
-
-  try {
-    const [rows] = await db.query(
-      `SELECT
-         b.id,
-         DATE_FORMAT(b.check_in,  '%Y-%m-%d') AS check_in,
-         DATE_FORMAT(b.check_out, '%Y-%m-%d') AS check_out,
-         b.nights,
-         b.guest_count,
-         b.children_count,
-         b.infants_count,
-         u.full_name  AS guest_name,
-         p.title      AS property_title,
-         v.name       AS vendor_name,
-         v.email      AS vendor_email
-       FROM bookings b
-       INNER JOIN users       u ON b.user_id      = u.id
-       INNER JOIN properties  p ON b.property_id  = p.id
-       INNER JOIN vendors     v ON p.vendor_id     = v.id
-       WHERE b.id = ?`,
-      [bookingId],
-    );
-
-    if (rows.length === 0) {
-      console.warn(
-        `⚠️  Vendor notification skipped: booking ${bookingId} not found`,
-      );
-      return false;
-    }
-
-    const b = rows[0];
-
-    if (!b.vendor_email) {
-      console.warn(
-        `⚠️  Vendor notification skipped: no email for vendor of booking ${bookingId}`,
-      );
-      return false;
-    }
-
-    const formatDate = (d) =>
-      d
-        ? new Date(d).toLocaleDateString("en-IN", {
-            day: "2-digit",
-            month: "short",
-            year: "numeric",
-          })
-        : "N/A";
-
-    const guestStr = [
-      `${b.guest_count || 0} Adult${(b.guest_count || 0) !== 1 ? "s" : ""}`,
-      b.children_count > 0 ? `${b.children_count} Children` : null,
-      b.infants_count > 0
-        ? `${b.infants_count} Infant${b.infants_count !== 1 ? "s" : ""}`
-        : null,
-    ]
-      .filter(Boolean)
-      .join(", ");
-
-    const bookingRef = b.id.substring(0, 8).toUpperCase();
-
-    const html =
-      _emailOpen("New Booking – Zevio") +
-      _emailHeader("NEW BOOKING") +
-      `<tr><td style="background:#2FA4A9;padding:18px 36px;">
-         <h2 style="margin:0;font-family:'Poppins','Inter','Segoe UI',Arial,sans-serif;font-size:18px;font-weight:700;color:#fff;">🎉 You have a new booking!</h2>
-         <p style="margin:4px 0 0;font-family:'Inter','Segoe UI',Arial,sans-serif;font-size:13px;color:rgba(255,255,255,0.9);">
-           A guest has confirmed a stay at your property.
-         </p>
-       </td></tr>` +
-      `<tr><td style="padding:32px 36px 28px;">` +
-      `<p style="font-family:'Inter','Segoe UI',Arial,sans-serif;font-size:15px;color:#5F6B7A;margin:0 0 20px;line-height:1.6;">
-         Dear <strong style="color:#1F3A5F;">${b.vendor_name}</strong>,<br>
-         A new booking has been confirmed for your property. Here are the details:
-       </p>` +
-      _st("Booking Details") +
-      `<table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-bottom:24px;">` +
-      _dr(
-        "Booking ID",
-        `<span style="font-family:'Courier New',monospace;font-size:12px;font-weight:700;color:#1F3A5F;">${bookingRef}</span>`,
-      ) +
-      _dr(
-        "Guest Name",
-        `<strong style="color:#1F3A5F;">${b.guest_name}</strong>`,
-      ) +
-      _dr("Property", b.property_title) +
-      _dr("Check-in", formatDate(b.check_in)) +
-      _dr("Check-out", formatDate(b.check_out)) +
-      _dr("Duration", `${b.nights} Night${b.nights !== 1 ? "s" : ""}`) +
-      _dr("Guests", guestStr, true) +
-      `</table>` +
-      _notice(`Please ensure the property is ready before the guest's check-in date.
-               If you have any questions, contact us at
-               <a href="mailto:support@zevio.in" style="color:#1F3A5F;font-weight:600;">support@zevio.in</a>.`) +
-      `<p style="font-family:'Inter','Segoe UI',Arial,sans-serif;font-size:13px;color:#5F6B7A;margin-top:20px;line-height:1.6;">
-         Thank you for being a part of Zevio!<br>— Team Zevio
-       </p>` +
-      `</td></tr>` +
-      `<tr><td style="padding:0;">${_brandFooter()}</td></tr>` +
-      _emailClose();
-
-    await transporter.sendMail({
-      from: SENDERS.BOOKINGS,
-      to: b.vendor_email,
-      subject: `New Booking Confirmed – ${b.property_title} | Zevio`,
-      html,
-    });
-
-    console.log(`✅ Vendor booking notification sent to ${b.vendor_email}`);
-    return true;
-  } catch (error) {
-    console.error("Failed to send vendor booking notification:", error);
-    return false;
   }
 };
 
@@ -658,30 +530,20 @@ export const sendCheckInReminderEmail = async (
     const [bookings] = await db.query(
       `SELECT 
         b.*,
-        DATE_FORMAT(b.check_in,  '%Y-%m-%d') AS check_in_date,
-        DATE_FORMAT(b.check_out, '%Y-%m-%d') AS check_out_date,
         u.full_name, u.email, u.phone,
         p.title as property_title,
         p.address, c.name as city, c.state as state, p.pincode,
-        p.maps_location,
         p.check_in_time, p.check_out_time,
-        pc1.name  AS primary_incharge_name,
-        pc1.phone AS primary_incharge_phone,
-        pc1.email AS primary_incharge_email,
-        pc1.whatsapp AS primary_incharge_whatsapp,
-        pc1.alt_contact AS primary_incharge_alt_contact,
-        pc2.name  AS secondary_incharge_name,
-        pc2.phone AS secondary_incharge_phone,
-        pc2.email AS secondary_incharge_email,
-        pc2.whatsapp AS secondary_incharge_whatsapp,
+        p.primary_incharge_name, p.primary_incharge_phone, 
+        p.primary_incharge_email, p.primary_incharge_whatsapp, p.primary_incharge_alt_contact,
+        p.secondary_incharge_name, p.secondary_incharge_phone,
+        p.secondary_incharge_email, p.secondary_incharge_whatsapp,
         p.safety_information, p.local_area_info, p.emergency_contacts,
         c.name as city_name
       FROM bookings b
       INNER JOIN users u ON b.user_id = u.id
       INNER JOIN properties p ON b.property_id = p.id
       INNER JOIN cities c ON p.city_id = c.id
-      LEFT JOIN property_contacts pc1 ON pc1.property_id = p.id AND pc1.contact_type_id = 1 AND pc1.is_active = 1
-      LEFT JOIN property_contacts pc2 ON pc2.property_id = p.id AND pc2.contact_type_id = 2 AND pc2.is_active = 1
       WHERE b.id = ?`,
       [bookingId],
     );
@@ -691,27 +553,10 @@ export const sendCheckInReminderEmail = async (
     }
 
     const booking = bookings[0];
-    const reminderType =
-      hoursBeforeCheckIn === 24
-        ? "24 hours"
-        : hoursBeforeCheckIn === 6
-          ? "6 hours"
-          : `${hoursBeforeCheckIn} hour${hoursBeforeCheckIn !== 1 ? "s" : ""}`;
-
-    // Parse YYYY-MM-DD string into a local Date (no UTC drift)
-    const fmtDate = (s) => {
-      if (!s) return "N/A";
-      const [y, m, d] = String(s).split("-").map(Number);
-      return new Date(y, m - 1, d).toLocaleDateString("en-IN", {
-        weekday: "long",
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      });
-    };
+    const reminderType = hoursBeforeCheckIn === 24 ? "24 hours" : "6 hours";
 
     const mailOptions = {
-      from: SENDERS.BOOKINGS,
+      from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
       to: booking.email,
       subject: `Check-in Reminder (${reminderType}) - ${booking.property_title}`,
       html: `
@@ -763,8 +608,8 @@ export const sendCheckInReminderEmail = async (
                 <div class="header-label">CHECK-IN REMINDER</div>
               </div>
 
-              <div class="urgency-bar ${hoursBeforeCheckIn >= 20 ? "urgency-h24" : "urgency-h6"}">
-                <span class="urgency-text">⏰ &nbsp;Your stay begins ${hoursBeforeCheckIn === 24 ? "tomorrow" : hoursBeforeCheckIn === 6 ? "in just 6 hours" : `in approximately ${hoursBeforeCheckIn} hour${hoursBeforeCheckIn !== 1 ? "s" : ""}`}! We look forward to welcoming you.</span>
+              <div class="urgency-bar ${hoursBeforeCheckIn === 24 ? "urgency-h24" : "urgency-h6"}">
+                <span class="urgency-text">⏰ &nbsp;Your stay begins ${hoursBeforeCheckIn === 24 ? "tomorrow" : "in just 6 hours"}! We look forward to welcoming you.</span>
               </div>
 
               <div class="content">
@@ -776,10 +621,9 @@ export const sendCheckInReminderEmail = async (
                   <tr><td class="lbl">Booking ID</td><td class="val" style="font-family:'Courier New',monospace;font-size:12px;color:#1F3A5F;font-weight:700;">${booking.id}</td></tr>
                   <tr><td class="lbl">Property</td><td class="val"><strong style="color:#1F3A5F;">${booking.property_title}</strong></td></tr>
                   <tr><td class="lbl">Address</td><td class="val">${booking.address}, ${booking.city}, ${booking.state} − ${booking.pincode}</td></tr>
-                  ${booking.maps_location ? `<tr><td class="lbl">Google Maps</td><td class="val"><a href="${booking.maps_location}" style="color:#2FA4A9;font-weight:600;text-decoration:none;">📍 Open in Google Maps</a></td></tr>` : ""}
-                  <tr><td class="lbl">Check-in</td><td class="val"><strong>${fmtDate(booking.check_in_date)}</strong></td></tr>
+                  <tr><td class="lbl">Check-in</td><td class="val"><strong>${new Date(booking.check_in).toLocaleDateString("en-IN", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</strong></td></tr>
                   <tr><td class="lbl">Check-in Time</td><td class="val">${booking.check_in_time || "2:00 PM"} onwards</td></tr>
-                  <tr><td class="lbl">Check-out</td><td class="val">${fmtDate(booking.check_out_date)}</td></tr>
+                  <tr><td class="lbl">Check-out</td><td class="val">${new Date(booking.check_out).toLocaleDateString("en-IN", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</td></tr>
                   <tr><td class="lbl">Check-out Time</td><td class="val">${booking.check_out_time || "11:00 AM"}</td></tr>
                   <tr><td class="lbl">Guests</td><td class="val">${booking.guest_count || 1} Adults${booking.children_count > 0 ? `, ${booking.children_count} Children` : ""}${booking.infants_count > 0 ? `, ${booking.infants_count} Infants` : ""}</td></tr>
                   <tr><td class="lbl">Total Nights</td><td class="val">${booking.nights}</td></tr>
@@ -952,8 +796,8 @@ export const sendReviewRequestEmail = async (bookingId) => {
             <p style="margin:0 0 6px;font-size:15px;font-weight:700;color:#1F3A5F;font-family:${_F};">${booking.property_title}</p>
             <p style="margin:0 0 4px;font-size:13px;color:#5F6B7A;font-family:${_F};">${booking.city_name || ""}</p>
             <p style="margin:4px 0 0;font-size:13px;color:#4a5666;font-family:${_F};">
-              Check-in: <strong>${new Date(new Date(booking.check_in).getTime() + 19800000).toLocaleDateString("en-IN")}</strong> &nbsp;|&nbsp;
-              Check-out: <strong>${new Date(new Date(booking.check_out).getTime() + 19800000).toLocaleDateString("en-IN")}</strong>
+              Check-in: <strong>${new Date(booking.check_in).toLocaleDateString("en-IN")}</strong> &nbsp;|&nbsp;
+              Check-out: <strong>${new Date(booking.check_out).toLocaleDateString("en-IN")}</strong>
             </p>
           `)}
           <p style="font-size:22px;letter-spacing:8px;margin:24px 0 8px;">⭐⭐⭐⭐⭐</p>

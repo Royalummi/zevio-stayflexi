@@ -67,23 +67,9 @@ export const getProperties = asyncHandler(async (req, res) => {
     guests,
     checkin,
     checkout,
-    sort,
     page = 1,
     limit = 12,
   } = req.query;
-
-  // Whitelist sort values to prevent SQL injection — only these exact strings are
-  // mapped to SQL fragments; anything else falls back to the default.
-  const SORT_ORDER_MAP = {
-    "title-az": "p.title ASC",
-    "title-za": "p.title DESC",
-    "price-low": "pr.price_per_night ASC",
-    "price-high": "pr.price_per_night DESC",
-    rating: "p.rating DESC, p.created_at DESC",
-    recommended:
-      "p.is_recommended DESC, p.recommended_priority DESC, p.created_at DESC",
-  };
-  const orderBy = SORT_ORDER_MAP[sort] ?? "p.created_at DESC";
 
   const pageNum = Math.max(1, parseInt(page) || 1);
   const limitNum = Math.min(Math.max(1, parseInt(limit) || 12), 100); // cap at 100
@@ -194,7 +180,7 @@ export const getProperties = asyncHandler(async (req, res) => {
     ${featuresService.getFeaturesJoinClause("p", "pf", "f")}
     ${whereClause}
     GROUP BY p.id
-    ORDER BY ${orderBy}
+    ORDER BY p.created_at DESC
     LIMIT ? OFFSET ?
   `;
 
