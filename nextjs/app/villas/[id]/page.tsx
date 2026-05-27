@@ -1838,7 +1838,8 @@ function PropertyDetailContent() {
                                     );
                                   }}
                                   disabled={
-                                    adults + children >= propertyPricing.max_guests
+                                    adults + children >=
+                                    propertyPricing.max_guests
                                   }
                                 >
                                   +
@@ -1888,7 +1889,8 @@ function PropertyDetailContent() {
                                     );
                                   }}
                                   disabled={
-                                    adults + children >= propertyPricing.max_guests ||
+                                    adults + children >=
+                                      propertyPricing.max_guests ||
                                     children >= propertyPricing.max_children
                                   }
                                 >

@@ -194,9 +194,12 @@ export default function PropertyCard({
     const params = new URLSearchParams();
     if (checkin) params.set("checkIn", checkin);
     if (checkout) params.set("checkOut", checkout);
-    if (adults !== undefined && adults > 0) params.set("adults", String(adults));
-    if (children !== undefined && children > 0) params.set("children", String(children));
-    if (infants !== undefined && infants > 0) params.set("infants", String(infants));
+    if (adults !== undefined && adults > 0)
+      params.set("adults", String(adults));
+    if (children !== undefined && children > 0)
+      params.set("children", String(children));
+    if (infants !== undefined && infants > 0)
+      params.set("infants", String(infants));
     const query = params.toString();
     router.push(`${detailBasePath}/${property.id}${query ? `?${query}` : ""}`);
   };
@@ -241,7 +244,10 @@ export default function PropertyCard({
   };
 
   return (
-    <div className={`${styles.propertyCard}${forceVertical ? ` ${styles.propertyCardVertical}` : ""}`} onClick={handleCardClick}>
+    <div
+      className={`${styles.propertyCard}${forceVertical ? ` ${styles.propertyCardVertical}` : ""}`}
+      onClick={handleCardClick}
+    >
       {/* Image Container with Carousel */}
       <div
         className={styles.propertyCardImageContainer}

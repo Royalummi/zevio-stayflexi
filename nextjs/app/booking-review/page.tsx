@@ -83,7 +83,9 @@ function BookingReviewContent() {
   }, [user]);
 
   // Track existing booking status to decide whether to skip POST /bookings in handlePayment
-  const [existingBookingStatus, setExistingBookingStatus] = useState<string | null>(null);
+  const [existingBookingStatus, setExistingBookingStatus] = useState<
+    string | null
+  >(null);
 
   // SESSION 64: Coupon system state
   const [appliedCouponCode, setAppliedCouponCode] = useState<string>("");
@@ -204,7 +206,10 @@ function BookingReviewContent() {
         if (adults) params.set("adults", adults);
         if (children) params.set("children", children);
         const propertyType = searchParams.get("propertyType");
-        const propertyPath = propertyType === "service-apartment" ? "service-apartments" : "villas";
+        const propertyPath =
+          propertyType === "service-apartment"
+            ? "service-apartments"
+            : "villas";
         router.replace(`/${propertyPath}/${propertyId}?${params.toString()}`);
       } else {
         toast.error("No booking data found");

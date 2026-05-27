@@ -79,8 +79,9 @@ export const getProperties = asyncHandler(async (req, res) => {
     "title-za": "p.title DESC",
     "price-low": "pr.price_per_night ASC",
     "price-high": "pr.price_per_night DESC",
-    "rating": "p.rating DESC, p.created_at DESC",
-    "recommended": "p.is_recommended DESC, p.recommended_priority DESC, p.created_at DESC",
+    rating: "p.rating DESC, p.created_at DESC",
+    recommended:
+      "p.is_recommended DESC, p.recommended_priority DESC, p.created_at DESC",
   };
   const orderBy = SORT_ORDER_MAP[sort] ?? "p.created_at DESC";
 

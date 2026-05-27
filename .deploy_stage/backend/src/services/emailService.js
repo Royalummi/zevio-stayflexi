@@ -59,10 +59,8 @@ try {
   ).toString("base64");
 } catch (_) {}
 
-/** Logo <img> or text fallback */
-export const _logoImg = _logoBase64
-  ? `<img src="data:image/png;base64,${_logoBase64}" alt="Zevio" width="160" style="display:block;max-width:160px;height:auto;" />`
-  : `<span style="font-family:'Inter','Segoe UI',Arial,sans-serif;font-size:28px;font-weight:800;letter-spacing:3px;color:#ffffff;">ZEVIO</span>`;
+/** Logo text fallback for email clients that strip data URIs */
+export const _logoImg = `<span style="font-family:'Poppins','Inter','Segoe UI',Arial,sans-serif;font-size:28px;font-weight:800;letter-spacing:3px;color:#ffffff;">ZEVIO</span>`;
 
 /** Branded footer table */
 export const _brandFooter = () =>
@@ -86,7 +84,7 @@ export const _brandFooter = () =>
   </table>`;
 
 // Shared design tokens
-const _F  = `'Inter','Segoe UI',Arial,sans-serif`;       // body
+const _F = `'Inter','Segoe UI',Arial,sans-serif`; // body
 const _FH = `'Poppins','Inter','Segoe UI',Arial,sans-serif`; // headings
 const _GF = `https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap`;
 
@@ -99,14 +97,15 @@ const _emailOpen = (title = "Zevio") =>
   `<tr><td align="center"><table cellpadding="0" cellspacing="0" width="100%" style="max-width:620px;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(31,58,95,0.08);">`;
 
 /** Close the email shell */
-const _emailClose = () =>
-  `</table></td></tr></table></body></html>`;
+const _emailClose = () => `</table></td></tr></table></body></html>`;
 
 /** Navy header row with logo + teal label */
 const _emailHeader = (label = "") =>
   `<tr><td style="background:#1F3A5F;padding:32px 36px;text-align:center;">` +
   `${_logoImg}` +
-  (label ? `<div style="margin-top:14px;font-family:${_FH};font-size:11px;font-weight:700;color:#2FA4A9;letter-spacing:2.5px;text-transform:uppercase;">${label}</div>` : ``) +
+  (label
+    ? `<div style="margin-top:14px;font-family:${_FH};font-size:11px;font-weight:700;color:#2FA4A9;letter-spacing:2.5px;text-transform:uppercase;">${label}</div>`
+    : ``) +
   `</td></tr>`;
 
 /** Teal section title */
@@ -129,7 +128,7 @@ const _notice = (content) =>
 /** CTA button */
 const _btn = (url, text, bg = "#2FA4A9") =>
   `<table width="100%" cellpadding="0" cellspacing="0" style="margin:20px 0;"><tr><td align="center">` +
-  `<a href="${url}" style="display:inline-block;padding:14px 40px;background:${bg};color:#ffffff;text-decoration:none;border-radius:8px;font-family:${_FH};font-weight:600;font-size:14px;">${text}</a>` +
+  `<a href="${url}" style="display:inline-block;padding:14px 40px;background:${bg};color:#ffffff !important;text-decoration:none;border-radius:8px;font-family:${_FH};font-weight:700;font-size:15px;line-height:1.2;mso-padding-alt:0;">${text}</a>` +
   `</td></tr></table>`;
 
 /** Status badge pill */
@@ -373,11 +372,11 @@ export const sendCancellationEmail = async (bookingId) => {
           ${_st("Cancelled Booking")}
           ${_box(
             `<strong style="font-family:${_F};color:#1F3A5F;display:block;margin-bottom:8px;">${booking.property_title}</strong>` +
-            `<span style="font-family:${_F};">Booking ID: <strong>${booking.id}</strong></span>`
+              `<span style="font-family:${_F};">Booking ID: <strong>${booking.id}</strong></span>`,
           )}
           ${_notice(
             "If you are entitled to a refund, the amount will be processed within 5–7 business days. " +
-            `For any questions, reach us at <a href="mailto:support@zevio.in" style="color:#2FA4A9;">support@zevio.in</a>.`
+              `For any questions, reach us at <a href="mailto:support@zevio.in" style="color:#2FA4A9;">support@zevio.in</a>.`,
           )}
           <p style="font-size:13px;color:#5F6B7A;margin:16px 0 0;font-family:${_F};">— Team Zevio</p>
         </td></tr>` +
@@ -439,7 +438,7 @@ export const sendRefundEmail = async (bookingId, refundAmount) => {
           </table>
           ${_notice(
             "⏱️ The amount will be credited to your original payment method within <strong>5–7 business days</strong>. " +
-            `For queries, contact <a href="mailto:support@zevio.in" style="color:#2FA4A9;">support@zevio.in</a>.`
+              `For queries, contact <a href="mailto:support@zevio.in" style="color:#2FA4A9;">support@zevio.in</a>.`,
           )}
           <p style="font-size:13px;color:#5F6B7A;margin:16px 0 0;font-family:${_F};">— Team Zevio</p>
         </td></tr>` +
@@ -582,14 +581,18 @@ export const sendCheckInReminderEmail = async (
                   ${booking.primary_incharge_alt_contact ? `<div class="contact-row"><span class="contact-lbl">Alt. Contact</span><span><a href="tel:${booking.primary_incharge_alt_contact}">${booking.primary_incharge_alt_contact}</a></span></div>` : ""}
                 </div>
 
-                ${booking.secondary_incharge_name ? `
+                ${
+                  booking.secondary_incharge_name
+                    ? `
                 <div class="contact-card secondary">
                   <h4>Secondary Contact (Backup)</h4>
                   <div class="contact-row"><span class="contact-lbl">Name</span><span>${booking.secondary_incharge_name}</span></div>
                   ${booking.secondary_incharge_phone ? `<div class="contact-row"><span class="contact-lbl">Phone</span><span><a href="tel:${booking.secondary_incharge_phone}">${booking.secondary_incharge_phone}</a></span></div>` : ""}
                   ${booking.secondary_incharge_email ? `<div class="contact-row"><span class="contact-lbl">Email</span><span><a href="mailto:${booking.secondary_incharge_email}">${booking.secondary_incharge_email}</a></span></div>` : ""}
                   ${booking.secondary_incharge_whatsapp ? `<div class="contact-row"><span class="contact-lbl">WhatsApp</span><span><a href="https://wa.me/${booking.secondary_incharge_whatsapp.replace(/[^0-9]/g, "")}">${booking.secondary_incharge_whatsapp}</a></span></div>` : ""}
-                </div>` : ""}
+                </div>`
+                    : ""
+                }
 
                 ${booking.safety_information ? `<p class="st">🛡️ Safety Information</p><div class="guide-box">${booking.safety_information}</div>` : ""}
                 ${booking.local_area_info ? `<p class="st">📍 Local Area Information</p><div class="guide-box">${booking.local_area_info}</div>` : ""}
@@ -745,7 +748,7 @@ export const sendReviewRequestEmail = async (bookingId) => {
           </p>
           ${_btn(
             `${process.env.FRONTEND_URL || process.env.NEXTJS_URL}/properties/${booking.property_id}?review=true&booking=${booking.id}`,
-            "Leave a Review"
+            "Leave a Review",
           )}
           <p style="font-size:13px;color:#5F6B7A;margin:24px 0 0;font-family:${_F};text-align:left;">We'd love to host you again soon! — Team Zevio</p>
         </td></tr>` +
@@ -812,11 +815,11 @@ export const sendBookingExpiryEmail = async (bookingId) => {
             ${_dr("Status", _badge("EXPIRED", "#dc2626"), true)}
           </table>
           ${_notice(
-            "💡 <strong>No worries!</strong> You can create a new booking anytime — the property may still be available for your preferred dates."
+            "💡 <strong>No worries!</strong> You can create a new booking anytime — the property may still be available for your preferred dates.",
           )}
           ${_btn(
             `${process.env.NEXTJS_URL || "https://zevio.in"}/properties/${booking.property_id}`,
-            "Browse Property Again"
+            "Browse Property Again",
           )}
           <p style="font-size:13px;color:#5F6B7A;margin:16px 0 0;font-family:${_F};">— Team Zevio</p>
         </td></tr>` +
@@ -1040,19 +1043,22 @@ export const sendForgotPasswordLinkEmail = async (email, name, resetToken) => {
 
     const html =
       _emailOpen("Reset Your Password") +
-      _emailHeader("RESET YOUR PASSWORD") +
-      `<tr><td style="padding:36px 36px 28px;">
-        <p style="font-size:15px;color:#5F6B7A;margin:0 0 6px;font-family:${_F};line-height:1.6;">Hello <strong style="color:#1F3A5F;">${name}</strong>! 👋</p>
-        <p style="font-size:14px;color:#4a5666;margin:0 0 20px;font-family:${_F};line-height:1.6;">
-          We received a request to reset the password for your Zevio account. Click the button below to set a new password.
-        </p>
-        ${_btn(resetUrl, "Reset Password")}
-        <p style="font-size:13px;color:#4a5666;margin:16px 0;font-family:${_F};">
-          Or copy and paste this link into your browser:<br>
-          <a href="${resetUrl}" style="color:#2FA4A9;word-break:break-all;">${resetUrl}</a>
-        </p>
-        ${_notice(`<strong style="color:#1F3A5F;">🔒 Security Notice:</strong><br><span style="font-size:13px;color:#4a5666;font-family:${_F};">This link expires in <strong>1 hour</strong>. If you did not request a password reset, you can safely ignore this email — your password will remain unchanged.</span>`)}
-      </td></tr>` +
+      `<tr><td style="background:#1F3A5F;padding:28px 36px;text-align:center;">` +
+      `<div style="font-family:${_FH};font-size:28px;font-weight:800;letter-spacing:3px;color:#ffffff;line-height:1;">ZEVIO</div>` +
+      `<div style="margin-top:10px;font-family:${_FH};font-size:11px;font-weight:700;color:#2FA4A9;letter-spacing:2.5px;text-transform:uppercase;">RESET YOUR PASSWORD</div>` +
+      `</td></tr>` +
+      `<tr><td style="padding:36px 36px 28px;background:#ffffff;">` +
+      `<p style="font-size:15px;color:#5F6B7A;margin:0 0 6px;font-family:${_F};line-height:1.6;">Hello <strong style="color:#1F3A5F;">${name}</strong>! 👋</p>` +
+      `<p style="font-size:14px;color:#4a5666;margin:0 0 20px;font-family:${_F};line-height:1.6;">` +
+      `We received a request to reset the password for your Zevio account. Click the button below to set a new password.` +
+      `</p>` +
+      `${_btn(resetUrl, "Reset Password")}` +
+      `<p style="font-size:13px;color:#4a5666;margin:16px 0 0;font-family:${_F};line-height:1.6;">` +
+      `Or copy and paste this link into your browser:<br>` +
+      `<a href="${resetUrl}" style="color:#2FA4A9;word-break:break-all;">${resetUrl}</a>` +
+      `</p>` +
+      `${_notice(`<strong style="color:#1F3A5F;">🔒 Security Notice:</strong><br><span style="font-size:13px;color:#4a5666;font-family:${_F};">This link expires in <strong>1 hour</strong>. If you did not request a password reset, you can safely ignore this email — your password will remain unchanged.</span>`)} ` +
+      `</td></tr>` +
       `<tr><td>${_brandFooter()}</td></tr>` +
       _emailClose();
 

@@ -248,7 +248,9 @@ export const processRefund = asyncHandler(async (req, res) => {
   ]);
 
   // Phase 1: Manual refund — admin will complete the bank transfer manually
-  console.log(`✅ Refund record created (pending_manual): ${refundId}. Admin to process bank transfer manually.`);
+  console.log(
+    `✅ Refund record created (pending_manual): ${refundId}. Admin to process bank transfer manually.`,
+  );
 
   // Create credit note
   await db.query(
@@ -1731,10 +1733,13 @@ export const getRevenueAnalytics = asyncHandler(async (req, res) => {
   const { start_date, end_date, period = "daily" } = req.query;
 
   // Default to last 30 days if no dates provided — use IST date so default range is correct on UTC server
-  const endDate = end_date || new Date(Date.now() + 19800000).toISOString().split("T")[0];
+  const endDate =
+    end_date || new Date(Date.now() + 19800000).toISOString().split("T")[0];
   const startDate =
     start_date ||
-    new Date(Date.now() + 19800000 - 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+    new Date(Date.now() + 19800000 - 30 * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .split("T")[0];
 
   // Get overall revenue summary
   const [summary] = await db.query(
@@ -1836,10 +1841,13 @@ export const getRevenueAnalytics = asyncHandler(async (req, res) => {
 export const getBookingTrends = asyncHandler(async (req, res) => {
   const { start_date, end_date } = req.query;
 
-  const endDate = end_date || new Date(Date.now() + 19800000).toISOString().split("T")[0];
+  const endDate =
+    end_date || new Date(Date.now() + 19800000).toISOString().split("T")[0];
   const startDate =
     start_date ||
-    new Date(Date.now() + 19800000 - 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+    new Date(Date.now() + 19800000 - 30 * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .split("T")[0];
 
   // Get booking status distribution
   const [statusDistribution] = await db.query(
@@ -1920,10 +1928,13 @@ export const getBookingTrends = asyncHandler(async (req, res) => {
 export const getUserActivityReport = asyncHandler(async (req, res) => {
   const { start_date, end_date } = req.query;
 
-  const endDate = end_date || new Date(Date.now() + 19800000).toISOString().split("T")[0];
+  const endDate =
+    end_date || new Date(Date.now() + 19800000).toISOString().split("T")[0];
   const startDate =
     start_date ||
-    new Date(Date.now() + 19800000 - 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+    new Date(Date.now() + 19800000 - 30 * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .split("T")[0];
 
   // Get new user registrations
   const [newUsers] = await db.query(
@@ -2024,10 +2035,13 @@ export const getUserActivityReport = asyncHandler(async (req, res) => {
 export const getPropertyPerformance = asyncHandler(async (req, res) => {
   const { start_date, end_date } = req.query;
 
-  const endDate = end_date || new Date(Date.now() + 19800000).toISOString().split("T")[0];
+  const endDate =
+    end_date || new Date(Date.now() + 19800000).toISOString().split("T")[0];
   const startDate =
     start_date ||
-    new Date(Date.now() + 19800000 - 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+    new Date(Date.now() + 19800000 - 30 * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .split("T")[0];
 
   // Get overall property stats
   const [overallStats] = await db.query(
@@ -2114,10 +2128,13 @@ export const getPropertyPerformance = asyncHandler(async (req, res) => {
 export const getVendorPerformance = asyncHandler(async (req, res) => {
   const { start_date, end_date } = req.query;
 
-  const endDate = end_date || new Date(Date.now() + 19800000).toISOString().split("T")[0];
+  const endDate =
+    end_date || new Date(Date.now() + 19800000).toISOString().split("T")[0];
   const startDate =
     start_date ||
-    new Date(Date.now() + 19800000 - 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+    new Date(Date.now() + 19800000 - 30 * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .split("T")[0];
 
   const [vendorStats] = await db.query(
     `

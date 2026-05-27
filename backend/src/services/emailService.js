@@ -187,11 +187,14 @@ export const sendBookingConfirmationEmail = async (bookingId) => {
       if (!d) return "N/A";
       // mysql2 returns DATE columns as JS Date at midnight IST (= 18:30 UTC prev day).
       // Add IST offset (+05:30) so the date displays correctly on a UTC server.
-      return new Date(new Date(d).getTime() + 19800000).toLocaleDateString("en-IN", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      });
+      return new Date(new Date(d).getTime() + 19800000).toLocaleDateString(
+        "en-IN",
+        {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        },
+      );
     };
     const formatCurrency = (amt) =>
       `₹${parseFloat(amt || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -336,7 +339,9 @@ export const sendBookingConfirmationEmail = async (bookingId) => {
 // Send booking notification email to the vendor
 export const sendVendorBookingNotification = async (bookingId) => {
   if (!transporter) {
-    console.log("⚠️  Vendor notification not sent: Email service not configured");
+    console.log(
+      "⚠️  Vendor notification not sent: Email service not configured",
+    );
     return false;
   }
 
@@ -363,14 +368,18 @@ export const sendVendorBookingNotification = async (bookingId) => {
     );
 
     if (rows.length === 0) {
-      console.warn(`⚠️  Vendor notification skipped: booking ${bookingId} not found`);
+      console.warn(
+        `⚠️  Vendor notification skipped: booking ${bookingId} not found`,
+      );
       return false;
     }
 
     const b = rows[0];
 
     if (!b.vendor_email) {
-      console.warn(`⚠️  Vendor notification skipped: no email for vendor of booking ${bookingId}`);
+      console.warn(
+        `⚠️  Vendor notification skipped: no email for vendor of booking ${bookingId}`,
+      );
       return false;
     }
 
@@ -386,7 +395,9 @@ export const sendVendorBookingNotification = async (bookingId) => {
     const guestStr = [
       `${b.guest_count || 0} Adult${(b.guest_count || 0) !== 1 ? "s" : ""}`,
       b.children_count > 0 ? `${b.children_count} Children` : null,
-      b.infants_count  > 0 ? `${b.infants_count} Infant${b.infants_count !== 1 ? "s" : ""}` : null,
+      b.infants_count > 0
+        ? `${b.infants_count} Infant${b.infants_count !== 1 ? "s" : ""}`
+        : null,
     ]
       .filter(Boolean)
       .join(", ");
@@ -409,13 +420,19 @@ export const sendVendorBookingNotification = async (bookingId) => {
        </p>` +
       _st("Booking Details") +
       `<table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-bottom:24px;">` +
-      _dr("Booking ID",   `<span style="font-family:'Courier New',monospace;font-size:12px;font-weight:700;color:#1F3A5F;">${bookingRef}</span>`) +
-      _dr("Guest Name",   `<strong style="color:#1F3A5F;">${b.guest_name}</strong>`) +
-      _dr("Property",     b.property_title) +
-      _dr("Check-in",     formatDate(b.check_in)) +
-      _dr("Check-out",    formatDate(b.check_out)) +
-      _dr("Duration",     `${b.nights} Night${b.nights !== 1 ? "s" : ""}`) +
-      _dr("Guests",       guestStr, true) +
+      _dr(
+        "Booking ID",
+        `<span style="font-family:'Courier New',monospace;font-size:12px;font-weight:700;color:#1F3A5F;">${bookingRef}</span>`,
+      ) +
+      _dr(
+        "Guest Name",
+        `<strong style="color:#1F3A5F;">${b.guest_name}</strong>`,
+      ) +
+      _dr("Property", b.property_title) +
+      _dr("Check-in", formatDate(b.check_in)) +
+      _dr("Check-out", formatDate(b.check_out)) +
+      _dr("Duration", `${b.nights} Night${b.nights !== 1 ? "s" : ""}`) +
+      _dr("Guests", guestStr, true) +
       `</table>` +
       _notice(`Please ensure the property is ready before the guest's check-in date.
                If you have any questions, contact us at
@@ -428,8 +445,8 @@ export const sendVendorBookingNotification = async (bookingId) => {
       _emailClose();
 
     await transporter.sendMail({
-      from:    SENDERS.BOOKINGS,
-      to:      b.vendor_email,
+      from: SENDERS.BOOKINGS,
+      to: b.vendor_email,
       subject: `New Booking Confirmed – ${b.property_title} | Zevio`,
       html,
     });
@@ -674,14 +691,22 @@ export const sendCheckInReminderEmail = async (
     }
 
     const booking = bookings[0];
-    const reminderType = hoursBeforeCheckIn === 24 ? "24 hours" : hoursBeforeCheckIn === 6 ? "6 hours" : `${hoursBeforeCheckIn} hour${hoursBeforeCheckIn !== 1 ? "s" : ""}`;
+    const reminderType =
+      hoursBeforeCheckIn === 24
+        ? "24 hours"
+        : hoursBeforeCheckIn === 6
+          ? "6 hours"
+          : `${hoursBeforeCheckIn} hour${hoursBeforeCheckIn !== 1 ? "s" : ""}`;
 
     // Parse YYYY-MM-DD string into a local Date (no UTC drift)
     const fmtDate = (s) => {
       if (!s) return "N/A";
       const [y, m, d] = String(s).split("-").map(Number);
       return new Date(y, m - 1, d).toLocaleDateString("en-IN", {
-        weekday: "long", year: "numeric", month: "long", day: "numeric",
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
       });
     };
 

@@ -149,7 +149,8 @@ export default function ServiceApartmentCard({
     if (checkin) p.set("checkIn", checkin);
     if (checkout) p.set("checkOut", checkout);
     if (adults !== undefined && adults > 0) p.set("adults", String(adults));
-    if (children !== undefined && children > 0) p.set("children", String(children));
+    if (children !== undefined && children > 0)
+      p.set("children", String(children));
     if (infants !== undefined && infants > 0) p.set("infants", String(infants));
     const q = p.toString();
     return q ? `?${q}` : "";
@@ -220,9 +221,7 @@ export default function ServiceApartmentCard({
         </div>
 
         {/* Location */}
-        <div
-          className={styles.location}
-        >
+        <div className={styles.location}>
           <FiMapPin className={styles.locationIcon} />
           <span>
             {property.area

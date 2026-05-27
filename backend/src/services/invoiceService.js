@@ -45,11 +45,14 @@ const formatDate = (date) => {
   if (!date) return "N/A";
   // mysql2 returns DATE columns as JS Date at midnight IST (= 18:30 UTC prev day).
   // Add IST offset (+05:30) so the date displays correctly on a UTC server.
-  return new Date(new Date(date).getTime() + 19800000).toLocaleDateString("en-IN", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
+  return new Date(new Date(date).getTime() + 19800000).toLocaleDateString(
+    "en-IN",
+    {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    },
+  );
 };
 
 // ─── Helper: Safe JSON parse ───────────────────────────────────────

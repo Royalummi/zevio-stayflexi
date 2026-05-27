@@ -235,7 +235,10 @@ export default function VendorSettlements() {
           <CardContent>
             <div className="text-2xl font-bold">
               {formatCurrency(
-                settlements.reduce((sum, s) => sum + parseFloat(s.amount || 0), 0),
+                settlements.reduce(
+                  (sum, s) => sum + parseFloat(s.amount || 0),
+                  0,
+                ),
               )}
             </div>
             <p className="text-xs text-gray-500 mt-1">
@@ -308,7 +311,10 @@ export default function VendorSettlements() {
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {settlements.map((settlement) => (
-                    <tr key={settlement.id} className="hover:bg-gray-50 transition-colors">
+                    <tr
+                      key={settlement.id}
+                      className="hover:bg-gray-50 transition-colors"
+                    >
                       <td className="px-4 py-4">
                         <span className="font-mono text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
                           {settlement.id.substring(0, 8)}…
@@ -331,7 +337,13 @@ export default function VendorSettlements() {
                       </td>
                       <td className="px-4 py-4">
                         <div className="min-w-0">
-                          <div className="font-medium text-gray-900 leading-snug" style={{ maxWidth: "200px", overflowWrap: "break-word" }}>
+                          <div
+                            className="font-medium text-gray-900 leading-snug"
+                            style={{
+                              maxWidth: "200px",
+                              overflowWrap: "break-word",
+                            }}
+                          >
                             {settlement.property_title || "N/A"}
                           </div>
                           <div className="text-xs text-gray-400 mt-0.5">
@@ -348,8 +360,14 @@ export default function VendorSettlements() {
                         </div>
                         {settlement.booking_base_amount != null && (
                           <div className="text-xs text-gray-400 mt-0.5 space-y-0.5">
-                            <div>Base: {formatCurrency(settlement.booking_base_amount)}</div>
-                            <div>GST: {formatCurrency(settlement.booking_gst_amount)}</div>
+                            <div>
+                              Base:{" "}
+                              {formatCurrency(settlement.booking_base_amount)}
+                            </div>
+                            <div>
+                              GST:{" "}
+                              {formatCurrency(settlement.booking_gst_amount)}
+                            </div>
                           </div>
                         )}
                       </td>
@@ -363,9 +381,11 @@ export default function VendorSettlements() {
                       <td className="px-4 py-4 text-right">
                         {settlement.platform_fee != null ? (
                           <div className="font-semibold text-red-500">
-                            -{formatCurrency(
+                            -
+                            {formatCurrency(
                               settlement.total_deduction ||
-                              (parseFloat(settlement.platform_fee || 0) + parseFloat(settlement.platform_fee_gst || 0))
+                                parseFloat(settlement.platform_fee || 0) +
+                                  parseFloat(settlement.platform_fee_gst || 0),
                             )}
                           </div>
                         ) : (
@@ -530,11 +550,18 @@ export default function VendorSettlements() {
                               )}
                             </span>
                           </div>
-                          {parseFloat(selectedSettlement.booking_discount_amount) > 0 && (
+                          {parseFloat(
+                            selectedSettlement.booking_discount_amount,
+                          ) > 0 && (
                             <div className="flex justify-between text-xs">
-                              <span className="text-gray-500">Coupon Discount:</span>
+                              <span className="text-gray-500">
+                                Coupon Discount:
+                              </span>
                               <span className="text-orange-500">
-                                -{formatCurrency(selectedSettlement.booking_discount_amount)}
+                                -
+                                {formatCurrency(
+                                  selectedSettlement.booking_discount_amount,
+                                )}
                               </span>
                             </div>
                           )}
@@ -547,13 +574,17 @@ export default function VendorSettlements() {
                             </span>
                           </div>
                           <div className="flex justify-between text-xs">
-                            <span className="text-gray-500">
-                              Service Fee:
-                            </span>
+                            <span className="text-gray-500">Service Fee:</span>
                             <span className="text-red-500">
-                              -{formatCurrency(
+                              -
+                              {formatCurrency(
                                 selectedSettlement.total_deduction ||
-                                (parseFloat(selectedSettlement.platform_fee || 0) + parseFloat(selectedSettlement.platform_fee_gst || 0))
+                                  parseFloat(
+                                    selectedSettlement.platform_fee || 0,
+                                  ) +
+                                    parseFloat(
+                                      selectedSettlement.platform_fee_gst || 0,
+                                    ),
                               )}
                             </span>
                           </div>

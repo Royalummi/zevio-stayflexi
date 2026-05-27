@@ -990,11 +990,19 @@ export const forgotPassword = asyncHandler(async (req, res) => {
   );
 
   // Send reset link via email (send the RAW token — user will present it back)
-  await sendForgotPasswordLinkEmail(
+  const emailSent = await sendForgotPasswordLinkEmail(
     foundUser.email,
     foundUser.display_name,
     resetToken,
   );
+
+  if (!emailSent) {
+    return sendError(
+      res,
+      "Password reset email could not be sent right now. Please try again later.",
+      503,
+    );
+  }
 
   sendSuccess(res, {}, "If the email exists, a reset link has been sent", 200);
 });

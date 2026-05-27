@@ -283,6 +283,7 @@ const getSettlements = asyncHandler(async (req, res) => {
       vs.booking_base_amount,
       vs.booking_gst_amount,
       vs.booking_service_charge,
+      vs.booking_discount_amount,
       vs.booking_total_amount,
       vs.vendor_gross_amount,
       vs.platform_fee,

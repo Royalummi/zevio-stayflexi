@@ -101,7 +101,9 @@ export default function ProcessRefunds() {
       });
 
       if (response.data.success) {
-        toast.success("Booking cancelled. Please complete the bank transfer manually.");
+        toast.success(
+          "Booking cancelled. Please complete the bank transfer manually.",
+        );
         setShowRefundDialog(false);
         setSelectedBooking(null);
         setNotes("");
@@ -222,8 +224,7 @@ export default function ProcessRefunds() {
             <div className="text-2xl font-bold">
               {formatCurrency(
                 bookings.reduce(
-                  (sum, booking) =>
-                    sum + parseFloat(booking.total_amount || 0),
+                  (sum, booking) => sum + parseFloat(booking.total_amount || 0),
                   0,
                 ),
               )}
@@ -236,21 +237,35 @@ export default function ProcessRefunds() {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle>{activeTab === "pending" ? "Pending Cancellation Requests" : "Processed Refunds"}</CardTitle>
+            <CardTitle>
+              {activeTab === "pending"
+                ? "Pending Cancellation Requests"
+                : "Processed Refunds"}
+            </CardTitle>
             <div className="flex gap-0 border border-gray-200 rounded-lg overflow-hidden">
               <button
                 className={`px-4 py-1.5 text-sm font-medium transition-colors ${
-                  activeTab === "pending" ? "bg-blue-600 text-white" : "bg-white text-gray-600 hover:bg-gray-50"
+                  activeTab === "pending"
+                    ? "bg-blue-600 text-white"
+                    : "bg-white text-gray-600 hover:bg-gray-50"
                 }`}
-                onClick={() => { setActiveTab("pending"); setPagination(prev => ({ ...prev, page: 1 })); }}
+                onClick={() => {
+                  setActiveTab("pending");
+                  setPagination((prev) => ({ ...prev, page: 1 }));
+                }}
               >
                 Pending
               </button>
               <button
                 className={`px-4 py-1.5 text-sm font-medium transition-colors ${
-                  activeTab === "processed" ? "bg-blue-600 text-white" : "bg-white text-gray-600 hover:bg-gray-50"
+                  activeTab === "processed"
+                    ? "bg-blue-600 text-white"
+                    : "bg-white text-gray-600 hover:bg-gray-50"
                 }`}
-                onClick={() => { setActiveTab("processed"); setPagination(prev => ({ ...prev, page: 1 })); }}
+                onClick={() => {
+                  setActiveTab("processed");
+                  setPagination((prev) => ({ ...prev, page: 1 }));
+                }}
               >
                 Processed
               </button>
@@ -354,9 +369,7 @@ export default function ProcessRefunds() {
                         <div className="font-semibold text-gray-900 dark:text-white">
                           {formatCurrency(booking.total_amount)}
                         </div>
-                        <div className="text-xs text-gray-400">
-                          Paid amount
-                        </div>
+                        <div className="text-xs text-gray-400">Paid amount</div>
                       </td>
                       <td className="px-4 py-4 text-sm">
                         {getStatusBadge(booking.status)}
@@ -389,9 +402,16 @@ export default function ProcessRefunds() {
           {!loading && bookings.length > 0 && (
             <div className="flex justify-between items-center mt-6 pt-4 border-t">
               <p className="text-sm text-gray-600">
-                Showing {pagination.total > 0 ? (pagination.page - 1) * pagination.limit + 1 : 0} to{" "}
+                Showing{" "}
+                {pagination.total > 0
+                  ? (pagination.page - 1) * pagination.limit + 1
+                  : 0}{" "}
+                to{" "}
                 {Math.min(pagination.page * pagination.limit, pagination.total)}{" "}
-                of {pagination.total} {activeTab === "pending" ? "pending requests" : "processed refunds"}
+                of {pagination.total}{" "}
+                {activeTab === "pending"
+                  ? "pending requests"
+                  : "processed refunds"}
               </p>
               <div className="flex gap-2">
                 <Button
@@ -542,17 +562,33 @@ export default function ProcessRefunds() {
                   <p className="font-semibold text-blue-800 flex items-center gap-1 mb-1">
                     <IndianRupee className="h-3.5 w-3.5" /> User Bank Details
                   </p>
-                  <p className="text-blue-700"><span className="font-medium">Name:</span> {selectedBooking.user_bank_details.account_holder_name}</p>
-                  <p className="text-blue-700"><span className="font-medium">Bank:</span> {selectedBooking.user_bank_details.bank_name}</p>
-                  <p className="text-blue-700"><span className="font-medium">Account:</span> {selectedBooking.user_bank_details.account_number}</p>
-                  <p className="text-blue-700"><span className="font-medium">IFSC:</span> {selectedBooking.user_bank_details.ifsc_code}</p>
+                  <p className="text-blue-700">
+                    <span className="font-medium">Name:</span>{" "}
+                    {selectedBooking.user_bank_details.account_holder_name}
+                  </p>
+                  <p className="text-blue-700">
+                    <span className="font-medium">Bank:</span>{" "}
+                    {selectedBooking.user_bank_details.bank_name}
+                  </p>
+                  <p className="text-blue-700">
+                    <span className="font-medium">Account:</span>{" "}
+                    {selectedBooking.user_bank_details.account_number}
+                  </p>
+                  <p className="text-blue-700">
+                    <span className="font-medium">IFSC:</span>{" "}
+                    {selectedBooking.user_bank_details.ifsc_code}
+                  </p>
                   {selectedBooking.user_bank_details.branch_name && (
-                    <p className="text-blue-700"><span className="font-medium">Branch:</span> {selectedBooking.user_bank_details.branch_name}</p>
+                    <p className="text-blue-700">
+                      <span className="font-medium">Branch:</span>{" "}
+                      {selectedBooking.user_bank_details.branch_name}
+                    </p>
                   )}
                 </div>
               ) : (
                 <div className="rounded-lg border border-orange-200 bg-orange-50 p-3 text-sm text-orange-700">
-                  ⚠️ User has not added bank details yet. Contact them before processing the refund.
+                  ⚠️ User has not added bank details yet. Contact them before
+                  processing the refund.
                 </div>
               )}
 

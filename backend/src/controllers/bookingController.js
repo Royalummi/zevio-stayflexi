@@ -538,13 +538,19 @@ export const getMyBookings = asyncHandler(async (req, res) => {
         booking.id,
         booking.property_title,
         booking.city_name,
-        new Date(new Date(booking.check_in).getTime() + 19800000).toLocaleDateString("en-IN"),
-        new Date(new Date(booking.check_out).getTime() + 19800000).toLocaleDateString("en-IN"),
+        new Date(
+          new Date(booking.check_in).getTime() + 19800000,
+        ).toLocaleDateString("en-IN"),
+        new Date(
+          new Date(booking.check_out).getTime() + 19800000,
+        ).toLocaleDateString("en-IN"),
         booking.nights,
         booking.guest_count,
         `₹${booking.total_amount.toFixed(2)}`,
         booking.status.toUpperCase(),
-        new Date(booking.created_at).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }),
+        new Date(booking.created_at).toLocaleString("en-IN", {
+          timeZone: "Asia/Kolkata",
+        }),
       ].join(","),
     );
 

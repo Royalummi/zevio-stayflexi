@@ -418,13 +418,17 @@ const VendorSettlements = () => {
                               {formatCurrency(settlement.booking_base_amount)}
                             </p>
                           </div>
-                          {parseFloat(settlement.booking_discount_amount) > 0 && (
+                          {parseFloat(settlement.booking_discount_amount) >
+                            0 && (
                             <div>
                               <p className="text-gray-500 dark:text-gray-400 text-xs">
                                 Coupon Discount
                               </p>
                               <p className="font-medium text-orange-500">
-                                -{formatCurrency(settlement.booking_discount_amount)}
+                                -
+                                {formatCurrency(
+                                  settlement.booking_discount_amount,
+                                )}
                               </p>
                             </div>
                           )}
@@ -449,9 +453,13 @@ const VendorSettlements = () => {
                               Service Fee
                             </p>
                             <p className="font-medium text-red-500">
-                              -{formatCurrency(
+                              -
+                              {formatCurrency(
                                 settlement.total_deduction ||
-                                (parseFloat(settlement.platform_fee || 0) + parseFloat(settlement.platform_fee_gst || 0))
+                                  parseFloat(settlement.platform_fee || 0) +
+                                    parseFloat(
+                                      settlement.platform_fee_gst || 0,
+                                    ),
                               )}
                             </p>
                           </div>
