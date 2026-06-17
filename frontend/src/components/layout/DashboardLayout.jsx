@@ -29,8 +29,11 @@ import {
   Star,
   Shield,
   Megaphone,
+  Link2,
+  Activity,
 } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
+import { canAccessCmMonitoring } from "../../lib/cmMonitoringAccess";
 import { useThemeStore } from "../../store/themeStore";
 import { Button } from "../ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
@@ -89,6 +92,11 @@ const DashboardLayout = () => {
         { name: "Reviews", icon: Star, path: "/admin/reviews" },
         { name: "Banners", icon: Megaphone, path: "/admin/banners" },
         {
+          name: "CM Integrations",
+          icon: Link2,
+          path: "/admin/channel-manager/mappings",
+        },
+        {
           name: "Calendar Pricing",
           icon: CalendarDays,
           path: "/admin/calendar-pricing",
@@ -118,6 +126,11 @@ const DashboardLayout = () => {
         { name: "Reviews", icon: Star, path: "/admin/reviews" },
         { name: "Banners", icon: Megaphone, path: "/admin/banners" },
         {
+          name: "CM Integrations",
+          icon: Link2,
+          path: "/admin/channel-manager/mappings",
+        },
+        {
           name: "Calendar Pricing",
           icon: CalendarDays,
           path: "/admin/calendar-pricing",
@@ -145,13 +158,48 @@ const DashboardLayout = () => {
           icon: CalendarDays,
           path: "/vendor/calendar-pricing",
         },
+        {
+          name: "Stayflexi Sync Logs",
+          icon: Shield,
+          path: "/vendor/channel-manager/sync-logs",
+        },
         { name: "Vendor T&C", icon: FileText, path: "/vendor/terms" },
         { name: "Profile", icon: UserCircle, path: "/vendor/profile" },
         { name: "Settings", icon: Settings, path: "/vendor/settings" },
       ],
     };
 
-    return navItems[role] || navItems.user;
+    const cmMonitoringNavItems = [
+      {
+        name: "CM Monitoring",
+        icon: Activity,
+        path: "/admin/channel-manager/monitoring",
+      },
+      {
+        name: "Stayflexi Sync Logs",
+        icon: Shield,
+        path: "/admin/channel-manager/sync-logs",
+      },
+    ];
+
+    const injectCmMonitoringNav = (items) => {
+      if (!canAccessCmMonitoring(user)) return items;
+      const anchorIndex = items.findIndex(
+        (item) => item.path === "/admin/channel-manager/mappings",
+      );
+      if (anchorIndex === -1) return [...items, ...cmMonitoringNavItems];
+      return [
+        ...items.slice(0, anchorIndex + 1),
+        ...cmMonitoringNavItems,
+        ...items.slice(anchorIndex + 1),
+      ];
+    };
+
+    const baseItems = navItems[role] || navItems.user;
+    if (role === "admin" || role === "super_admin") {
+      return injectCmMonitoringNav(baseItems);
+    }
+    return baseItems;
   };
 
   const navItems = getNavItems();

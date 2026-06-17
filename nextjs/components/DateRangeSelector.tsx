@@ -334,8 +334,12 @@ export default function DateRangeSelector({
             <div className={styles.calendarHeader}>
               <button
                 onClick={() => {
-                  const prev = new Date(currentMonth);
-                  prev.setMonth(prev.getMonth() - 1);
+                  // Anchor to day 1 to avoid month-overflow (e.g. May 31 -> Apr 31 rolls over)
+                  const prev = new Date(
+                    currentMonth.getFullYear(),
+                    currentMonth.getMonth() - 1,
+                    1,
+                  );
                   setCurrentMonth(prev);
                 }}
                 className={styles.navBtn}
@@ -351,8 +355,12 @@ export default function DateRangeSelector({
               </span>
               <button
                 onClick={() => {
-                  const next = new Date(currentMonth);
-                  next.setMonth(next.getMonth() + 1);
+                  // Anchor to day 1 to avoid month-overflow (e.g. May 31 -> Jun 31 rolls over to Jul)
+                  const next = new Date(
+                    currentMonth.getFullYear(),
+                    currentMonth.getMonth() + 1,
+                    1,
+                  );
                   setCurrentMonth(next);
                 }}
                 className={styles.navBtn}
@@ -441,8 +449,12 @@ export default function DateRangeSelector({
         <div className={styles.calendarHeader}>
           <button
             onClick={() => {
-              const prev = new Date(currentMonth);
-              prev.setMonth(prev.getMonth() - 1);
+              // Anchor to day 1 to avoid month-overflow (e.g. May 31 -> Apr 31 rolls over)
+              const prev = new Date(
+                currentMonth.getFullYear(),
+                currentMonth.getMonth() - 1,
+                1,
+              );
               setCurrentMonth(prev);
             }}
             className={styles.navBtn}
@@ -458,8 +470,12 @@ export default function DateRangeSelector({
           </span>
           <button
             onClick={() => {
-              const next = new Date(currentMonth);
-              next.setMonth(next.getMonth() + 1);
+              // Anchor to day 1 to avoid month-overflow (e.g. May 31 -> Jun 31 rolls over to Jul)
+              const next = new Date(
+                currentMonth.getFullYear(),
+                currentMonth.getMonth() + 1,
+                1,
+              );
               setCurrentMonth(next);
             }}
             className={styles.navBtn}
@@ -557,8 +573,12 @@ export default function DateRangeSelector({
           <div className={styles.calendarHeader}>
             <button
               onClick={() => {
-                const prev = new Date(currentMonth);
-                prev.setMonth(prev.getMonth() - 1);
+                // Anchor to day 1 to avoid month-overflow (e.g. May 31 -> Apr 31 rolls over)
+                const prev = new Date(
+                  currentMonth.getFullYear(),
+                  currentMonth.getMonth() - 1,
+                  1,
+                );
                 setCurrentMonth(prev);
               }}
               className={styles.navBtn}
@@ -574,8 +594,12 @@ export default function DateRangeSelector({
             </span>
             <button
               onClick={() => {
-                const next = new Date(currentMonth);
-                next.setMonth(next.getMonth() + 1);
+                // Anchor to day 1 to avoid month-overflow (e.g. May 31 -> Jun 31 rolls over to Jul)
+                const next = new Date(
+                  currentMonth.getFullYear(),
+                  currentMonth.getMonth() + 1,
+                  1,
+                );
                 setCurrentMonth(next);
               }}
               className={styles.navBtn}

@@ -98,7 +98,9 @@ export const createBooking = asyncHandler(async (req, res) => {
   // Validate dates
   const checkInDate = new Date(check_in);
   const checkOutDate = new Date(check_out);
-  const today = new Date();
+  // Use IST-offset "today" so midnight IST is the boundary, not midnight UTC
+  const nowIST = new Date(Date.now() + 5.5 * 60 * 60 * 1000);
+  const today = new Date(nowIST.toISOString().split("T")[0]);
   today.setHours(0, 0, 0, 0);
 
   if (checkInDate < today) {
@@ -317,17 +319,18 @@ export const createBooking = asyncHandler(async (req, res) => {
           [coupon.id],
         );
 
-        if (usageCount[0].count < coupon.usage_limit) {
+        // usage_limit = null means unlimited — JS coerces null to 0 so must check explicitly
+        if (coupon.usage_limit === null || usageCount[0].count < coupon.usage_limit) {
           couponId = coupon.id;
 
-          // DB column is 'type' (percentage | fixed)
-          if (coupon.type === "percentage") {
-            discountAmount = (baseAmount * coupon.discount_value) / 100;
-            if (coupon.max_discount && discountAmount > coupon.max_discount) {
-              discountAmount = coupon.max_discount;
+          // Use correct DB columns: discount_percentage / discount_amount / max_discount_cap
+          if (coupon.type === "percentage" || coupon.type === "first_time") {
+            discountAmount = (baseAmount * parseFloat(coupon.discount_percentage)) / 100;
+            if (coupon.max_discount_cap && discountAmount > parseFloat(coupon.max_discount_cap)) {
+              discountAmount = parseFloat(coupon.max_discount_cap);
             }
-          } else {
-            discountAmount = coupon.discount_value;
+          } else if (coupon.type === "flat") {
+            discountAmount = parseFloat(coupon.discount_amount) || 0;
           }
         }
       }
@@ -357,10 +360,8 @@ export const createBooking = asyncHandler(async (req, res) => {
 
   // Create NEW booking OR update EXISTING pending booking
   const bookingId = existingBookingId || generateUUID();
-  const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes from now
-
-  // SESSION 47: Set payment expiry window (15 minutes for payment completion)
-  const paymentExpiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes from now
+  // Use SQL DATE_ADD(NOW(), INTERVAL 15 MINUTE) instead of JS Date to avoid
+  // IST/UTC timezone mismatch from the mysql2 timezone:'+05:30' connection setting.
 
   if (isUpdatingExisting) {
     // UPDATE existing pending booking with new dates/guests/amounts
@@ -379,8 +380,8 @@ export const createBooking = asyncHandler(async (req, res) => {
         service_charge = ?,
         discount_amount = ?,
         total_amount = ?,
-        expires_at = ?,
-        payment_expires_at = ?,
+        expires_at = DATE_ADD(NOW(), INTERVAL 15 MINUTE),
+        payment_expires_at = DATE_ADD(NOW(), INTERVAL 15 MINUTE),
         payment_status = 'pending'
       WHERE id = ?`,
       [
@@ -397,8 +398,6 @@ export const createBooking = asyncHandler(async (req, res) => {
         amounts.serviceCharge,
         amounts.discountAmount,
         amounts.totalAmount,
-        expiresAt,
-        paymentExpiresAt,
         bookingId,
       ],
     );
@@ -411,7 +410,7 @@ export const createBooking = asyncHandler(async (req, res) => {
         base_amount, extra_guest_charges, extra_children_charges, 
         gst_amount, service_charge, discount_amount, total_amount, 
         status, payment_status, expires_at, payment_expires_at) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending_payment', 'pending', ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending_payment', 'pending', DATE_ADD(NOW(), INTERVAL 15 MINUTE), DATE_ADD(NOW(), INTERVAL 15 MINUTE))`,
       [
         bookingId,
         userId,
@@ -429,8 +428,6 @@ export const createBooking = asyncHandler(async (req, res) => {
         amounts.serviceCharge,
         amounts.discountAmount,
         amounts.totalAmount,
-        expiresAt,
-        paymentExpiresAt,
       ],
     );
   }
@@ -925,7 +922,9 @@ export const modifyPendingBooking = asyncHandler(async (req, res) => {
   // Validate dates
   const checkInDate = new Date(check_in);
   const checkOutDate = new Date(check_out);
-  const today = new Date();
+  // Use IST-offset "today" so midnight IST is the boundary, not midnight UTC
+  const nowIST = new Date(Date.now() + 5.5 * 60 * 60 * 1000);
+  const today = new Date(nowIST.toISOString().split("T")[0]);
   today.setHours(0, 0, 0, 0);
 
   if (checkInDate < today) {
@@ -1022,9 +1021,7 @@ export const modifyPendingBooking = asyncHandler(async (req, res) => {
     calendarBaseAmount,
   );
 
-  // Reset expires_at to 15 minutes from now
-  const newExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
-
+  // Reset expires_at to 15 minutes from now (use SQL to avoid IST/UTC offset)
   // Update booking (SESSION 64: Added service_charge)
   await db.query(
     `UPDATE bookings 
@@ -1040,7 +1037,7 @@ export const modifyPendingBooking = asyncHandler(async (req, res) => {
          gst_amount = ?,
          service_charge = ?,
          total_amount = ?,
-         expires_at = ?
+         expires_at = DATE_ADD(NOW(), INTERVAL 15 MINUTE)
      WHERE id = ?`,
     [
       check_in,
@@ -1055,7 +1052,6 @@ export const modifyPendingBooking = asyncHandler(async (req, res) => {
       amounts.gstAmount,
       amounts.serviceCharge,
       amounts.totalAmount,
-      newExpiresAt,
       id,
     ],
   );
@@ -1183,10 +1179,11 @@ export const sendManualReviewRequest = asyncHandler(async (req, res) => {
     await sendReviewRequestEmail(id);
 
     // Log manual send in review_email_log
+    // email_type must be a valid ENUM value; user_id is NOT NULL
     await db.query(
-      `INSERT INTO review_email_log (id, booking_id, email_type, sent_at) 
-       VALUES (?, ?, ?, NOW())`,
-      [generateUUID(), id, "manual_admin"],
+      `INSERT INTO review_email_log (id, booking_id, user_id, email_type, sent_at) 
+       VALUES (?, ?, ?, ?, NOW())`,
+      [generateUUID(), id, booking.user_id, "manual"],
     );
 
     sendSuccess(res, null, "Review request email sent successfully", 200);

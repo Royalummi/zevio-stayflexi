@@ -37,9 +37,18 @@ pnpm-debug.log*
 # Database files
 *.sql
 !Database.sql
+!**/Database.sql
+!zevio_stayflexi.sql
 !**/migrations/*.sql
 *.sqlite
 *.db
+
+# Local DB backups and code snapshots (not for deployment)
+db/backups/
+
+# Deployment staging copies (local only — use backend/, frontend/, nextjs/ instead)
+.deploy_stage/
+deploy_bundle.zip
 
 # Session Documentation (not needed in production)
 SESSION_*.md
@@ -56,6 +65,9 @@ QUICK_START_*.md
 # Keep only essential docs
 !README.md
 !DEPLOYMENT_GUIDE.md
+
+# Cursor agent config (local dev only)
+.cursor/
 
 # IDE and Editor
 .vscode/

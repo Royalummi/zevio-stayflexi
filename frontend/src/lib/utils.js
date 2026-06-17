@@ -33,3 +33,14 @@ export function formatDateTime(date) {
     minute: "2-digit",
   });
 }
+
+/** Safe display for API JSON/object fields in UI (avoids React child errors). */
+export function formatDisplayValue(value) {
+  if (value === null || value === undefined || value === "") return "-";
+  if (typeof value === "string") return value;
+  try {
+    return JSON.stringify(value, null, 2);
+  } catch {
+    return String(value);
+  }
+}

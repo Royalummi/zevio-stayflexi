@@ -1556,6 +1556,16 @@ function PropertyDetailContent() {
                           )}
                         </p>
                       </div>
+                      {property.maps_location && (
+                        <a
+                          href={property.maps_location}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={luxuryStyles.viewMapButton}
+                        >
+                          <FiMapPin /> View on Google Maps
+                        </a>
+                      )}
                     </div>
                   </div>
                 </section>

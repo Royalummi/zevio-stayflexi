@@ -1386,6 +1386,35 @@ function ServiceApartmentDetailContent() {
             </details>
           )}
 
+          {/* Location Section */}
+          {(property.area || property.city) && (
+            <div className={styles.section}>
+              <div className={styles.sectionHeader}>
+                <h2>Location</h2>
+                <div className={styles.sectionDivider}></div>
+              </div>
+              <div className={styles.locationInfo}>
+                <p>
+                  {property.area
+                    ? `${property.area}, ${property.city}`
+                    : property.city}
+                  , {property.state}
+                  {property.pincode && ` - ${property.pincode}`}
+                </p>
+                {property.maps_location && (
+                  <a
+                    href={property.maps_location}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={styles.mapsButton}
+                  >
+                    <FiMapPin /> View on Google Maps
+                  </a>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Local Area Information - Accordion */}
           {property.local_area_info && (
             <details className={styles.accordionCard}>

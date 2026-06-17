@@ -1,6 +1,7 @@
 import { verifyAccessToken } from "../config/jwt.js";
 import { sendError } from "../utils/response.js";
 import db from "../config/database.js";
+import { CM_MONITORING_ALLOWED_EMAIL } from "../constants/cmMonitoringAccess.js";
 
 const TABLE_MAP = {
   user: "users",
@@ -54,4 +55,35 @@ export const authorize = (...roles) => {
 
     next();
   };
+};
+
+/** CM Monitoring + Sync Logs — allowed email only (not role-based). */
+export const requireCmMonitoringAccess = async (req, res, next) => {
+  try {
+    if (!req.user) {
+      return sendError(res, "Unauthorized", 401);
+    }
+
+    const tableName = TABLE_MAP[req.user.role];
+    if (!tableName) {
+      return sendError(res, "Forbidden: Insufficient permissions", 403);
+    }
+
+    const [rows] = await db.query(
+      `SELECT email FROM ${tableName} WHERE id = ? AND deleted_at IS NULL LIMIT 1`,
+      [req.user.id],
+    );
+
+    const email = String(rows[0]?.email || "")
+      .trim()
+      .toLowerCase();
+
+    if (email !== CM_MONITORING_ALLOWED_EMAIL) {
+      return sendError(res, "Forbidden: Insufficient permissions", 403);
+    }
+
+    next();
+  } catch (error) {
+    return sendError(res, error.message, 500);
+  }
 };

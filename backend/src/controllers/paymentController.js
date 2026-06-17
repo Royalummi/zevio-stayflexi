@@ -8,6 +8,7 @@ import { asyncHandler, sendSuccess, sendError } from "../utils/response.js";
 import { generateUUID } from "../utils/helpers.js";
 import { sendBookingConfirmationEmail } from "../services/emailService.js";
 import cashfreeService from "../services/cashfree.service.js";
+import { triggerPushBookingForBooking } from "../services/channelManagerOutboundService.js";
 
 /**
  * Create payment order with Cashfree
@@ -301,6 +302,17 @@ export const verifyPayment = asyncHandler(async (req, res) => {
     } catch (error) {
       console.error("Failed to send confirmation email:", error);
     }
+
+    // Non-blocking outbound sync: booking flow must succeed even if provider push fails.
+    triggerPushBookingForBooking({
+      bookingId: booking_id,
+      bookingStatus: "CONFIRMED",
+    }).catch((error) => {
+      console.error(
+        "Channel manager outbound push failed (verifyPayment):",
+        error,
+      );
+    });
 
     sendSuccess(
       res,
@@ -618,6 +630,17 @@ async function handlePaymentSuccess(data) {
     sendBookingConfirmationEmail(bookingId).catch((err) =>
       console.error("Email sending failed:", err),
     );
+
+    // Non-blocking outbound sync: webhook success must not be rolled back by push issues.
+    triggerPushBookingForBooking({
+      bookingId,
+      bookingStatus: "CONFIRMED",
+    }).catch((error) => {
+      console.error(
+        "Channel manager outbound push failed (handlePaymentSuccess):",
+        error,
+      );
+    });
   } catch (error) {
     await connection.rollback();
     console.error("Webhook transaction failed:", error);

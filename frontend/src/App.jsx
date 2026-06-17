@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "sonner";
 import { useAuthStore } from "./store/authStore";
+import { canAccessCmMonitoring } from "./lib/cmMonitoringAccess";
 
 // Layout
 import DashboardLayout from "./components/layout/DashboardLayout";
@@ -28,6 +29,9 @@ import CancellationPolicies from "./pages/admin/CancellationPolicies";
 import AdminCalendarPricing from "./pages/admin/AdminCalendarPricing";
 import AdminProfile from "./pages/admin/AdminProfile";
 import AdminSettings from "./pages/admin/AdminSettings";
+import AdminChannelManagerSyncLogs from "./pages/admin/AdminChannelManagerSyncLogs";
+import AdminChannelManagerMappings from "./pages/admin/AdminChannelManagerMappings";
+import AdminChannelManagerMonitoring from "./pages/admin/AdminChannelManagerMonitoring";
 
 // Vendor Pages
 import VendorDashboard from "./pages/vendor/VendorDashboard";
@@ -40,6 +44,7 @@ import VendorProfile from "./pages/vendor/VendorProfile";
 import VendorSettings from "./pages/vendor/VendorSettings";
 import VendorCalendarPricing from "./pages/vendor/VendorCalendarPricing";
 import VendorTerms from "./pages/vendor/VendorTerms";
+import VendorChannelManagerSyncLogs from "./pages/vendor/VendorChannelManagerSyncLogs";
 
 // Protected Route Component
 const isJwtExpired = (token) => {
@@ -73,6 +78,20 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
   }
 
   if (allowedRoles && !allowedRoles.includes(user?.role)) {
+    return <Navigate to="/unauthorized" replace />;
+  }
+
+  return children;
+};
+
+const CmMonitoringRoute = ({ children }) => {
+  const { isAuthenticated, user } = useAuthStore();
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (!canAccessCmMonitoring(user)) {
     return <Navigate to="/unauthorized" replace />;
   }
 
@@ -118,6 +137,26 @@ function App() {
             element={<CancellationPolicies />}
           />
           <Route
+            path="channel-manager/sync-logs"
+            element={
+              <CmMonitoringRoute>
+                <AdminChannelManagerSyncLogs />
+              </CmMonitoringRoute>
+            }
+          />
+          <Route
+            path="channel-manager/mappings"
+            element={<AdminChannelManagerMappings />}
+          />
+          <Route
+            path="channel-manager/monitoring"
+            element={
+              <CmMonitoringRoute>
+                <AdminChannelManagerMonitoring />
+              </CmMonitoringRoute>
+            }
+          />
+          <Route
             path="vendor-terms"
             element={<Navigate to="/admin/settings" replace />}
           />
@@ -156,6 +195,10 @@ function App() {
           <Route path="settlements" element={<VendorSettlementsPage />} />
           <Route path="analytics" element={<VendorAnalytics />} />
           <Route path="calendar-pricing" element={<VendorCalendarPricing />} />
+          <Route
+            path="channel-manager/sync-logs"
+            element={<VendorChannelManagerSyncLogs />}
+          />
           <Route path="profile" element={<VendorProfile />} />
           <Route path="terms" element={<VendorTerms />} />
           <Route path="settings" element={<VendorSettings />} />

@@ -180,7 +180,7 @@ export const getProperties = asyncHandler(async (req, res) => {
     ${featuresService.getFeaturesJoinClause("p", "pf", "f")}
     ${whereClause}
     GROUP BY p.id
-    ORDER BY p.created_at DESC
+    ORDER BY p.title ASC
     LIMIT ? OFFSET ?
   `;
 

@@ -1,0 +1,30 @@
+-- Phase 2 (Plan B): Daily rate and restriction controls for channel manager sync
+
+CREATE TABLE IF NOT EXISTS channel_manager_daily_controls (
+  id CHAR(36) NOT NULL,
+  integration_id CHAR(36) NOT NULL,
+  property_id CHAR(36) NOT NULL,
+  provider_key VARCHAR(50) NOT NULL,
+  external_room_type_id VARCHAR(120) NOT NULL,
+  external_rate_plan_id VARCHAR(120) NOT NULL,
+  control_date DATE NOT NULL,
+  single_rate DECIMAL(12,2) DEFAULT NULL,
+  double_rate DECIMAL(12,2) DEFAULT NULL,
+  triple_rate DECIMAL(12,2) DEFAULT NULL,
+  extra_adult_rate DECIMAL(12,2) DEFAULT NULL,
+  extra_child_rate DECIMAL(12,2) DEFAULT NULL,
+  stop_sell TINYINT(1) NOT NULL DEFAULT 0,
+  closed_on_arrival TINYINT(1) NOT NULL DEFAULT 0,
+  closed_on_departure TINYINT(1) NOT NULL DEFAULT 0,
+  min_los INT UNSIGNED DEFAULT NULL,
+  max_los INT UNSIGNED DEFAULT NULL,
+  source_reference_id VARCHAR(160) DEFAULT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_cm_daily_control (integration_id, external_room_type_id, external_rate_plan_id, control_date),
+  KEY idx_cm_daily_property_date (property_id, control_date),
+  KEY idx_cm_daily_provider_date (provider_key, control_date),
+  CONSTRAINT fk_cm_daily_integration FOREIGN KEY (integration_id) REFERENCES channel_manager_integrations (id),
+  CONSTRAINT fk_cm_daily_property FOREIGN KEY (property_id) REFERENCES properties (id)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;

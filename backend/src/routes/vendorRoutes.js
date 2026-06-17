@@ -104,6 +104,23 @@ router.get("/settlements", validatePagination, vendorController.getSettlements);
 // Analytics (stats - no pagination)
 router.get("/analytics", vendorController.getAnalytics);
 
+// Channel Manager Sync Logs (vendor-scoped)
+router.get(
+  "/channel-manager/sync-logs",
+  validatePagination,
+  vendorController.getChannelManagerSyncLogs,
+);
+router.get(
+  "/channel-manager/sync-logs/:id",
+  vendorController.getChannelManagerSyncLogById,
+);
+
+// Session 109: Stayflexi active status per property
+router.get(
+  "/properties/:propertyId/stayflexi-status",
+  vendorController.getPropertyStayflexiStatus,
+);
+
 // Bank details
 router.put("/bank-details", vendorController.updateBankDetails);
 

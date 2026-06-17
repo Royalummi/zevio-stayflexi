@@ -1,7 +1,11 @@
 import express from "express";
 import { body } from "express-validator";
 import { validate } from "../middlewares/validator.js";
-import { authenticate, authorize } from "../middlewares/auth.js";
+import {
+  authenticate,
+  authorize,
+  requireCmMonitoringAccess,
+} from "../middlewares/auth.js";
 import { validatePagination } from "../middlewares/pagination.js";
 import { uploadPropertyImages as uploadPropertyImagesMiddleware } from "../middlewares/upload.js";
 import {
@@ -63,6 +67,26 @@ import {
   updateCancellationPolicy,
   deleteCancellationPolicy,
 } from "../controllers/cancellationPoliciesController.js";
+import {
+  getChannelManagerSyncLogs,
+  getChannelManagerSyncLogById,
+  replayChannelManagerSyncLog,
+  listIntegrations,
+  getIntegration,
+  createIntegration,
+  updateIntegration,
+  deleteIntegration,
+  listMappings,
+  createMapping,
+  updateMapping,
+  deleteMapping,
+  activateMapping,
+  deactivateMapping,
+  manualPushBooking,
+  getChannelManagerMonitoringOverview,
+  getChannelManagerMonitoringIntegrations,
+  runChannelManagerMonitoringTest,
+} from "../controllers/channelManagerAdminController.js";
 
 const router = express.Router();
 
@@ -279,5 +303,98 @@ router.get("/cancellation-policies", getAllCancellationPolicies);
 router.post("/cancellation-policies", createCancellationPolicy);
 router.put("/cancellation-policies/:id", updateCancellationPolicy);
 router.delete("/cancellation-policies/:id", deleteCancellationPolicy);
+
+// ── Session 92: Channel Manager Sync Logs (CM monitoring email only) ──
+router.get(
+  "/channel-manager/sync-logs",
+  requireCmMonitoringAccess,
+  validatePagination,
+  getChannelManagerSyncLogs,
+);
+router.get(
+  "/channel-manager/sync-logs/:id",
+  requireCmMonitoringAccess,
+  getChannelManagerSyncLogById,
+);
+router.post(
+  "/channel-manager/sync-logs/:id/replay",
+  requireCmMonitoringAccess,
+  replayChannelManagerSyncLog,
+);
+
+// ── Session 109: Channel Manager Integrations + Mapping Management ──
+router.get(
+  "/channel-manager/integrations",
+  validatePagination,
+  listIntegrations,
+);
+router.get("/channel-manager/integrations/:id", getIntegration);
+router.post(
+  "/channel-manager/integrations",
+  [
+    body("vendor_id").notEmpty().withMessage("vendor_id is required"),
+    body("external_hotel_id")
+      .notEmpty()
+      .withMessage("external_hotel_id is required"),
+    validate,
+  ],
+  createIntegration,
+);
+router.put("/channel-manager/integrations/:id", updateIntegration);
+router.delete("/channel-manager/integrations/:id", deleteIntegration);
+
+router.get(
+  "/channel-manager/integrations/:integrationId/mappings",
+  listMappings,
+);
+router.post(
+  "/channel-manager/integrations/:integrationId/mappings",
+  [
+    body("property_id").notEmpty().withMessage("property_id is required"),
+    body("external_property_id")
+      .notEmpty()
+      .withMessage("external_property_id is required"),
+    validate,
+  ],
+  createMapping,
+);
+router.put(
+  "/channel-manager/integrations/:integrationId/mappings/:mappingId",
+  updateMapping,
+);
+router.delete(
+  "/channel-manager/integrations/:integrationId/mappings/:mappingId",
+  deleteMapping,
+);
+router.post(
+  "/channel-manager/integrations/:integrationId/mappings/:mappingId/activate",
+  activateMapping,
+);
+router.post(
+  "/channel-manager/integrations/:integrationId/mappings/:mappingId/deactivate",
+  deactivateMapping,
+);
+router.post("/channel-manager/push-booking/:bookingId", manualPushBooking);
+
+router.get(
+  "/channel-manager/monitoring/overview",
+  requireCmMonitoringAccess,
+  getChannelManagerMonitoringOverview,
+);
+router.get(
+  "/channel-manager/monitoring/integrations",
+  requireCmMonitoringAccess,
+  getChannelManagerMonitoringIntegrations,
+);
+router.post(
+  "/channel-manager/monitoring/run-test",
+  requireCmMonitoringAccess,
+  [
+    body("integration_id").notEmpty().withMessage("integration_id is required"),
+    body("operation_key").notEmpty().withMessage("operation_key is required"),
+    validate,
+  ],
+  runChannelManagerMonitoringTest,
+);
 
 export default router;

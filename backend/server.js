@@ -27,6 +27,7 @@ import propertyImagesRoutes from "./src/routes/propertyImagesRoutes.js";
 import serviceApartmentsRoutes from "./src/routes/serviceApartmentsRoutes.js";
 import corporateRoutes from "./src/routes/corporateRoutes.js";
 import bannersRoutes from "./src/routes/bannersRoutes.js";
+import channelManagerRoutes from "./src/routes/channelManagerRoutes.js";
 
 // Load environment variables
 dotenv.config();
@@ -169,6 +170,7 @@ app.use("/api/admin", adminRoutes); // No rate limit
 app.use("/api/vendor", vendorRoutes); // No rate limit
 app.use("/api/vendor/properties", propertyImagesRoutes); // No rate limit
 app.use("/api/corporate", corporateRoutes); // No rate limit
+app.use("/api/channel-manager", channelManagerRoutes); // Plan B: provider-keyed XML webhook endpoints
 
 // 404 handler
 app.use(notFound);
@@ -217,5 +219,5 @@ process.on("unhandledRejection", (err) => {
   // Keep server running in development for debugging
 });
 
-// Start the server
+// Start the server (nodemon reload picks up .env changes on restart)
 startServer();

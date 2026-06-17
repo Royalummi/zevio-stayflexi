@@ -8,6 +8,7 @@ import {
   sendReviewRequestEmail,
   sendBookingExpiryEmail,
 } from "../services/emailService.js";
+import { retryFailedChannelManagerOutboundEvents } from "../services/channelManagerOutboundService.js";
 
 // ==========================================
 // SESSION 30 + SESSION 47: EXPIRED BOOKINGS CRON JOB
@@ -595,6 +596,31 @@ export const reviewRequestJob = cron.schedule(
   },
 );
 
+// Retry failed channel manager outbound push events every 15 minutes.
+export const channelManagerOutboundRetryJob = cron.schedule(
+  "*/15 * * * *",
+  async () => {
+    try {
+      const summary = await retryFailedChannelManagerOutboundEvents({
+        limit: 20,
+        lookbackHours: 24,
+      });
+
+      if (summary.scanned > 0 || summary.retried > 0) {
+        console.log(
+          `🔁 Channel manager outbound retry: scanned=${summary.scanned}, retried=${summary.retried}, succeeded=${summary.succeeded}, failed=${summary.failed}, skipped=${summary.skipped}`,
+        );
+      }
+    } catch (error) {
+      console.error("❌ Channel manager outbound retry job failed:", error);
+    }
+  },
+  {
+    scheduled: false,
+    timezone: "Asia/Kolkata",
+  },
+);
+
 // Start all cron jobs
 export const startCronJobs = () => {
   if (process.env.ENABLE_CRON_JOBS === "true") {
@@ -605,8 +631,9 @@ export const startCronJobs = () => {
     checkInReminderJob6h.start();
     checkOutReminderJob.start();
     reviewRequestJob.start();
+    channelManagerOutboundRetryJob.start();
     console.log(
-      "✅ All cron jobs started (expired bookings, booking processor, cleanup, email reminders)",
+      "✅ All cron jobs started (expired bookings, booking processor, cleanup, email reminders, channel manager outbound retry)",
     );
   } else {
     console.log("ℹ️  Cron jobs disabled");
@@ -622,5 +649,6 @@ export const stopCronJobs = () => {
   checkInReminderJob6h.stop();
   checkOutReminderJob.stop();
   reviewRequestJob.stop();
+  channelManagerOutboundRetryJob.stop();
   console.log("⏹️  All cron jobs stopped");
 };

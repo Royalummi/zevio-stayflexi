@@ -16,6 +16,7 @@ import {
   isR2Configured,
 } from "../utils/r2Storage.js";
 import { generateSecurePassword, hashPassword } from "../utils/password.js";
+import { triggerPushBookingForBooking } from "../services/channelManagerOutboundService.js";
 
 const MAX_PROPERTY_IMAGES = 40;
 
@@ -70,6 +71,7 @@ export const getAllBookings = asyncHandler(async (req, res) => {
     from_date,
     to_date,
     search,
+    booking_source,
     page = 1,
     limit = 20,
   } = req.query;
@@ -130,6 +132,12 @@ export const getAllBookings = asyncHandler(async (req, res) => {
     params.push(searchTerm, searchTerm, searchTerm, searchTerm);
   }
 
+  const VALID_BOOKING_SOURCES = ["direct", "channel_manager"];
+  if (booking_source && VALID_BOOKING_SOURCES.includes(booking_source)) {
+    query += ` AND b.booking_source = ?`;
+    params.push(booking_source);
+  }
+
   // Count total
   const countQuery = query.replace(
     /SELECT[\s\S]*?FROM/,
@@ -170,7 +178,10 @@ export const getBookingStats = asyncHandler(async (req, res) => {
       SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed_bookings,
       SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) as cancelled_bookings,
       SUM(CASE WHEN status = 'cancel_requested' THEN 1 ELSE 0 END) as cancel_requested,
-      SUM(CASE WHEN status = 'confirmed' OR status = 'completed' THEN total_amount ELSE 0 END) as total_revenue
+      SUM(CASE WHEN status = 'confirmed' OR status = 'completed' THEN total_amount ELSE 0 END) as total_revenue,
+      SUM(CASE WHEN booking_source = 'channel_manager' THEN 1 ELSE 0 END) as channel_manager_bookings,
+      SUM(CASE WHEN booking_source = 'direct' OR booking_source IS NULL THEN 1 ELSE 0 END) as direct_bookings,
+      SUM(CASE WHEN booking_source = 'channel_manager' AND (status = 'confirmed' OR status = 'completed') THEN total_amount ELSE 0 END) as channel_manager_revenue
     FROM bookings
     WHERE deleted_at IS NULL
   `);
@@ -246,6 +257,16 @@ export const processRefund = asyncHandler(async (req, res) => {
   await db.query('UPDATE bookings SET status = "cancelled" WHERE id = ?', [
     booking_id,
   ]);
+
+  triggerPushBookingForBooking({
+    bookingId: booking_id,
+    bookingStatus: "CANCELLED",
+  }).catch((error) => {
+    console.error(
+      "Channel manager outbound push failed (processRefund):",
+      error,
+    );
+  });
 
   // Phase 1: Manual refund — admin will complete the bank transfer manually
   console.log(
@@ -477,7 +498,9 @@ export const getDashboardStats = asyncHandler(async (req, res) => {
       COUNT(*) as total_bookings,
       SUM(CASE WHEN status = 'confirmed' THEN 1 ELSE 0 END) as confirmed_bookings,
       SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed_bookings,
-      SUM(CASE WHEN status = 'cancel_requested' THEN 1 ELSE 0 END) as pending_cancellations
+      SUM(CASE WHEN status = 'cancel_requested' THEN 1 ELSE 0 END) as pending_cancellations,
+      SUM(CASE WHEN booking_source = 'channel_manager' THEN 1 ELSE 0 END) as channel_manager_bookings,
+      SUM(CASE WHEN booking_source = 'direct' OR booking_source IS NULL THEN 1 ELSE 0 END) as direct_bookings
     FROM bookings
     WHERE deleted_at IS NULL
   `);
@@ -508,6 +531,34 @@ export const getDashboardStats = asyncHandler(async (req, res) => {
     WHERE status = 'pending'
   `);
 
+  const [cmHealth] = await db.query(`
+    SELECT
+      SUM(CASE WHEN deleted_at IS NULL AND status IN ('active','test') THEN 1 ELSE 0 END) as active_integrations,
+      SUM(CASE WHEN deleted_at IS NULL AND status = 'inactive' THEN 1 ELSE 0 END) as inactive_integrations
+    FROM channel_manager_integrations
+  `);
+  const [cmMappings] = await db.query(`
+    SELECT COUNT(*) as active_mappings
+    FROM channel_manager_property_mappings cpm
+    JOIN channel_manager_integrations ci ON cpm.integration_id = ci.id
+    WHERE cpm.is_active = 1
+      AND ci.deleted_at IS NULL
+      AND ci.status IN ('active','test')
+  `);
+  const [cmFailed] = await db.query(`
+    SELECT COUNT(*) as failed_outbound_24h
+    FROM channel_manager_webhook_events
+    WHERE event_type LIKE 'push_booking_%'
+      AND processing_status = 'failed'
+      AND received_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
+  `);
+  const [cmLastSync] = await db.query(`
+    SELECT MAX(processed_at) as last_sync_at
+    FROM channel_manager_webhook_events
+    WHERE event_type LIKE 'push_booking_%'
+      AND processing_status = 'processed'
+  `);
+
   sendSuccess(
     res,
     {
@@ -516,6 +567,11 @@ export const getDashboardStats = asyncHandler(async (req, res) => {
       ...propertyCounts[0],
       ...userCount[0],
       ...settlementStats[0],
+      cm_active_integrations: parseInt(cmHealth[0].active_integrations || 0),
+      cm_inactive_integrations: parseInt(cmHealth[0].inactive_integrations || 0),
+      cm_active_mappings: parseInt(cmMappings[0].active_mappings || 0),
+      cm_failed_outbound_24h: parseInt(cmFailed[0].failed_outbound_24h || 0),
+      cm_last_sync_at: cmLastSync[0].last_sync_at || null,
     },
     "Dashboard statistics fetched successfully",
     200,
@@ -669,7 +725,16 @@ export const getAllProperties = asyncHandler(async (req, res) => {
         pr.maintenance_charges,
         pr.discount_3_5_days,
         pr.discount_6_14_days,
-        pr.discount_15_plus_days
+        pr.discount_15_plus_days,
+        EXISTS (
+          SELECT 1 FROM channel_manager_property_mappings cpm
+          JOIN channel_manager_integrations ci ON cpm.integration_id = ci.id
+          WHERE cpm.property_id = p.id
+            AND cpm.is_active = 1
+            AND ci.deleted_at IS NULL
+            AND ci.provider_key = 'stayflexi'
+            AND ci.status IN ('active', 'test')
+        ) as is_stayflexi_active
       FROM properties p
       LEFT JOIN cities c ON p.city_id = c.id
       LEFT JOIN vendors v ON p.vendor_id = v.id
