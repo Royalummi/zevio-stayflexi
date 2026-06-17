@@ -50,6 +50,9 @@ db/backups/
 .deploy_stage/
 deploy_bundle.zip
 
+# Internal documentation (not for deployment repo)
+docs/
+
 # Session Documentation (not needed in production)
 SESSION_*.md
 *_SUMMARY.md
