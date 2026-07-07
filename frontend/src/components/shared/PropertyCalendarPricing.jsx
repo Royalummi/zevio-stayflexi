@@ -77,6 +77,9 @@ export default function PropertyCalendarPricing({
   // Set-price form
   const [priceInput, setPriceInput] = useState("");
   const [noteInput, setNoteInput] = useState("");
+  const [stayflexiManaged, setStayflexiManaged] = useState(false);
+
+  const effectiveCanEdit = canEdit && !stayflexiManaged;
 
   // ── Fetch calendar prices for current view ──
   // role="vendor"  → only use vendor endpoint, no fallback
@@ -110,8 +113,13 @@ export default function PropertyCalendarPricing({
         }),
       );
       if (res.data.success) {
+        const payload = res.data.data;
+        const entries = Array.isArray(payload)
+          ? payload
+          : payload?.prices || [];
+        setStayflexiManaged(Boolean(payload?.stayflexi_managed));
         const map = {};
-        (res.data.data || []).forEach((entry) => {
+        entries.forEach((entry) => {
           map[entry.price_date] = {
             price: parseFloat(entry.price),
             note: entry.note || "",
@@ -165,7 +173,7 @@ export default function PropertyCalendarPricing({
   };
 
   const handleDayClick = (d) => {
-    if (!canEdit) return;
+    if (!effectiveCanEdit) return;
     const key = toKey(viewYear, viewMonth, d);
     if (!selectStart || (selectStart && selectEnd)) {
       // Start new selection
@@ -262,7 +270,7 @@ export default function PropertyCalendarPricing({
 
   // ── Clear single date ──
   const handleClearDate = async (dateKey) => {
-    if (!canEdit) return;
+    if (!effectiveCanEdit) return;
     // Staging mode
     if (!propertyId) {
       const newPending = { ...pendingMap };
@@ -298,7 +306,7 @@ export default function PropertyCalendarPricing({
 
   // ── Clear entire month ──
   const handleClearMonth = async () => {
-    if (!canEdit) return;
+    if (!effectiveCanEdit) return;
     // Staging mode
     if (!propertyId) {
       const prefix = `${viewYear}-${String(viewMonth + 1).padStart(2, "0")}`;
@@ -359,6 +367,16 @@ export default function PropertyCalendarPricing({
           </span>
         </div>
       )}
+      {propertyId && stayflexiManaged && (
+        <div className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-800 px-4 py-2.5 text-sm text-blue-800 dark:text-blue-300">
+          <Info className="h-4 w-4 shrink-0 text-blue-500" />
+          <span>
+            <strong>Stayflexi managed:</strong> Calendar pricing is synced from
+            Stayflexi and cannot be edited here. Deactivate the channel manager
+            mapping to edit manually.
+          </span>
+        </div>
+      )}
       {/* Header row */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -382,7 +400,7 @@ export default function PropertyCalendarPricing({
         </div>
 
         <div className="flex items-center gap-2">
-          {customDatesInMonth.length > 0 && canEdit && (
+          {customDatesInMonth.length > 0 && effectiveCanEdit && (
             <button
               type="button"
               onClick={handleClearMonth}
@@ -410,7 +428,7 @@ export default function PropertyCalendarPricing({
           <span className="inline-block h-3 w-3 rounded-sm bg-blue-500/20 border border-blue-400" />
           Custom price
         </span>
-        {canEdit && (
+        {effectiveCanEdit && (
           <span className="flex items-center gap-1.5">
             <span className="inline-block h-3 w-3 rounded-sm bg-primary/20 border border-primary/60" />
             Selected
@@ -471,7 +489,7 @@ export default function PropertyCalendarPricing({
                 className={`group ${cellClass}`}
                 onClick={() => !isPast && handleDayClick(d)}
                 onMouseEnter={() =>
-                  canEdit && selectStart && !selectEnd && setHoverDate(key)
+                  effectiveCanEdit && selectStart && !selectEnd && setHoverDate(key)
                 }
                 onMouseLeave={() => setHoverDate(null)}
                 title={
@@ -497,7 +515,7 @@ export default function PropertyCalendarPricing({
                   </span>
                 )}
                 {/* Remove button for custom dates */}
-                {isCustom && canEdit && !isPast && (
+                {isCustom && effectiveCanEdit && !isPast && (
                   <button
                     type="button"
                     className="absolute top-0.5 right-0.5 h-3.5 w-3.5 rounded-full bg-destructive/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-destructive transition-opacity"
@@ -517,7 +535,7 @@ export default function PropertyCalendarPricing({
       )}
 
       {/* Set Price Panel */}
-      {canEdit && (
+      {effectiveCanEdit && (
         <div
           className={`rounded-lg border transition-all ${selectStart ? "border-primary/40 bg-primary/5 p-4" : "border-dashed border-border bg-muted/20 p-3"}`}
         >

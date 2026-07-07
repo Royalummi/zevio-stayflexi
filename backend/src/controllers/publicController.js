@@ -10,6 +10,14 @@ import {
 } from "../services/amenitiesService.js";
 import featuresService from "../services/featuresService.js";
 import { sendContactEmail } from "../services/emailService.js";
+import {
+  getEffectiveMinStayDetails,
+  getCmRestrictionsForYear,
+  getCmRestrictionForDate,
+  validateStayLength,
+  validateCoaCod,
+} from "../services/channelManagerStayRulesService.js";
+import { calculateNights } from "../utils/helpers.js";
 
 // Get all active cities
 export const getCities = asyncHandler(async (req, res) => {
@@ -465,7 +473,110 @@ export const checkAvailability = asyncHandler(async (req, res) => {
     );
   }
 
+  const nights = calculateNights(check_in, check_out);
+  const stayLengthCheck = await validateStayLength({
+    propertyId: property_id,
+    checkIn: check_in,
+    checkOut: check_out,
+    nights,
+  });
+
+  if (!stayLengthCheck.ok) {
+    return sendSuccess(
+      res,
+      {
+        available: false,
+        reason: stayLengthCheck.message,
+        stay_rules: {
+          effective_min_stay: stayLengthCheck.effectiveMinStay,
+          property_min_stay_days: stayLengthCheck.propertyMinStayDays,
+          channel_manager_min_los: stayLengthCheck.channelManagerMinLos,
+        },
+      },
+      "Availability checked",
+      200,
+    );
+  }
+
+  const coaCodCheck = await validateCoaCod({
+    propertyId: property_id,
+    checkIn: check_in,
+    checkOut: check_out,
+  });
+
+  if (!coaCodCheck.ok) {
+    return sendSuccess(
+      res,
+      {
+        available: false,
+        reason: coaCodCheck.message,
+      },
+      "Availability checked",
+      200,
+    );
+  }
+
   sendSuccess(res, { available: true }, "Property is available", 200);
+});
+
+/**
+ * @route   GET /api/public/properties/:id/stay-rules
+ * @desc    Effective min-stay for a property (property + CM MinLOS when mapped)
+ * @access  Public
+ */
+export const getPropertyStayRules = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { check_in: checkIn, check_out: checkOut } = req.query;
+
+  const [properties] = await db.query(
+    `SELECT id FROM properties WHERE id = ? AND status = 'approved' AND deleted_at IS NULL LIMIT 1`,
+    [id],
+  );
+
+  if (properties.length === 0) {
+    return sendError(res, "Property not found", 404);
+  }
+
+  const stayRules = await getEffectiveMinStayDetails(id, checkIn || null);
+
+  let closedOnDeparture = false;
+  if (checkOut) {
+    const checkOutRestriction = await getCmRestrictionForDate(id, checkOut);
+    closedOnDeparture = Boolean(checkOutRestriction?.closed_on_departure);
+  }
+
+  sendSuccess(
+    res,
+    {
+      ...stayRules,
+      check_out: checkOut || null,
+      closed_on_departure: closedOnDeparture,
+    },
+    "Stay rules fetched",
+    200,
+  );
+});
+
+/**
+ * @route   GET /api/public/properties/:id/stay-restrictions
+ * @desc    CM arrival/departure restrictions for calendar (COA/COD/MinLOS by date)
+ * @access  Public
+ */
+export const getPropertyStayRestrictions = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const year = req.query.year || new Date().getFullYear();
+
+  const [properties] = await db.query(
+    `SELECT id FROM properties WHERE id = ? AND status = 'approved' AND deleted_at IS NULL LIMIT 1`,
+    [id],
+  );
+
+  if (properties.length === 0) {
+    return sendError(res, "Property not found", 404);
+  }
+
+  const restrictions = await getCmRestrictionsForYear(id, year);
+  sendSuccess(res, restrictions, "Stay restrictions fetched", 200);
 });
 
 // Get recommended properties (property-type specific)

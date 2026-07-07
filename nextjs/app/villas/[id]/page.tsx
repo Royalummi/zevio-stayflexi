@@ -107,6 +107,7 @@ function PropertyDetailContent() {
 
   const [property, setProperty] = useState<Property | null>(null);
   const [loading, setLoading] = useState(true);
+  const [effectiveMinStay, setEffectiveMinStay] = useState(1);
   const [checkIn, setCheckIn] = useState<Date | null>(null);
   const [checkOut, setCheckOut] = useState<Date | null>(null);
 
@@ -339,6 +340,7 @@ function PropertyDetailContent() {
           max_children: Number(data.max_children) || 5,
           extra_child_charge: Number(data.extra_child_charge) || 0,
         });
+        setEffectiveMinStay(Number(data.min_stay_days) || 1);
       } catch (error: unknown) {
         if (
           isMounted &&
@@ -362,6 +364,52 @@ function PropertyDetailContent() {
       abortController.abort();
     };
   }, [propertyId]);
+
+  // Fetch effective min-stay (MAX of property min_stay_days and CM MinLOS for check-in)
+  useEffect(() => {
+    if (!propertyId) return;
+
+    const fetchStayRules = async () => {
+      try {
+        const params = new URLSearchParams();
+        if (checkIn) params.set("check_in", formatDateForAPI(checkIn));
+        if (checkOut) params.set("check_out", formatDateForAPI(checkOut));
+        const query = params.toString() ? `?${params.toString()}` : "";
+        const response = await api.get(
+          `/public/properties/${propertyId}/stay-rules${query}`,
+        );
+        const rules = response.data.data;
+        const minStay = Number(rules?.effective_min_stay);
+        if (Number.isFinite(minStay) && minStay > 0) {
+          setEffectiveMinStay(minStay);
+        }
+        if (rules?.closed_on_arrival) {
+          setCheckIn(null);
+          setCheckOut(null);
+          toast.info("Check-in is not available on the selected date");
+          return;
+        }
+        if (checkOut && rules?.closed_on_departure) {
+          setCheckOut(null);
+          toast.info("Check-out is not available on the selected date");
+        }
+      } catch {
+        setEffectiveMinStay(property?.min_stay_days || 1);
+      }
+    };
+
+    fetchStayRules();
+  }, [propertyId, checkIn, checkOut, property?.min_stay_days, toast]);
+
+  useEffect(() => {
+    if (!checkIn || !checkOut || nights <= 0) return;
+    if (nights < effectiveMinStay) {
+      setCheckOut(null);
+      toast.info(
+        `Minimum stay is ${effectiveMinStay} ${effectiveMinStay === 1 ? "night" : "nights"} for the selected check-in date`,
+      );
+    }
+  }, [effectiveMinStay, checkIn, checkOut, nights, toast]);
 
   // Fetch calendar pricing for current + next year once the property ID is known
   useEffect(() => {
@@ -493,6 +541,38 @@ function PropertyDetailContent() {
     if (adults + children > maxGuestsAllowed) {
       toast.warning(`Maximum ${maxGuestsAllowed} guests allowed`);
       return;
+    }
+
+    if (nights < effectiveMinStay) {
+      toast.warning(
+        `Minimum stay is ${effectiveMinStay} ${effectiveMinStay === 1 ? "night" : "nights"} for the selected check-in date`,
+      );
+      return;
+    }
+
+    if (!property) {
+      return;
+    }
+
+    try {
+      const params = new URLSearchParams({
+        check_in: formatDateForAPI(checkIn),
+        check_out: formatDateForAPI(checkOut),
+      });
+      const rulesRes = await api.get(
+        `/public/properties/${property.id}/stay-rules?${params.toString()}`,
+      );
+      const rules = rulesRes.data.data;
+      if (rules?.closed_on_arrival) {
+        toast.warning("Check-in is not available on the selected date");
+        return;
+      }
+      if (rules?.closed_on_departure) {
+        toast.warning("Check-out is not available on the selected date");
+        return;
+      }
+    } catch {
+      // Server-side booking validation remains the source of truth
     }
 
     // Check if user is logged in
@@ -952,7 +1032,7 @@ function PropertyDetailContent() {
                   )}
 
                   {/* Minimum & Maximum Stay */}
-                  {(property.min_stay_days || property.max_stay_days) && (
+                  {(effectiveMinStay > 1 || property.max_stay_days) && (
                     <div className={luxuryStyles.infoItem}>
                       <div className={luxuryStyles.infoIcon}>
                         <FiCalendar />
@@ -962,9 +1042,9 @@ function PropertyDetailContent() {
                           Stay Requirements
                         </div>
                         <div className={luxuryStyles.infoValue}>
-                          {property.min_stay_days &&
-                            `Min: ${property.min_stay_days} ${property.min_stay_days === 1 ? "night" : "nights"}`}
-                          {property.min_stay_days &&
+                          {effectiveMinStay > 1 &&
+                            `Min: ${effectiveMinStay} ${effectiveMinStay === 1 ? "night" : "nights"}`}
+                          {effectiveMinStay > 1 &&
                             property.max_stay_days &&
                             " • "}
                           {property.max_stay_days &&
@@ -1778,6 +1858,7 @@ function PropertyDetailContent() {
                         luxuryStyles={luxuryStyles}
                         propertyId={property.id}
                         basePrice={property.price_per_night}
+                        minStayNights={effectiveMinStay}
                       />
 
                       {/* Modern Guests Field */}
@@ -2059,6 +2140,7 @@ function PropertyDetailContent() {
         propertyId={property?.id}
         pricePerNight={property?.price_per_night ?? 0}
         calendarPriceMap={calendarPriceMap}
+        minStayNights={effectiveMinStay}
       />
 
       <ToastContainer toasts={toast.toasts} removeToast={toast.removeToast} />

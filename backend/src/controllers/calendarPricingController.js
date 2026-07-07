@@ -7,37 +7,11 @@
 import db from "../config/database.js";
 import { asyncHandler, sendSuccess, sendError } from "../utils/response.js";
 import { generateUUID } from "../utils/helpers.js";
-
-const isStayflexiActive = async (propertyId) => {
-  const [rows] = await db.query(
-    `SELECT m.id
-     FROM channel_manager_property_mappings m
-     INNER JOIN channel_manager_integrations i ON i.id = m.integration_id
-     WHERE m.property_id = ?
-       AND m.is_active = 1
-       AND i.provider_key = 'stayflexi'
-       AND i.deleted_at IS NULL
-       AND i.status IN ('active', 'test')
-     LIMIT 1`,
-    [propertyId],
-  );
-
-  return rows.length > 0;
-};
-
-const enforceVendorStayflexiRateLock = async (res, propertyId) => {
-  const active = await isStayflexiActive(propertyId);
-  if (active) {
-    sendError(
-      res,
-      "Calendar pricing is managed by StayFlexi for this property. Deactivate the mapping or contact admin.",
-      409,
-    );
-    return true;
-  }
-
-  return false;
-};
+import {
+  isStayflexiManagedProperty,
+  enforceStayflexiManagedLock,
+  STAYFLEXI_PRICING_LOCK_MESSAGE,
+} from "../services/channelManagerPropertyGuard.js";
 
 // ──────────────────────────────────────────────────────────
 // GET /api/admin/properties/:propertyId/calendar-pricing
@@ -81,7 +55,13 @@ export const getCalendarPricing = asyncHandler(async (req, res) => {
     params,
   );
 
-  return sendSuccess(res, rows, "Calendar pricing fetched");
+  const stayflexi_managed = await isStayflexiManagedProperty(propertyId);
+
+  return sendSuccess(
+    res,
+    { prices: rows, stayflexi_managed },
+    "Calendar pricing fetched",
+  );
 });
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -104,8 +84,16 @@ export const setCalendarPricing = asyncHandler(async (req, res) => {
     );
     if (rows.length === 0)
       return sendError(res, "Property not found or access denied", 404);
+  }
 
-    if (await enforceVendorStayflexiRateLock(res, propertyId)) return;
+  if (
+    await enforceStayflexiManagedLock(
+      res,
+      propertyId,
+      STAYFLEXI_PRICING_LOCK_MESSAGE,
+    )
+  ) {
+    return;
   }
 
   const role =
@@ -171,8 +159,16 @@ export const deleteCalendarPricing = asyncHandler(async (req, res) => {
     );
     if (rows.length === 0)
       return sendError(res, "Property not found or access denied", 404);
+  }
 
-    if (await enforceVendorStayflexiRateLock(res, propertyId)) return;
+  if (
+    await enforceStayflexiManagedLock(
+      res,
+      propertyId,
+      STAYFLEXI_PRICING_LOCK_MESSAGE,
+    )
+  ) {
+    return;
   }
 
   const [result] = await db.query(
@@ -206,8 +202,16 @@ export const clearCalendarPricingRange = asyncHandler(async (req, res) => {
     );
     if (rows.length === 0)
       return sendError(res, "Property not found or access denied", 404);
+  }
 
-    if (await enforceVendorStayflexiRateLock(res, propertyId)) return;
+  if (
+    await enforceStayflexiManagedLock(
+      res,
+      propertyId,
+      STAYFLEXI_PRICING_LOCK_MESSAGE,
+    )
+  ) {
+    return;
   }
 
   const [result] = await db.query(

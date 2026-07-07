@@ -705,20 +705,68 @@ const processRestrictionUpdate = async ({
       return { ok: false, code: "107", message: "Invalid date range" };
     }
 
-    const stopSell = getBooleanNodeValue(restriction?.StopSell, false);
-    const closedOnArrival = getBooleanNodeValue(
-      restriction?.ClosedOnArrival,
-      false,
-    );
-    const closedOnDeparture = getBooleanNodeValue(
-      restriction?.ClosedOnDeparture,
-      false,
-    );
-    const minLos = Number(getNodeValue(restriction?.MinLOS) ?? 1);
-    const maxLos = Number(getNodeValue(restriction?.MaxLOS) ?? 31);
+    // Stayflexi often sends one restriction field per request (MinLOS, COA, COD, etc.).
+    // Only update fields present in the payload; preserve existing values for omitted fields.
+    const hasStopSell = restriction?.StopSell !== undefined;
+    const hasClosedOnArrival = restriction?.ClosedOnArrival !== undefined;
+    const hasClosedOnDeparture = restriction?.ClosedOnDeparture !== undefined;
+    const hasMinLos = restriction?.MinLOS !== undefined;
+    const hasMaxLos = restriction?.MaxLOS !== undefined;
+
+    const stopSell = hasStopSell
+      ? getBooleanNodeValue(restriction?.StopSell, false)
+      : false;
+    const closedOnArrival = hasClosedOnArrival
+      ? getBooleanNodeValue(restriction?.ClosedOnArrival, false)
+      : false;
+    const closedOnDeparture = hasClosedOnDeparture
+      ? getBooleanNodeValue(restriction?.ClosedOnDeparture, false)
+      : false;
+    const minLos = hasMinLos ? Number(getNodeValue(restriction?.MinLOS)) : null;
+    const maxLos = hasMaxLos ? Number(getNodeValue(restriction?.MaxLOS)) : null;
 
     for (const date of dates) {
       const referenceId = `${integration.external_hotel_id}:${roomTypeCode}:restriction:${ratePlanCode}:${date}`;
+
+      const [existingRows] = await db.query(
+        `
+          SELECT stop_sell, closed_on_arrival, closed_on_departure, min_los, max_los
+          FROM channel_manager_daily_controls
+          WHERE integration_id = ?
+            AND external_room_type_id = ?
+            AND external_rate_plan_id = ?
+            AND control_date = ?
+          LIMIT 1
+        `,
+        [integration.id, roomTypeCode, ratePlanCode, date],
+      );
+
+      const existing = existingRows[0];
+      const mergedStopSell = hasStopSell
+        ? stopSell
+          ? 1
+          : 0
+        : Number(existing?.stop_sell ?? 0);
+      const mergedClosedOnArrival = hasClosedOnArrival
+        ? closedOnArrival
+          ? 1
+          : 0
+        : Number(existing?.closed_on_arrival ?? 0);
+      const mergedClosedOnDeparture = hasClosedOnDeparture
+        ? closedOnDeparture
+          ? 1
+          : 0
+        : Number(existing?.closed_on_departure ?? 0);
+      const mergedMinLos = hasMinLos
+        ? Number.isFinite(minLos) && minLos > 0
+          ? minLos
+          : 1
+        : Number(existing?.min_los ?? 1);
+      const mergedMaxLos = hasMaxLos
+        ? Number.isFinite(maxLos) && maxLos > 0
+          ? maxLos
+          : 31
+        : Number(existing?.max_los ?? 31);
 
       await db.query(
         `
@@ -743,16 +791,16 @@ const processRestrictionUpdate = async ({
           roomTypeCode,
           ratePlanCode,
           date,
-          stopSell ? 1 : 0,
-          closedOnArrival ? 1 : 0,
-          closedOnDeparture ? 1 : 0,
-          Number.isFinite(minLos) ? minLos : 1,
-          Number.isFinite(maxLos) ? maxLos : 31,
+          mergedStopSell,
+          mergedClosedOnArrival,
+          mergedClosedOnDeparture,
+          mergedMinLos,
+          mergedMaxLos,
           referenceId,
         ],
       );
 
-      if (stopSell) {
+      if (hasStopSell && stopSell) {
         await db.query(
           `
             INSERT INTO property_blackout_dates
@@ -774,7 +822,7 @@ const processRestrictionUpdate = async ({
             referenceId,
           ],
         );
-      } else {
+      } else if (hasStopSell) {
         await db.query(
           `
             DELETE FROM property_blackout_dates

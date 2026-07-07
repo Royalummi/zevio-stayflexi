@@ -134,7 +134,7 @@ export default function VendorCalendarPricing() {
         <PropertyCalendarPricing
           propertyId={selectedProperty.id}
           basePrice={Number(selectedProperty.price_per_night) || 0}
-          canEdit={true}
+          canEdit={!Boolean(selectedProperty.is_stayflexi_active)}
           role="vendor"
         />
       </div>

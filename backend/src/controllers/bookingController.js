@@ -5,6 +5,7 @@ import {
   calculateNights,
   calculateBookingAmount,
 } from "../utils/helpers.js";
+import { validateStayLength, validateCoaCod } from "../services/channelManagerStayRulesService.js";
 
 /**
  * Compute the calendar-aware base amount for a booking date range.
@@ -156,6 +157,27 @@ export const createBooking = asyncHandler(async (req, res) => {
 
   // Calculate nights
   const nights = calculateNights(check_in, check_out);
+
+  const stayLengthCheck = await validateStayLength({
+    propertyId: property_id,
+    checkIn: check_in,
+    checkOut: check_out,
+    nights,
+  });
+
+  if (!stayLengthCheck.ok) {
+    return sendError(res, stayLengthCheck.message, 400);
+  }
+
+  const coaCodCheck = await validateCoaCod({
+    propertyId: property_id,
+    checkIn: check_in,
+    checkOut: check_out,
+  });
+
+  if (!coaCodCheck.ok) {
+    return sendError(res, coaCodCheck.message, 400);
+  }
 
   // ============================================
   // SESSION 30: CHECK FOR EXISTING PENDING BOOKING FIRST

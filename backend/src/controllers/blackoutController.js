@@ -1,6 +1,11 @@
 import db from "../config/database.js";
 import { asyncHandler, sendSuccess, sendError } from "../utils/response.js";
 import { generateUUID } from "../utils/helpers.js";
+import {
+  isStayflexiManagedProperty,
+  enforceStayflexiManagedLock,
+  STAYFLEXI_BLOCKING_LOCK_MESSAGE,
+} from "../services/channelManagerPropertyGuard.js";
 
 /**
  * @route   GET /api/vendor/properties/:id/blackouts
@@ -49,7 +54,11 @@ export const getPropertyBlackouts = asyncHandler(async (req, res) => {
 
   sendSuccess(
     res,
-    { blackouts, bookings },
+    {
+      blackouts,
+      bookings,
+      stayflexi_managed: await isStayflexiManagedProperty(id),
+    },
     "Calendar data retrieved successfully",
   );
 });
@@ -90,6 +99,16 @@ export const createBlackout = asyncHandler(async (req, res) => {
   );
   if (props.length === 0) {
     return sendError(res, "Property not found or unauthorized", 404);
+  }
+
+  if (
+    await enforceStayflexiManagedLock(
+      res,
+      id,
+      STAYFLEXI_BLOCKING_LOCK_MESSAGE,
+    )
+  ) {
+    return;
   }
 
   // Ensure no overlap with confirmed/pending bookings
@@ -150,6 +169,16 @@ export const deleteBlackout = asyncHandler(async (req, res) => {
   );
   if (props.length === 0) {
     return sendError(res, "Property not found or unauthorized", 404);
+  }
+
+  if (
+    await enforceStayflexiManagedLock(
+      res,
+      id,
+      STAYFLEXI_BLOCKING_LOCK_MESSAGE,
+    )
+  ) {
+    return;
   }
 
   // Find the blackout record — must belong to this property and be vendor-created
@@ -220,7 +249,11 @@ export const adminGetPropertyBlackouts = asyncHandler(async (req, res) => {
 
   sendSuccess(
     res,
-    { blackouts, bookings },
+    {
+      blackouts,
+      bookings,
+      stayflexi_managed: await isStayflexiManagedProperty(id),
+    },
     "Calendar data retrieved successfully",
   );
 });
@@ -253,6 +286,16 @@ export const adminCreateBlackout = asyncHandler(async (req, res) => {
     [id],
   );
   if (props.length === 0) return sendError(res, "Property not found", 404);
+
+  if (
+    await enforceStayflexiManagedLock(
+      res,
+      id,
+      STAYFLEXI_BLOCKING_LOCK_MESSAGE,
+    )
+  ) {
+    return;
+  }
 
   const [overlapping] = await db.query(
     `SELECT id FROM bookings
@@ -298,6 +341,16 @@ export const adminCreateBlackout = asyncHandler(async (req, res) => {
  */
 export const adminDeleteBlackout = asyncHandler(async (req, res) => {
   const { id, blackoutId } = req.params;
+
+  if (
+    await enforceStayflexiManagedLock(
+      res,
+      id,
+      STAYFLEXI_BLOCKING_LOCK_MESSAGE,
+    )
+  ) {
+    return;
+  }
 
   const [blackouts] = await db.query(
     `SELECT id FROM property_blackout_dates WHERE id = ? AND property_id = ?`,

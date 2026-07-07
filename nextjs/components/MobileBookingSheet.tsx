@@ -41,6 +41,8 @@ interface MobileBookingSheetProps {
   pricePerNight: number;
   /** Per-day custom prices from calendar pricing (keyed by "YYYY-MM-DD") */
   calendarPriceMap?: Record<string, number>;
+  /** Minimum nights required for the selected check-in */
+  minStayNights?: number;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -64,6 +66,7 @@ export default function MobileBookingSheet({
   propertyId,
   pricePerNight,
   calendarPriceMap = {},
+  minStayNights = 1,
 }: MobileBookingSheetProps) {
   // Active tab: "dates" | "guests"
   const [activeTab, setActiveTab] = useState<"dates" | "guests">("dates");
@@ -238,6 +241,7 @@ export default function MobileBookingSheet({
                 inline={true}
                 propertyId={propertyId}
                 basePrice={pricePerNight}
+                minStayNights={minStayNights}
               />
             </div>
           )}

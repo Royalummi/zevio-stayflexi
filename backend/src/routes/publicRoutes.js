@@ -8,6 +8,8 @@ import {
   checkAvailability,
   getRecommendedProperties,
   getPropertyBlockedDates,
+  getPropertyStayRules,
+  getPropertyStayRestrictions,
   submitContactForm,
 } from "../controllers/publicController.js";
 import {
@@ -40,6 +42,8 @@ router.get(
   getPublicCalendarPricing,
 ); // Public price calendar for detail pages
 router.get("/properties/:id/blocked-dates", getPropertyBlockedDates); // Blocked/booked dates for customer calendar
+router.get("/properties/:id/stay-rules", getPropertyStayRules); // Effective min-stay (property + CM MinLOS)
+router.get("/properties/:id/stay-restrictions", getPropertyStayRestrictions); // CM COA/COD calendar rules
 router.post("/contact", submitContactForm); // Contact form → support@zevio.in
 
 export default router;

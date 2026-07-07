@@ -16,6 +16,12 @@ interface BlockedRange {
   type?: "booking" | "blackout";
 }
 
+interface StayRestriction {
+  closed_on_arrival: boolean;
+  closed_on_departure: boolean;
+  min_los: number | null;
+}
+
 interface DateRangeSelectorProps {
   checkIn: Date | null;
   checkOut: Date | null;
@@ -37,6 +43,8 @@ interface DateRangeSelectorProps {
   propertyId?: string;
   /** Base price per night — shown on days without a custom rate */
   basePrice?: number;
+  /** Minimum nights required for the selected check-in (property + CM MinLOS) */
+  minStayNights?: number;
 }
 
 function formatDayPrice(amount: number): string {
@@ -58,6 +66,7 @@ export default function DateRangeSelector({
   onOpenChange,
   propertyId,
   basePrice,
+  minStayNights = 1,
 }: DateRangeSelectorProps) {
   const [internalShowDropdown, setInternalShowDropdown] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -68,6 +77,12 @@ export default function DateRangeSelector({
   // Blocked date ranges (blackouts + confirmed bookings)
   const [blockedRanges, setBlockedRanges] = useState<BlockedRange[]>([]);
   const [blockedLoaded, setBlockedLoaded] = useState(false);
+  const [restrictionMap, setRestrictionMap] = useState<
+    Record<string, StayRestriction>
+  >({});
+  const [restrictionYearsFetched, setRestrictionYearsFetched] = useState<
+    Set<number>
+  >(new Set());
   const [rangeError, setRangeError] = useState<string>("");
 
   // Use external isOpen if provided (for controlled mode), otherwise use internal state
@@ -131,6 +146,47 @@ export default function DateRangeSelector({
     };
     load();
   }, [propertyId, blockedLoaded]);
+
+  // Fetch CM stay restrictions (COA/COD) for calendar year
+  useEffect(() => {
+    if (!propertyId) return;
+    if (!inline && !showDropdown) return;
+    const yr = currentMonth.getFullYear();
+    if (restrictionYearsFetched.has(yr)) return;
+    const load = async () => {
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/public/properties/${propertyId}/stay-restrictions?year=${yr}`,
+        );
+        const json = await res.json();
+        if (json.success && json.data?.restrictions) {
+          setRestrictionMap((prev) => {
+            const next = { ...prev };
+            (
+              json.data.restrictions as Array<{
+                control_date: string;
+                closed_on_arrival: boolean;
+                closed_on_departure: boolean;
+                min_los: number | null;
+              }>
+            ).forEach((entry) => {
+              next[entry.control_date] = {
+                closed_on_arrival: Boolean(entry.closed_on_arrival),
+                closed_on_departure: Boolean(entry.closed_on_departure),
+                min_los:
+                  entry.min_los !== null ? Number(entry.min_los) : null,
+              };
+            });
+            return next;
+          });
+          setRestrictionYearsFetched((prev) => new Set(prev).add(yr));
+        }
+      } catch {
+        // calendar still works without restriction overlay
+      }
+    };
+    load();
+  }, [inline, showDropdown, currentMonth, propertyId, restrictionYearsFetched]);
 
   const handleOpenChange = (newState: boolean) => {
     if (externalIsOpen === undefined) {
@@ -243,6 +299,26 @@ export default function DateRangeSelector({
     });
   };
 
+  const isClosedOnArrival = (date: Date): boolean =>
+    Boolean(restrictionMap[toKey(date)]?.closed_on_arrival);
+
+  const isClosedOnDeparture = (date: Date): boolean =>
+    Boolean(restrictionMap[toKey(date)]?.closed_on_departure);
+
+  const isRestrictionBlocked = (date: Date): boolean => {
+    if (selectingCheckOut) {
+      return isClosedOnDeparture(date);
+    }
+    return isClosedOnArrival(date);
+  };
+
+  const isEffectivelyBlocked = (date: Date): boolean => {
+    const blocked = !isDisabled(date) && isBlocked(date);
+    const inventoryBlocked =
+      blocked && !(selectingCheckOut && !!checkIn && date > checkIn);
+    return inventoryBlocked || isRestrictionBlocked(date);
+  };
+
   /** Returns true if any date strictly between fromDate and toDate (exclusive) is blocked */
   const hasBlockedInRange = (fromDate: Date, toDate: Date): boolean => {
     if (blockedRanges.length === 0) return false;
@@ -262,19 +338,39 @@ export default function DateRangeSelector({
 
     if (
       isDisabled(selectedDate) ||
-      (isBlocked(selectedDate) &&
-        !(selectingCheckOut && selectedDate > checkIn!))
+      isEffectivelyBlocked(selectedDate)
     )
       return;
 
     setRangeError("");
 
     if (!checkIn || (checkIn && checkOut)) {
+      if (isClosedOnArrival(selectedDate)) {
+        setRangeError("Check-in is not available on this date.");
+        return;
+      }
       // Starting a new selection
       onCheckInChange(selectedDate);
       onCheckOutChange(null);
     } else {
       if (selectedDate > checkIn) {
+        if (isClosedOnDeparture(selectedDate)) {
+          setRangeError("Check-out is not available on this date.");
+          return;
+        }
+
+        const selectedNights = Math.ceil(
+          (selectedDate.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24),
+        );
+
+        if (minStayNights > 1 && selectedNights < minStayNights) {
+          setRangeError(
+            `Minimum stay is ${minStayNights} nights for this check-in date.`,
+          );
+          onCheckOutChange(null);
+          return;
+        }
+
         // Validate: no blocked dates inside the selected range
         if (hasBlockedInRange(checkIn, selectedDate)) {
           setRangeError(
@@ -287,6 +383,10 @@ export default function DateRangeSelector({
         onCheckOutChange(selectedDate);
         handleOpenChange(false);
       } else {
+        if (isClosedOnArrival(selectedDate)) {
+          setRangeError("Check-in is not available on this date.");
+          return;
+        }
         // Clicked before or on check-in — restart selection
         onCheckInChange(selectedDate);
         onCheckOutChange(null);
@@ -403,11 +503,8 @@ export default function DateRangeSelector({
                 date.setHours(0, 0, 0, 0);
 
                 const disabled = isDisabled(date);
-                const blocked = !disabled && isBlocked(date);
-                // Allow blocked date as checkout when user is picking check-out and date is after check-in
                 const effectivelyBlocked =
-                  blocked &&
-                  !(selectingCheckOut && !!checkIn && date > checkIn);
+                  !disabled && isEffectivelyBlocked(date);
                 const selected = isSelected(date);
                 const inRange = isInRange(date);
                 const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
@@ -510,10 +607,8 @@ export default function DateRangeSelector({
             date.setDate(day);
             date.setHours(0, 0, 0, 0);
             const disabled = isDisabled(date);
-            const blocked = !disabled && isBlocked(date);
-            // Allow blocked date as checkout when user is picking check-out and date is after check-in
             const effectivelyBlocked =
-              blocked && !(selectingCheckOut && !!checkIn && date > checkIn);
+              !disabled && isEffectivelyBlocked(date);
             const selected = isSelected(date);
             const inRange = isInRange(date);
             const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
@@ -639,10 +734,8 @@ export default function DateRangeSelector({
               date.setHours(0, 0, 0, 0);
 
               const disabled = isDisabled(date);
-              const blocked = !disabled && isBlocked(date);
-              // Allow blocked date as checkout when user is picking check-out and date is after check-in
               const effectivelyBlocked =
-                blocked && !(selectingCheckOut && !!checkIn && date > checkIn);
+                !disabled && isEffectivelyBlocked(date);
               const selected = isSelected(date);
               const inRange = isInRange(date);
               const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;

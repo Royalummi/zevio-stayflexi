@@ -85,6 +85,9 @@ const PropertyBlockoutCalendar = ({
   const [blackoutMap, setBlackoutMap] = useState({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [stayflexiManaged, setStayflexiManaged] = useState(false);
+
+  const canModify = !stayflexiManaged;
 
   // DayPicker range selection
   const [range, setRange] = useState(undefined);
@@ -106,7 +109,9 @@ const PropertyBlockoutCalendar = ({
       );
       if (!resp.data.success) return;
 
-      const { blackouts: bls = [], bookings: bks = [] } = resp.data.data;
+      const { blackouts: bls = [], bookings: bks = [], stayflexi_managed } =
+        resp.data.data;
+      setStayflexiManaged(Boolean(stayflexi_managed));
       setBlackouts(
         bls.map((bl) => ({
           ...bl,
@@ -150,7 +155,7 @@ const PropertyBlockoutCalendar = ({
     } finally {
       setLoading(false);
     }
-  }, [propertyId]);
+  }, [propertyId, apiBase]);
 
   useEffect(() => {
     fetchCalendarData();
@@ -158,6 +163,7 @@ const PropertyBlockoutCalendar = ({
 
   // ── Range change handler ───────────────────────────────────────────────────
   const handleRangeSelect = (newRange) => {
+    if (!canModify) return;
     if (!newRange) {
       setRange(undefined);
       return;
@@ -178,6 +184,7 @@ const PropertyBlockoutCalendar = ({
 
   // ── Day click — clicking a vendor-blocked date offers delete ───────────────
   const handleDayClick = (date) => {
+    if (!canModify) return;
     const ds = toYMD(date);
     const entry = blackoutMap[ds];
     if (!entry) return;
@@ -270,6 +277,17 @@ const PropertyBlockoutCalendar = ({
   const selectionStarted = range?.from && !range?.to;
 
   return (
+    <div className="space-y-4">
+      {stayflexiManaged && (
+        <div className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-800 px-4 py-2.5 text-sm text-blue-800 dark:text-blue-300">
+          <Info className="h-4 w-4 shrink-0 text-blue-500" />
+          <span>
+            <strong>Stayflexi managed:</strong> Date blocking is synced from
+            Stayflexi and cannot be edited here. You can still view existing
+            blocks and bookings below.
+          </span>
+        </div>
+      )}
     <div className="flex flex-col md:flex-row gap-4 md:gap-6 min-h-0">
       {/* ── Mobile-only close header ── */}
       {onClose && (
@@ -426,7 +444,14 @@ const PropertyBlockoutCalendar = ({
         <Separator className="hidden md:block" />
 
         {/* Instruction / State panel */}
-        {!selectionStarted && !selectionComplete && !deleteCandidate && (
+        {!canModify && !deleteCandidate && (
+          <div className="flex items-start gap-2 text-sm text-muted-foreground bg-muted/30 rounded-lg px-3 py-3">
+            <Lock className="h-4 w-4 shrink-0 mt-0.5" />
+            <span>Blocking is read-only while this property is managed by Stayflexi.</span>
+          </div>
+        )}
+
+        {canModify && !selectionStarted && !selectionComplete && !deleteCandidate && (
           <>
             {/* Desktop — full hint card */}
             <div className="hidden md:flex items-start gap-2 text-sm text-muted-foreground bg-muted/30 rounded-lg px-3 py-3">
@@ -445,7 +470,7 @@ const PropertyBlockoutCalendar = ({
         )}
 
         {/* Partial selection hint */}
-        {selectionStarted && (
+        {canModify && selectionStarted && (
           <div className="flex items-start gap-2 text-sm text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/20 rounded-lg px-3 py-3">
             <Info className="h-4 w-4 shrink-0 mt-0.5" />
             <span>
@@ -456,7 +481,7 @@ const PropertyBlockoutCalendar = ({
         )}
 
         {/* Delete candidate panel */}
-        {deleteCandidate && !selectionStarted && !selectionComplete && (
+        {canModify && deleteCandidate && !selectionStarted && !selectionComplete && (
           <div className="border border-red-200 bg-red-50 dark:bg-red-950/20 rounded-lg p-4 space-y-3">
             <p className="text-sm font-semibold text-red-700 dark:text-red-400 flex items-center gap-2">
               <Trash2 className="h-4 w-4" />
@@ -496,7 +521,7 @@ const PropertyBlockoutCalendar = ({
         )}
 
         {/* Confirm block panel */}
-        {selectionComplete && (
+        {canModify && selectionComplete && (
           <div className="border border-primary/30 bg-primary/5 rounded-lg p-4 space-y-3">
             <p className="text-sm font-semibold text-foreground flex items-center gap-2">
               <CalendarOff className="h-4 w-4 text-primary" />
@@ -577,7 +602,7 @@ const PropertyBlockoutCalendar = ({
                     >
                       {bl.created_by}
                     </Badge>
-                    {(bl.created_by === "vendor" || isAdmin) && (
+                    {(bl.created_by === "vendor" || isAdmin) && canModify && (
                       <Button
                         size="icon"
                         variant="ghost"
@@ -612,6 +637,7 @@ const PropertyBlockoutCalendar = ({
           </div>
         )}
       </div>
+    </div>
     </div>
   );
 };
